@@ -27,6 +27,10 @@ wp_census <-
   st_drop_geometry
 ```
 
+## Eligible water points
+
+LW: a table counting the number of observations, and counting how many of them satisfy the eligibility critera (communal, used for drinking, functional)
+
 ## Number of water points found
 
 ```{r}
@@ -62,6 +66,11 @@ wp_census %>%
     ` ` = c("All water points", "DSW", "ILC water points", "ILC water collection points")
   )
 ```
+
+### Averages by village
+
+LW: Add a table showing: average number of water points per village, nubmer of villages with DSW, average number of DSW water points per village (only if any ILC is present), number of villages with ILC, average number of ILC water points per village (only if any ILC is present)
+
 ## Type of water points
 
 ### All water points
@@ -214,6 +223,8 @@ wp_census %>%
 - DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
 - ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
 - ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean * 100) %>% round(1)`%
+
+LW: add average cost in ILC and DSW and water the payment is for 
 
 ## DSW water points
 

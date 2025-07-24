@@ -35,3 +35,6 @@ hh_census %>%
   )
 ```
 
+LW: add graph with the number of people who report using each water treatment method
+LW: show in a graph or table the distribution of the number of water points used by households
+LW: show the share of households in the WP census who report using a water points with DSW or ILC (only households using WP without them are asked about it)
