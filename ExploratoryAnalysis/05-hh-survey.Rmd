@@ -1,0 +1,48 @@
+# Household survey
+
+```{r}
+library(stringr)
+library(sf)
+library(tidyverse)
+library(modelsummary)
+library(fixest)
+```
+
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(promoter_household == 0)
+```
+
+## Number of observations
+
+```{r}
+hh_survey %>%
+  group_by(country) %>%
+  summarise(
+    N = n(), 
+    `Color wheel TCR > 0.2` = mean(disctcr > 0.2, na.rm = TRUE),
+    `Color wheel FCR > 0.2` = mean(discfcr > 0.2, na.rm = TRUE),
+    `Colorimeter TCR > 0.2` = mean(metertcr > 0.2, na.rm = TRUE),
+    `Colorimeter FCR > 0.2` = mean(meterfcr > 0.2, na.rm = TRUE)
+  ) %>%
+  mutate(
+    across(
+      -c(country, N),
+      ~ paste0(round(. * 100, 1), "%")
+    ),
+    across(everything(), ~ as.character(.))
+  ) %>%
+  pivot_longer(cols = -country)
+```
+

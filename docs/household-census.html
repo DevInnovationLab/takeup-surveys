@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Page not found | Chlorine adoption survey</title>
-  <meta name="description" content="Page not found | Chlorine adoption survey" />
+  <title>4 Household census | Chlorine adoption survey</title>
+  <meta name="description" content="4 Household census | Chlorine adoption survey" />
   <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Page not found | Chlorine adoption survey" />
+  <meta property="og:title" content="4 Household census | Chlorine adoption survey" />
   <meta property="og:type" content="book" />
   
   
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Page not found | Chlorine adoption survey" />
+  <meta name="twitter:title" content="4 Household census | Chlorine adoption survey" />
   
   
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-
-
+<link rel="prev" href="water-point-chlorine-residual-tests.html"/>
+<link rel="next" href="household-survey.html"/>
 
 
 
@@ -2031,19 +2031,54 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="page-not-found" class="section level1">
-<h1>Page not found</h1>
-<p>The page you requested cannot be found (perhaps it was moved or renamed).</p>
-<p>You may want to try searching to find the page's new location, or use
-the table of contents to find the page you are looking for.</p>
+<div id="household-census" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">4</span> Household census<a href="household-census.html#household-census" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="household-census.html#cb29-1" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb29-2"><a href="household-census.html#cb29-2" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb29-3"><a href="household-census.html#cb29-3" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb29-4"><a href="household-census.html#cb29-4" tabindex="-1"></a><span class="fu">library</span>(modelsummary)</span>
+<span id="cb29-5"><a href="household-census.html#cb29-5" tabindex="-1"></a><span class="fu">library</span>(fixest)</span></code></pre></div>
+</details>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="household-census.html#cb30-1" tabindex="-1"></a>hh_census <span class="ot">&lt;-</span></span>
+<span id="cb30-2"><a href="household-census.html#cb30-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb30-3"><a href="household-census.html#cb30-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb30-4"><a href="household-census.html#cb30-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb30-5"><a href="household-census.html#cb30-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb30-6"><a href="household-census.html#cb30-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb30-7"><a href="household-census.html#cb30-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb30-8"><a href="household-census.html#cb30-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb30-9"><a href="household-census.html#cb30-9" tabindex="-1"></a>      <span class="st">&quot;hh-census.rds&quot;</span></span>
+<span id="cb30-10"><a href="household-census.html#cb30-10" tabindex="-1"></a>    )</span>
+<span id="cb30-11"><a href="household-census.html#cb30-11" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<div id="number-of-observations" class="section level2 hasAnchor" number="4.1">
+<h2><span class="header-section-number">4.1</span> Number of observations<a href="household-census.html#number-of-observations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="household-census.html#cb31-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb31-2"><a href="household-census.html#cb31-2" tabindex="-1"></a>  <span class="fu">group_by</span>(country) <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="household-census.html#cb31-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb31-4"><a href="household-census.html#cb31-4" tabindex="-1"></a>    <span class="at">N =</span> <span class="fu">n</span>(), </span>
+<span id="cb31-5"><a href="household-census.html#cb31-5" tabindex="-1"></a>    <span class="st">`</span><span class="at">DSW (%)</span><span class="st">`</span> <span class="ot">=</span> (<span class="fu">mean</span>(wp_dsw, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>),</span>
+<span id="cb31-6"><a href="household-census.html#cb31-6" tabindex="-1"></a>    <span class="st">`</span><span class="at">ILC (%)</span><span class="st">`</span> <span class="ot">=</span> (<span class="fu">mean</span>(wp_ilc_device, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb31-7"><a href="household-census.html#cb31-7" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 2 × 4
+##   country     N `DSW (%)` `ILC (%)`
+##   &lt;chr&gt;   &lt;int&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+## 1 MALAWI   1448       3.6       2.2
+## 2 UGANDA   3301      61.7       0.3</code></pre>
+
+</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-
-
+<a href="water-point-chlorine-residual-tests.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="household-survey.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script>/*! jQuery v3.6.0 | (c) OpenJS Foundation and other contributors | jquery.org/license */

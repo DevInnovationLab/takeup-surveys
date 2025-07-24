@@ -1,0 +1,37 @@
+# Household census
+
+```{r}
+library(stringr)
+library(sf)
+library(tidyverse)
+library(modelsummary)
+library(fixest)
+```
+
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  )
+```
+
+## Number of observations
+
+```{r}
+hh_census %>%
+  group_by(country) %>%
+  summarise(
+    N = n(), 
+    `DSW (%)` = (mean(wp_dsw, na.rm = TRUE) * 100) %>% round(1),
+    `ILC (%)` = (mean(wp_ilc_device, na.rm = TRUE) * 100) %>% round(1)
+  )
+```
+

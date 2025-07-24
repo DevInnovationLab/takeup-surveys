@@ -24,3 +24,9 @@ turbidity-and-chlorine-residual
 colorimeter-ids-and-chlorine-residual
 color-disc-ids-and-chlorine-residual
 enumerator-ids-and-chlorine-residual
+household-census
+number-of-observations
+household-survey
+number-of-observations-1
+monitoring-survey
+number-of-observations-2

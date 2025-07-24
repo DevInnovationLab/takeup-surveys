@@ -3,5 +3,8 @@ output_dir: ../docs/
 rmd_files: [
   "index.Rmd",
   "02-wp-census.Rmd",
-  "03-wp-tests.Rmd"
+  "03-wp-tests.Rmd",
+  "04-hh-census.Rmd",
+  "05-hh-survey.Rmd",
+  "06-monitoring-survey.Rmd"
 ]
