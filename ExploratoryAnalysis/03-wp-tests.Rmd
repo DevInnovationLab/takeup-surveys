@@ -1,0 +1,371 @@
+# Water point chlorine residual tests
+
+```{r}
+library(stringr)
+library(sf)
+library(tidyverse)
+library(modelsummary)
+library(fixest)
+```
+
+<!-- ## Field observations -->
+
+```{r}
+wp_test <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-chlorine.rds"
+    )
+  ) %>%
+  rename_with(
+    ~ .x %>% 
+      str_replace_all("meter", "meter_") %>% 
+      str_replace_all("disc", "disc_") %>%
+      str_replace_all("cr_c$", "cr")
+  ) %>%
+  dplyr::filter(!is.na(country), !is.na(disc_fcr))
+```
+
+## Color wheel and colorimeter readings
+
+```{r}
+wp_test %>%
+  select(wp_id, matches("(.)cr$")) %>%
+  pivot_longer(
+    cols = -wp_id,
+    names_pattern = "(.*)_(.*)",
+    names_to = c(".value", "test")
+  ) %>%
+  mutate(
+    test = str_to_upper(test)
+  ) %>%
+  ggplot(
+    aes(
+      x = meter,
+      y = disc,
+      color = test
+    )
+  ) +
+  geom_abline(
+    slope = 1,
+    color = "gray80"
+  ) +
+  geom_abline(
+    slope = 1,
+    intercept = 0.2,
+    color = "gray80",
+    linetype = "dashed"
+  ) +
+  geom_abline(
+    slope = 1,
+    intercept = -0.2,
+    color = "gray80",
+    linetype = "dashed"
+  ) +
+  geom_abline(
+    slope = 1,
+    color = "gray80"
+  ) +
+  geom_point(position = "jitter") +
+  theme +
+  facet_wrap(~ test) +
+  labs(
+    x = "Colorimeter reading (mg/L)",
+    y = "Color wheel reading (mg/L)",
+    color = NULL
+  ) + 
+  scale_color_viridis_d() 
+```
+
+## TCR and FCR readings
+
+```{r}
+wp_test %>%
+  select(wp_id, matches("_(.)cr$")) %>%
+  pivot_longer(
+    cols = -wp_id,
+    names_pattern = "(.*)_(.*)",
+    names_to = c("test", ".value")
+  ) %>%
+  mutate(
+    test = case_when(test == "meter" ~ "Colorimeter", TRUE ~ "Color wheel")
+  ) %>%
+  rename(
+    TCR = tcr,
+    FCR = fcr
+  ) %>%
+  ggplot(
+    aes(
+      x = FCR,
+      y = TCR,
+      color = test
+    )
+  ) +
+  geom_abline(
+    slope = 1,
+    color = "gray80"
+  ) +
+  geom_abline(
+    slope = 1,
+    intercept = -0.1,
+    color = "gray80",
+    linetype = "dashed"
+  ) +
+  geom_abline(
+    slope = 1,
+    intercept = -0.2,
+    color = "gray80",
+    linetype = "dotted"
+  ) +
+  geom_abline(
+    slope = 1,
+    color = "gray80"
+  ) +
+  geom_point(position = "jitter") +
+  theme +
+  facet_wrap(~ test) +
+  scale_color_viridis_d() +
+  theme(legend.position = "none")
+```
+
+## Dosage and chlorine residual
+
+```{r}
+map(
+  c("disc_tcr", "disc_fcr", "meter_tcr", "meter_fcr"),
+  ~ lm(
+    paste(.x, " ~ jc_mldispensed + jc_mllost") %>% as.formula,
+    data = wp_test
+  )
+) %>%
+  set_names(
+    c(
+      "Color wheel TCR", "Color wheel FCR",
+      "Colorimeter TCR", "Colorimeter FCR"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "IC|Log|RMSE|R2$"
+  )
+```
+
+## Wait time and chlorine residual
+
+```{r}
+map(
+  c(
+    "disc_tcr ~ disc_fcr_dur_wait", 
+    "disc_fcr ~ disc_tcr_dur_wait", 
+    "meter_tcr ~ meter_fcr_dur_wait", 
+    "meter_fcr ~ meter_tcr_dur_wait"
+  ),
+  ~ lm(
+    as.formula(.x),
+    data = wp_test
+  )
+) %>%
+  set_names(
+    c(
+      "Color wheel TCR", "Color wheel FCR",
+      "Colorimeter TCR", "Colorimeter FCR"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "IC|Log|RMSE|R2$"
+  )
+```
+
+## Reported color and chlorine residual
+
+```{r}
+map(
+  c(
+    "disc_tcr ~ disc_fcr_color", 
+    "disc_fcr ~ disc_tcr_color", 
+    "meter_tcr ~ meter_fcr_color", 
+    "meter_fcr ~ meter_tcr_color"
+  ),
+  ~ lm(
+    as.formula(.x),
+    data = wp_test
+  )
+) %>%
+  set_names(
+    c(
+      "Color wheel TCR", "Color wheel FCR",
+      "Colorimeter TCR", "Colorimeter FCR"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "IC|Log|RMSE|R2$"
+  )
+```
+
+## Water source type and chlorine residual
+
+```{r}
+map(
+  c(
+    "disc_tcr ~ disc_fcr_color", 
+    "disc_fcr ~ disc_tcr_color", 
+    "meter_tcr ~ meter_fcr_color", 
+    "meter_fcr ~ meter_tcr_color"
+  ),
+  ~ lm(
+    as.formula(.x),
+    data = wp_test
+  )
+) %>%
+  set_names(
+    c(
+      "Color wheel TCR", "Color wheel FCR",
+      "Colorimeter TCR", "Colorimeter FCR"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "IC|Log|RMSE|R2$"
+  )
+```
+
+## Turbidity and chlorine residual
+
+```{r}
+wp_test %>%
+  ggplot(
+    aes(
+      x = wp_turbidity,
+      fill = wp_turbidity
+    )
+  ) +
+  geom_bar() +
+  scale_fill_viridis_d() +
+  theme +
+  labs(
+    y = "Number of water points",
+    x = "Turbidity (1 = Clear, 5 = Very turbid)"
+  ) +
+  theme(
+    legend.position = "none"
+  )
+```
+
+
+```{r}
+map(
+  c(
+    "disc_diff_c ~ wp_turbidity", 
+    "meter_diff_c ~ wp_turbidity"
+  ),
+  ~ lm(
+    as.formula(.x),
+    data = wp_test
+  )
+) %>%
+  set_names(
+    c(
+      "Color wheel difference",
+      "Colorimeter difference"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "IC|Log|RMSE|R2$"
+  )
+```
+
+
+## Colorimeter IDs and chlorine residual
+
+```{r}
+wp_test %>% 
+  dplyr::filter(!is.na(meter_id)) %>%
+  group_by(meter_id) %>%
+  mutate(meter_id = paste0(meter_id, " (N =", n(), ")")) %>%
+  ggplot(
+    aes(
+      y = meter_id,
+      x = meter_fcr
+    )
+  ) +
+  geom_boxplot() +
+  facet_grid(rows = vars(country), scales = "free") +
+  theme +
+  labs(
+    y = NULL,
+    x = "Free chlorine residual (mg/L)"
+  )
+```
+
+```{r}
+wp_test %>%
+  dplyr::filter(!is.na(meter_id)) %>%
+  group_by(meter_id) %>%
+  mutate(meter_id = paste0(meter_id, " (N =", n(), ")")) %>%
+  ggplot(
+    aes(
+      y = meter_id,
+      x = meter_tcr
+    )
+  ) +
+  geom_boxplot() +
+  facet_grid(rows = vars(country), scales = "free") +
+  theme +
+  labs(
+    y = NULL,
+    x = "Total chlorine residual (mg/L)"
+  )
+```
+
+## Color disc IDs and chlorine residual
+
+```{r}
+wp_test %>%
+  dplyr::filter(!is.na(meter_id)) %>%
+  group_by(disc_id) %>%
+  mutate(disc_id = paste0(meter_id, " (N =", n(), ")")) %>%
+  ggplot(
+    aes(
+      y = disc_id,
+      x = disc_fcr
+    )
+  ) +
+  geom_boxplot() +
+  facet_grid(rows = vars(country), scales = "free") +
+  theme +
+  labs(
+    y = NULL,
+    x = "Free chlorine residual (mg/L)"
+  )
+```
+
+```{r}
+wp_test %>%
+  dplyr::filter(!is.na(meter_id)) %>%
+  group_by(disc_id) %>%
+  mutate(disc_id = paste0(meter_id, " (N =", n(), ")")) %>%
+  ggplot(
+    aes(
+      y = disc_id,
+      x = disc_tcr
+    )
+  ) +
+  geom_boxplot() +
+  facet_grid(rows = vars(country), scales = "free") +
+  theme +
+  labs(
+    y = NULL,
+    x = "Total chlorine residual (mg/L)"
+  )
+```
+
+## Enumerator IDs and chlorine residual
+

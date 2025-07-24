@@ -1,0 +1,7 @@
+delete_merged_file: true
+output_dir: ./Notebooks/
+rmd_files: [
+  "index.Rmd",
+  "02-wp-census.Rmd",
+  "03-wp-tests.Rmd"
+]

@@ -1,0 +1,10 @@
+bookdown::gitbook:
+  css: style.css
+  config:
+    toc:
+      collapse: section
+      before: |
+        <li><a href="./">Wrangle Water Point Census</a></li>
+  code_folding: hide
+  self_contained: true
+

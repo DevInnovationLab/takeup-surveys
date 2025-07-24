@@ -1,0 +1,42 @@
+
+# Maps
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+require("pacman")
+
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "sf",
+    "haven",
+    "lfe",
+    "modelsummary",
+    "kableExtra",
+    "data.table",
+    "broom",
+    "janitor",
+    "corrplot",
+    "crosstable",
+    "readxl",
+    "vtable",
+    "broom",
+    "leaflet",
+    "viridis",
+    "randomcoloR"
+  )
+
+p_load(
+  packages,
+  character.only = TRUE
+)
+
+seed <- 1729
+set.seed(seed)
+```
+
+## Malawi
+
+## Uganda

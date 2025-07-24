@@ -1,0 +1,18 @@
+--- 
+title: "Chlorine adoption survey"
+author: "Development Innovation Lab"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+---
+
+```{r}
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+```
+# Introduction
+
+THIS IS A WORK IN PROGRESS
+
+This document shows exploratory analysis results for the chlorine adoption surveys conducted in Malawi and Uganda.

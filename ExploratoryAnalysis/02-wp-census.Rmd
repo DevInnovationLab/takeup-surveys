@@ -1,0 +1,337 @@
+# Water point census
+
+```{r}
+library(stringr)
+library(sf)
+library(tidyverse)
+```
+
+## Field observations
+
+- In some villages, the promoters filled the dispenser after they saw the FOs inspecting it
+- There is one DSW village that has an ILC device. The community guide reported that the ILC is operated by an organization called "Salvation"
+
+
+```{r}
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  st_drop_geometry
+```
+
+## Number of water points found
+
+```{r}
+wp_census %>%
+  select(wp_func, wp_dsw, wp_ilc_device, wp_ilc) %>%
+  mutate(
+    dsw_func = case_when(wp_dsw == 1 ~ wp_func),
+    ilcwp_func = case_when(wp_ilc_device == 1 ~ wp_func),
+    ilcwcp_func = case_when(wp_ilc == 1 ~ wp_func),
+  ) %>%
+  summarise(
+    wp_n = n(),
+    across(
+      c(
+        dsw_n = wp_dsw,
+        ilcwp_n = wp_ilc_device,
+        ilcwcp_n = wp_ilc
+      ),
+      ~ sum(., na.rm = TRUE)
+    ),
+    across(
+      ends_with("func"),
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_pattern = "(.*)_(.*)",
+    names_to = c("type", ".value")
+  ) %>%
+  set_names(c(" ", "N", "Percent functioning")) %>%
+  mutate(
+    ` ` = c("All water points", "DSW", "ILC water points", "ILC water collection points")
+  )
+```
+## Type of water points
+
+### All water points
+
+```{r}
+wp_census %>%
+  group_by(sourcetype, wp_ilc_device, wp_dsw, wp_ilc) %>%
+  summarise(
+    n = n()
+  ) %>%
+  mutate(
+    ea = case_when(
+      wp_ilc_device ~ "ILC water point",
+      wp_ilc ~ "ILC water collection point",
+      wp_dsw ~ "DSW",
+      TRUE ~ "Non-program"
+    )
+  ) %>%
+  group_by(sourcetype) %>%
+  mutate(
+    total = sum(n),
+    # sourcetype = reorder(sourcetype, total, order = TRUE)
+  ) %>%
+  ggplot(
+    aes(
+      y = sourcetype,
+      x = n,
+      fill = ea
+    )
+  ) +
+  geom_col() +
+  geom_text(
+    aes(
+      x = total,
+      label = total
+    ),
+    size = 3,
+    hjust = 1.2,
+    color = "white"
+  ) +
+  theme +
+  scale_fill_viridis_d() +
+  labs(
+    y = NULL,
+    x = "Number of sources",
+    fill = NULL
+  )
+```
+
+### Program water points
+
+```{r}
+wp_census %>%
+  mutate(
+    ea = case_when(
+      wp_ilc_device ~ "ILC",
+      wp_ilc ~ "ILC water collection point",
+      wp_dsw ~ "DSW"
+    )
+  ) %>%
+  dplyr::filter(!is.na(ea)) %>%
+  group_by(sourcetype, ea) %>%
+  summarise(n = n()) %>%
+  group_by(ea) %>%
+  mutate(
+    total = sum(n),
+    pct = (n/total) * 100
+  ) %>%
+  ggplot(
+    aes(
+      y = sourcetype,
+      x = pct,
+      fill = ea,
+      label = pct %>% round(1)
+    )
+  ) + 
+  geom_col() +
+  geom_text(
+    aes(color = ea),
+    size = 3,
+    hjust = 1.2
+  ) +
+  facet_wrap(~ ea) +
+  theme +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d(direction = -1) +
+  labs(
+    y = NULL,
+    x = "Percent of sources",
+    fill = NULL
+  )
+```
+
+## Number of water points per village
+
+```{r}
+wp_census %>%
+  group_by(village_id) %>%
+  summarise(
+    `Water points` = n(),
+    `DSW water points` = sum(wp_dsw, na.rm = TRUE) %>% na_if(0),
+    `ILC water points` = sum(wp_ilc_device, na.rm = TRUE) %>% na_if(0),
+    `ILC water collection points` = sum(wp_ilc, na.rm = TRUE) %>% na_if(0)
+  ) %>%
+  summarise(
+    across(
+      - village_id,
+      ~ mean(., na.rm = TRUE),
+      .names = "Average_{.col}"
+    ),
+    across(
+      - village_id,
+      ~ min(., na.rm = TRUE),
+      .names = "Minimum_{.col}"
+    ),
+    across(
+      - village_id,
+      ~ max(., na.rm = TRUE),
+      .names = "Maximum_{.col}"
+    )
+    ,
+    across(
+      - village_id,
+      ~ sum(!is.na(.), na.rm = TRUE),
+      .names = "N_{.col}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_pattern = "(.*)_(.*)",
+    names_to = c(".value", "Type")
+  ) %>%
+  select(
+    Type, N, Average, Minimum, Maximum
+  ) %>%
+  rename(
+    `Number of villages` = N
+  )
+```
+## Water point functionality rate
+
+- Overall: `r (wp_census %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
+- DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
+- ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
+- ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_func) %>% mean * 100) %>% round(1)`%
+
+## Share of paid water points
+
+- Overall: `r (wp_census %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
+- DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
+- ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
+- ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean * 100) %>% round(1)`%
+
+## DSW water points
+
+```{r}
+dsw <-
+  wp_census %>%
+  dplyr::filter(wp_dsw == 1)
+```
+
+### Functionality
+
+```{r}
+dsw %>%
+  summarise(
+    across(
+      c(
+        `Water point is functional` = wp_func,
+        `Casing is present` = disp_casing_present,
+        `PVC pole is present` = disp_pvc_pole_present,
+        `Tank is present` = disp_tank_present,
+        `Valve is working (conditional on tank being present)` = jc_valve,
+        `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+      ),
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1),
+      .names = "{.col}_Percent"
+    ),
+    across(
+      c(
+        `Water point is functional` = wp_func,
+        `Casing is present` = disp_casing_present,
+        `PVC pole is present` = disp_pvc_pole_present,
+        `Tank is present` = disp_tank_present,
+        `Valve is working (conditional on tank being present)` = jc_valve,
+        `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+      ),
+      ~ sum(!is.na(.)),
+      .names = "{.col}_N Obs"
+    ),
+    across(
+      c(
+        `Water point is functional` = wp_func,
+        `Casing is present` = disp_casing_present,
+        `PVC pole is present` = disp_pvc_pole_present,
+        `Tank is present` = disp_tank_present,
+        `Valve is working (conditional on tank being present)` = jc_valve,
+        `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+      ),
+      ~ sum(., na.rm = TRUE),
+      .names = "{.col}_Count"
+    )
+  ) %>%
+  pivot_longer(
+    everything(),
+    names_pattern = "(.*)_(.*)",
+    names_to = c(" ", ".value")
+  ) %>%
+  select(" ", `N Obs`, Count, Percent)
+```
+
+
+### Chlorine dosage
+
+```{r}
+dsw %>%
+  ggplot(
+    aes(
+      x = jc_mldispensed,
+      fill = as.factor(jc_mllost)
+    )
+  ) +
+  geom_vline(
+    xintercept = 2.8,
+    color = "gray",
+    linetype = "dashed"
+  ) +
+  geom_vline(
+    xintercept = 3.2,
+    color = "gray",
+    linetype = "dashed"
+  ) +
+  geom_histogram() +
+  scale_fill_viridis_d() +
+  theme +
+  labs(
+    y = "Number of dispensers",
+    x = "Chlorine dose (mL)",
+    fill = "Some chlorine leaked out of the calibrated cylinder"
+  )
+```
+
+### Chlorine residual distribution
+
+```{r}
+dsw %>%
+  select(
+    `Color wheel_TCR` = disctcr_c, 
+    `Color wheel_FCR` = discfcr_c, 
+    Colorimeter_TCR = metertcr_c,
+    Colorimeter_FCR = meterfcr_c
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_pattern = "(.*)_(.*)",
+    names_to = c("instrument", "test")
+  ) %>%
+  ggplot(
+    aes(
+      x = value,
+      fill = instrument
+    )
+  ) +
+  scale_fill_viridis_d() + 
+  geom_histogram() +
+  facet_grid(test ~ instrument) +
+  theme +
+  labs(
+    x = "Chlorine residual reading (mg/L)",
+    y = "Number of tests"
+  ) + 
+  theme(legend.position = "none")
+```
