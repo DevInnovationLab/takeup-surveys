@@ -19,6 +19,7 @@ dosage-and-chlorine-residual
 wait-time-and-chlorine-residual
 reported-color-and-chlorine-residual
 water-source-type-and-chlorine-residual
+source-type-and-chlorine-residual
 turbidity-and-chlorine-residual
 colorimeter-ids-and-chlorine-residual
 color-disc-ids-and-chlorine-residual

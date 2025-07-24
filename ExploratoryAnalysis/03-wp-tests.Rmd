@@ -236,6 +236,10 @@ map(
   )
 ```
 
+## Source type and chlorine residual
+
+Add graph of chlorine residual distribution by type of water source
+
 ## Turbidity and chlorine residual
 
 ```{r}
