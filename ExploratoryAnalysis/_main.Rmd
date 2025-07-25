@@ -1,3 +1,30 @@
+--- 
+title: "Chlorine adoption survey"
+author: "Development Innovation Lab"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+---
+--- 
+title: "Chlorine adoption survey"
+author: "Development Innovation Lab"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+---
+
+```{r}
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+```
+# Introduction
+
+THIS IS A WORK IN PROGRESS
+
+This document shows exploratory analysis results for the chlorine adoption surveys conducted in Malawi and Uganda.
+
+<!--chapter:end:index.Rmd-->
+
 ---
 output:
   pdf_document: default
@@ -130,10 +157,9 @@ village_stats <- wp_census %>%
   summarise(
     total_wps = n(),
     dsw_wps = sum(wp_dsw, na.rm = TRUE),
-    ilc_device_wps = sum(wp_ilc_evac == TRUE, na.rm = TRUE),
-    ilc_collection_only_wps = sum(wp_ilc == TRUE, na.rm = TRUE),
+    ilc_wps = sum(wp_ilc, na.rm = TRUE),
     has_dsw = any(wp_dsw == TRUE, na.rm = TRUE),
-    has_ilc = any(wp_ilc == TRUE | wp_ilc_evac == TRUE, na.rm = TRUE),
+    has_ilc = any(wp_ilc == TRUE, na.rm = TRUE),
     .groups = "drop"
   )
 
@@ -143,16 +169,14 @@ summary_table <- tibble(
     "Number of villages with DSW",
     "Avg. number of DSW water points per village (with any DSW)",
     "Number of villages with ILC",
-    "Avg. number of water points with ILC devices per village (with any ILC)",
-    "Avg. number of water points with ILC collection points per village (with any ILC)"
+    "Avg. number of ILC water points per village (with any ILC)"
   ),
   Value = c(
     mean(village_stats$total_wps),
     sum(village_stats$has_dsw),
     mean(village_stats$dsw_wps[village_stats$has_dsw]),
     sum(village_stats$has_ilc),
-    mean(village_stats$ilc_device_wps[village_stats$has_ilc]),
-    mean(village_stats$ilc_collection_only_wps[village_stats$has_ilc])
+    mean(village_stats$ilc_wps[village_stats$has_ilc])
   ) %>% round(2)
 )
 
@@ -312,15 +336,17 @@ wp_census %>%
 ## Share of paid water points
 
 - Overall: `r (wp_census %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
-- DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% wp_census %>% `%
+- DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
 - ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
 - ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean * 100) %>% round(1)`%
 
-LW: add average cost in ILC and DSW and water [what] the payment is for -> I haven't added period
-- Average cost among paid DSW water points (Malawi): `r (wp_census %>% dplyr::filter(country == "MALAWI", wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` MWK
-- Average cost among paid DSW water points (Uganda): `r (wp_census %>% dplyr::filter(country == "UGANDA", wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` UGX
-- Average cost among ILC water points (Malawi): `r (wp_census %>% dplyr::filter(country == "MALAWI", wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` MWK
-- Average cost among ILC water points (Uganda): `r (wp_census %>% dplyr::filter(country == "UGANDA", wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` UGX
+LW: add average cost in ILC and DSW and water the payment is for 
+
+- Average cost (all ILC water points): `r wp_census %>% filter(wp_ilc_device) %>% summarise(avg_cost = mean(wp_cost, na.rm = TRUE)) %>% pull(avg_cost) %>% round(0)` MWK
+- Payment period for ILC: `r wp_census %>% filter(wp_ilc_device) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period)`
+
+- Average cost (all DSW water points): `r wp_census %>% filter(wp_dsw) %>% summarise(avg_cost = mean(wp_cost, na.rm = TRUE)) %>% pull(avg_cost) %>% round(0)` MWK
+- Payment period for DSW: `r wp_census %>% filter(wp_dsw) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period)`
 
 ```{r}
 
@@ -479,3 +505,57 @@ dsw %>%
   ) + 
   theme(legend.position = "none")
 ```
+
+<!--chapter:end:02-wp-census.Rmd-->
+
+
+# Water point chlorine residual tests
+
+Placeholder
+
+
+## Number of observations
+## Color wheel and colorimeter readings
+## TCR and FCR readings
+## Dosage and chlorine residual
+## Wait time and chlorine residual
+## Reported color and chlorine residual
+## Water source type and chlorine residual
+## Source type and chlorine residual
+## Turbidity and chlorine residual
+## Colorimeter IDs and chlorine residual
+## Color disc IDs and chlorine residual
+## Enumerator IDs and chlorine residual
+
+<!--chapter:end:03-wp-tests.Rmd-->
+
+
+# Household census
+
+Placeholder
+
+
+## Number of observations
+
+<!--chapter:end:04-hh-census.Rmd-->
+
+
+# Household survey
+
+Placeholder
+
+
+## Number of observations
+
+<!--chapter:end:05-hh-survey.Rmd-->
+
+
+# Monitoring survey
+
+Placeholder
+
+
+## Number of observations
+
+<!--chapter:end:06-monitoring-survey.Rmd-->
+
