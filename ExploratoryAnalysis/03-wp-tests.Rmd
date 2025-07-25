@@ -26,7 +26,8 @@ wp_test <-
     ~ .x %>% 
       str_replace_all("meter", "meter_") %>% 
       str_replace_all("disc", "disc_") %>%
-      str_replace_all("cr_c$", "cr")
+      str_replace_all("cr_c$", "cr") %>%
+      str_replace_all("__", "_")
   ) %>%
   dplyr::filter(!is.na(country), !is.na(disc_fcr))
 ```
