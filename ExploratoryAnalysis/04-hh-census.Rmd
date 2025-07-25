@@ -35,6 +35,75 @@ hh_census %>%
   )
 ```
 
+## Water treatment method
 LW: add graph with the number of people who report using each water treatment method
+
+```{r}
+
+wtmt_long <- hh_census %>%
+  pivot_longer(
+    cols = c(wtmt_method_0, wtmt_method_1, wtmt_method_2, wtmt_method_3,
+             wtmt_method_4, wtmt_method_5, wtmt_method_6, wtmt_method_7, wtmt_method_8,
+             wtmt_method__111, wtmt_method__666, wtmt_method__999),
+    names_to = "method",
+    values_to = "used"
+  )
+
+wtmt_used <- dplyr::filter(wtmt_long, used == 1) %>%
+  dplyr::count(method, sort = TRUE)
+
+wtmt_used <- wtmt_used %>%
+  mutate(
+    method_label = case_when(
+      method == "wtmt_method_0" ~ "Nothing (no treatment)",
+      method == "wtmt_method_1" ~ "Boil",
+      method == "wtmt_method_2" ~ "Apply chlorine from dispenser",
+      method == "wtmt_method_3" ~ "Apply chlorine at home (WaterGuard, PUR, AquaTabs)",
+      method == "wtmt_method_4" ~ "Strain through a cloth",
+      method == "wtmt_method_5" ~ "Use water filter",
+      method == "wtmt_method_6" ~ "Sand/composite etc",
+      method == "wtmt_method_7" ~ "Solar disinfection",
+      method == "wtmt_method_8" ~ "Let it stand and settle",
+      method == "wtmt_method__111" ~ "Nothing (water is already treated)",
+      method == "wtmt_method__666" ~ "Other",
+      method == "wtmt_method__999" ~ "Don't Know",
+      TRUE ~ "Unknown"
+    )
+  )
+
+ggplot(wtmt_used, aes(x = reorder(method_label, n), y = n)) +
+  geom_col(fill = "#2C77BF") +
+  coord_flip() +
+  labs(
+    title = "Households Using Each Water Treatment Method",
+    x = "Treatment Method",
+    y = "Number of Households"
+  ) +
+  theme_minimal()
+```
+## Number of water points per household
 LW: show in a graph or table the distribution of the number of water points used by households
+
+```{r}
+wp_distribution <- hh_survey %>%
+  mutate(wp_count = if_else(is.na(wp_count), 1L, wp_count + 1L)) %>%
+  count(wp_count) %>%
+  mutate(percentage = round(n / sum(n) * 100, 1),
+        label = paste0(percentage, "%")
+  )
+
+ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 4) +
+  scale_fill_brewer(palette = "Blues") +
+  labs(
+    title = "Distribution of Water Points Used per Household",
+    fill = "Water Points Used"
+  ) +
+  theme_void()
+```
+
+## 
+
 LW: show the share of households in the WP census who report using a water points with DSW or ILC (only households using WP without them are asked about it)
