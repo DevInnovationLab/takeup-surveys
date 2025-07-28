@@ -81,6 +81,7 @@ ggplot(wtmt_used, aes(x = reorder(method_label, n), y = n)) +
   ) +
   theme_minimal()
 ```
+
 ## Number of water points per household
 LW: show in a graph or table the distribution of the number of water points used by households
 
@@ -105,8 +106,24 @@ ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
 ```
 
 ## Share of households using DSW or ILC
+(Table shows share of households whose primary WP is non-DSW/ILC, but other WP has DSW/ILC)
+LW: show the share of households in the WP census who report using a water points with DSW or ILC (only households using WP without them are asked about it)
 
+```{r}
+wp_other_table <- hh_census %>%
+  mutate(
+    used_other = wp_other_dsw == 1 | wp_other_ilc == 1
+  ) %>%
+  count(used_other) %>%
+  mutate(
+    Category = if_else(used_other, "DSW/ILC", "Non-DSW/ILC"),
+    Percentage = round(n / sum(n) * 100, 1)
+  ) %>%
+  select(Category, Households = n, Percentage)
 
-LW: show the share of households in the WP census who report using a water points with DSW or ILC
-
-(only households using WP without them are asked about it)
+kable(wp_other_table,
+      caption = "Number and Share of Households using WP without DSW/ILC whose other WP has DSW/ILC",
+      col.names = c("Category", "Number", "Percentage"),
+      align = c("l", "r", "r")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+```
