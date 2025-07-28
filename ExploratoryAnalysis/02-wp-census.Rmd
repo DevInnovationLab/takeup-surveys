@@ -44,7 +44,7 @@ wp_census <-
 
 wp_analysis <-
   wp_census %>%
-  dplyr::filter(analysisis)
+  dplyr::filter(analysis)
 ```
 
 ## Eligible water points
@@ -148,8 +148,6 @@ wp_analysis %>%
 ```
 
 ### Averages by village
-
-LW: I started editing this code, but didn't finish
 
 ```{r}
 wp_analysis %>%

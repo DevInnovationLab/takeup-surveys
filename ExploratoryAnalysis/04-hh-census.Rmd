@@ -46,8 +46,7 @@ hh_census %>%
 LW: make this % and add note
 
 ```{r}
-wtmt_long <- 
-  hh_census %>%
+wtmt_long <-hh_census %>%
   pivot_longer(
     cols = c(wtmt_method_0, wtmt_method_1, wtmt_method_2, wtmt_method_3,
              wtmt_method_4, wtmt_method_5, wtmt_method_6, wtmt_method_7, wtmt_method_8,
@@ -57,10 +56,10 @@ wtmt_long <-
   )
 
 wtmt_used <- dplyr::filter(wtmt_long, used == 1) %>%
-  dplyr::count(method, sort = TRUE)
-
-wtmt_used <- wtmt_used %>%
+  dplyr::count(method, sort = TRUE) %>%
+  
   mutate(
+    pct = 100 * n / sum(n),
     method_label = case_when(
       method == "wtmt_method_0" ~ "Nothing (no treatment)",
       method == "wtmt_method_1" ~ "Boil",
@@ -78,40 +77,18 @@ wtmt_used <- wtmt_used %>%
     )
   )
 
-ggplot(wtmt_used, aes(x = reorder(method_label, n), y = n)) +
+wtmt_used %>%
+  ggplot(aes(x = reorder(method_label, pct), y = pct)) +
   geom_col(fill = viridis(1)) +
   coord_flip() +
   labs(
     title = "Households Using Each Water Treatment Method",
     x = "Treatment Method",
-    y = "Number of Households"
+    y = "Share of Households (%)",
+    caption = "Note: xyz"
   ) +
   theme
-```
 
-## Number of water points per household
-
-LW: move this to hh survey
-
-```{r}
-wp_distribution <- 
-  hh_census %>%
-  mutate(wp_count = if_else(is.na(wp_count), 1L, wp_count + 1L)) %>%
-  count(wp_count) %>%
-  mutate(percentage = round(n / sum(n) * 100, 1),
-        label = paste0(percentage, "%")
-  )
-
-ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 4) +
-  scale_fill_brewer(palette = "Blues") +
-  labs(
-    title = "Distribution of Water Points Used per Household",
-    fill = "Water Points Used"
-  ) +
-  theme_void()
 ```
 
 ## Share of households using DSW or ILC
@@ -134,15 +111,21 @@ wp_other_table <-
   ) %>%
   group_by(country) %>%
   mutate(Percentage = (N/sum(N) * 100) %>% round(1) %>% paste("%"))
-  
-kable(wp_other_table,
-      caption = "Number and Share of Households using WP without DSW/ILC whose other WP has DSW/ILC",
-      col.names = c("Category", "Number", "Percentage"),
-      align = c("l", "r", "r")) %>%
-  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+
+wp_other_table %>%
+  kable(
+    caption = "Household Exposure to Water Point Programs by Country",
+    col.names = c("Country", "Program Type", "N", "Percentage")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
 ```
 
 ## Share of households not using DSW or ILC who report using DSW or ILC (LW)
+
+
 
 ## Household composition
 

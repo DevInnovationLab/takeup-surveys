@@ -6,6 +6,7 @@ library(sf)
 library(tidyverse)
 library(modelsummary)
 library(fixest)
+library(glue)
 ```
 
 
@@ -44,6 +45,47 @@ hh_survey %>%
     across(everything(), ~ as.character(.))
   ) %>%
   pivot_longer(cols = -country)
+```
+
+## Number of water points per household
+
+LW: move this to hh survey
+
+```{r}
+wp_distribution <- 
+  hh_survey %>%
+  mutate(wp_count = if_else(is.na(wp_count), 1L, wp_count + 1L)) %>%
+  count(wp_count) %>%
+  mutate(percentage = round(n / sum(n) * 100, 1),
+        label = paste0(percentage, "%")
+  )
+
+total_households <- hh_survey %>%
+  mutate(wp_count = if_else(is.na(wp_count), 1L, wp_count + 1L)) %>%
+  count(wp_count) %>%
+  summarise(total = sum(n)) %>%
+  pull(total)
+
+ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(
+    aes(label = label),
+    position = position_stack(vjust = 0.5),
+    color = "black"                   
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+    labs(
+  title = "Distribution of Water Points Used per Household",
+  caption = glue("Note: This data includes observations from {total_households} households included to date in the Household Survey."
+  )) +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.caption = element_text(hjust = 0, face = "italic") 
+  )
 ```
 
 ## Household composition
