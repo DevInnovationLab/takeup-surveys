@@ -6,9 +6,18 @@ output:
 # Water point census
 
 ```{r}
-library(stringr)
-library(sf)
-library(tidyverse)
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
 ```
 
 ## Field observations
@@ -29,65 +38,82 @@ wp_census <-
       "wp-census.rds"
     )
   ) %>%
-  st_drop_geometry
+  st_drop_geometry %>%
+  # Calculate which WPs will be included in analysis -- this is being moved to the processing code
+  mutate(analysis = wp_multicompound & wp_drink) 
+
+wp_analysis <-
+  wp_census %>%
+  dplyr::filter(analysisis)
 ```
 
 ## Eligible water points
-LW: a table counting the number of observations, and counting how many of them satisfy the eligibility criteria (communal, used for drinking, functional)
 
 ```{r}
-rows <- c(
-  "Visited",
-  "Communal",
-  "Used for Drinking",
-  "Functional",
-  "Eligible (2-4 = Yes)"
-)
+eligiblity_df <-
+  wp_census %>%
+  # Calculate the relevanat statistics
+  summarise(
+    Visited =  n_distinct(wp_id),
+    across(
+      c(wp_multicompound, wp_drink, wp_func, analysis),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  # Add labels
+  rename(
+    Communal = wp_multicompound,
+    `Used for drinking` = wp_drink,
+    Functional = wp_func,
+    `In analysis sample` = analysis
+  ) %>%
+  # Make it one stat per line
+  pivot_longer(
+    cols = everything(),
+    names_to = "Name",
+    values_to = "Counts"
+  ) %>%
+  # Change the order in which the statistics will be displayed
+  mutate(
+    Name = factor(
+      Name,
+      levels = c("Visited", "Communal", "Used for drinking", "Functional", "In analysis sample"),
+      ordered = TRUE
+    )
+  )
+```
 
-counts = c(
-  nrow(distinct(wp_census, wp_id)),
-  sum(wp_census$wp_multicompound, na.rm = T),
-  sum(wp_census$wp_drink, na.rm = T),
-  sum(wp_census$wp_func, na.rm = T),
-  sum((wp_census$wp_drink & wp_census$wp_multicompound & wp_census$wp_func), na.rm = T)
-)
-
-eligiblity_df <- data.frame(
-  Name = rows,
-  Counts = counts
-)
-
-ggplot(data = eligiblity_df,
-       aes(x = Name, y = Counts)) +
-  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") + 
-  scale_x_discrete(limits = rows) +
+```{r}
+eligiblity_df %>%
+  ggplot(
+    aes(
+      x = Name, 
+      y = Counts,
+      label = Counts
+    )
+  ) +
+  geom_col(fill = viridis(1)) + 
+  geom_text(
+    vjust = 1.5,
+    color = "white"
+  ) +
   labs(
     title = "Water Point Eligibility Criteria",
     x = "Criteria",
-    y = "Count",
-    caption = paste0("Note: Cumulative data comes from ", nrow(distinct(wp_census, village_id)), " villages")
+    y = "Number of water points satisfying criteria",
+    caption = paste0(
+      "Note: Cumulative data comes from ", 
+      wp_census %>% pull(village_id) %>% n_distinct, 
+      " villages"
+    )
   ) + 
   theme
-
-eligibility_df <- data.frame(
-  Criteria = rows,
-  N = counts
-)
-
-kable(
-  eligibility_df,
-  caption = "Water Point Eligibility Criteria",
-  col.names = c("Criteria", "N"),
-  align = c("l", "r"),
-  format = "html"
-) %>%
-  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 ```
 
 ## Number of water points found
 
 ```{r}
-wp_census %>%
+wp_analysis %>%
   select(wp_func, wp_dsw, wp_ilc_device, wp_ilc) %>%
   mutate(
     dsw_func = case_when(wp_dsw == 1 ~ wp_func),
@@ -117,50 +143,59 @@ wp_census %>%
   set_names(c(" ", "N", "Percent functioning")) %>%
   mutate(
     ` ` = c("All water points", "DSW", "ILC water points", "ILC water collection points")
-  )
+  ) %>%
+  kable
 ```
 
 ### Averages by village
 
-LW: Add a table showing: average number of water points per village, number of villages with DSW, average number of DSW water points per village (only if any ILC [DSW?] is present), number of villages with ILC, average number of ILC water points per village (only if any ILC is present)
+LW: I started editing this code, but didn't finish
 
 ```{r}
-village_stats <- wp_census %>%
+wp_analysis %>%
   group_by(village_id) %>%
   summarise(
     total_wps = n(),
     dsw_wps = sum(wp_dsw, na.rm = TRUE),
-    ilc_device_wps = sum(wp_ilc_evac == TRUE, na.rm = TRUE),
+    ilc_device_wps = sum(wp_ilc_device == TRUE, na.rm = TRUE),
     ilc_collection_only_wps = sum(wp_ilc == TRUE, na.rm = TRUE),
     has_dsw = any(wp_dsw == TRUE, na.rm = TRUE),
-    has_ilc = any(wp_ilc == TRUE | wp_ilc_evac == TRUE, na.rm = TRUE),
+    has_ilc = any(wp_ilc == TRUE | wp_ilc_device == TRUE, na.rm = TRUE),
     .groups = "drop"
-  )
-
-summary_table <- tibble(
-  Metric = c(
-    "Avg. number of water points per village",
-    "Number of villages with DSW",
-    "Avg. number of DSW water points per village (with any DSW)",
-    "Number of villages with ILC",
-    "Avg. number of water points with ILC devices per village (with any ILC)",
-    "Avg. number of water points with ILC collection points per village (with any ILC)"
-  ),
-  Value = c(
-    mean(village_stats$total_wps),
-    sum(village_stats$has_dsw),
-    mean(village_stats$dsw_wps[village_stats$has_dsw]),
-    sum(village_stats$has_ilc),
-    mean(village_stats$ilc_device_wps[village_stats$has_ilc]),
-    mean(village_stats$ilc_collection_only_wps[village_stats$has_ilc])
-  ) %>% round(2)
-)
-
-kable(summary_table,
-      caption = "Village-level summary statistics for water points",
+  ) %>%
+  #group_by(country) %>%
+  summarise(
+    "Avg. number of water points per village" = mean(total_wps),
+    "Number of villages with DSW" = sum(has_dsw),
+    "Avg. number of DSW water points per village (with any DSW)" = dsw_wps %>% if_else(has_dsw, ., NA) %>% mean(na.rm = TRUE),
+    "Number of villages with ILC" = sum(has_ilc),
+    "Avg. number of water points with ILC devices per village (with any ILC)" = ilc_device_wps %>% if_else(has_ilc, ., NA) %>% mean(na.rm = TRUE),
+    "Avg. number of water points with ILC collection points per village (with any ILC)" = ilc_collection_only_wps %>% if_else(has_ilc, ., NA) %>% mean(na.rm = TRUE)
+  ) %>%
+  mutate(
+    across(
+      starts_with("Avg."),
+      ~ round(., 1) %>% as.character()
+    ),
+    across(
+      starts_with("Number"),
+      ~ round(.)  %>% as.character()
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Metric",
+    values_to = "Value"
+  ) %>%
+  kable(
+    caption = "Village-level summary statistics for water points",
       col.names = c("Metric", "Value"),
-      align = c("l", "r")) %>%
-  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+      align = c("l", "r")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
 ```
 
 ## Type of water points
@@ -334,21 +369,21 @@ payment_summary <- tibble(
   ),
   `Paying (%)` = c(
     wp_census %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
-    wp_census %>% filter(wp_dsw) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
-    wp_census %>% filter(wp_ilc_device) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
-    wp_census %>% filter(wp_ilc) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100
+    wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
+    wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
+    wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100
   ) %>% round(1),
   `Avg. Cost (MWK)` = c(
     wp_census %>% pull(wp_cost) %>% mean(na.rm = TRUE),
-    wp_census %>% filter(wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE),
-    wp_census %>% filter(wp_ilc_device) %>% pull(wp_cost) %>% mean(na.rm = TRUE),
-    wp_census %>% filter(wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)
+    wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE),
+    wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_cost) %>% mean(na.rm = TRUE),
+    wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)
   ) %>% round(0),
   `Payment Frequency` = c(
     wp_census %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
-    wp_census %>% filter(wp_dsw) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
-    wp_census %>% filter(wp_ilc_device) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
-    wp_census %>% filter(wp_ilc) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period)
+    wp_census %>% dplyr::filter(wp_dsw) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
+    wp_census %>% dplyr::filter(wp_ilc_device) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
+    wp_census %>% dplyr::filter(wp_ilc) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period)
   )
 )
 

@@ -46,3 +46,15 @@ hh_survey %>%
   pivot_longer(cols = -country)
 ```
 
+## Household composition
+
+```{r}
+hh_survey %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(hh_under5, hh_under2),
+      ~ mean((.) > 1, na.rm = TRUE)
+    )
+  )
+```

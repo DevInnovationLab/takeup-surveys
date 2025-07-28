@@ -1,13 +1,19 @@
 # Household census
 
 ```{r}
-library(stringr)
-library(sf)
-library(tidyverse)
-library(modelsummary)
-library(fixest)
-```
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis"
+  )
 
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
 
 ```{r}
 hh_census <-
@@ -36,11 +42,12 @@ hh_census %>%
 ```
 
 ## Water treatment method
-LW: add graph with the number of people who report using each water treatment method
+
+LW: make this % and add note
 
 ```{r}
-
-wtmt_long <- hh_census %>%
+wtmt_long <- 
+  hh_census %>%
   pivot_longer(
     cols = c(wtmt_method_0, wtmt_method_1, wtmt_method_2, wtmt_method_3,
              wtmt_method_4, wtmt_method_5, wtmt_method_6, wtmt_method_7, wtmt_method_8,
@@ -72,21 +79,23 @@ wtmt_used <- wtmt_used %>%
   )
 
 ggplot(wtmt_used, aes(x = reorder(method_label, n), y = n)) +
-  geom_col(fill = "#2C77BF") +
+  geom_col(fill = viridis(1)) +
   coord_flip() +
   labs(
     title = "Households Using Each Water Treatment Method",
     x = "Treatment Method",
     y = "Number of Households"
   ) +
-  theme_minimal()
+  theme
 ```
 
 ## Number of water points per household
-LW: show in a graph or table the distribution of the number of water points used by households
+
+LW: move this to hh survey
 
 ```{r}
-wp_distribution <- hh_survey %>%
+wp_distribution <- 
+  hh_census %>%
   mutate(wp_count = if_else(is.na(wp_count), 1L, wp_count + 1L)) %>%
   count(wp_count) %>%
   mutate(percentage = round(n / sum(n) * 100, 1),
@@ -106,24 +115,44 @@ ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
 ```
 
 ## Share of households using DSW or ILC
-(Table shows share of households whose primary WP is non-DSW/ILC, but other WP has DSW/ILC)
-LW: show the share of households in the WP census who report using a water points with DSW or ILC (only households using WP without them are asked about it)
 
 ```{r}
-wp_other_table <- hh_census %>%
+wp_other_table <- 
+  hh_census %>%
   mutate(
-    used_other = wp_other_dsw == 1 | wp_other_ilc == 1
+    hh_dsw = (wp_dsw == 1 | wp_dsw_pl == 1),
+    hh_ilc = (wp_ilc == 1 | wp_ilc_pl == 1),
+    hh_wp_ea = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC",
+      TRUE ~ "Non-program"
+    )
   ) %>%
-  count(used_other) %>%
-  mutate(
-    Category = if_else(used_other, "DSW/ILC", "Non-DSW/ILC"),
-    Percentage = round(n / sum(n) * 100, 1)
+  group_by(country, hh_wp_ea) %>%
+  summarise(
+    N = n()
   ) %>%
-  select(Category, Households = n, Percentage)
-
+  group_by(country) %>%
+  mutate(Percentage = (N/sum(N) * 100) %>% round(1) %>% paste("%"))
+  
 kable(wp_other_table,
       caption = "Number and Share of Households using WP without DSW/ILC whose other WP has DSW/ILC",
       col.names = c("Category", "Number", "Percentage"),
       align = c("l", "r", "r")) %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+```
+
+## Share of households not using DSW or ILC who report using DSW or ILC (LW)
+
+## Household composition
+
+```{r}
+hh_census %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(hh_under5, hh_under2),
+      ~ mean((.) > 1, na.rm = TRUE)
+    )
+  )
 ```

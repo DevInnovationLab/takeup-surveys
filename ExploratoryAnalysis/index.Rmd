@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   warning = FALSE
 )
 ```
+
 # Introduction
 
 THIS IS A WORK IN PROGRESS
