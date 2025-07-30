@@ -6,7 +6,8 @@ packages <-
     "stringr",
     "sf",
     "tidyverse",
-    "viridis"
+    "viridis",
+    "glue"
   )
 
 pacman::p_load(
@@ -77,6 +78,10 @@ wtmt_used <- dplyr::filter(wtmt_long, used == 1) %>%
     )
   )
 
+n_households <- hh_census %>%
+  filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0) %>%
+  nrow()
+
 wtmt_used %>%
   ggplot(aes(x = reorder(method_label, pct), y = pct)) +
   geom_col(fill = viridis(1)) +
@@ -85,10 +90,12 @@ wtmt_used %>%
     title = "Households Using Each Water Treatment Method",
     x = "Treatment Method",
     y = "Share of Households (%)",
-    caption = "Note: xyz"
-  ) +
+      caption = paste0("Note: ", 
+  nrow(dplyr::filter(hh_census, rowSums(!is.na(dplyr::select(hh_census, dplyr::all_of(wtmt_cols)))) > 0)),
+  " households that report not using a DSW or ILC water source.\n",
+  "Each household may report more than one treatment method.")
+    ) +
   theme
-
 ```
 
 ## Share of households using DSW or ILC
@@ -125,7 +132,34 @@ wp_other_table %>%
 
 ## Share of households not using DSW or ILC who report using DSW or ILC (LW)
 
+```{r}
+wtmt_summary <- hh_census %>%
+  summarise(
+    dsw_yes = sum(wtmt_dsw == 1, na.rm = TRUE),
+    dsw_total = sum(!is.na(wtmt_dsw)),
+    ilc_yes = sum(wtmt_ilc == 1, na.rm = TRUE),
+    ilc_total = sum(!is.na(wtmt_ilc))
+  ) %>%
+  pivot_longer(cols = everything(), names_to = c("type", "response"), names_sep = "_") %>%
+  pivot_wider(names_from = response, values_from = value) %>%
+  mutate(share = yes / total * 100) %>%
+  mutate(type = recode(type, dsw = "DSW", ilc = "ILC"))
 
+ggplot(wtmt_summary, aes(x = type, y = share, fill = type)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Share of HHs not using DSW/ILC who report a DSW/ILC waterpoint in their village",
+    x = "",
+    y = "Share Responding 'Yes' (%)",
+    caption = paste0(
+      "Note: ", 
+      nrow(dplyr::filter(hh_census, !is.na(wtmt_dsw) | !is.na(wtmt_ilc))),
+      " households that report not using a DSW or ILC water source."
+    )
+  ) +
+  theme_minimal()
+```
 
 ## Household composition
 
