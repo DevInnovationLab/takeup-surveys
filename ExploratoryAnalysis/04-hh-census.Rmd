@@ -34,17 +34,136 @@ hh_census <-
 
 ```{r}
 hh_census %>%
+  mutate(
+    hh_dsw = wp_dsw == 1 | wp_dsw_pl == 1,
+    hh_ilc = wp_ilc_device == 1 | wp_ilc_pl == 1
+  ) %>%
   group_by(country) %>%
   summarise(
-    N = n(), 
-    `DSW (%)` = (mean(wp_dsw, na.rm = TRUE) * 100) %>% round(1),
-    `ILC (%)` = (mean(wp_ilc_device, na.rm = TRUE) * 100) %>% round(1)
+    N = n(),
+    `DSW (%)` = round(mean(hh_dsw, na.rm = TRUE) * 100, 1),
+    `ILC (%)` = round(mean(hh_ilc, na.rm = TRUE) * 100, 1)
+  )
+```
+
+## Share of households using DSW or ILC
+
+```{r}
+wp_other_table <- 
+  hh_census %>%
+  mutate(
+    hh_dsw = (wp_dsw == 1 | wp_dsw_pl == 1),
+    hh_ilc = (wp_ilc == 1 | wp_ilc_pl == 1),
+    hh_wp_ea = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC",
+      TRUE ~ "Non-program"
+    )
+  ) %>%
+  group_by(country, hh_wp_ea) %>%
+  summarise(
+    N = n()
+  ) %>%
+  group_by(country) %>%
+  mutate(Percentage = (N/sum(N) * 100) %>% round(1) %>% paste("%"))
+
+wp_other_table %>%
+  kable(
+    caption = "Household Exposure to Water Point Programs by Country",
+    col.names = c("Country", "Program Type", "N", "Percentage")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+## Reasons for using other water source (LW added)
+
+```{r}
+secwhen_long <- hh_census %>%
+  pivot_longer(
+    cols = c(wp_secwhen_1, wp_secwhen_2, wp_secwhen_3, wp_secwhen_4, wp_secwhen__666),
+    names_to = "circumstance",
+    values_to = "used"
+  )
+
+secwhen_used <- dplyr::filter(secwhen_long, used == 1) %>%
+  dplyr::count(circumstance, sort = TRUE) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    circumstance_label = case_when(
+      circumstance == "wp_secwhen_1" ~ "Primary source is not working",
+      circumstance == "wp_secwhen_2" ~ "Primary source does not give adequate water",
+      circumstance == "wp_secwhen_3" ~ "Primary source gives water intermittently",
+      circumstance == "wp_secwhen_4" ~ "No fixed reason",
+      circumstance == "wp_secwhen_-666" ~ "Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+n_households <- hh_census %>%
+  filter(rowSums(!is.na(select(., wp_secwhen_1, wp_secwhen_2, wp_secwhen_3, wp_secwhen_4, wp_secwhen__666))) > 0) %>%
+  nrow()
+
+secwhen_used %>%
+  ggplot(aes(x = reorder(circumstance_label, pct), y = pct)) +
+  geom_col(fill = viridis(1)) +
+  coord_flip() +
+  labs(
+    title = "Share of Households Reporting Reasons for Using Other Water Sources",
+    x = "Reason",
+    y = "Share of Households (%)",
+    caption = paste0("Note: ", n_households,
+                     " households answered this question.\n",
+                     "Each household could report more than one reason.")
+  ) +
+  theme
+```
+
+## Number of water points per household (LW added)
+
+LW: we have the same thing in hh_survey, but I realized there is also a census measure for this
+
+```{r}
+wp_distribution_census <- 
+  hh_census %>%
+  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(wp_secweekno) %>%
+  mutate(percentage = round(n / sum(n) * 100, 1),
+        label = paste0(percentage, "%")
+  )
+
+total_households_census <- hh_census %>%
+  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(wp_secweekno) %>%
+  summarise(total = sum(n)) %>%
+  pull(total)
+
+ggplot(wp_distribution_census, aes(x = "", y = n, fill = as.factor(wp_secweekno))) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(
+    aes(label = label),
+    position = position_stack(vjust = 0.5),
+    color = "black"                   
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+    labs(
+  title = "Distribution of Water Points Used per Household",
+  caption = glue("Note: This data includes observations from {total_households_census} households included to date in the Household Census."
+  )) +
+  theme +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.caption = element_text(hjust = 0, face = "italic") 
   )
 ```
 
 ## Water treatment method
-
-LW: make this % and add note
 
 ```{r}
 wtmt_long <-hh_census %>%
@@ -87,10 +206,10 @@ wtmt_used %>%
   geom_col(fill = viridis(1)) +
   coord_flip() +
   labs(
-    title = "Households Using Each Water Treatment Method",
+    title = "Share of Households Using Each Water Treatment Method",
     x = "Treatment Method",
     y = "Share of Households (%)",
-      caption = paste0("Note: ", 
+      caption = paste0("Note: Among ", 
   nrow(dplyr::filter(hh_census, rowSums(!is.na(dplyr::select(hh_census, dplyr::all_of(wtmt_cols)))) > 0)),
   " households that report not using a DSW or ILC water source.\n",
   "Each household may report more than one treatment method.")
@@ -98,39 +217,58 @@ wtmt_used %>%
   theme
 ```
 
-## Share of households using DSW or ILC
+## Share of households using at least 1 treatment method (LW added)
 
 ```{r}
-wp_other_table <- 
-  hh_census %>%
-  mutate(
-    hh_dsw = (wp_dsw == 1 | wp_dsw_pl == 1),
-    hh_ilc = (wp_ilc == 1 | wp_ilc_pl == 1),
-    hh_wp_ea = case_when(
-      hh_dsw ~ "DSW",
-      hh_ilc ~ "ILC",
-      TRUE ~ "Non-program"
-    )
-  ) %>%
-  group_by(country, hh_wp_ea) %>%
-  summarise(
-    N = n()
-  ) %>%
-  group_by(country) %>%
-  mutate(Percentage = (N/sum(N) * 100) %>% round(1) %>% paste("%"))
+wtmt_real_methods <- c(
+  "wtmt_method_1",  # Boil
+  "wtmt_method_2",  # Dispenser chlorine
+  "wtmt_method_3",  # Home chlorine
+  "wtmt_method_4",  # Strain through a cloth
+  "wtmt_method_5",  # Use water filter
+  "wtmt_method_6",  # Sand/composite
+  "wtmt_method_7",  # Solar disinfection
+  "wtmt_method_8"   # Let it stand and settle
+)
 
-wp_other_table %>%
-  kable(
-    caption = "Household Exposure to Water Point Programs by Country",
-    col.names = c("Country", "Program Type", "N", "Percentage")
+hh_valid <- hh_census[rowSums(!is.na(hh_census[, wtmt_real_methods])) > 0, ]
+
+summary_data <- hh_valid %>%
+  mutate(
+    used_any = rowSums(select(., all_of(wtmt_real_methods)) == 1, na.rm = TRUE) > 0
   ) %>%
-  kable_styling(
-    full_width = FALSE, 
-    bootstrap_options = c("striped", "hover")
+  count(used_any, name = "n") %>%
+  mutate(
+    pct = round(100 * n / sum(n), 1),
+    label = ifelse(used_any, "Used Treatment", "Did Not Use Treatment")
   )
+
+ggplot(summary_data, aes(x = "", y = pct, fill = label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = paste0(pct, "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Share of Households Using Any Water Treatment Method",
+    caption = paste0("Note: Among ", sum(summary_data$n), 
+                     " households that report not using a DSW or ILC water source.")
+  ) +
+  theme +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    legend.title = element_blank(),  
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  ) 
 ```
 
 ## Share of households not using DSW or ILC who report using DSW or ILC (LW)
+A measure of awareness of DSW/ILC among HHs that do not use
 
 ```{r}
 wtmt_summary <- hh_census %>%
@@ -158,10 +296,10 @@ ggplot(wtmt_summary, aes(x = type, y = share, fill = type)) +
       " households that report not using a DSW or ILC water source."
     )
   ) +
-  theme_minimal()
+  theme
 ```
 
-## Household composition
+## Household composition: share of households with 1+ child under 5 or 2
 
 ```{r}
 hh_census %>%
@@ -169,7 +307,44 @@ hh_census %>%
   summarise(
     across(
       c(hh_under5, hh_under2),
-      ~ mean((.) > 1, na.rm = TRUE)
+      ~ mean((.) >= 1, na.rm = TRUokayE) * 100
+    )
+  ) %>%
+  rename(
+    `Country` = country,
+    `Child under 5` = hh_under5,
+    `Child under 2` = hh_under2
+  ) %>%
+  kable(digits = 1, caption = "Percentage Share of Households with at Least One Young Child")
+```
+
+## Household composition: average members (LW added)
+
+```{r}
+demo_vars <- c("hh_members", "hh_adults", "hh_males", "hh_females",
+               "hh_pregnant", "hh_under5", "hh_under2")
+
+n_demo_households <- hh_census %>%
+  filter(rowSums(!is.na(select(., all_of(demo_vars)))) > 0) %>%
+  nrow()
+
+hh_census %>%
+  group_by(country) %>%
+  summarise(
+    `Members` = mean(hh_members, na.rm = TRUE),
+    `Adults` = mean(hh_adults, na.rm = TRUE),
+    `Men` = mean(hh_males, na.rm = TRUE),
+    `Women` = mean(hh_females, na.rm = TRUE),
+    `Pregnant Women` = mean(hh_pregnant, na.rm = TRUE),
+    `Children <5` = mean(hh_under5, na.rm = TRUE),
+    `Children <2` = mean(hh_under2, na.rm = TRUE)
+  ) %>%
+  kable(
+    digits = 2,
+    caption = paste0(
+      "Average Household Composition by Country. Note: Averages for ",
+      n_demo_households,
+      " households which had at least one non-missing value for any demographic field."
     )
   )
 ```
