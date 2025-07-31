@@ -30,7 +30,7 @@ hh_census <-
   )
 ```
 
-## Number of observations and number/share of households using DSW/ILC water points
+## Number of observations and number/share of households using DSW and ILC water points
 
 ```{r}
 hh_census %>%
@@ -88,7 +88,7 @@ ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as
     title = "Distribution of Water Points Used per Household",
     x = "Number of Water Points Used",
     y = "Number of Households",
-    caption = glue("Note: This data includes observations from {total_households_census} households included to date in the Household Census.")
+    caption = glue("Note: N={total_households_census} households included to date in the Household Census.")
   ) +
   theme +
   theme(
@@ -141,7 +141,7 @@ secwhen_used %>%
     title = "Reasons for Using Other Water Points",
     x = "Reason",
     y = "Share of Households (%)",
-    caption = paste0("Note: Sample is ", n_households,
+    caption = paste0("Note: N=", n_households,
                      " households reporting using more than 1 water source.\n",
                      "Each household could report more than one reason.")
   ) +
@@ -152,10 +152,10 @@ secwhen_used %>%
 
 LW:
 - characteristics of households that apply chlorine at home: 
-  - household composition (younger children, pregnant women, maybe number of HHs in compound) -> DONE
+  - household composition (younger children, pregnant women, number of HHs in compound) -> DONE
   - whether in DSW or ILC villages
-- apply chlorine from dispenser: look at distance (because their water point doesn't have DSW/ILC) -> 
 - nothing (already treated): type of water source they're using -> DONE
+- apply chlorine from dispenser: look at distance (because their water point doesn't have DSW/ILC) -> TO DO
 
 ```{r}
 wtmt_long <-hh_census %>%
@@ -201,7 +201,7 @@ wtmt_used %>%
     title = "Share of Households Using Each Water Treatment Method",
     x = "Treatment Method",
     y = "Share of Households (%)",
-      caption = paste0("Note: Sample is ", 
+      caption = paste0("Note: N=", 
   nrow(dplyr::filter(hh_census, rowSums(!is.na(dplyr::select(hh_census, dplyr::all_of(wtmt_cols)))) > 0)),
   " households that report not using a DSW or ILC water \n",
   "point. Each household may report more than one treatment method.")
@@ -209,12 +209,16 @@ wtmt_used %>%
   theme
 ```
 
-## Household composition of households applying chlorine at home
-No clear trend here
+## Households applying chlorine at home: household composition
+No evident differences between households applying chlorine at home and average
 ```{r}
 hh_census <- hh_census %>%
   mutate(
-    chlorine_home_user = wtmt_method_3 == 1
+    chlorine_home_user = wtmt_method_3 == 1,
+    responded_to_wtmt = if_any(
+      .cols = starts_with("wtmt_method_"),
+      .fns = ~ !is.na(.x)
+    )
   )
 
 all_households <- hh_census %>%
@@ -226,6 +230,15 @@ all_households <- hh_census %>%
     `Pregnant woman` = mean(hh_pregnant >= 1, na.rm = TRUE) * 100
   )
 
+responders <- hh_census %>%
+  summarise(
+    group = "No DSW/ILC",
+    N = sum(coalesce(responded_to_wtmt, FALSE)),
+    `Child under 5` = mean(hh_under5[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Child under 2` = mean(hh_under2[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100
+  )
+
 chlorine_users <- hh_census %>%
   summarise(
     group = "Applies Chlorine at Home",
@@ -235,23 +248,89 @@ chlorine_users <- hh_census %>%
     `Pregnant woman` = mean(hh_pregnant[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100
   )
 
-comp_data <- bind_rows(all_households, chlorine_users) %>%
+comp_data <- bind_rows(all_households, chlorine_users, responders) %>%
   pivot_longer(
     cols = c(`Child under 5`, `Child under 2`, `Pregnant woman`),
     names_to = "Characteristic",
     values_to = "Percent"
   )
 
+comp_data <- comp_data %>%
+  mutate(
+    group = factor(group, levels = c(
+      "All Households",
+      "No DSW/ILC",
+      "Applies Chlorine at Home"
+    ))
+  )
+
 ggplot(comp_data, aes(x = Characteristic, y = Percent, fill = group)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
   labs(
-    title = "Household Composition: All vs Chlorine-at-Home Households",
+    title = "Household Composition of Chlorine-at-Home Households vs Average",
     x = "",
     y = "Share of Households (%)",
     fill = "Household Type",
     caption = paste0(
-      "Note: N = ", all_households$N, " for all households and N = ", chlorine_users$N,
-      " for subset of households that applies chlorine at home."
+      "Note: N = ", all_households$N, " (All), ",
+      responders$N, " (No DSW/ILC), ",
+      chlorine_users$N, " (Chlorine Users)."
+    )
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  theme
+```
+## Households applying chlorine at home: number of households in compound
+Above average for households applying chlorine (both relative to all and relative to no DSW/ILC subsample)
+```{r}
+hh_census <- hh_census %>%
+  mutate(
+    chlorine_home_user = wtmt_method_3 == 1,
+    responded_to_wtmt = if_any(
+      .cols = starts_with("wtmt_method_"),
+      .fns = ~ !is.na(.x)
+    )
+  )
+
+compound_summary <- bind_rows(
+  hh_census %>%
+    summarise(
+      group = "All Households",
+      N = dplyr::n(),
+      avg_hh_per_compound = mean(hh_hhsincompound, na.rm = TRUE)
+    ),
+  
+  hh_census %>%
+    summarise(
+      group = "No DSW/ILC",
+      N = sum(coalesce(responded_to_wtmt, FALSE)),
+      avg_hh_per_compound = mean(hh_hhsincompound[responded_to_wtmt == TRUE], na.rm = TRUE)
+    ),
+  
+  hh_census %>%
+    summarise(
+      group = "Applies Chlorine at Home",
+      N = sum(coalesce(chlorine_home_user, FALSE)),
+      avg_hh_per_compound = mean(hh_hhsincompound[chlorine_home_user == TRUE], na.rm = TRUE)
+    )
+)
+
+compound_summary <- compound_summary %>%
+  mutate(group = factor(group, levels = c(
+    "All Households", "No DSW/ILC", "Applies Chlorine at Home"
+  )))
+
+ggplot(compound_summary, aes(x = group, y = avg_hh_per_compound, fill = group)) +
+  geom_col(width = 0.6) +
+  labs(
+    title = "Avg. Number of Households per Compound of Chlorine-at-Home Households vs Average",
+    x = "",
+    y = "Households per Compound",
+    fill = "Group",
+    caption = paste0(
+      "N = ", compound_summary$N[compound_summary$group == "All Households"], " (All), ",
+      compound_summary$N[compound_summary$group == "No DSW/ILC"], " (No DSW/ILC), ",
+      compound_summary$N[compound_summary$group == "Applies Chlorine at Home"], " (Chlorine Users)."
     )
   ) +
   scale_fill_viridis_d(option = "D", direction = -1) +
@@ -259,32 +338,53 @@ ggplot(comp_data, aes(x = Characteristic, y = Percent, fill = group)) +
 ```
 
 ## Reported Village Water Source Type for Households Reporting 'Nothing (Water Already Treated)'
-In line with the fact that ILC water should already be treated
+Highest share not treating is in ILC villages, in line with the fact that ILC water should already be treated
 ```{r}
-hh_census %>%
-  dplyr::filter(wtmt_method__111 == 1) %>%
-  dplyr::mutate(
-    source_type = dplyr::case_when(
+hh_census <- hh_census %>%
+  mutate(
+    source_type = case_when(
       wtmt_dsw == 1 & (is.na(wtmt_ilc) | wtmt_ilc != 1) ~ "DSW Only",
       wtmt_ilc == 1 & (is.na(wtmt_dsw) | wtmt_dsw != 1) ~ "ILC Only",
       wtmt_dsw == 1 & wtmt_ilc == 1 ~ "Both DSW & ILC",
       TRUE ~ "Neither"
-    )
-  ) %>%
-  dplyr::count(source_type, name = "n", sort = TRUE) %>%
-  dplyr::mutate(
+    ),
+    responded_to_wtmt = if_any(starts_with("wtmt_method_"), ~ !is.na(.x))
+  )
+
+group1 <- hh_census %>%
+  mutate(include = wtmt_method__111 == 1) %>%
+  count(source_type, group = "Do not treat ('Already Treated')", wt = include) %>%
+  group_by(group) %>%
+  mutate(
     pct = round(100 * n / sum(n), 1)
-  ) %>%
-  ggplot(aes(x = reorder(source_type, -pct), y = pct)) +
-  geom_col(fill = viridis(1)) +
-  geom_text(aes(label = paste0(pct, "%")), vjust = -0.3, size = 3.5) +
+  )
+
+group2 <- hh_census %>%
+  mutate(include = responded_to_wtmt) %>%
+  count(source_type, group = "Average", wt = include) %>%
+  group_by(group) %>%
+  mutate(
+    pct = round(100 * n / sum(n), 1)
+  )
+
+comparison <- bind_rows(group1, group2)
+
+ggplot(comparison, aes(x = source_type, y = pct, fill = group)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_text(aes(label = paste0(pct, "%")), 
+            position = position_dodge(width = 0.7), 
+            vjust = -0.4, size = 3.5) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
   labs(
-    title = "Reported Village Water Source Type for Households Reporting\n'Nothing (Water Already Treated)'",
+    title = "Reported Village DSW/ILC Availability for Households Reporting\n Not Treating Water ('Already Treated')' vs Average",
     x = "Village Water Source Type",
     y = "Share of Households (%)",
-    caption = paste0("Note: Among ", 
-                     sum(hh_census$wtmt_method__111 == 1, na.rm = TRUE),
-                     " households that report 'Nothing (water is already treated)'.")
+    fill = "Household Type",
+    caption = paste0(
+      "Note: N = ", sum(hh_census$wtmt_method__111 == 1, na.rm = TRUE), 
+      " (Do not treat ('Already Treated')), ", 
+      sum(hh_census$responded_to_wtmt, na.rm = TRUE), " (Average for Responders to Water Treatment Questions)."
+    )
   ) +
   theme +
   theme(
@@ -294,7 +394,6 @@ hh_census %>%
 
 ## Share of households using at least 1 treatment method
 Broken down by reported village access to DSW/ILC in next chart 
-
 ```{r}
 wtmt_real_methods <- c(
   "wtmt_method_1",  # Boil
@@ -328,7 +427,7 @@ ggplot(summary_data, aes(x = "", y = pct, fill = label)) +
   scale_fill_viridis_d(option = "D", direction = -1) +
   labs(
     title = "Share of Households Using Any Water Treatment Method",
-    caption = paste0("Note: Sample is ", sum(summary_data$n), 
+    caption = paste0("Note: N=", sum(summary_data$n), 
                      " households that report not using a DSW or ILC water source.")
   ) +
   theme +
@@ -342,8 +441,8 @@ ggplot(summary_data, aes(x = "", y = pct, fill = label)) +
     legend.position = "bottom"
   ) 
 ```
-## Share of households using at least 1 treatment method by whether village has DSW or ILC
 
+## Share of households using at least 1 treatment method by whether village has DSW or ILC
 ```{r}
 wtmt_real_methods <- c(
   "wtmt_method_1", "wtmt_method_2", "wtmt_method_3", "wtmt_method_4",
@@ -401,7 +500,7 @@ ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
   )
 ```
 
-## Share of households not using DSW or ILC who report using DSW or ILC 
+## Share of households not using DSW or ILC who report DSW or ILC in village
 A measure of awareness of DSW/ILC among HHs that do not use
 
 ```{r}
@@ -425,7 +524,7 @@ ggplot(wtmt_summary, aes(x = type, y = share, fill = type)) +
     x = "",
     y = "Share Responding 'Yes' (%)",
     caption = paste0(
-      "Note: Sample is ", 
+      "Note: N=", 
       nrow(dplyr::filter(hh_census, !is.na(wtmt_dsw) | !is.na(wtmt_ilc))),
       " households that report not using a DSW or ILC water source."
     )
