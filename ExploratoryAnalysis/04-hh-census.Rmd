@@ -46,6 +46,22 @@ hh_census %>%
   )
 ```
 
+```{r}
+hh_census %>%
+  mutate(
+    hh_dsw = wp_dsw == 1 | wp_dsw_pl == 1,
+    hh_ilc = wp_ilc_device == 1 | wp_ilc_pl == 1
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    N = n(),
+    `DSW (n)` = sum(hh_dsw, na.rm = TRUE),
+    `DSW (%)` = round(sum(hh_dsw, na.rm = TRUE) / n() * 100, 1),
+    `ILC (n)` = sum(hh_ilc, na.rm = TRUE),
+    `ILC (%)` = round(sum(hh_ilc, na.rm = TRUE) / n() * 100, 1)
+  )
+```
+
 ## Share of households using DSW or ILC
 LW: the difference between the shares here and in the above table is that below, any HHs that access both DSW and ILC access points are counted as DSW, whereas above, they would be counted into both DSW and ILC (hence sum > 100%)
 
@@ -222,7 +238,7 @@ wtmt_used %>%
     title = "Share of Households Using Each Water Treatment Method",
     x = "Treatment Method",
     y = "Share of Households (%)",
-      caption = paste0("Note: Among ", 
+      caption = paste0("Note: Sample is ", 
   nrow(dplyr::filter(hh_census, rowSums(!is.na(dplyr::select(hh_census, dplyr::all_of(wtmt_cols)))) > 0)),
   " households that report not using a DSW or ILC water source.\n",
   "Each household may report more than one treatment method.")
@@ -266,7 +282,7 @@ ggplot(summary_data, aes(x = "", y = pct, fill = label)) +
   scale_fill_viridis_d(option = "D", direction = -1) +
   labs(
     title = "Share of Households Using Any Water Treatment Method",
-    caption = paste0("Note: Among ", sum(summary_data$n), 
+    caption = paste0("Note: Sample is ", sum(summary_data$n), 
                      " households that report not using a DSW or ILC water source.")
   ) +
   theme +
@@ -305,12 +321,65 @@ ggplot(wtmt_summary, aes(x = type, y = share, fill = type)) +
     x = "",
     y = "Share Responding 'Yes' (%)",
     caption = paste0(
-      "Note: ", 
+      "Note: Sample is ", 
       nrow(dplyr::filter(hh_census, !is.na(wtmt_dsw) | !is.na(wtmt_ilc))),
       " households that report not using a DSW or ILC water source."
     )
   ) +
   theme
+```
+
+```{r}
+wtmt_real_methods <- c(
+  "wtmt_method_1",  # Boil
+  "wtmt_method_2",  # Dispenser chlorine
+  "wtmt_method_3",  # Home chlorine
+  "wtmt_method_4",  # Strain through a cloth
+  "wtmt_method_5",  # Use water filter
+  "wtmt_method_6",  # Sand/composite
+  "wtmt_method_7",  # Solar disinfection
+  "wtmt_method_8"   # Let it stand and settle
+)
+
+hh_valid <- as.data.frame(hh_census)[rowSums(!is.na(hh_census[, wtmt_real_methods])) > 0, ]
+
+summary_data <- hh_valid %>%
+  mutate(
+    used_any = rowSums(select(., all_of(wtmt_real_methods)) == 1, na.rm = TRUE) > 0,
+    category = case_when(
+      wtmt_dsw == 1 & wtmt_ilc != 1 ~ "DSW Only",
+      wtmt_ilc == 1 & wtmt_dsw != 1 ~ "ILC Only",
+      wtmt_dsw == 1 & wtmt_ilc == 1 ~ "Both DSW & ILC",
+      TRUE ~ "Neither"
+    )
+  ) %>%
+  count(category, used_any, name = "n") %>%
+  group_by(category) %>%
+  mutate(
+    pct = round(100 * n / sum(n), 1),
+    label = ifelse(used_any, "Used Treatment", "Did Not Use Treatment")
+  )
+
+ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
+  geom_col(width = 0.7) +
+  facet_wrap(~category, ncol = 2) +
+  geom_text(aes(label = paste0(pct, "%")), vjust = -0.3, size = 3.5) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Share of Households Using Any Water Treatment Method by Village Water Source Type",
+    x = NULL, y = "Share of Households (%)",
+    caption = paste0("Note: Sample is ", sum(summary_data$n), 
+                     " households that report not using a DSW or ILC water source.\n",
+                     "Each household may report more than one treatment method.")
+  ) +
+  theme +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "none",
+    strip.text = element_text(face = "bold")
+  )
+```
+
 ```
 
 ## Household composition: share of households with 1+ child under 5 or 2
@@ -359,7 +428,7 @@ hh_census %>%
     caption = paste0(
       "Average Household Composition by Country. Note: Averages for ",
       n_demo_households,
-      " households which had at least one non-missing value for any demographic field."
+      " households included in Household Census to date."
     )
   )
 ```
