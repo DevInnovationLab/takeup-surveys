@@ -47,6 +47,7 @@ hh_census %>%
 ```
 
 ## Share of households using DSW or ILC
+LW: the difference between the shares here and in the above table is that below, any HHs that access both DSW and ILC access points are counted as DSW, whereas above, they would be counted into both DSW and ILC (hence sum > 100%)
 
 ```{r}
 wp_other_table <- 
@@ -102,20 +103,28 @@ secwhen_used <- dplyr::filter(secwhen_long, used == 1) %>%
     )
   )
 
-n_households <- hh_census %>%
-  filter(rowSums(!is.na(select(., wp_secwhen_1, wp_secwhen_2, wp_secwhen_3, wp_secwhen_4, wp_secwhen__666))) > 0) %>%
-  nrow()
+hh_census_wpsec <- hh_census %>%
+  mutate(
+    has_any_wp_secwhen = !is.na(wp_secwhen_1) |
+                         !is.na(wp_secwhen_2) |
+                         !is.na(wp_secwhen_3) |
+                         !is.na(wp_secwhen_4)
+  )
+
+n_households <- hh_census_wpsec %>%
+  summarise(n = sum(has_any_wp_secwhen)) %>%
+  pull(n)
 
 secwhen_used %>%
   ggplot(aes(x = reorder(circumstance_label, pct), y = pct)) +
   geom_col(fill = viridis(1)) +
   coord_flip() +
   labs(
-    title = "Share of Households Reporting Reasons for Using Other Water Sources",
+    title = "Reasons for Using Other Water Points",
     x = "Reason",
     y = "Share of Households (%)",
-    caption = paste0("Note: ", n_households,
-                     " households answered this question.\n",
+    caption = paste0("Note: Sample is ", n_households,
+                     " households reporting using more than 1 water source.\n",
                      "Each household could report more than one reason.")
   ) +
   theme
@@ -130,8 +139,9 @@ wp_distribution_census <-
   hh_census %>%
   mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
   count(wp_secweekno) %>%
-  mutate(percentage = round(n / sum(n) * 100, 1),
-        label = paste0(percentage, "%")
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
   )
 
 total_households_census <- hh_census %>%
@@ -140,26 +150,24 @@ total_households_census <- hh_census %>%
   summarise(total = sum(n)) %>%
   pull(total)
 
-ggplot(wp_distribution_census, aes(x = "", y = n, fill = as.factor(wp_secweekno))) +
-  geom_col(width = 1) +
-  coord_polar(theta = "y") +
+ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
+  geom_col() +
   geom_text(
     aes(label = label),
-    position = position_stack(vjust = 0.5),
-    color = "black"                   
+    vjust = -0.5,
+    color = "black"
   ) +
   scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
-    labs(
-  title = "Distribution of Water Points Used per Household",
-  caption = glue("Note: This data includes observations from {total_households_census} households included to date in the Household Census."
-  )) +
+  labs(
+    title = "Distribution of Water Points Used per Household",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = glue("Note: This data includes observations from {total_households_census} households included to date in the Household Census.")
+  ) +
   theme +
   theme(
-    axis.title = element_blank(),
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid = element_blank(),
-    plot.caption = element_text(hjust = 0, face = "italic") 
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
   )
 ```
 
@@ -312,16 +320,17 @@ hh_census %>%
   group_by(country) %>%
   summarise(
     across(
-      c(hh_under5, hh_under2),
-      ~ mean((.) >= 1, na.rm = TRUokayE) * 100
+      c(hh_under5, hh_under2, hh_pregnant),
+      ~ mean((.) >= 1, na.rm = TRUE) * 100
     )
   ) %>%
   rename(
     `Country` = country,
     `Child under 5` = hh_under5,
-    `Child under 2` = hh_under2
+    `Child under 2` = hh_under2,
+    `Pregnant woman` = hh_pregnant
   ) %>%
-  kable(digits = 1, caption = "Percentage Share of Households with at Least One Young Child")
+  kable(digits = 1, caption = "Percentage Share of Households with at Least One Young Child or Pregnant Woman")
 ```
 
 ## Household composition: average members (LW added)
