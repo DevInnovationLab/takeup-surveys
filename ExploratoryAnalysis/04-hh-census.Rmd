@@ -165,6 +165,11 @@ ggplot(wp_distribution_census, aes(x = "", y = n, fill = as.factor(wp_secweekno)
 
 ## Water treatment method
 
+LW:
+- characteristics of households that apply chlorine at home: esp household composition (younger children, pregnant women, maybe number of HHs in compound). also whether in DSW or ILC villages
+- apply chlorine from dispenser: look at distance (because their water point doesn't have DSW/ILC)
+- nothing (already treated): type of water source they're using
+
 ```{r}
 wtmt_long <-hh_census %>%
   pivot_longer(
@@ -218,6 +223,7 @@ wtmt_used %>%
 ```
 
 ## Share of households using at least 1 treatment method (LW added)
+Add this broken down for whether it is a DSW or ILC village
 
 ```{r}
 wtmt_real_methods <- c(
