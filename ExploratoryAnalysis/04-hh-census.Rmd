@@ -1,5 +1,4 @@
 # Household census
-
 ```{r}
 packages <-
   c(
@@ -30,6 +29,10 @@ hh_census <-
   )
 ```
 
+## LW TO DO
+- add graphs by footprint and expansion villages when available
+- apply chlorine from dispenser: look at distance (because their water point doesn't have DSW/ILC) -> TO DO (when we have distance)
+
 ## Number of observations and number/share of households using DSW and ILC water points
 
 ```{r}
@@ -57,9 +60,14 @@ hh_census %>%
   )
 ```
 
-## Number of water points per household
-We have the same thing in hh_survey, but I realized there is also a census measure for this
+## Dataframe to analyze needed raw data corrections
+```{r}
+corrections_df <- hh_census %>%
+  select(key, wtmt_method_o, country, enumerator_ID)
+```
 
+## Number of water points per household
+(Same graph in hh_survey)
 ```{r}
 wp_distribution_census <- 
   hh_census %>%
@@ -149,14 +157,12 @@ secwhen_used %>%
 ```
 
 ## Water treatment method
-
-LW:
-- characteristics of households that apply chlorine at home: 
+LW: characteristics of households that apply chlorine at home
   - household composition (younger children, pregnant women, number of HHs in compound) -> DONE
-  - whether in DSW or ILC villages
+  - whether in DSW or ILC villages -> DONE
 - nothing (already treated): type of water source they're using -> DONE
-- apply chlorine from dispenser: look at distance (because their water point doesn't have DSW/ILC) -> TO DO
 
+add HH survey graph side by side
 ```{r}
 wtmt_long <-hh_census %>%
   pivot_longer(
@@ -206,6 +212,73 @@ wtmt_used %>%
   " households that report not using a DSW or ILC water \n",
   "point. Each household may report more than one treatment method.")
     ) +
+  theme
+```
+
+## Water treatment method by country
+```{r}
+wtmt_cols <- c(
+  "wtmt_method_0", "wtmt_method_1", "wtmt_method_2", "wtmt_method_3",
+  "wtmt_method_4", "wtmt_method_5", "wtmt_method_6", "wtmt_method_7",
+  "wtmt_method_8", "wtmt_method__111", "wtmt_method__666", "wtmt_method__999"
+)
+
+country_n <- hh_census %>%
+  mutate(non_na_count = rowSums(!is.na(select(., all_of(wtmt_cols))))) %>%
+  group_by(country) %>%
+  summarise(n = sum(non_na_count > 0), .groups = "drop")
+
+wtmt_long <- hh_census %>%
+  pivot_longer(
+    cols = all_of(wtmt_cols),
+    names_to = "method",
+    values_to = "used"
+  )
+
+wtmt_used <- wtmt_long %>%
+  mutate(keep = used == 1) %>%
+  group_by(country, method) %>%
+  summarise(n = sum(keep, na.rm = TRUE), .groups = "drop") %>%
+  group_by(country) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    method_label = case_when(
+      method == "wtmt_method_0" ~ "Nothing (no treatment)",
+      method == "wtmt_method_1" ~ "Boil",
+      method == "wtmt_method_2" ~ "Apply chlorine from dispenser",
+      method == "wtmt_method_3" ~ "Apply chlorine at home (WaterGuard, PUR, AquaTabs)",
+      method == "wtmt_method_4" ~ "Strain through a cloth",
+      method == "wtmt_method_5" ~ "Use water filter",
+      method == "wtmt_method_6" ~ "Sand/composite etc",
+      method == "wtmt_method_7" ~ "Solar disinfection",
+      method == "wtmt_method_8" ~ "Let it stand and settle",
+      method == "wtmt_method__111" ~ "Nothing (already treated)",
+      method == "wtmt_method__666" ~ "Other",
+      method == "wtmt_method__999" ~ "Don't Know",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  ungroup()
+
+caption_text <- country_n %>%
+  mutate(label = paste0(country, ": N=", n)) %>%
+  pull(label) %>%
+  paste(collapse = "; ")
+
+ggplot(wtmt_used, aes(x = reorder(method_label, pct), y = pct)) +
+  geom_col(fill = viridis(1)) +
+  coord_flip() +
+  facet_wrap(~ country) +
+  labs(
+    title = "Share of Households Using Each Water Treatment Method",
+    x = "Treatment Method",
+    y = "Share of Households (%)",
+    caption = paste0(
+      "Note: Household sample sizes – ", caption_text, 
+      ".\n Sample is households that report not using a DSW or ILC water point.\n",
+  " Each household may report multiple methods."
+    )
+  ) +
   theme
 ```
 
@@ -339,6 +412,9 @@ ggplot(compound_summary, aes(x = group, y = avg_hh_per_compound, fill = group)) 
 
 ## Reported Village Water Source Type for Households Reporting 'Nothing (Water Already Treated)'
 Highest share not treating is in ILC villages, in line with the fact that ILC water should already be treated
+
+among everyone in village, how many people using DSW/ILC, how many not treating and aware, how many not treating and not aware
+collapse data into villages
 ```{r}
 hh_census <- hh_census %>%
   mutate(
@@ -391,6 +467,7 @@ ggplot(comparison, aes(x = source_type, y = pct, fill = group)) +
     axis.text.x = element_text(angle = 0, hjust = 0.5)
   )
 ```
+## add treatment by type of water source (eg well, tap)
 
 ## Share of households using at least 1 treatment method
 Broken down by reported village access to DSW/ILC in next chart 
