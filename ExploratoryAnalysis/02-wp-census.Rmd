@@ -349,7 +349,7 @@ wp_census %>%
 - ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
 - ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean * 100) %>% round(1)`%
 
-LW: add average cost in ILC and DSW and water [what] the payment is for -> I haven't added period
+LW: add average cost in ILC and DSW and water [what] the payment is for
 - Average cost among paid DSW water points (Malawi): `r (wp_census %>% dplyr::filter(country == "MALAWI", wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` MWK
 - Average cost among paid DSW water points (Uganda): `r (wp_census %>% dplyr::filter(country == "UGANDA", wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` UGX
 - Average cost among ILC water points (Malawi): `r (wp_census %>% dplyr::filter(country == "MALAWI", wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` MWK
