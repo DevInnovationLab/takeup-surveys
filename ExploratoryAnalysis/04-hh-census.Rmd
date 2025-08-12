@@ -618,18 +618,17 @@ ggplot(compound_summary, aes(x = group, y = avg_hh_per_compound, fill = group)) 
 LW: among everyone in village, how many people using DSW/ILC, how many not treating and aware, how many not treating and not aware
 ```{r}
 # define treatment
-wtmt_real_methods <- c(
-  "wtmt_method_1", "wtmt_method_2", "wtmt_method_3",
-  "wtmt_method_4", "wtmt_method_5", "wtmt_method_6",
-  "wtmt_method_7", "wtmt_method_8"
+wtmt_used <- c(
+  "wtmt_boil", "wtmt_dispcl", "wtmt_othercl", "wtmt_strain",
+  "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant", "wtmt_other"
 )
 
 # classify each household
 hh_summary <- hh_census %>%
   mutate(
-    hh_dsw = (wp_dsw == 1 | wp_dsw_pl == 1),
-    hh_ilc = (wp_ilc_device == 1 | wp_ilc_pl == 1),
-    treat_any = rowSums(select(., all_of(wtmt_real_methods)) == 1, na.rm = TRUE) > 0,
+    hh_dsw = (wp_dsw == 1),
+    hh_ilc = (wp_ilc == 'Yes'),
+    treat_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0,
     category = case_when(
       hh_ilc ~ "ILC",
       hh_dsw ~ "DSW",
