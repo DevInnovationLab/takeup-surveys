@@ -200,7 +200,7 @@ n_households <- hh_census %>%
 wtmt_cols_survey <- c(
   "make_watersafe_1", "make_watersafe_2", "make_watersafe_3", "make_watersafe_4",
   "make_watersafe_5", "make_watersafe_6", "make_watersafe_7", "make_watersafe_8",
-  "make_watersafe__666", "make_watersafe__999"
+  "make_watersafe__666"
 )
 
 wtmt_long_survey <- hh_survey %>% 
@@ -223,7 +223,6 @@ wtmt_used_survey <- dplyr::filter(wtmt_long_survey, used == 1) %>%
       method == "make_watersafe_7" ~ "Solar disinfection",
       method == "make_watersafe_8" ~ "Let it stand and settle",
       method == "make_watersafe_666" ~ "Other",
-      method == "make_watersafe_999" ~ "Don't Know",
       TRUE ~ "Unknown"
     )
   )
@@ -287,6 +286,81 @@ ggplot(plot_data, aes(x = method_label, y = pct, fill = dataset)) +
     )
   ) +
   theme 
+```
+
+## Water treatment method grouped (HH census & HH survey side by side)
+```{r}
+# group census
+wtmt_used_census_cat <- wtmt_long %>%
+  dplyr::filter(used == 1) %>%
+  mutate(category = case_when(
+    method %in% c("wtmt_none", "wtmt_pretreated") ~ "Nothing",
+    method %in% c("wtmt_dispcl", "wtmt_othercl") ~ "Chlorine",
+    TRUE ~ "Other"
+  )) %>%
+  count(category) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    se = 100 * sqrt((pct / 100) * (1 - pct / 100) / sum(n)),
+    method_label = category,
+    dataset = "HH Census"
+  ) %>%
+  select(method_label, pct, se, dataset)
+
+# group survey
+wtmt_used_survey_cat <- wtmt_long_survey %>%
+  dplyr::filter(used == 1) %>%
+  mutate(category = case_when(
+    method %in% c("make_watersafe_2", "make_watersafe_3") ~ "Chlorine",
+    method %in% c("make_watersafe_1", "make_watersafe_4", "make_watersafe_5",
+                  "make_watersafe_6", "make_watersafe_7", "make_watersafe_8",
+                  "make_watersafe__666") ~ "Other",
+    TRUE ~ NA_character_
+  )) %>%
+  count(category)
+
+# handle nothing cat
+wtmt_used_survey_cat <- wtmt_used_survey_cat %>%
+  bind_rows(tibble(category = "Nothing", n = nothing_count)) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    se = 100 * sqrt((pct / 100) * (1 - pct / 100) / sum(n)),
+    method_label = category,
+    dataset = "HH Survey"
+  ) %>%
+  select(method_label, pct, se, dataset)
+
+# combine
+plot_data_cat <- bind_rows(wtmt_used_census_cat, wtmt_used_survey_cat) %>%
+  mutate(method_label = fct_reorder(method_label, pct, .fun = max))
+
+# plot
+ggplot(plot_data_cat, aes(x = method_label, y = pct, fill = dataset)) +
+  geom_col(show.legend = FALSE, position = "dodge") +
+  geom_errorbar(aes(ymin = pct - se, ymax = pct + se),
+                position = position_dodge(width = 0.9),
+                width = 0.25) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", pct)),
+    position = position_dodge(width = 0.5),
+    hjust = 1.1, size = 3.5, color = "white"
+  ) +
+  coord_flip() +
+  facet_wrap(~dataset, ncol = 2) +
+  scale_fill_viridis_d() +
+  labs(
+    title = "Share of Households Using Each Water Treatment Method",
+    x = "Treatment Category",
+    y = "Share of Households (%)",
+    caption = paste0(
+      "Note: For HH census, raw dataset includes ", total_households_census, " households. Here,\n",
+      "N = ", n_households_census, " households that report not using a DSW or ILC water point.\n",
+      "For HH survey, raw dataset includes ", total_households_survey, " households. Here, N = ", n_households_survey, "\n",
+      "households that responded to question about treating water.\n",
+      "Each household may report multiple methods.\n"
+    )
+  ) +
+  theme
 ```
 
 ## Water treatment method by country
@@ -370,6 +444,7 @@ ggplot(wtmt_used, aes(x = reorder(method_label, pct), y = pct)) +
 
 ## Households applying chlorine at home: household composition
 When we break down by country, higher share of households with children / pregnant women among those who chlorinate
+LW: add standard errors
 ```{r}
 # Uganda
 hh_census_uganda <- hh_census %>%
