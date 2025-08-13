@@ -32,10 +32,14 @@ hh_survey %>%
   group_by(country) %>%
   summarise(
     N = n(), 
-    `Color wheel TCR > 0.2` = mean(disctcr > 0.2, na.rm = TRUE),
-    `Color wheel FCR > 0.2` = mean(discfcr > 0.2, na.rm = TRUE),
-    `Colorimeter TCR > 0.2` = mean(metertcr > 0.2, na.rm = TRUE),
-    `Colorimeter FCR > 0.2` = mean(meterfcr > 0.2, na.rm = TRUE)
+    `Color wheel TCR > 0.2` = mean(disctcr_c > 0.2, na.rm = TRUE),
+    `Color wheel TCR > 0.2` = mean(disctcr_c > 0.2, na.rm = TRUE),
+    `Color wheel FCR > 0.2` = mean(discfcr_c > 0.2, na.rm = TRUE),
+    `Color wheel FCR > 0.2` = mean(discfcr_c > 0.2, na.rm = TRUE),
+    `Colorimeter TCR > 0.2` = mean(metertcr_c > 0.2, na.rm = TRUE),
+    `Colorimeter TCR > 0.2` = mean(metertcr_c > 0.2, na.rm = TRUE),
+    `Colorimeter FCR > 0.2` = mean(meterfcr_c > 0.2, na.rm = TRUE),
+    `Colorimeter FCR > 0.2` = mean(meterfcr_c > 0.2, na.rm = TRUE)
   ) %>%
   mutate(
     across(
