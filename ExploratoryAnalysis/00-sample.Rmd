@@ -1,0 +1,128 @@
+---
+output:
+pdf_document: default
+html_document: default
+---
+
+# Sample sizes
+  
+```{r}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+
+## Water points 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  )
+
+wp %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id_c),
+    ILC = sum(ilc_wp | ilc_wcp, na.rm = TRUE),
+    DSW = sum(dsw, na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr_c)),
+    `Color wheel TCR test` = sum(!is.na(disctcr_c)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr_c)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr_c)),
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  )
+```
+
+## Household survey
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(promoter_household == 0)
+
+hh_survey %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    Household = n_distinct(household_id),
+    ILC = sum(wp_ilc, na.rm = TRUE),
+    DSW = sum(wp_dsw, na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr_c)),
+    `Color wheel TCR test` = sum(!is.na(disctcr_c)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr_c)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr_c)),
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  )
+```
+
+## Monitoring survey
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(promoter_household == 1)
+
+hh_survey %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    Household = n_distinct(household_id),
+    ILC = sum(wp_ilc, na.rm = TRUE),
+    DSW = sum(wp_dsw, na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr_c)),
+    `Color wheel TCR test` = sum(!is.na(disctcr_c)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr_c)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr_c)),
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  )
+```
+
