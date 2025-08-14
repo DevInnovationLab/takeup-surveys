@@ -8,7 +8,10 @@ packages <-
     "viridis",
     "glue",
     "patchwork",
-    "tidyr"
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra"
   )
 
 pacman::p_load(
@@ -31,14 +34,49 @@ hh_census <-
   )
 ```
 
-## Number of observations and number/share of households using DSW and ILC water points
-LW: different percentages now that we don't have wp_dsw_pl
+## Headline numbers table
+```{r}
+hh_census %>%
+  st_drop_geometry() %>% 
+  dplyr::filter(!is.na(country)) %>%  
+  mutate(
+    hh_dsw = wp_intervention_type == "DSW",
+    hh_ilc = wp_intervention_type %in% c("ILC water point", "ILC water collection point")
+  ) %>%
+  group_by(country, village_id) %>%
+  summarise(
+    n_households = n(),
+    share_dsw = mean(hh_dsw, na.rm = TRUE) * 100,
+    share_ilc = mean(hh_ilc, na.rm = TRUE) * 100,
+    .groups = "drop"
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    `Villages (n)` = n_distinct(village_id),
+    `Households (total)` = sum(n_households),
+    `Avg HHs per village` = mean(n_households),
+    `Avg DSW share per village (%)` = mean(share_dsw),
+    `Avg ILC share per village (%)` = mean(share_ilc),
+    .groups = "drop"
+  ) %>%
+  kable(
+    digits = 1,
+    caption = "Village and Household Summary by Country",
+    format = "html"
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+## DSW and ILC share by country
 ```{r}
 hh_census %>%
   st_drop_geometry() %>% 
   mutate(
-    hh_dsw = wp_dsw == 1,
-    hh_ilc = wp_ilc == "Yes"
+    hh_dsw = ifelse(wp_intervention_type == "DSW", 1, 0),
+    hh_ilc = ifelse(wp_intervention_type %in% c("ILC water point", "ILC water collection point"), 1, 0)
   ) %>%
   group_by(country) %>%
   summarise(
@@ -113,7 +151,7 @@ secwhen_used <- dplyr::filter(secwhen_long, used == 1) %>%
       circumstance == "wp_sec_inadequate" ~ "Primary source does not give adequate water",
       circumstance == "wp_sec_intermitent" ~ "Primary source gives water intermittently",
       circumstance == "wp_sec_notfixed" ~ "No fixed reason",
-      circumstance == "wp_sec_crowded" ~ "Too many people using or waiting to use the primary water source*",
+      circumstance == "wp_sec_crowded" ~ "Too many people using or waiting to use the primary water source",
       circumstance == "wp_sec_other" ~ "Other",
       TRUE ~ "Unknown"
     )
@@ -148,7 +186,7 @@ secwhen_used %>%
     caption = paste0("Note: In HH census raw data, there are ",total_households_census," households.\n",
                      "Here, N=", n_households," households reporting not always using\n",   
                      "primary water point for drinking water. Each household\n",
-                     "could report more than one reason. *Added later (August).")
+                     "could report more than one reason.")
   ) +
   theme
 ```
@@ -424,6 +462,7 @@ n_wtmt_malawi <- hh_census %>%
   nrow()
 
 # plot
+wtmt_used <- wtmt_used[!is.na(wtmt_used$country), ]
 ggplot(wtmt_used, aes(x = reorder(method_label, pct), y = pct)) +
   geom_col(fill = viridis(1)) +
   coord_flip() +
@@ -444,7 +483,6 @@ ggplot(wtmt_used, aes(x = reorder(method_label, pct), y = pct)) +
 
 ## Households applying chlorine at home: household composition
 When we break down by country, higher share of households with children / pregnant women among those who chlorinate
-LW: add standard errors
 ```{r}
 # Uganda
 hh_census_uganda <- hh_census %>%
@@ -571,8 +609,41 @@ comp_data <- bind_rows(comp_data_uganda, comp_data_malawi) %>%
     ))
   )
 
+# standard errors
+se_data <- hh_census %>%
+  st_drop_geometry() %>%
+  mutate(
+    chlorine_home_user = wtmt_othercl == 1,
+    responded_to_wtmt = if_any(starts_with("wtmt_method_"), ~ !is.na(.x)),
+    group = case_when(
+      chlorine_home_user ~ "Applies Chlorine at Home",
+      responded_to_wtmt ~ "No DSW/ILC",
+      TRUE ~ "All"
+    ),
+    `Child <5` = hh_under5 >= 1,
+    `Child <2` = hh_under2 >= 1,
+    `Pregnant woman` = hh_pregnant >= 1
+  ) %>%
+  pivot_longer(cols = c(`Child <5`, `Child <2`, `Pregnant woman`),
+               names_to = "Characteristic",
+               values_to = "has") %>%
+  group_by(country, group, Characteristic) %>%
+  summarise(
+    SE = sd(has, na.rm = TRUE) / sqrt(sum(!is.na(has))) * 100,
+    .groups = "drop"
+  )
+
+comp_data <- comp_data %>%
+  left_join(se_data, by = c("country", "group", "Characteristic"))
+
+# plot
 ggplot(comp_data, aes(x = Characteristic, y = Percent, fill = group)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_errorbar(
+    aes(ymin = Percent - SE, ymax = Percent + SE),
+    position = position_dodge(width = 0.7),
+    width = 0.3
+  ) +
   labs(
     title = "Household Composition of Chlorine-at-Home Households vs Average",
     x = "",
