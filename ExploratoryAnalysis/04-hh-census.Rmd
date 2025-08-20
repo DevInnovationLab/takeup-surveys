@@ -72,20 +72,47 @@ hh_census %>%
 
 ## Consent rate
 ```{r}
+# Summarise to village-level first
 village_summary <- hh_census %>%
-  group_by(village_id) %>%
+  dplyr::filter(!is.na(country)) %>%  
+  group_by(country, village_id, ea_program_vil) %>%
   summarise(
     n_households = n_distinct(household_id),
     consent_rate = mean(response, na.rm = TRUE),
     .groups = "drop"
-  ) %>%
-  summarise(
-    avg_households = mean(n_households),
-    avg_consent_rate = mean(consent_rate)
   )
 
-kable(village_summary, digits = 2,
-      col.names = c("Average # of HH per Village", "Average Consent Rate")) %>%
+# Then summarise by country + program type
+summary_by_type <- village_summary %>%
+  group_by(country, ea_program_vil) %>%
+  summarise(
+    avg_households = mean(n_households),
+    avg_consent_rate = mean(consent_rate),
+    n_villages = n(),
+    .groups = "drop"
+  )
+
+# Add totals across all countries and types
+summary_total <- village_summary %>%
+  group_by(country) %>%
+  summarise(
+    ea_program_vil = "All",
+    avg_households = mean(n_households),
+    avg_consent_rate = mean(consent_rate),
+    n_villages = n_distinct(village_id),
+    .groups = "drop"
+  )
+
+# Combine
+final_summary <- bind_rows(summary_by_type, summary_total)
+
+# Nicely formatted table
+kable(final_summary, digits = 2,
+      col.names = c("Country",
+                    "Village Type",
+                    "Average # of HH per Village",
+                    "Average Consent Rate",
+                    "# of Villages")) %>%
 kable_styling(
     full_width = FALSE, 
     bootstrap_options = c("striped", "hover")

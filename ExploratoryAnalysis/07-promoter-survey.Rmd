@@ -1,5 +1,35 @@
----
-title: "07-promoter-survey"
-output: html_document
----
+# Promoter survey
+```{r}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "glue",
+    "patchwork",
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra"
+  )
 
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r}
+pm_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Final",
+      "pm-survey.rds"
+    )
+  )
+```
