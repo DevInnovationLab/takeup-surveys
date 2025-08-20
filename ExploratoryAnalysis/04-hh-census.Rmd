@@ -70,10 +70,33 @@ hh_census %>%
   )
 ```
 
+## Consent rate
+```{r}
+village_summary <- hh_census %>%
+  group_by(village_id) %>%
+  summarise(
+    n_households = n_distinct(household_id),
+    consent_rate = mean(response, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  summarise(
+    avg_households = mean(n_households),
+    avg_consent_rate = mean(consent_rate)
+  )
+
+kable(village_summary, digits = 2,
+      col.names = c("Average # of HH per Village", "Average Consent Rate")) %>%
+kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+)
+```
+
 ## DSW and ILC share by country
 ```{r}
 hh_census %>%
   st_drop_geometry() %>% 
+  dplyr::filter(!is.na(country)) %>%  
   mutate(
     hh_dsw = ifelse(wp_intervention_type == "DSW", 1, 0),
     hh_ilc = ifelse(wp_intervention_type %in% c("ILC water point", "ILC water collection point"), 1, 0)
@@ -327,6 +350,8 @@ ggplot(plot_data, aes(x = method_label, y = pct, fill = dataset)) +
 ```
 
 ## Water treatment method grouped (HH census & HH survey side by side)
+LW: add by footprint, expansion, ILC
+facet_grid(sample_group~dataset) +
 ```{r}
 # group census
 wtmt_used_census_cat <- wtmt_long %>%
@@ -384,7 +409,6 @@ ggplot(plot_data_cat, aes(x = method_label, y = pct, fill = dataset)) +
     hjust = 1.1, size = 3.5, color = "white"
   ) +
   coord_flip() +
-  facet_wrap(~dataset, ncol = 2) +
   scale_fill_viridis_d() +
   labs(
     title = "Share of Households Using Each Water Treatment Method",
@@ -439,7 +463,7 @@ wtmt_used <- wtmt_long %>%
       method == "wtmt_sand" ~ "Sand/composite etc",
       method == "wtmt_solar" ~ "Solar disinfection",
       method == "wtmt_decant" ~ "Let it stand and settle",
-      method == "wtmt_pretreated" ~ "Nothing (water is already treated)*",
+      method == "wtmt_pretreated" ~ "Nothing (water is already treated)",
       method == "wtmt_other" ~ "Other",
       TRUE ~ "Unknown"
     )
@@ -772,8 +796,8 @@ wtmt_used <- c(
 # classify each household
 hh_summary <- hh_census %>%
   mutate(
-    hh_dsw = (wp_dsw == 1),
-    hh_ilc = (wp_ilc == 'Yes'),
+    hh_dsw = (dsw == 1),
+    hh_ilc = (ilc == 1),
     treat_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0,
     category = case_when(
       hh_ilc ~ "ILC",
@@ -833,7 +857,89 @@ ggplot(avg_shares, aes(x = category, y = average_share, fill = category)) +
 ```
 
 ## Water treatment by type of water source (eg well, tap)
-LW: to do
+```{r}
+wtmt_grouped <- wtmt_long %>%
+  st_drop_geometry() %>%
+  left_join(
+    hh_census %>% 
+      select(household_id, wp_sourcetype) %>%
+      mutate(
+        wp_source_group = case_when(
+          str_detect(wp_sourcetype, "Borehole") ~ "Borehole",
+          str_detect(wp_sourcetype, "spring") & str_detect(wp_sourcetype, "Protected") ~ "Protected spring",
+          str_detect(wp_sourcetype, "spring") & str_detect(wp_sourcetype, "Unprotected") ~ "Unprotected spring",
+          str_detect(wp_sourcetype, "dug") & str_detect(wp_sourcetype, "Protected") ~ "Protected dug well",
+          str_detect(wp_sourcetype, "dug") & str_detect(wp_sourcetype, "Unprotected") ~ "Unprotected dug well",
+          str_detect(wp_sourcetype, "Lake|pond|dam|standing") ~ "Surface water (lake/pond/dam)",
+          str_detect(wp_sourcetype, "River|stream|flowing") ~ "Surface water (river/stream)",
+          str_detect(wp_sourcetype, "Municipal") ~ "Piped/municipal",
+          str_detect(wp_sourcetype, "Other") ~ "Other",
+          TRUE ~ "Unknown"
+        )
+      ),
+    by = "household_id"
+  )
+
+# Summarize by treatment category and grouped water source
+wtmt_used_census_cat <- wtmt_grouped %>%
+  dplyr::filter(used == 1) %>%
+  mutate(category = case_when(
+    method %in% c("wtmt_none", "wtmt_pretreated") ~ "Nothing",
+    method %in% c("wtmt_dispcl", "wtmt_othercl") ~ "Chlorine",
+    TRUE ~ "Other"
+  )) %>%
+  group_by(wp_source_group, category) %>%
+  summarise(
+    n = n(),
+    .groups = "drop_last"
+  ) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    se = 100 * sqrt((pct/100) * (1 - pct/100) / sum(n))
+  )
+
+
+# Compute sample size per group
+sample_sizes <- wtmt_grouped %>%
+  dplyr::filter(used == 1) %>%
+  group_by(wp_source_group) %>%
+  summarise(N = n(), .groups = "drop")
+
+# Join back N to the summarized data for plotting
+wtmt_used_census_cat <- wtmt_used_census_cat %>%
+  left_join(sample_sizes, by = "wp_source_group")
+
+# Define the order
+source_order <- c(
+  "Borehole",
+  "Protected spring",
+  "Unprotected spring",
+  "Protected dug well",
+  "Unprotected dug well",
+  "Surface water (lake/pond/dam)",
+  "Surface water (river/stream)",
+  "Piped/municipal",
+  "Rainwater collection",
+  "Other"
+)
+
+wtmt_used_census_cat <- wtmt_used_census_cat %>%
+  mutate(wp_source_group = factor(wp_source_group, levels = source_order))
+
+# Plot
+ggplot(wtmt_used_census_cat, aes(x = category, y = pct, fill = category)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = pct - se, ymax = pct + se), width = 0.2) +
+  facet_wrap(~ paste0(wp_source_group, " (N=", N, ")")) +
+  labs(
+    x = "Treatment Category",
+    y = "Percent of Households",
+    title = "Treatment Methods by Water Source Group"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  theme +
+  theme(legend.position = "none")
+```
 
 ## Share of households using at least 1 treatment method
 Broken down by reported village access to DSW/ILC in next chart 
@@ -992,6 +1098,7 @@ n_demo_households <- hh_census %>%
   nrow()
 
 hh_census %>%
+  dplyr::filter(!is.na(country)) %>%  
   st_drop_geometry() %>%
   group_by(country) %>%
   summarise(
@@ -1024,7 +1131,8 @@ n_demo_households <- hh_census %>%
   filter(rowSums(!is.na(select(., all_of(demo_vars)))) > 0) %>%
   nrow()
 
-hh_census %>%
+hh_census %>%  
+  dplyr::filter(!is.na(country)) %>%
   st_drop_geometry() %>%
   group_by(country) %>%
   summarise(
