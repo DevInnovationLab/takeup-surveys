@@ -31,7 +31,8 @@ hh_census <-
       "Final",
       "hh-census.rds"
     )
-  )
+  ) %>%
+  st_drop_geometry() 
 ```
 
 ## Headline numbers table
@@ -151,6 +152,13 @@ hh_census %>%
     hh_dsw = ifelse(wp_intervention_type == "DSW", 1, 0),
     hh_ilc = ifelse(wp_intervention_type %in% c("ILC water point", "ILC water collection point"), 1, 0)
   ) %>%
+```
+
+## Number of observations and number/share of households using DSW and ILC water points
+
+```{r}
+hh_census %>%
+>>>>>>> Stashed changes
   group_by(country) %>%
   summarise(
     N = n(),
@@ -844,37 +852,43 @@ wtmt_used <- c(
 )
 
 # classify each household
-hh_summary <- hh_census %>%
+hh_summary <- 
+  hh_census %>%
+  rowwise() %>%
+  mutate(
+    treat_any = any(c_across(all_of(wtmt_used)), na.rm = TRUE)
+  ) %>%
+  ungroup %>%
   mutate(
     hh_dsw = (dsw == 1),
     hh_ilc = (ilc == 1),
     treat_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0,
     category = case_when(
-      hh_ilc ~ "ILC",
-      hh_dsw ~ "DSW",
+      str_detect(wp_intervention_type, "ILC") ~ "ILC",
+      wp_intervention_type == "DSW" ~ "DSW",
       treat_any ~ "Neither & Treat",
       !treat_any ~ "Neither & Don't Treat",
       TRUE ~ NA_character_
     )
-  )
+  ) 
 
 # per-village category counts (count distinct households)
 per_village_cat <- hh_summary %>%
-  group_by(villageid, category) %>%
+  group_by(village_id, category) %>%
   summarise(n_cat = n_distinct(household_id), .groups = "drop")
 
 # total households per village (denominator)
 village_totals <- hh_summary %>%
-  group_by(villageid) %>%
+  group_by(village_id) %>%
   summarise(total_hh = n_distinct(household_id), .groups = "drop")
 
 # join and compute share of village in each category
 per_village_cat <- per_village_cat %>%
-  left_join(village_totals, by = "villageid") %>%
+  left_join(village_totals, by = "village_id") %>%
   mutate(share = n_cat / total_hh)
 
 per_village_wide <- per_village_cat %>%
-  select(villageid, category, share) %>%
+  select(village_id, category, share) %>%
   pivot_wider(
     names_from = category,
     values_from = share,

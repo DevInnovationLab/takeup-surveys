@@ -20,11 +20,6 @@ pacman::p_load(
 )
 ```
 
-## Field observations
-
-- In some villages, the promoters filled the dispenser after they saw the FOs inspecting it
-- There is one DSW village that has an ILC device. The community guide reported that the ILC is operated by an organization called "Salvation"
-
 
 ```{r}
 wp_census <-
@@ -114,19 +109,20 @@ eligiblity_df %>%
 
 ```{r}
 wp_analysis %>%
-  select(wp_func, wp_dsw, wp_ilc_device, wp_ilc) %>%
+  dplyr::filter(country == "Malawi") %>%
+  select(wp_func, dsw, ilc_wp, ilc_wcp) %>%
   mutate(
-    dsw_func = case_when(wp_dsw == 1 ~ wp_func),
-    ilcwp_func = case_when(wp_ilc_device == 1 ~ wp_func),
-    ilcwcp_func = case_when(wp_ilc == 1 ~ wp_func),
+    dsw_func = case_when(dsw == 1 ~ wp_func),
+    ilcwp_func = case_when(ilc_wp == 1 ~ wp_func),
+    ilcwcp_func = case_when(ilc_wcp == 1 ~ wp_func),
   ) %>%
   summarise(
     wp_n = n(),
     across(
       c(
-        dsw_n = wp_dsw,
-        ilcwp_n = wp_ilc_device,
-        ilcwcp_n = wp_ilc
+        dsw_n = dsw,
+        ilcwp_n = ilc_wp,
+        ilcwcp_n = ilc_wcp
       ),
       ~ sum(., na.rm = TRUE)
     ),
@@ -144,7 +140,51 @@ wp_analysis %>%
   mutate(
     ` ` = c("All water points", "DSW", "ILC water points", "ILC water collection points")
   ) %>%
-  kable
+  kable(
+    caption = "Number of water points found in Malawi",
+    col.names = c("", "N", "Functional (%)"),
+    align = c("l", "c", "c")
+  ) 
+```
+
+```{r}
+wp_analysis %>%
+  dplyr::filter(country == "Uganda") %>%
+  select(wp_func, dsw, ilc_wp, ilc_wcp) %>%
+  mutate(
+    dsw_func = case_when(dsw == 1 ~ wp_func),
+    ilcwp_func = case_when(ilc_wp == 1 ~ wp_func),
+    ilcwcp_func = case_when(ilc_wcp == 1 ~ wp_func),
+  ) %>%
+  summarise(
+    wp_n = n(),
+    across(
+      c(
+        dsw_n = dsw,
+        ilcwp_n = ilc_wp,
+        ilcwcp_n = ilc_wcp
+      ),
+      ~ sum(., na.rm = TRUE)
+    ),
+    across(
+      ends_with("func"),
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_pattern = "(.*)_(.*)",
+    names_to = c("type", ".value")
+  ) %>%
+  set_names(c(" ", "N", "Percent functioning")) %>%
+  mutate(
+    ` ` = c("All water points", "DSW", "ILC water points", "ILC water collection points")
+  ) %>%
+  kable(
+    caption = "Number of water points found in Uganda",
+    col.names = c("", "N", "Functional (%)"),
+    align = c("l", "c", "c")
+  ) 
 ```
 
 ### Averages by village
@@ -154,11 +194,11 @@ wp_analysis %>%
   group_by(village_id) %>%
   summarise(
     total_wps = n(),
-    dsw_wps = sum(wp_dsw, na.rm = TRUE),
-    ilc_device_wps = sum(wp_ilc_device == TRUE, na.rm = TRUE),
-    ilc_collection_only_wps = sum(wp_ilc == TRUE, na.rm = TRUE),
-    has_dsw = any(wp_dsw == TRUE, na.rm = TRUE),
-    has_ilc = any(wp_ilc == TRUE | wp_ilc_device == TRUE, na.rm = TRUE),
+    dsw_wps = sum(dsw, na.rm = TRUE),
+    ilc_device_wps = sum(ilc_wp == TRUE, na.rm = TRUE),
+    ilc_collection_only_wps = sum(ilc_wcp == TRUE, na.rm = TRUE),
+    has_dsw = any(dsw == TRUE, na.rm = TRUE),
+    has_ilc = any(ilc_wcp == TRUE | ilc_wp == TRUE, na.rm = TRUE),
     .groups = "drop"
   ) %>%
   #group_by(country) %>%
@@ -202,28 +242,19 @@ wp_analysis %>%
 
 ```{r}
 wp_census %>%
-  group_by(sourcetype, wp_ilc_device, wp_dsw, wp_ilc) %>%
+  group_by(sourcetype, intervention_type) %>%
   summarise(
     n = n()
   ) %>%
-  mutate(
-    ea = case_when(
-      wp_ilc_device ~ "ILC water point",
-      wp_ilc ~ "ILC water collection point",
-      wp_dsw ~ "DSW",
-      TRUE ~ "Non-program"
-    )
-  ) %>%
   group_by(sourcetype) %>%
   mutate(
-    total = sum(n),
-    # sourcetype = reorder(sourcetype, total, order = TRUE)
+    total = sum(n)
   ) %>%
   ggplot(
     aes(
       y = sourcetype,
       x = n,
-      fill = ea
+      fill = intervention_type
     )
   ) +
   geom_col() +
@@ -249,17 +280,10 @@ wp_census %>%
 
 ```{r}
 wp_census %>%
-  mutate(
-    ea = case_when(
-      wp_ilc_device ~ "ILC",
-      wp_ilc ~ "ILC water collection point",
-      wp_dsw ~ "DSW"
-    )
-  ) %>%
-  dplyr::filter(!is.na(ea)) %>%
-  group_by(sourcetype, ea) %>%
+  dplyr::filter(intervention_type != "Non-program") %>%
+  group_by(sourcetype, intervention_type) %>%
   summarise(n = n()) %>%
-  group_by(ea) %>%
+  group_by(intervention_type) %>%
   mutate(
     total = sum(n),
     pct = (n/total) * 100
@@ -268,17 +292,17 @@ wp_census %>%
     aes(
       y = sourcetype,
       x = pct,
-      fill = ea,
+      fill = intervention_type,
       label = pct %>% round(1)
     )
   ) + 
   geom_col() +
   geom_text(
-    aes(color = ea),
+    aes(color = intervention_type),
     size = 3,
     hjust = 1.2
   ) +
-  facet_wrap(~ ea) +
+  facet_wrap(~ intervention_type) +
   theme +
   scale_fill_viridis_d() +
   scale_color_viridis_d(direction = -1) +
@@ -296,9 +320,9 @@ wp_census %>%
   group_by(village_id) %>%
   summarise(
     `Water points` = n(),
-    `DSW water points` = sum(wp_dsw, na.rm = TRUE) %>% na_if(0),
-    `ILC water points` = sum(wp_ilc_device, na.rm = TRUE) %>% na_if(0),
-    `ILC water collection points` = sum(wp_ilc, na.rm = TRUE) %>% na_if(0)
+    `DSW water points` = sum(dsw, na.rm = TRUE) %>% na_if(0),
+    `ILC water points` = sum(ilc_wp, na.rm = TRUE) %>% na_if(0),
+    `ILC water collection points` = sum(ilc_wcp, na.rm = TRUE) %>% na_if(0)
   ) %>%
   summarise(
     across(
@@ -335,60 +359,42 @@ wp_census %>%
     `Number of villages` = N
   )
 ```
+
 ## Water point functionality rate
 
 - Overall: `r (wp_census %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
-- DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
-- ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
-- ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_func) %>% mean * 100) %>% round(1)`%
+- DSW: `r (wp_census %>% dplyr::filter(dsw) %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
+- ILC water points: `r (wp_census %>% dplyr::filter(ilc_wp) %>% pull(wp_func) %>% mean* 100) %>% round(1)`%
+- ILC water collection points: `r (wp_census %>% dplyr::filter(ilc_wcp) %>% pull(wp_func) %>% mean * 100) %>% round(1)`%
 
 ## Share of paid water points
 
-- Overall: `r (wp_census %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
-- DSW: `r (wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% wp_census %>% `%
-- ILC water points: `r (wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean* 100) %>% round(1)`%
-- ILC water collection points: `r (wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean * 100) %>% round(1)`%
-
-LW: add average cost in ILC and DSW and water [what] the payment is for
-- Average cost among paid DSW water points (Malawi): `r (wp_census %>% dplyr::filter(country == "MALAWI", wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` MWK
-- Average cost among paid DSW water points (Uganda): `r (wp_census %>% dplyr::filter(country == "UGANDA", wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` UGX
-- Average cost among ILC water points (Malawi): `r (wp_census %>% dplyr::filter(country == "MALAWI", wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` MWK
-- Average cost among ILC water points (Uganda): `r (wp_census %>% dplyr::filter(country == "UGANDA", wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)) %>% round(1)` UGX
+```{r}
+wp_census %>%
+  group_by(country) %>%
+  summarise(mean(wp_pay))
+```
 
 ```{r}
-
-
-payment_summary <- tibble(
-  Group = c(
-    "Overall",
-    "DSW",
-    "ILC water points",
-    "ILC water collection points"
-  ),
-  `Paying (%)` = c(
-    wp_census %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
-    wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
-    wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100,
-    wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_pay) %>% mean(na.rm = TRUE) * 100
-  ) %>% round(1),
-  `Avg. Cost (MWK)` = c(
-    wp_census %>% pull(wp_cost) %>% mean(na.rm = TRUE),
-    wp_census %>% dplyr::filter(wp_dsw) %>% pull(wp_cost) %>% mean(na.rm = TRUE),
-    wp_census %>% dplyr::filter(wp_ilc_device) %>% pull(wp_cost) %>% mean(na.rm = TRUE),
-    wp_census %>% dplyr::filter(wp_ilc) %>% pull(wp_cost) %>% mean(na.rm = TRUE)
-  ) %>% round(0),
-  `Payment Frequency` = c(
-    wp_census %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
-    wp_census %>% dplyr::filter(wp_dsw) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
-    wp_census %>% dplyr::filter(wp_ilc_device) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period),
-    wp_census %>% dplyr::filter(wp_ilc) %>% count(wp_cost_period, sort = TRUE) %>% slice(1) %>% pull(wp_cost_period)
+wp_census %>%
+  group_by(intervention_type, country) %>%
+  summarise(
+    `Paying (%)` = (mean(wp_pay == "Yes", na.rm = TRUE) * 100) %>% round(1),
+    `Payment Frequency` = wp_cost_period %>% 
+              na.omit() %>%
+              {names(sort(table(.), decreasing = TRUE))[1]}
   )
-)
+```
 
-kable(payment_summary,
-      caption = "Water Point Payment Summary by System Type",
-      col.names = c("Group", "Paying (%)", "Avg. Cost (MWK)", "Most Common Payment Frequency"),
-      align = "lccc") %>%
+
+```{r eval = FALSE}
+wp_census %>%
+   %>%
+  kable(
+    caption = "Water Point Payment Summary by System Type",
+    col.names = c("Group", "Country", "Paying (%)", "Avg. Cost (MWK)", "Most Common Payment Frequency"),
+    align = "lcccc"
+  ) %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 ```
 
@@ -397,7 +403,7 @@ kable(payment_summary,
 ```{r}
 dsw <-
   wp_census %>%
-  dplyr::filter(wp_dsw == 1)
+  dplyr::filter(dsw == 1)
 ```
 
 ### Functionality
@@ -486,10 +492,10 @@ dsw %>%
 ```{r}
 dsw %>%
   select(
-    `Color wheel_TCR` = disctcr_c, 
-    `Color wheel_FCR` = discfcr_c, 
-    Colorimeter_TCR = metertcr_c,
-    Colorimeter_FCR = meterfcr_c
+    `Color wheel_TCR` = disctcr, 
+    `Color wheel_FCR` = discfcr, 
+    Colorimeter_TCR = metertcr,
+    Colorimeter_FCR = meterfcr
   ) %>%
   pivot_longer(
     cols = everything(),
@@ -503,7 +509,7 @@ dsw %>%
     )
   ) +
   scale_fill_viridis_d() + 
-  geom_histogram() +
+  geom_density() +
   facet_grid(test ~ instrument) +
   theme +
   labs(

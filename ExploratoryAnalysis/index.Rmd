@@ -12,8 +12,219 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Introduction
-
-THIS IS A WORK IN PROGRESS
+# Disclaimer
 
 This document shows exploratory analysis results for the chlorine adoption surveys conducted in Malawi and Uganda.
+It is a work in progress meant to keep all the partners in the loop of how analysis is advancing. 
+
+The numbers shown in this document *will* change as we collect more data and address issues identified in the field.
+
+The DIL team is double-coding the analysis numbers, and we have not yet validated the estimates in this document.
+
+
+# Annecdotes from the field (Incomplete)
+
+- In some villages where most of the taps were water collection points, the field team classified all taps as ILC. We are still confirming whether these are correct classifications or not.
+
+- In Uganda, the field teams only received the second batch of colorimeters at the very end on data collection. This will reduce our power for colorimeter take-up estimates.
+
+- We observed that in Malawi, it is rare for households to collect water with a jerrican. They typically use a bucket, which means the chlorine evaporates faster and there is more risk of recontamination.
+  - To do: check water storage in the household
+  
+- In some villages, the promoters filled the dispenser after they saw the FOs inspecting it
+
+- Three villages in Uganda were replaced after the field team realized that the chairperson and the promoter were expecting the data collection.
+
+- In one village in Uganda, the promoter distributed water to be tested if asked by IPA.
+
+- Two villages in Uganda was replaced because no dispensers were found.
+  - In one of these cases, the dispenser was located in a neighboring village, that was used as replacement
+
+
+
+
+<!-- # Primary outcomes -->
+
+<!-- ```{r} -->
+<!-- packages <- -->
+<!--   c( -->
+<!--     "stringr", -->
+<!--     "sf", -->
+<!--     "tidyverse", -->
+<!--     "viridis" -->
+<!--   ) -->
+
+<!-- pacman::p_load( -->
+<!--   packages, -->
+<!--   character.only = TRUE -->
+<!-- ) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- hh_census <- -->
+<!--   read_rds( -->
+<!--     file.path( -->
+<!--       path_box, -->
+<!--       "Data", -->
+<!--       "HouseholdCensus", -->
+<!--       "DataSets", -->
+<!--       "Final", -->
+<!--       "hh-census.rds" -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   st_drop_geometry()  -->
+<!-- ``` -->
+
+<!-- ## Number of households per village -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter(!is.na(wp_intervention_type)) %>% -->
+<!--   group_by(country, sample_group, village_id) %>% -->
+<!--   summarise(hhs = n()) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>% -->
+<!--   pivot_wider( -->
+<!--     names_from = "country" -->
+<!--   ) %>% -->
+<!--   kable( -->
+<!--     caption = "Average number of households per village", -->
+<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!--       align = c("l", "c", "c") -->
+<!--   ) %>% -->
+<!--   kable_styling( -->
+<!--     full_width = FALSE,  -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) -->
+<!-- ``` -->
+<!-- - Missing program: village for which the household census data hasn't been downloaded yet -->
+
+<!-- ## Number of households using program water points -->
+
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter(wp_intervention_type != "Non-program", !is.na(sample_group)) %>% -->
+<!--   group_by(country, sample_group, village_id) %>% -->
+<!--   summarise(hhs = n()) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>% -->
+<!--   pivot_wider( -->
+<!--     names_from = "country" -->
+<!--   ) %>% -->
+<!--   kable( -->
+<!--     caption = "Average number of households using program water points per village", -->
+<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!--       align = c("l", "c", "c") -->
+<!--   ) %>% -->
+<!--   kable_styling( -->
+<!--     full_width = FALSE,  -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter(!is.na(sample_group)) %>% -->
+<!--   group_by(country, sample_group, village_id) %>% -->
+<!--   summarise(hhs = mean(wp_intervention_type != "Non-program", na.rm = TRUE)) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   summarise(value = (mean(hhs, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
+<!--   pivot_wider(names_from = "country") %>% -->
+<!--   kable( -->
+<!--     caption = "Average share of households using program water points", -->
+<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!--       align = c("l", "c", "c") -->
+<!--   ) %>% -->
+<!--   kable_styling( -->
+<!--     full_width = FALSE,  -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ## Average chlorination rate among households using program water points -->
+
+<!-- - Some colorimeters gave incorrect readings on specific days (likely because the vials were dirty). These observations have not yet been cleaned -->
+
+<!-- ```{r} -->
+<!-- hh_survey <- -->
+<!--   read_rds( -->
+<!--     file.path( -->
+<!--       path_box, -->
+<!--       "Data", -->
+<!--       "HouseholdSurvey", -->
+<!--       "DataSets", -->
+<!--       "Final", -->
+<!--       "hh-survey.rds" -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   dplyr::filter(survey == "Household Survey") -->
+
+<!-- # hh_survey %>% -->
+<!-- #   dplyr::filter(!is.na(sample_group), sample_group != "ILC") %>% -->
+<!-- #   group_by(country, sample_group) %>% -->
+<!-- #   summarise(value = (mean(wtmt_dispcl, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
+<!-- #   pivot_wider(names_from = "country") %>% -->
+<!-- #   kable( -->
+<!-- #     caption = "Average share of households that self-report treating the water sample tested with chlorine from dispenser", -->
+<!-- #       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!-- #       align = c("l", "c", "c") -->
+<!-- #   ) %>% -->
+<!-- #   kable_styling( -->
+<!-- #     full_width = FALSE,  -->
+<!-- #     bootstrap_options = c("striped", "hover") -->
+<!-- #   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   dplyr::filter(!is.na(sample_group)) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   summarise(value = (mean(metertcr_01, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
+<!--   pivot_wider(names_from = "country") %>% -->
+<!--   kable( -->
+<!--     caption = "Average share of households that has at least 0.1 ppm of TCR on colorimeter", -->
+<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!--       align = c("l", "c", "c") -->
+<!--   ) %>% -->
+<!--   kable_styling( -->
+<!--     full_width = FALSE,  -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   dplyr::filter(!is.na(sample_group)) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   summarise(value = (mean(metertcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
+<!--   pivot_wider(names_from = "country") %>% -->
+<!--   kable( -->
+<!--     caption = "Average share of households that has at least 0.2 ppm of TCR on colorimeter", -->
+<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!--       align = c("l", "c", "c") -->
+<!--   ) %>% -->
+<!--   kable_styling( -->
+<!--     full_width = FALSE,  -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   dplyr::filter(!is.na(sample_group)) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   summarise(value = (mean(disctcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
+<!--   pivot_wider(names_from = "country") %>% -->
+<!--   kable( -->
+<!--     caption = "Average share of households that has at least 0.2 ppm of TCR on color wheel", -->
+<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
+<!--       align = c("l", "c", "c") -->
+<!--   ) %>% -->
+<!--   kable_styling( -->
+<!--     full_width = FALSE,  -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) -->
+<!-- ``` -->
+

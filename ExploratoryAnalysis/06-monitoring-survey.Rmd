@@ -21,7 +21,7 @@ hh_survey <-
       "hh-survey.rds"
     )
   ) %>%
-  dplyr::filter(promoter_household == 1)
+  dplyr::filter(str_detect(survey, "Monitoring"))
 ```
 
 ## Number of observations

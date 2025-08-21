@@ -26,7 +26,8 @@ wp_test <-
     ~ .x %>% 
       str_replace_all("meter", "meter_") %>% 
       str_replace_all("disc", "disc_") %>%
-      str_replace_all("cr_c$", "cr")
+      str_replace_all("cr_c$", "cr") %>%
+      str_replace_all("__", "_")
   ) %>%
   dplyr::filter(!is.na(country), !is.na(disc_fcr))
 ```
@@ -41,9 +42,9 @@ Add a table showing:
 
 ```{r}
 wp_test %>%
-  select(wp_id, matches("(.)cr$")) %>%
+  select(wp_id_c, matches("(.)cr$")) %>%
   pivot_longer(
-    cols = -wp_id,
+    cols = -wp_id_c,
     names_pattern = "(.*)_(.*)",
     names_to = c(".value", "test")
   ) %>%
@@ -92,9 +93,9 @@ wp_test %>%
 
 ```{r}
 wp_test %>%
-  select(wp_id, matches("_(.)cr$")) %>%
+  select(wp_id_c, matches("_(.)cr$")) %>%
   pivot_longer(
-    cols = -wp_id,
+    cols = -wp_id_c,
     names_pattern = "(.*)_(.*)",
     names_to = c("test", ".value")
   ) %>%

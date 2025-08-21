@@ -22,7 +22,7 @@ hh_survey <-
       "hh-survey.rds"
     )
   ) %>%
-  dplyr::filter(promoter_household == 0)
+  dplyr::filter(survey == "Household Survey")
 ```
 
 ## Number of observations
@@ -32,14 +32,14 @@ hh_survey %>%
   group_by(country) %>%
   summarise(
     N = n(), 
-    `Color wheel TCR > 0.2` = mean(disctcr_c > 0.2, na.rm = TRUE),
-    `Color wheel TCR > 0.2` = mean(disctcr_c > 0.2, na.rm = TRUE),
-    `Color wheel FCR > 0.2` = mean(discfcr_c > 0.2, na.rm = TRUE),
-    `Color wheel FCR > 0.2` = mean(discfcr_c > 0.2, na.rm = TRUE),
-    `Colorimeter TCR > 0.2` = mean(metertcr_c > 0.2, na.rm = TRUE),
-    `Colorimeter TCR > 0.2` = mean(metertcr_c > 0.2, na.rm = TRUE),
-    `Colorimeter FCR > 0.2` = mean(meterfcr_c > 0.2, na.rm = TRUE),
-    `Colorimeter FCR > 0.2` = mean(meterfcr_c > 0.2, na.rm = TRUE)
+    `Color wheel TCR > 0.2` = mean(disctcr > 0.2, na.rm = TRUE),
+    `Color wheel TCR > 0.2` = mean(disctcr > 0.2, na.rm = TRUE),
+    `Color wheel FCR > 0.2` = mean(discfcr > 0.2, na.rm = TRUE),
+    `Color wheel FCR > 0.2` = mean(discfcr > 0.2, na.rm = TRUE),
+    `Colorimeter TCR > 0.2` = mean(metertcr > 0.2, na.rm = TRUE),
+    `Colorimeter TCR > 0.2` = mean(metertcr > 0.2, na.rm = TRUE),
+    `Colorimeter FCR > 0.2` = mean(meterfcr > 0.2, na.rm = TRUE),
+    `Colorimeter FCR > 0.2` = mean(meterfcr > 0.2, na.rm = TRUE)
   ) %>%
   mutate(
     across(
@@ -92,15 +92,15 @@ ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
   )
 ```
 
-## Household composition
+<!-- ## Household composition -->
 
-```{r}
-hh_survey %>%
-  group_by(country) %>%
-  summarise(
-    across(
-      c(hh_under5, hh_under2),
-      ~ mean((.) > 1, na.rm = TRUE)
-    )
-  )
-```
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarise( -->
+<!--     across( -->
+<!--       c(hh_under5, hh_under2), -->
+<!--       ~ mean((.) > 1, na.rm = TRUE) -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
