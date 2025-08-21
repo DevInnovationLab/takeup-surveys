@@ -1,42 +1,267 @@
-
-# Maps
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-
-require("pacman")
-
+```{r}
 packages <-
   c(
-    "tidyverse",
-    "here",
-    "sf",
-    "haven",
-    "lfe",
-    "modelsummary",
-    "kableExtra",
-    "data.table",
-    "broom",
-    "janitor",
-    "corrplot",
-    "crosstable",
-    "readxl",
-    "vtable",
-    "broom",
+    "dplyr",
+    "ggplot2",
+    "gridExtra",
+    "htmlwidgets",
+    "webshot2",
+    "mapview",
+    "magick",
+    "pagedown",
+    "readr",
+    "htmltools",
     "leaflet",
-    "viridis",
-    "randomcoloR"
+    "sf",
+    "randomcoloR",
+    "janitor",
+    "scales",
+    "sjmisc"
   )
 
-p_load(
-  packages,
-  character.only = TRUE
+pacman::p_load(packages, character.only = TRUE)
+
+# Load data -------------------------------------------------------------------
+
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data/WaterPointCensus/DataSets/Spatial",
+      "wp-gps-constructed.rds"
+    )
+  ) %>%
+  mutate(
+    icon_type = case_when(
+      intervention_type == "DSW" ~ "dsw",
+      intervention_type == "ILC water point" ~ "ilc",
+      intervention_type == "ILC water collection point" ~ "ilc",
+    ),
+    label = paste(
+      "Name:", wp_name, "<br>",
+      "WP ID:", wp_id_c, wp_id, "<br>",
+      "EA ID:", ea_id, "<br>",
+      "Source type:", sourcetype, "<br>",
+      "Functioning:", wp_func, "<br>",
+      "Village:", village_id, "<br>",
+      "District:", district_id
+    ),
+    label = lapply(label, htmltools::HTML)
+  )
+
+wp_census_uncollapsed <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data/WaterPointCensus/DataSets/Spatial",
+      "wp-gps-clean.rds"
+    )
+  ) %>%
+  mutate(
+    label = paste(
+      "Name:", wp_name_1, "<br>",
+      "WP ID:", wp_id, "<br>",
+      "Source type:", sourcetype, "<br>",
+      "Functioning:", wp_func, "<br>",
+      "Village:", village_id, "<br>",
+      "District:", district_id
+    ),
+    label = lapply(label, htmltools::HTML)
+  )
+
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data/HouseholdCensus/DataSets/Spatial",
+      "hh-census-constructed.rds"
+    )
+  ) %>%
+  mutate(
+    label = paste(
+      "HH ID:", household_id, "<br>",
+      "Village:", village_id, "<br>",
+      "District:", district_id
+    ),
+    label = lapply(label, htmltools::HTML)
+  )
+
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data/VillageBoundary",
+      "village-boundaries.rds"
+    )
+  ) 
+
+ea_wpt <-
+  bind_rows(
+    read_rds(
+      file.path(
+        path_box,
+        "Data/EvidenceAction/Spatial",
+        "ea-uganda-wp-sf.rds"
+      )
+    ),
+    read_rds(
+      file.path(
+        path_box,
+        "Data/EvidenceAction/Spatial",
+        "ea-malawi-wp-sf.rds"
+      )
+    )
+  ) %>%
+  mutate(
+    label = paste(
+      "EA ID:", wpt_id, "<br>",
+      "Source type:", sourcetype, "<br>",
+      "Intervention:", program, "<br>",
+      "Village:", villageid, "<br>",
+      "District:", districtid
+    ) ,
+    label = lapply(label, htmltools::HTML)
+  )
+  
+ea_wcp <-
+  bind_rows(
+    read_rds(
+      file.path(
+        path_box,
+        "Data/EvidenceAction/Spatial",
+        "ea-uganda-wcp-sf.rds"
+      ) 
+    ),
+    read_rds(
+      file.path(
+        path_box,
+        "Data/EvidenceAction/Spatial",
+        "ea-malawi-wcp-sf.rds"
+      )
+    ) %>%
+    mutate(
+      across(
+        c(wpt_villageid, wcp_villageid),
+        ~ as.character(.)
+      )
+    )
+  ) %>%
+  mutate(
+    label = paste(
+      "EA ID:", wcp_id, "<br>",
+      "Intervention: ILC water collection point<br>",
+      "Village:", wcp_villageid, "<br>",
+      "District:", districtid
+    ) ,
+    label = lapply(label, htmltools::HTML)
+  )
+# Settings --------------------------------------------------------------------
+
+## Icons for type of EvAc intervention ----------------------------------------
+icon_list <- iconList(
+  ilc = makeIcon(
+    iconUrl    = 
+      here(
+        path_box,
+        "Map",
+        "icons",
+        "icon_pipe.svg"
+      ),
+    iconWidth  = 8,
+    iconHeight = 8,
+    iconAnchorX = 4,
+    iconAnchorY = 4
+  ),
+  dsw = makeIcon(
+    iconUrl    =
+      here(
+        path_box,
+        "Map",
+        "icons",
+        "icon_waterdrop.svg"
+      ),
+    iconWidth  = 8,
+    iconHeight = 8,
+    iconAnchorX = 4,
+    iconAnchorY = 4
+  )
 )
 
-seed <- 1729
-set.seed(seed)
+## Actual map ------------------------------------------------------------------
+
+village_code <- wp_census %>% pull(village_id)
+
+leaflet() %>%
+  addTiles(options = tileOptions(opacity = 0.95)) %>%
+  addPolygons(
+    data = villages,
+    opacity = .8,
+    color = "orange"
+  ) %>%
+  addCircleMarkers(
+    data = hh_census %>% dplyr::filter(village_id %in% village_code),
+    radius = 4, 
+    color = "gray20",
+    opacity = 1,
+    fillColor = "gray20",
+    fillOpacity = 1,
+    label = ~label
+  ) %>%
+  # If there are no DSW water points in the village, the map will throw an error.
+  # Comment these lines out to run itaddCircleMarkers(
+  addCircleMarkers(
+    data = ea_wpt %>% dplyr::filter(program == "DSW"),
+    radius = 11,
+    stroke = FALSE,
+    color = "blue",
+    fillOpacity = 1,
+    label = ~label
+  ) %>%
+  #If there are no ILC water points in the village, the map will throw an error.
+  #Comment these lines out to run it
+  addCircleMarkers(
+    data = ea_wcp,
+    radius = 11,
+    stroke = FALSE,
+    color = "red",
+    fillOpacity = 1,
+    label = ~label
+  ) %>%
+  addCircleMarkers(
+    data = ea_wpt %>% dplyr::filter(program == "ILC"),
+    radius = 11,
+    stroke = FALSE,
+    color = "pink",
+    fillOpacity = 1,
+    label = ~label
+  ) %>%
+  addCircleMarkers(
+    data = wp_census_uncollapsed %>% dplyr::filter(village_id %in% village_code),
+    radius = 8, 
+    stroke = FALSE,
+    color = "lightblue",
+    fillOpacity = .5,
+    label = ~label
+  ) %>%
+  addCircleMarkers(
+    data = wp_census %>% dplyr::filter(village_id %in% village_code),
+    radius = 8, 
+    stroke = FALSE,
+    color = "lightblue",
+    fillOpacity = 1,
+    label = ~label
+  ) %>%
+  addMarkers(
+    data = wp_census %>% dplyr::filter(intervention_type == "DSW", village_id %in% village_code),
+    icon = icon_list$dsw
+  ) %>%
+  addMarkers(
+    data = wp_census %>% dplyr::filter(intervention_type == "ILC water point", village_id %in% village_code),
+    icon = icon_list$ilc
+  ) %>%
+  addMarkers(
+    data = wp_census %>% dplyr::filter(intervention_type == "ILC water collection point", village_id %in% village_code),
+    icon = icon_list$ilc
+  )
 ```
 
-## Malawi
-
-## Uganda

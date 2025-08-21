@@ -1,13 +1,24 @@
 # Household census
-
 ```{r}
-library(stringr)
-library(sf)
-library(tidyverse)
-library(modelsummary)
-library(fixest)
-```
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "glue",
+    "patchwork",
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra"
+  )
 
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
 
 ```{r}
 hh_census <-
@@ -20,18 +31,1189 @@ hh_census <-
       "Final",
       "hh-census.rds"
     )
+  ) %>%
+  st_drop_geometry() 
+```
+
+## Headline numbers table
+```{r}
+hh_census %>%
+  st_drop_geometry() %>% 
+  dplyr::filter(!is.na(country)) %>%  
+  mutate(
+    hh_dsw = wp_intervention_type == "DSW",
+    hh_ilc = wp_intervention_type %in% c("ILC water point", "ILC water collection point")
+  ) %>%
+  group_by(country, village_id) %>%
+  summarise(
+    n_households = n(),
+    share_dsw = mean(hh_dsw, na.rm = TRUE) * 100,
+    share_ilc = mean(hh_ilc, na.rm = TRUE) * 100,
+    .groups = "drop"
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    `Villages (n)` = n_distinct(village_id),
+    `Households (total)` = sum(n_households),
+    `Avg HHs per village` = mean(n_households),
+    `Avg DSW share per village (%)` = mean(share_dsw),
+    `Avg ILC share per village (%)` = mean(share_ilc),
+    .groups = "drop"
+  ) %>%
+  kable(
+    digits = 1,
+    caption = "Village and Household Summary by Country",
+    format = "html"
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
   )
 ```
 
-## Number of observations
+## Data for table 1 in Overleaf
+```{r}
+# Summarise to village-level first
+village_summary <- hh_census %>%
+  dplyr::filter(!is.na(country)) %>%  
+  group_by(country, village_id, ea_program_vil) %>%
+  summarise(
+    n_households = n_distinct(household_id),
+    consent_rate = mean(response, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Then summarise by country + program type
+summary_by_type <- village_summary %>%
+  group_by(country, ea_program_vil) %>%
+  summarise(
+    avg_households = mean(n_households),
+    avg_consent_rate = mean(consent_rate),
+    n_villages = n(),
+    .groups = "drop"
+  )
+
+# Add totals across all countries and types
+summary_total <- village_summary %>%
+  group_by(country) %>%
+  summarise(
+    ea_program_vil = "All",
+    avg_households = sum(n_households, na.rm = TRUE) / n_distinct(village_id),
+    avg_consent_rate = mean(consent_rate),
+    n_villages = n_distinct(village_id),
+    .groups = "drop"
+  )
+
+# Combine
+final_summary <- bind_rows(summary_by_type, summary_total)
+
+# Nicely formatted table
+kable(final_summary, digits = 3,
+      col.names = c("Country",
+                    "Village Type",
+                    "Average # of HH per Village",
+                    "Average Consent Rate",
+                    "# of Villages")) %>%
+kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+)
+```
+
+```{r}
+hh_summary <- hh_census %>%
+  group_by(country) %>%
+  summarise(
+    total_unique_households = n_distinct(household_id),
+    total_consented_households = n_distinct(household_id[response == TRUE]),
+    .groups = "drop"
+  )
+kable(hh_summary, digits = 4,
+      col.names = c("Country",
+                    "Total Unique Households",
+                    "Total Consented Households")) %>%
+kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+)
+```
+
+```{r}
+no_consent <- hh_census %>%
+  dplyr::filter(response == FALSE) %>%
+  select(country, endcomment)
+```
+## DSW and ILC share by country
+```{r}
+hh_census %>%
+  st_drop_geometry() %>% 
+  dplyr::filter(!is.na(country)) %>%  
+  mutate(
+    hh_dsw = ifelse(wp_intervention_type == "DSW", 1, 0),
+    hh_ilc = ifelse(wp_intervention_type %in% c("ILC water point", "ILC water collection point"), 1, 0)
+  ) %>%
+```
+
+## Number of observations and number/share of households using DSW and ILC water points
 
 ```{r}
 hh_census %>%
+>>>>>>> Stashed changes
   group_by(country) %>%
   summarise(
-    N = n(), 
-    `DSW (%)` = (mean(wp_dsw, na.rm = TRUE) * 100) %>% round(1),
-    `ILC (%)` = (mean(wp_ilc_device, na.rm = TRUE) * 100) %>% round(1)
+    N = n(),
+    `DSW (n)` = sum(hh_dsw, na.rm = TRUE),
+    `DSW (%)` = round(sum(hh_dsw, na.rm = TRUE) / n() * 100, 1),
+    `ILC (n)` = sum(hh_ilc, na.rm = TRUE),
+    `ILC (%)` = round(sum(hh_ilc, na.rm = TRUE) / n() * 100, 1)
+  ) %>%
+  kable(
+    digits = 1,
+    caption = "Observations and DSW/ILC Usage by Country",
+    format = "html"
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
   )
 ```
 
+## Number of water points per household
+(Same graph in hh_survey)
+```{r}
+wp_distribution_census <- 
+  hh_census %>%
+  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(wp_secweekno) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample 
+total_households_census <- length(unique(trimws(as.character(hh_census$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included to date in the Household Census raw data.")) +
+  theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
+
+## Reasons for using other water source
+```{r}
+secwhen_long <- hh_census %>%
+  pivot_longer(
+    cols = c(wp_sec_notworking, wp_sec_inadequate, wp_sec_intermitent, wp_sec_notfixed, wp_sec_crowded, wp_sec_other),
+    names_to = "circumstance",
+    values_to = "used"
+  )
+
+secwhen_used <- dplyr::filter(secwhen_long, used == 1) %>%
+  dplyr::count(circumstance, sort = TRUE) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    circumstance_label = case_when(
+      circumstance == "wp_sec_notworking" ~ "Primary source is not working",
+      circumstance == "wp_sec_inadequate" ~ "Primary source does not give adequate water",
+      circumstance == "wp_sec_intermitent" ~ "Primary source gives water intermittently",
+      circumstance == "wp_sec_notfixed" ~ "No fixed reason",
+      circumstance == "wp_sec_crowded" ~ "Too many people using or waiting to use the primary water source",
+      circumstance == "wp_sec_other" ~ "Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+# sample
+hh_census_wpsec <- hh_census %>%
+  mutate(
+    has_any_wp_secwhen = !is.na(wp_sec_notworking) |
+                         !is.na(wp_sec_inadequate) |
+                         !is.na(wp_sec_intermitent) |
+                         !is.na(wp_sec_notfixed) |
+                         !is.na(wp_sec_crowded) |
+                         !is.na(wp_sec_other)) 
+
+
+n_households <- hh_census_wpsec %>%
+  summarise(n = sum(has_any_wp_secwhen)) %>%
+  pull(n)
+
+total_households_census <- length(unique(hh_census$household_id))
+
+# plot
+secwhen_used %>%
+  ggplot(aes(x = reorder(circumstance_label, pct), y = pct)) +
+  geom_col(fill = viridis(1)) +
+  coord_flip() +
+  labs(
+    title = "Reasons for Using Other Water Points",
+    x = "Reason",
+    y = "Share of Households (%)",
+    caption = paste0("Note: In HH census raw data, there are ",total_households_census," households.\n",
+                     "Here, N=", n_households," households reporting not always using\n",   
+                     "primary water point for drinking water. Each household\n",
+                     "could report more than one reason.")
+  ) +
+  theme
+```
+
+## Water treatment method (HH census & HH survey side by side)
+1) Higher usage of chlorine from dispenser in HH survey - as expected, since those HHs use DSW/ILC dispenser. That said, among HH survey HHs, it's just above 20% - still pretty low.
+2) In HH census, more HHs say they apply chlorine at home or boil. 
+```{r}
+# census
+wtmt_cols <- c(
+  "wtmt_none", "wtmt_boil", "wtmt_dispcl", "wtmt_othercl",
+  "wtmt_strain", "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant",
+  "wtmt_pretreated", "wtmt_other"
+)
+
+wtmt_long <- hh_census %>%
+  pivot_longer(
+    cols = all_of(wtmt_cols),
+    names_to = "method",
+    values_to = "used"
+  )
+
+wtmt_used <- dplyr::filter(wtmt_long, used == 1) %>%
+  dplyr::count(method, sort = TRUE) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    method_label = case_when(
+      method == "wtmt_none" ~ "Nothing (no treatment)",
+      method == "wtmt_boil" ~ "Boil",
+      method == "wtmt_dispcl" ~ "Apply chlorine from dispenser",
+      method == "wtmt_othercl" ~ "Apply chlorine at home (WaterGuard, PUR, AquaTabs)",
+      method == "wtmt_strain" ~ "Strain through a cloth",
+      method == "wtmt_filter" ~ "Use water filter",
+      method == "wtmt_sand" ~ "Sand/composite etc",
+      method == "wtmt_solar" ~ "Solar disinfection",
+      method == "wtmt_decant" ~ "Let it stand and settle",
+      method == "wtmt_pretreated" ~ "Nothing (water is already treated)*",
+      method == "wtmt_other" ~ "Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+n_households <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0) %>%
+  nrow()
+
+# survey
+wtmt_cols_survey <- c(
+  "make_watersafe_1", "make_watersafe_2", "make_watersafe_3", "make_watersafe_4",
+  "make_watersafe_5", "make_watersafe_6", "make_watersafe_7", "make_watersafe_8",
+  "make_watersafe__666"
+)
+
+wtmt_long_survey <- hh_survey %>% 
+  pivot_longer(
+    cols = all_of(wtmt_cols_survey),
+    names_to = "method",
+    values_to = "used"
+  )
+
+wtmt_used_survey <- dplyr::filter(wtmt_long_survey, used == 1) %>%
+  dplyr::count(method, sort = TRUE) %>%
+  mutate(
+    method_label = case_when(
+      method == "make_watersafe_1" ~ "Boil",
+      method == "make_watersafe_2" ~ "Apply chlorine from dispenser",
+      method == "make_watersafe_3" ~ "Apply chlorine at home (WaterGuard, PUR, AquaTabs)",
+      method == "make_watersafe_4" ~ "Strain through a cloth",
+      method == "make_watersafe_5" ~ "Use water filter",
+      method == "make_watersafe_6" ~ "Sand/composite etc",
+      method == "make_watersafe_7" ~ "Solar disinfection",
+      method == "make_watersafe_8" ~ "Let it stand and settle",
+      method == "make_watersafe_666" ~ "Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+nothing_count <- hh_survey %>% dplyr::filter(do_anything == 0) %>% nrow()
+wtmt_used_survey <- wtmt_used_survey %>%
+  bind_rows(
+    tibble(
+      method = "nothing",
+      n = nothing_count,
+      method_label = "Nothing (no treatment)"
+    )
+  )
+
+total_count <- sum(wtmt_used_survey$n)
+wtmt_used_survey <- wtmt_used_survey %>%
+  mutate(pct = 100 * n / total_count)
+
+# combine data from census and survey
+plot_data <- bind_rows(
+  wtmt_used %>%
+    mutate(dataset = "HH Census") %>%
+    select(method_label, pct, dataset),
+  wtmt_used_survey %>%
+    mutate(dataset = "HH Survey") %>%
+    select(method_label, pct, dataset)
+)
+
+# ensure same ordering
+plot_data <- plot_data %>%
+  mutate(method_label = fct_reorder(method_label, pct, .fun = max))
+
+# sample size
+total_households_census <- length(unique(hh_census$household_id))
+total_households_survey <- length(unique(hh_survey$household_id))
+n_households_survey <- hh_survey %>%
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols_survey)))) > 0 | !is.na(do_anything)) %>%
+  nrow()
+n_households_census <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0) %>%
+  nrow()
+
+# plot
+ggplot(plot_data, aes(x = method_label, y = pct, fill = dataset)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~dataset, ncol = 2) +
+  scale_fill_viridis_d() +
+  labs(
+    title = "Share of Households Using Each Water Treatment Method",
+    x = "Treatment Method",
+    y = "Share of Households (%)",
+    caption = paste0(
+      "Note: For HH census, raw dataset includes ",total_households_census," households. Here,\n",
+      "N= ",n_households_census," households that report not using a DSW or ILC water point.\n",
+      "For HH survey, raw dataset includes ",total_households_survey," households. Here, N=", n_households_survey, "\n",
+      "households that responded to question about treating water.\n",
+      "Each household may report multiple methods.\n",
+      "*Not an option in HH survey.\n"
+    )
+  ) +
+  theme 
+```
+
+## Water treatment method grouped (HH census & HH survey side by side)
+LW: add by footprint, expansion, ILC
+facet_grid(sample_group~dataset) +
+```{r}
+# group census
+wtmt_used_census_cat <- wtmt_long %>%
+  dplyr::filter(used == 1) %>%
+  mutate(category = case_when(
+    method %in% c("wtmt_none", "wtmt_pretreated") ~ "Nothing",
+    method %in% c("wtmt_dispcl", "wtmt_othercl") ~ "Chlorine",
+    TRUE ~ "Other"
+  )) %>%
+  count(category) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    se = 100 * sqrt((pct / 100) * (1 - pct / 100) / sum(n)),
+    method_label = category,
+    dataset = "HH Census"
+  ) %>%
+  select(method_label, pct, se, dataset)
+
+# group survey
+wtmt_used_survey_cat <- wtmt_long_survey %>%
+  dplyr::filter(used == 1) %>%
+  mutate(category = case_when(
+    method %in% c("make_watersafe_2", "make_watersafe_3") ~ "Chlorine",
+    method %in% c("make_watersafe_1", "make_watersafe_4", "make_watersafe_5",
+                  "make_watersafe_6", "make_watersafe_7", "make_watersafe_8",
+                  "make_watersafe__666") ~ "Other",
+    TRUE ~ NA_character_
+  )) %>%
+  count(category)
+
+# handle nothing cat
+wtmt_used_survey_cat <- wtmt_used_survey_cat %>%
+  bind_rows(tibble(category = "Nothing", n = nothing_count)) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    se = 100 * sqrt((pct / 100) * (1 - pct / 100) / sum(n)),
+    method_label = category,
+    dataset = "HH Survey"
+  ) %>%
+  select(method_label, pct, se, dataset)
+
+# combine
+plot_data_cat <- bind_rows(wtmt_used_census_cat, wtmt_used_survey_cat) %>%
+  mutate(method_label = fct_reorder(method_label, pct, .fun = max))
+
+# plot
+ggplot(plot_data_cat, aes(x = method_label, y = pct, fill = dataset)) +
+  geom_col(show.legend = FALSE, position = "dodge") +
+  geom_errorbar(aes(ymin = pct - se, ymax = pct + se),
+                position = position_dodge(width = 0.9),
+                width = 0.25) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", pct)),
+    position = position_dodge(width = 0.5),
+    hjust = 1.1, size = 3.5, color = "white"
+  ) +
+  coord_flip() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "Share of Households Using Each Water Treatment Method",
+    x = "Treatment Category",
+    y = "Share of Households (%)",
+    caption = paste0(
+      "Note: For HH census, raw dataset includes ", total_households_census, " households. Here,\n",
+      "N = ", n_households_census, " households that report not using a DSW or ILC water point.\n",
+      "For HH survey, raw dataset includes ", total_households_survey, " households. Here, N = ", n_households_survey, "\n",
+      "households that responded to question about treating water.\n",
+      "Each household may report multiple methods.\n"
+    )
+  ) +
+  theme
+```
+
+## Water treatment method by country
+"Apply chlorine at home" more popular in Malawi, "Boil" more popular in Uganda
+```{r}
+wtmt_cols <- c(
+  "wtmt_none", "wtmt_boil", "wtmt_dispcl", "wtmt_othercl",
+  "wtmt_strain", "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant",
+  "wtmt_pretreated", "wtmt_other"
+)
+
+country_n <- hh_census %>%
+  mutate(non_na_count = rowSums(!is.na(select(., all_of(wtmt_cols))))) %>%
+  group_by(country) %>%
+  summarise(n = sum(non_na_count > 0), .groups = "drop")
+
+wtmt_long <- hh_census %>%
+  pivot_longer(
+    cols = all_of(wtmt_cols),
+    names_to = "method",
+    values_to = "used"
+  )
+
+wtmt_used <- wtmt_long %>%
+  mutate(keep = used == 1) %>%
+  group_by(country, method) %>%
+  summarise(n = sum(keep, na.rm = TRUE), .groups = "drop") %>%
+  group_by(country) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    method_label = case_when(
+      method == "wtmt_none" ~ "Nothing (no treatment)",
+      method == "wtmt_boil" ~ "Boil",
+      method == "wtmt_dispcl" ~ "Apply chlorine from dispenser",
+      method == "wtmt_othercl" ~ "Apply chlorine at home (WaterGuard, PUR, AquaTabs)",
+      method == "wtmt_strain" ~ "Strain through a cloth",
+      method == "wtmt_filter" ~ "Use water filter",
+      method == "wtmt_sand" ~ "Sand/composite etc",
+      method == "wtmt_solar" ~ "Solar disinfection",
+      method == "wtmt_decant" ~ "Let it stand and settle",
+      method == "wtmt_pretreated" ~ "Nothing (water is already treated)",
+      method == "wtmt_other" ~ "Other",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  ungroup()
+
+# sample
+total_households_census <- length(unique(hh_census$household_id))
+n_wtmt_census <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0) %>%
+  nrow()
+n_wtmt_uganda <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0, country == "Uganda") %>%
+  nrow()
+n_wtmt_malawi <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0, country == "Malawi") %>%
+  nrow()
+
+# plot
+wtmt_used <- wtmt_used[!is.na(wtmt_used$country), ]
+ggplot(wtmt_used, aes(x = reorder(method_label, pct), y = pct)) +
+  geom_col(fill = viridis(1)) +
+  coord_flip() +
+  facet_wrap(~ country) +
+  labs(
+    title = "Share of Households Using Each Water Treatment Method",
+    x = "Treatment Method",
+    y = "Share of Households (%)",
+    caption = paste0(
+      "Note: In HH census raw data, there are ",total_households_census," households. Sample is\n",
+      "households that report not using a DSW or ILC water point. Total: N = ",n_wtmt_census,"\n",
+      "Sample sizes by country: Uganda: N = ", n_wtmt_uganda,", Malawi: N = ",n_wtmt_malawi," \n",
+      "Each household may report multiple methods."
+    )
+  ) +
+  theme
+```
+
+## Households applying chlorine at home: household composition
+When we break down by country, higher share of households with children / pregnant women among those who chlorinate
+```{r}
+# Uganda
+hh_census_uganda <- hh_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  mutate(
+    chlorine_home_user = wtmt_othercl == 1,
+    responded_to_wtmt = if_any(
+      .cols = starts_with("wtmt_method_"),
+      .fns = ~ !is.na(.x)
+    )
+  )
+
+all_households_uganda <- hh_census_uganda %>%
+  summarise(
+    group = "All",
+    N = dplyr::n(),
+    `Child <5` = mean(hh_under5 >= 1, na.rm = TRUE) * 100,
+    `Child <2` = mean(hh_under2 >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant >= 1, na.rm = TRUE) * 100
+  )
+
+responders_uganda <- hh_census_uganda %>%
+  summarise(
+    group = "No DSW/ILC",
+    N = sum(coalesce(responded_to_wtmt, FALSE)),
+    `Child <5` = mean(hh_under5[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Child <2` = mean(hh_under2[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100
+  )
+
+chlorine_users_uganda <- hh_census_uganda %>%
+  summarise(
+    group = "Applies Chlorine at Home",
+    N = sum(coalesce(chlorine_home_user, FALSE)),
+    `Child <5` = mean(hh_under5[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Child <2` = mean(hh_under2[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100
+  )
+
+comp_data_uganda <- bind_rows(all_households_uganda, chlorine_users_uganda, responders_uganda) %>%
+  pivot_longer(
+    cols = c(`Child <5`, `Child <2`, `Pregnant woman`),
+    names_to = "Characteristic",
+    values_to = "Percent"
+  ) %>%
+  mutate(country = "Uganda")
+
+# Malawi
+hh_census_malawi <- hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  mutate(
+    chlorine_home_user = wtmt_othercl == 1,
+    responded_to_wtmt = if_any(
+      .cols = starts_with("wtmt_method_"),
+      .fns = ~ !is.na(.x)
+    )
+  )
+
+all_households_malawi <- hh_census_malawi %>%
+  summarise(
+    group = "All",
+    N = dplyr::n(),
+    `Child <5` = mean(hh_under5 >= 1, na.rm = TRUE) * 100,
+    `Child <2` = mean(hh_under2 >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant >= 1, na.rm = TRUE) * 100
+  )
+
+responders_malawi <- hh_census_malawi %>%
+  summarise(
+    group = "No DSW/ILC",
+    N = sum(coalesce(responded_to_wtmt, FALSE)),
+    `Child <5` = mean(hh_under5[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Child <2` = mean(hh_under2[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant[responded_to_wtmt == TRUE] >= 1, na.rm = TRUE) * 100
+  )
+
+chlorine_users_malawi <- hh_census_malawi %>%
+  summarise(
+    group = "Applies Chlorine at Home",
+    N = sum(coalesce(chlorine_home_user, FALSE)),
+    `Child <5` = mean(hh_under5[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Child <2` = mean(hh_under2[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100,
+    `Pregnant woman` = mean(hh_pregnant[chlorine_home_user == TRUE] >= 1, na.rm = TRUE) * 100
+  )
+
+comp_data_malawi <- bind_rows(all_households_malawi, chlorine_users_malawi, responders_malawi) %>%
+  pivot_longer(
+    cols = c(`Child <5`, `Child <2`, `Pregnant woman`),
+    names_to = "Characteristic",
+    values_to = "Percent"
+  ) %>%
+  mutate(country = "Malawi")
+
+# sample
+total_households_census <- length(unique(hh_census$household_id))
+n_wtmt_census <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0) %>%
+  nrow()
+n_wtmt_uganda <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0, country == "Uganda") %>%
+  nrow()
+n_wtmt_malawi <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0, country == "Malawi") %>%
+  nrow()
+n_othercl_uganda <- hh_census %>%
+  st_drop_geometry() %>%
+  dplyr::filter(wtmt_othercl == 1, country == "Uganda") %>%
+  nrow()
+n_othercl_malawi <- hh_census %>%
+  st_drop_geometry() %>%
+  dplyr::filter(wtmt_othercl == 1, country == "Malawi") %>%
+  nrow()
+
+# combine and plot
+comp_data <- bind_rows(comp_data_uganda, comp_data_malawi) %>%
+  mutate(
+    group = factor(group, levels = c(
+      "All",
+      "No DSW/ILC",
+      "Applies Chlorine at Home"
+    ))
+  )
+
+# standard errors
+se_data <- hh_census %>%
+  st_drop_geometry() %>%
+  mutate(
+    chlorine_home_user = wtmt_othercl == 1,
+    responded_to_wtmt = if_any(starts_with("wtmt_method_"), ~ !is.na(.x)),
+    group = case_when(
+      chlorine_home_user ~ "Applies Chlorine at Home",
+      responded_to_wtmt ~ "No DSW/ILC",
+      TRUE ~ "All"
+    ),
+    `Child <5` = hh_under5 >= 1,
+    `Child <2` = hh_under2 >= 1,
+    `Pregnant woman` = hh_pregnant >= 1
+  ) %>%
+  pivot_longer(cols = c(`Child <5`, `Child <2`, `Pregnant woman`),
+               names_to = "Characteristic",
+               values_to = "has") %>%
+  group_by(country, group, Characteristic) %>%
+  summarise(
+    SE = sd(has, na.rm = TRUE) / sqrt(sum(!is.na(has))) * 100,
+    .groups = "drop"
+  )
+
+comp_data <- comp_data %>%
+  left_join(se_data, by = c("country", "group", "Characteristic"))
+
+# plot
+ggplot(comp_data, aes(x = Characteristic, y = Percent, fill = group)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_errorbar(
+    aes(ymin = Percent - SE, ymax = Percent + SE),
+    position = position_dodge(width = 0.7),
+    width = 0.3
+  ) +
+  labs(
+    title = "Household Composition of Chlorine-at-Home Households vs Average",
+    x = "",
+    y = "Share of Households (%)",
+    fill = "Household Type",
+    caption = paste0( "Note: In HH census raw data, there are ",total_households_census," households. Non-DSW/ILC households by country: Uganda: N = ", n_wtmt_uganda,",\n",
+      "Malawi: N = ",n_wtmt_malawi,". Chlorine-at-home households by country: Uganda: N = ", n_othercl_uganda,", Malawi: N = ",n_othercl_malawi,".\n",
+      "Chlorine-at-home is a subset of No DSW/ILC, which is a subset of All."
+    )
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  facet_wrap(~ country) +
+  theme
+```
+
+## Households applying chlorine at home: number of households in compound
+Above average for households applying chlorine in Uganda, no clear pattern in Malawi
+```{r}
+wtmt_cols <- c(
+  "wtmt_none", "wtmt_boil", "wtmt_dispcl", "wtmt_othercl",
+  "wtmt_strain", "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant",
+  "wtmt_pretreated", "wtmt_other"
+)
+
+# Prepare hh_census with required variables
+hh_census <- hh_census %>%
+  mutate(
+    chlorine_home_user = wtmt_othercl == 1,
+    responded_to_wtmt = if_any(
+      .cols = all_of(wtmt_cols),
+      .fns = ~ !is.na(.x)
+    )
+  )
+
+# Function to create compound summary per country
+make_compound_summary <- function(data, country_name) {
+  data %>%
+    dplyr::filter(country == country_name) %>%
+    summarise(
+      group = "All",
+      N = dplyr::n(),
+      avg_hh_per_compound = mean(hh_hhsincompound, na.rm = TRUE)
+    ) %>%
+    bind_rows(
+      data %>%
+        dplyr::filter(country == country_name) %>%
+        summarise(
+          group = "No DSW/ILC",
+          N = sum(coalesce(responded_to_wtmt, FALSE)),
+          avg_hh_per_compound = mean(hh_hhsincompound[responded_to_wtmt == TRUE], na.rm = TRUE)
+        )
+    ) %>%
+    bind_rows(
+      data %>%
+        dplyr::filter(country == country_name) %>%
+        summarise(
+          group = "Applies Chlorine at Home",
+          N = sum(coalesce(chlorine_home_user, FALSE)),
+          avg_hh_per_compound = mean(hh_hhsincompound[chlorine_home_user == TRUE], na.rm = TRUE)
+        )
+    ) %>%
+    mutate(country = country_name)
+}
+
+compound_summary_uganda <- make_compound_summary(hh_census, "Uganda")
+compound_summary_malawi <- make_compound_summary(hh_census, "Malawi")
+
+compound_summary <- bind_rows(compound_summary_uganda, compound_summary_malawi) %>%
+  mutate(
+    group = factor(group, levels = c(
+      "All", "No DSW/ILC", "Applies Chlorine at Home"
+    )),
+    country = factor(country, levels = c("Uganda", "Malawi"))
+  )
+
+# sample
+total_households_census <- length(unique(hh_census$household_id))
+n_wtmt_census <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0) %>%
+  nrow()
+n_wtmt_uganda <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0, country == "Uganda") %>%
+  nrow()
+n_wtmt_malawi <- hh_census %>%
+  st_drop_geometry() %>%                              
+  dplyr::filter(rowSums(!is.na(select(., all_of(wtmt_cols)))) > 0, country == "Malawi") %>%
+  nrow()
+n_othercl_uganda <- hh_census %>%
+  st_drop_geometry() %>%
+  dplyr::filter(wtmt_othercl == 1, country == "Uganda") %>%
+  nrow()
+n_othercl_malawi <- hh_census %>%
+  st_drop_geometry() %>%
+  dplyr::filter(wtmt_othercl == 1, country == "Malawi") %>%
+  nrow()
+
+# plot
+ggplot(compound_summary, aes(x = group, y = avg_hh_per_compound, fill = group)) +
+  geom_col(width = 0.6, position = position_dodge(width = 0.7)) +
+  facet_wrap(~country) +
+  labs(
+    title = "Avg. Number of Households per Compound by Group and Country",
+    x = "",
+    y = "Households per Compound",
+    fill = "Group",
+    caption = paste0( "Note: In HH census raw data, there are ",total_households_census," households. Non-DSW/ILC households by country: Uganda: N = ", n_wtmt_uganda,",\n",
+      "Malawi: N = ",n_wtmt_malawi,". Chlorine-at-home households by country: Uganda: N = ", n_othercl_uganda,", Malawi: N = ",n_othercl_malawi,".\n",
+      "Chlorine-at-home is a subset of No DSW/ILC, which is a subset of All."
+    )
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  theme
+```
+
+## Average Share of HHs using DSW, ILC, Treating, and Not Treating, by Village
+LW: among everyone in village, how many people using DSW/ILC, how many not treating and aware, how many not treating and not aware
+```{r}
+# define treatment
+wtmt_used <- c(
+  "wtmt_boil", "wtmt_dispcl", "wtmt_othercl", "wtmt_strain",
+  "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant", "wtmt_other"
+)
+
+# classify each household
+hh_summary <- 
+  hh_census %>%
+  rowwise() %>%
+  mutate(
+    treat_any = any(c_across(all_of(wtmt_used)), na.rm = TRUE)
+  ) %>%
+  ungroup %>%
+  mutate(
+    hh_dsw = (dsw == 1),
+    hh_ilc = (ilc == 1),
+    treat_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0,
+    category = case_when(
+      str_detect(wp_intervention_type, "ILC") ~ "ILC",
+      wp_intervention_type == "DSW" ~ "DSW",
+      treat_any ~ "Neither & Treat",
+      !treat_any ~ "Neither & Don't Treat",
+      TRUE ~ NA_character_
+    )
+  ) 
+
+# per-village category counts (count distinct households)
+per_village_cat <- hh_summary %>%
+  group_by(village_id, category) %>%
+  summarise(n_cat = n_distinct(household_id), .groups = "drop")
+
+# total households per village (denominator)
+village_totals <- hh_summary %>%
+  group_by(village_id) %>%
+  summarise(total_hh = n_distinct(household_id), .groups = "drop")
+
+# join and compute share of village in each category
+per_village_cat <- per_village_cat %>%
+  left_join(village_totals, by = "village_id") %>%
+  mutate(share = n_cat / total_hh)
+
+per_village_wide <- per_village_cat %>%
+  select(village_id, category, share) %>%
+  pivot_wider(
+    names_from = category,
+    values_from = share,
+    values_fill = 0
+  )
+
+avg_shares <- per_village_wide %>%
+  summarise(
+    DSW = mean(DSW, na.rm = TRUE),
+    ILC = mean(ILC, na.rm = TRUE),
+    `Neither & Treat` = mean(`Neither & Treat`, na.rm = TRUE),
+    `Neither & Don't Treat` = mean(`Neither & Don't Treat`, na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    everything(),
+    names_to = "category",
+    values_to = "average_share"
+  )
+
+ggplot(avg_shares, aes(x = category, y = average_share, fill = category)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Average Share of Household Treatment Categories Across Villages",
+    x = "Category",
+    y = "Average Share of Households (%)"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  theme
+```
+
+## Water treatment by type of water source (eg well, tap)
+```{r}
+wtmt_grouped <- wtmt_long %>%
+  st_drop_geometry() %>%
+  left_join(
+    hh_census %>% 
+      select(household_id, wp_sourcetype) %>%
+      mutate(
+        wp_source_group = case_when(
+          str_detect(wp_sourcetype, "Borehole") ~ "Borehole",
+          str_detect(wp_sourcetype, "spring") & str_detect(wp_sourcetype, "Protected") ~ "Protected spring",
+          str_detect(wp_sourcetype, "spring") & str_detect(wp_sourcetype, "Unprotected") ~ "Unprotected spring",
+          str_detect(wp_sourcetype, "dug") & str_detect(wp_sourcetype, "Protected") ~ "Protected dug well",
+          str_detect(wp_sourcetype, "dug") & str_detect(wp_sourcetype, "Unprotected") ~ "Unprotected dug well",
+          str_detect(wp_sourcetype, "Lake|pond|dam|standing") ~ "Surface water (lake/pond/dam)",
+          str_detect(wp_sourcetype, "River|stream|flowing") ~ "Surface water (river/stream)",
+          str_detect(wp_sourcetype, "Municipal") ~ "Piped/municipal",
+          str_detect(wp_sourcetype, "Other") ~ "Other",
+          TRUE ~ "Unknown"
+        )
+      ),
+    by = "household_id"
+  )
+
+# Summarize by treatment category and grouped water source
+wtmt_used_census_cat <- wtmt_grouped %>%
+  dplyr::filter(used == 1) %>%
+  mutate(category = case_when(
+    method %in% c("wtmt_none", "wtmt_pretreated") ~ "Nothing",
+    method %in% c("wtmt_dispcl", "wtmt_othercl") ~ "Chlorine",
+    TRUE ~ "Other"
+  )) %>%
+  group_by(wp_source_group, category) %>%
+  summarise(
+    n = n(),
+    .groups = "drop_last"
+  ) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    se = 100 * sqrt((pct/100) * (1 - pct/100) / sum(n))
+  )
+
+
+# Compute sample size per group
+sample_sizes <- wtmt_grouped %>%
+  dplyr::filter(used == 1) %>%
+  group_by(wp_source_group) %>%
+  summarise(N = n(), .groups = "drop")
+
+# Join back N to the summarized data for plotting
+wtmt_used_census_cat <- wtmt_used_census_cat %>%
+  left_join(sample_sizes, by = "wp_source_group")
+
+# Define the order
+source_order <- c(
+  "Borehole",
+  "Protected spring",
+  "Unprotected spring",
+  "Protected dug well",
+  "Unprotected dug well",
+  "Surface water (lake/pond/dam)",
+  "Surface water (river/stream)",
+  "Piped/municipal",
+  "Rainwater collection",
+  "Other"
+)
+
+wtmt_used_census_cat <- wtmt_used_census_cat %>%
+  mutate(wp_source_group = factor(wp_source_group, levels = source_order))
+
+# Plot
+ggplot(wtmt_used_census_cat, aes(x = category, y = pct, fill = category)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = pct - se, ymax = pct + se), width = 0.2) +
+  facet_wrap(~ paste0(wp_source_group, " (N=", N, ")")) +
+  labs(
+    x = "Treatment Category",
+    y = "Percent of Households",
+    title = "Treatment Methods by Water Source Group"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  theme +
+  theme(legend.position = "none")
+```
+
+## Share of households using at least 1 treatment method
+Broken down by reported village access to DSW/ILC in next chart 
+```{r}
+wtmt_used <- c(
+  "wtmt_boil", "wtmt_dispcl", "wtmt_othercl", "wtmt_strain",
+  "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant", "wtmt_other"
+)
+
+wtmt_include <- c(
+  "wtmt_none", "wtmt_pretreated", "wtmt_boil", "wtmt_dispcl", "wtmt_othercl",
+  "wtmt_strain", "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant", "wtmt_other"
+)
+
+hh_census <- hh_census %>% 
+  st_drop_geometry()
+
+hh_valid <- hh_census[rowSums(!is.na(hh_census[, wtmt_include])) > 0, ]
+
+summary_data <- hh_valid %>%
+  st_drop_geometry() %>%
+  mutate(
+    used_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0
+  ) %>%
+  count(used_any, name = "n") %>%
+  mutate(
+    pct = round(100 * n / sum(n), 1),
+    label = ifelse(used_any, "Used Treatment", "Did Not Use Treatment")
+  )
+
+ggplot(summary_data, aes(x = "", y = pct, fill = label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = paste0(pct, "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Share of Households Using Any Water Treatment Method",
+    caption = paste0("Note: N=", sum(summary_data$n), 
+                     " households that report using a non-DSW/ILC water source.")
+  ) +
+  theme +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    legend.title = element_blank(),  
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  ) 
+```
+
+## Share of households using at least 1 treatment method by whether village has DSW or ILC
+Note: I don't count Nothing (already treated) as treatment
+```{r}
+wtmt_used <- c(
+  "wtmt_boil", "wtmt_dispcl", "wtmt_othercl", "wtmt_strain",
+  "wtmt_filter", "wtmt_sand", "wtmt_solar", "wtmt_decant", "wtmt_other"
+)
+
+hh_valid <- as.data.frame(hh_census)[
+  rowSums(!is.na(hh_census[, wtmt_used])) > 0, ]
+
+summary_data <- hh_valid %>%
+  st_drop_geometry() %>%
+  mutate(
+    used_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0,
+    category = case_when(
+      vil_dsw_selfreport == 1 & vil_ilc_selfreport != 1 ~ "Village: DSW Only",
+      vil_ilc_selfreport == 1 & vil_dsw_selfreport != 1 ~ "Village: ILC Only",
+      vil_dsw_selfreport == 1 & vil_ilc_selfreport == 1 ~ "Village: Both DSW & ILC",
+      TRUE ~ "Village: Neither"
+    )
+  ) %>%
+  count(category, used_any, name = "n") %>%
+  group_by(category) %>%
+  mutate(
+    total_n = sum(n),
+    pct = round(100 * n / total_n, 1),
+    label = ifelse(used_any, "Used Treatment", "Did Not Use Treatment"),
+    category_label = paste0(category, "\n(n = ", total_n, ")")
+  )
+
+ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
+  geom_col(width = 0.6) +
+  geom_text(
+  aes(
+    label = paste0(pct, "%"),
+    vjust = ifelse(category == "Village: Both DSW & ILC" & used_any, 1.5, -0.4),
+    color = ifelse(category == "Village: Both DSW & ILC" & used_any, "white", "black")
+  ),
+  size = 3.5,
+  show.legend = FALSE
+  ) +
+  scale_color_identity() +
+  facet_wrap(~category_label, ncol = 2) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Households Using Water Treatment by Reported DSW/ILC Availability in Village",
+    x = NULL,
+    y = "Share of Households (%)",
+    caption = paste0("Note: Total number of households in raw HH census data: ",total_households_census,".
+                     Each panel is a distinct group of households among the ", sum(summary_data$n), 
+                     " that report using a non-DSW/ILC water point (only these are asked about treatment in HH census).")
+  ) +
+  theme +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "none",
+    strip.text = element_text(face = "bold", size = 10)
+  )
+```
+
+## Share of households not using DSW or ILC who report DSW or ILC in village
+A measure of awareness of DSW/ILC among HHs that do not use
+```{r}
+wtmt_summary <- hh_census %>%
+  st_drop_geometry() %>%
+  summarise(
+    dsw_yes = sum(vil_dsw_selfreport == 1, na.rm = TRUE),
+    dsw_total = sum(!is.na(vil_dsw_selfreport)),
+    ilc_yes = sum(vil_ilc_selfreport == 1, na.rm = TRUE),
+    ilc_total = sum(!is.na(vil_ilc_selfreport))
+  ) %>%
+  pivot_longer(cols = everything(), names_to = c("type", "response"), names_sep = "_") %>%
+  pivot_wider(names_from = response, values_from = value) %>%
+  mutate(share = yes / total * 100) %>%
+  mutate(type = recode(type, dsw = "DSW in village", ilc = "ILC in village"))
+
+ggplot(wtmt_summary, aes(x = type, y = share, fill = type)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Share of HHs using non-DSW/ILC waterpoint who report a DSW or ILC waterpoint in village",
+    x = "",
+    y = "Share Self-Reporting DSW/ILC in Village (%)",
+    caption = paste0("Note: Total number of households in raw HH census data: ",total_households_census,".
+      N=",nrow(dplyr::filter(hh_census, !is.na(vil_dsw_selfreport) | !is.na(vil_ilc_selfreport))),
+      " households that report not using a DSW or ILC water source."
+    )
+  ) +
+  theme
+```
+
+## Household composition: share of households with 1+ child under 5 or 2, pregnant woman
+```{r}
+demo_vars <- c("hh_pregnant", "hh_under5", "hh_under2")
+
+# sample
+total_households_census <- length(unique(trimws(as.character(hh_census$household_id))))
+n_demo_households <- hh_census %>%
+  st_drop_geometry() %>%
+  filter(rowSums(!is.na(select(., all_of(demo_vars)))) > 0) %>%
+  nrow()
+
+hh_census %>%
+  dplyr::filter(!is.na(country)) %>%  
+  st_drop_geometry() %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(hh_under5, hh_under2, hh_pregnant),
+      ~ mean((.) >= 1, na.rm = TRUE) * 100
+    )
+  ) %>%
+  rename(
+    `Country` = country,
+    `Child under 5` = hh_under5,
+    `Child under 2` = hh_under2,
+    `Pregnant woman` = hh_pregnant
+  ) %>%
+  kable(digits = 1, caption = paste0(
+      "Average Household Composition by Country. Note: Total number of households in raw HH census data: ",total_households_census,". Averages for ",
+      n_demo_households,
+      " households included in Household Census that responded to at least 1 relevant demographic question."))
+```
+
+## Household composition: average numbers of members 
+```{r}
+demo_vars <- c("hh_members", "hh_adults", "hh_males", "hh_females",
+               "hh_pregnant", "hh_under5", "hh_under2")
+
+# sample
+total_households_census <- length(unique(trimws(as.character(hh_census$household_id))))
+n_demo_households <- hh_census %>%
+  st_drop_geometry() %>%
+  filter(rowSums(!is.na(select(., all_of(demo_vars)))) > 0) %>%
+  nrow()
+
+hh_census %>%  
+  dplyr::filter(!is.na(country)) %>%
+  st_drop_geometry() %>%
+  group_by(country) %>%
+  summarise(
+    `Members` = mean(hh_members, na.rm = TRUE),
+    `Adults` = mean(hh_adults, na.rm = TRUE),
+    `Men` = mean(hh_males, na.rm = TRUE),
+    `Women` = mean(hh_females, na.rm = TRUE),
+    `Pregnant Women` = mean(hh_pregnant, na.rm = TRUE),
+    `Children <5` = mean(hh_under5, na.rm = TRUE),
+    `Children <2` = mean(hh_under2, na.rm = TRUE)
+  ) %>%
+  kable(
+    digits = 2,
+    caption = paste0(
+      "Average Household Composition by Country. Note: Total number of households in raw HH census data: ",total_households_census,". Averages for ",
+      n_demo_households,
+      " households included in Household Census that responded to at least 1 demographic question."
+    )
+  )
+```

@@ -31,14 +31,20 @@ wp_test <-
   ) %>%
   dplyr::filter(!is.na(country), !is.na(disc_fcr))
 ```
+## Number of observations
+
+Add a table showing:
+- Number of water points visited
+- Number of water points tested with color wheel
+- Number of water points tested with colorimeter
 
 ## Color wheel and colorimeter readings
 
 ```{r}
 wp_test %>%
-  select(wp_id, matches("(.)cr$")) %>%
+  select(wp_id_c, matches("(.)cr$")) %>%
   pivot_longer(
-    cols = -wp_id,
+    cols = -wp_id_c,
     names_pattern = "(.*)_(.*)",
     names_to = c(".value", "test")
   ) %>%
@@ -87,9 +93,9 @@ wp_test %>%
 
 ```{r}
 wp_test %>%
-  select(wp_id, matches("_(.)cr$")) %>%
+  select(wp_id_c, matches("_(.)cr$")) %>%
   pivot_longer(
-    cols = -wp_id,
+    cols = -wp_id_c,
     names_pattern = "(.*)_(.*)",
     names_to = c("test", ".value")
   ) %>%
