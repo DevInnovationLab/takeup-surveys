@@ -70,7 +70,7 @@ hh_census %>%
   )
 ```
 
-## Consent rate
+## Data for table 1 in Overleaf
 ```{r}
 # Summarise to village-level first
 village_summary <- hh_census %>%
@@ -97,7 +97,7 @@ summary_total <- village_summary %>%
   group_by(country) %>%
   summarise(
     ea_program_vil = "All",
-    avg_households = mean(n_households),
+    avg_households = sum(n_households, na.rm = TRUE) / n_distinct(village_id),
     avg_consent_rate = mean(consent_rate),
     n_villages = n_distinct(village_id),
     .groups = "drop"
@@ -107,7 +107,7 @@ summary_total <- village_summary %>%
 final_summary <- bind_rows(summary_by_type, summary_total)
 
 # Nicely formatted table
-kable(final_summary, digits = 2,
+kable(final_summary, digits = 3,
       col.names = c("Country",
                     "Village Type",
                     "Average # of HH per Village",
@@ -119,6 +119,29 @@ kable_styling(
 )
 ```
 
+```{r}
+hh_summary <- hh_census %>%
+  group_by(country) %>%
+  summarise(
+    total_unique_households = n_distinct(household_id),
+    total_consented_households = n_distinct(household_id[response == TRUE]),
+    .groups = "drop"
+  )
+kable(hh_summary, digits = 4,
+      col.names = c("Country",
+                    "Total Unique Households",
+                    "Total Consented Households")) %>%
+kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+)
+```
+
+```{r}
+no_consent <- hh_census %>%
+  dplyr::filter(response == FALSE) %>%
+  select(country, endcomment)
+```
 ## DSW and ILC share by country
 ```{r}
 hh_census %>%
