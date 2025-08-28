@@ -39,192 +39,486 @@ The DIL team is double-coding the analysis numbers, and we have not yet validate
 
 - Two villages in Uganda was replaced because no dispensers were found.
   - In one of these cases, the dispenser was located in a neighboring village, that was used as replacement
-
-
+  
+- In Malawi, the coordinates received from Evidence Action are less accurate than those from Uganda. It seems like some of the dispensers have been moved, a few are in water sources that are no longer functional, and new dispensers have been installed that are not in the database. It is also harder to see dispenser IDs in the slabs.
 
 
 <!-- # Primary outcomes -->
 
-<!-- ```{r} -->
-<!-- packages <- -->
-<!--   c( -->
-<!--     "stringr", -->
-<!--     "sf", -->
-<!--     "tidyverse", -->
-<!--     "viridis" -->
-<!--   ) -->
+```{r eval = FALSE}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis"
+  )
 
-<!-- pacman::p_load( -->
-<!--   packages, -->
-<!--   character.only = TRUE -->
-<!-- ) -->
-<!-- ``` -->
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r eval = F}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  st_drop_geometry() %>%
+  mutate(sample_group_combined = if_else(sample_group == "ILC", "ILC", "DSW"))
+```
+
+## Number of program water points users
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(wp_intervention_type), !is.na(sample_group)) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    `Total households` = n_distinct(household_id),
+    `EvAc water point users` = sum(wp_intervention_type != "Non-program")
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      -village_id,
+      list(
+        mean = ~ mean(.x, na.rm = TRUE),
+        sd   = ~ sd(.x, na.rm = TRUE),
+        n    = ~ sum(!is.na(.x))
+      ), 
+      .names = "{.col}_{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = -c(country, sample_group),
+    names_to = c("est", ".value"),
+    names_pattern = "(.*)_(.*)"
+  ) %>%
+  mutate(
+    se = sd/sqrt(n),
+    lb = mean - 1.96 * se,
+    ub = mean + 1.96 * se,
+    label = paste0(est, " (", n, ")")
+  ) %>%
+  ggplot(
+    aes(
+      x = sample_group,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(est ~ country)
+```
+
+<!-- - number of people using EA water points is lower in footprint than Expansion in both countries -- which could point to choosing most used water points when installing them -->
+
+<!-- But the difference is significant in Uganda and not in Malawi because in UGanda there's also a selection bias -- villages in the expansion group are significantly larger than villages in the footprint group -->
 
 
-<!-- ```{r} -->
-<!-- hh_census <- -->
-<!--   read_rds( -->
-<!--     file.path( -->
-<!--       path_box, -->
-<!--       "Data", -->
-<!--       "HouseholdCensus", -->
-<!--       "DataSets", -->
-<!--       "Final", -->
-<!--       "hh-census.rds" -->
-<!--     ) -->
-<!--   ) %>% -->
-<!--   st_drop_geometry()  -->
-<!-- ``` -->
-
-<!-- ## Number of households per village -->
-
-<!-- ```{r} -->
-<!-- hh_census %>% -->
-<!--   dplyr::filter(!is.na(wp_intervention_type)) %>% -->
-<!--   group_by(country, sample_group, village_id) %>% -->
-<!--   summarise(hhs = n()) %>% -->
-<!--   group_by(country, sample_group) %>% -->
-<!--   summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>% -->
-<!--   pivot_wider( -->
-<!--     names_from = "country" -->
-<!--   ) %>% -->
-<!--   kable( -->
-<!--     caption = "Average number of households per village", -->
-<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!--       align = c("l", "c", "c") -->
-<!--   ) %>% -->
-<!--   kable_styling( -->
-<!--     full_width = FALSE,  -->
-<!--     bootstrap_options = c("striped", "hover") -->
-<!--   ) -->
-<!-- ``` -->
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(wp_intervention_type)) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(hhs = n()) %>%
+  group_by(country, sample_group) %>%
+  summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>%
+  pivot_wider(
+    names_from = "country"
+  ) %>%
+  kable(
+    caption = "Average number of households per village",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
 <!-- - Missing program: village for which the household census data hasn't been downloaded yet -->
 
 <!-- ## Number of households using program water points -->
 
 
-<!-- ```{r} -->
-<!-- hh_census %>% -->
-<!--   dplyr::filter(wp_intervention_type != "Non-program", !is.na(sample_group)) %>% -->
-<!--   group_by(country, sample_group, village_id) %>% -->
-<!--   summarise(hhs = n()) %>% -->
-<!--   group_by(country, sample_group) %>% -->
-<!--   summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>% -->
-<!--   pivot_wider( -->
-<!--     names_from = "country" -->
-<!--   ) %>% -->
-<!--   kable( -->
-<!--     caption = "Average number of households using program water points per village", -->
-<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!--       align = c("l", "c", "c") -->
-<!--   ) %>% -->
-<!--   kable_styling( -->
-<!--     full_width = FALSE,  -->
-<!--     bootstrap_options = c("striped", "hover") -->
-<!--   ) -->
-<!-- ``` -->
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(wp_intervention_type != "Non-program", !is.na(sample_group)) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(hhs = n()) %>%
+  group_by(country, sample_group) %>%
+  summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>%
+  pivot_wider(
+    names_from = "country"
+  ) %>%
+  kable(
+    caption = "Average number of households using program water points per village",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
 
-<!-- ```{r} -->
-<!-- hh_census %>% -->
-<!--   dplyr::filter(!is.na(sample_group)) %>% -->
-<!--   group_by(country, sample_group, village_id) %>% -->
-<!--   summarise(hhs = mean(wp_intervention_type != "Non-program", na.rm = TRUE)) %>% -->
-<!--   group_by(country, sample_group) %>% -->
-<!--   summarise(value = (mean(hhs, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
-<!--   pivot_wider(names_from = "country") %>% -->
-<!--   kable( -->
-<!--     caption = "Average share of households using program water points", -->
-<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!--       align = c("l", "c", "c") -->
-<!--   ) %>% -->
-<!--   kable_styling( -->
-<!--     full_width = FALSE,  -->
-<!--     bootstrap_options = c("striped", "hover") -->
-<!--   ) -->
-<!-- ``` -->
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(hhs = mean(wp_intervention_type != "Non-program", na.rm = TRUE)) %>%
+  group_by(country, sample_group) %>%
+  summarise(value = (mean(hhs, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    hhs = sum(wp_intervention_type != "Non-program", na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    value = mean(hhs, na.rm = TRUE)
+  ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(sample_group), country == "Malawi") %>%
+  group_by(sample_group, village_id) %>%
+  summarise(
+    total = n_distinct(household_id),
+    beneficiaries = sum(wp_intervention_type != "Non-program", na.rm = TRUE)
+  ) %>%
+  group_by(sample_group) %>%
+  summarise(
+    mutate(
+      across(
+        everything(),
+        ~ mean(., na.rm = TRUE),
+        .names = "{.col}_mean"
+      ),
+            across(
+        everything(),
+        ~ mean(., na.rm = TRUE),
+        .names = "{.col}_name"
+      )
+    )
+  )
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    hhs = mean(wp_intervention_type != "Non-program", na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    value = (mean(hhs, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%")
+  ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    value = mean(wp_intervention_type != "Non-program", na.rm = TRUE)
+  ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(wp_intervention_type != "Non-program", !is.na(sample_group)) %>%
+  group_by(country, ilc, village_id) %>%
+  summarise(hhs = n()) %>%
+  group_by(country, ilc) %>%
+  summarise(value = mean(hhs, na.rm = TRUE) %>% round()) %>%
+  pivot_wider(
+    names_from = "country"
+  ) %>%
+  kable(
+    caption = "Average number of households using program water points per village",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, ilc, village_id) %>%
+  summarise(hhs = mean(wp_intervention_type != "Non-program", na.rm = TRUE)) %>%
+  group_by(country, ilc) %>%
+  summarise(value = (mean(hhs, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_census %>%
+  dplyr::filter(!is.na(ea_program_vil)) %>%
+  group_by(country, ea_program_vil, village_id) %>%
+  summarise(hhs = mean(wp_intervention_type != "Non-program", na.rm = TRUE)) %>%
+  group_by(country, ea_program_vil) %>%
+  summarise(value = (mean(hhs, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households using program water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
 
 <!-- ## Average chlorination rate among households using program water points -->
 
 <!-- - Some colorimeters gave incorrect readings on specific days (likely because the vials were dirty). These observations have not yet been cleaned -->
 
-<!-- ```{r} -->
-<!-- hh_survey <- -->
-<!--   read_rds( -->
-<!--     file.path( -->
-<!--       path_box, -->
-<!--       "Data", -->
-<!--       "HouseholdSurvey", -->
-<!--       "DataSets", -->
-<!--       "Final", -->
-<!--       "hh-survey.rds" -->
-<!--     ) -->
-<!--   ) %>% -->
-<!--   dplyr::filter(survey == "Household Survey") -->
+```{r eval = F}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(survey == "Household Survey")
 
-<!-- # hh_survey %>% -->
-<!-- #   dplyr::filter(!is.na(sample_group), sample_group != "ILC") %>% -->
-<!-- #   group_by(country, sample_group) %>% -->
-<!-- #   summarise(value = (mean(wtmt_dispcl, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
-<!-- #   pivot_wider(names_from = "country") %>% -->
-<!-- #   kable( -->
-<!-- #     caption = "Average share of households that self-report treating the water sample tested with chlorine from dispenser", -->
-<!-- #       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!-- #       align = c("l", "c", "c") -->
-<!-- #   ) %>% -->
-<!-- #   kable_styling( -->
-<!-- #     full_width = FALSE,  -->
-<!-- #     bootstrap_options = c("striped", "hover") -->
-<!-- #   ) -->
-<!-- ``` -->
+# hh_survey %>%
+#   dplyr::filter(!is.na(sample_group), sample_group != "ILC") %>%
+#   group_by(country, sample_group) %>%
+#   summarise(value = (mean(wtmt_dispcl, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+#   pivot_wider(names_from = "country") %>%
+#   kable(
+#     caption = "Average share of households that self-report treating the water sample tested with chlorine from dispenser",
+#       col.names = c("Sample", "Malawi", "Uganda"),
+#       align = c("l", "c", "c")
+#   ) %>%
+#   kable_styling(
+#     full_width = FALSE,
+#     bootstrap_options = c("striped", "hover")
+#   )
+```
 
-<!-- ```{r} -->
-<!-- hh_survey %>% -->
-<!--   dplyr::filter(!is.na(sample_group)) %>% -->
-<!--   group_by(country, sample_group) %>% -->
-<!--   summarise(value = (mean(metertcr_01, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
-<!--   pivot_wider(names_from = "country") %>% -->
-<!--   kable( -->
-<!--     caption = "Average share of households that has at least 0.1 ppm of TCR on colorimeter", -->
-<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!--       align = c("l", "c", "c") -->
-<!--   ) %>% -->
-<!--   kable_styling( -->
-<!--     full_width = FALSE,  -->
-<!--     bootstrap_options = c("striped", "hover") -->
-<!--   ) -->
-<!-- ``` -->
+```{r eval = F}
+hh_survey %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group) %>%
+  summarise(value = (mean(metertcr_01, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households that has at least 0.1 ppm of TCR on colorimeter",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
 
-<!-- ```{r} -->
-<!-- hh_survey %>% -->
-<!--   dplyr::filter(!is.na(sample_group)) %>% -->
-<!--   group_by(country, sample_group) %>% -->
-<!--   summarise(value = (mean(metertcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
-<!--   pivot_wider(names_from = "country") %>% -->
-<!--   kable( -->
-<!--     caption = "Average share of households that has at least 0.2 ppm of TCR on colorimeter", -->
-<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!--       align = c("l", "c", "c") -->
-<!--   ) %>% -->
-<!--   kable_styling( -->
-<!--     full_width = FALSE,  -->
-<!--     bootstrap_options = c("striped", "hover") -->
-<!--   ) -->
-<!-- ``` -->
+```{r eval = F}
+hh_survey %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group) %>%
+  summarise(value = (mean(metertcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households that has at least 0.2 ppm of TCR on colorimeter",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
 
-<!-- ```{r} -->
-<!-- hh_survey %>% -->
-<!--   dplyr::filter(!is.na(sample_group)) %>% -->
-<!--   group_by(country, sample_group) %>% -->
-<!--   summarise(value = (mean(disctcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>% -->
-<!--   pivot_wider(names_from = "country") %>% -->
-<!--   kable( -->
-<!--     caption = "Average share of households that has at least 0.2 ppm of TCR on color wheel", -->
-<!--       col.names = c("Sample", "Malawi", "Uganda"), -->
-<!--       align = c("l", "c", "c") -->
-<!--   ) %>% -->
-<!--   kable_styling( -->
-<!--     full_width = FALSE,  -->
-<!--     bootstrap_options = c("striped", "hover") -->
-<!--   ) -->
-<!-- ``` -->
+```{r eval = F}
+hh_survey %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, sample_group) %>%
+  summarise(value = (mean(disctcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households that has at least 0.2 ppm of TCR on color wheel",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+
+<!-- ## Average chlorination rate among households using program water points -->
+
+```{r eval = F}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  mutate(ilc = if_else(sample_group == "ILC", "ILC", "DSW"))
+
+# hh_survey %>%
+#   dplyr::filter(!is.na(sample_group), sample_group != "ILC") %>%
+#   group_by(country, sample_group) %>%
+#   summarise(value = (mean(wtmt_dispcl, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+#   pivot_wider(names_from = "country") %>%
+#   kable(
+#     caption = "Average share of households that self-report treating the water sample tested with chlorine from dispenser",
+#       col.names = c("Sample", "Malawi", "Uganda"),
+#       align = c("l", "c", "c")
+#   ) %>%
+#   kable_styling(
+#     full_width = FALSE,
+#     bootstrap_options = c("striped", "hover")
+#   )
+```
+
+```{r eval = F}
+hh_survey %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, ilc) %>%
+  summarise(value = (mean(metertcr_01, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households that has at least 0.1 ppm of TCR on colorimeter",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_survey %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, ilc) %>%
+  summarise(value = (mean(metertcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households that has at least 0.2 ppm of TCR on colorimeter",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r eval = F}
+hh_survey %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  group_by(country, ilc) %>%
+  summarise(value = (mean(disctcr_02, na.rm = TRUE)* 100) %>% round(1) %>% paste0("%") ) %>%
+  pivot_wider(names_from = "country") %>%
+  kable(
+    caption = "Average share of households that has at least 0.2 ppm of TCR on color wheel",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover")
+  )
+```
 

@@ -144,21 +144,21 @@ no_consent <- hh_census %>%
   select(country, endcomment)
 ```
 ## DSW and ILC share by country
-```{r}
+
+```{r eval = FALSE}
 hh_census %>%
   st_drop_geometry() %>% 
   dplyr::filter(!is.na(country)) %>%  
   mutate(
     hh_dsw = ifelse(wp_intervention_type == "DSW", 1, 0),
     hh_ilc = ifelse(wp_intervention_type %in% c("ILC water point", "ILC water collection point"), 1, 0)
-  ) %>%
+  )
 ```
 
 ## Number of observations and number/share of households using DSW and ILC water points
 
 ```{r}
 hh_census %>%
->>>>>>> Stashed changes
   group_by(country) %>%
   summarise(
     N = n(),

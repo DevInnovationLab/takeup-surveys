@@ -1,28 +1,16 @@
+# Map of study area
+
 ```{r}
-packages <-
-  c(
-    "dplyr",
-    "ggplot2",
-    "gridExtra",
-    "htmlwidgets",
-    "webshot2",
-    "mapview",
-    "magick",
-    "pagedown",
-    "readr",
-    "htmltools",
-    "leaflet",
-    "sf",
-    "randomcoloR",
-    "janitor",
-    "scales",
-    "sjmisc"
-  )
+pacman::p_load(
+  tidyverse,
+  ggplot2,
+  htmltools,
+  leaflet,
+  sf
+)
+```
 
-pacman::p_load(packages, character.only = TRUE)
-
-# Load data -------------------------------------------------------------------
-
+```{r}
 wp_census <-
   read_rds(
     file.path(
@@ -155,11 +143,11 @@ ea_wcp <-
     ) ,
     label = lapply(label, htmltools::HTML)
   )
-# Settings --------------------------------------------------------------------
+```
 
-## Icons for type of EvAc intervention ----------------------------------------
+```{r}
 icon_list <- iconList(
-  ilc = makeIcon(
+  wcp = makeIcon(
     iconUrl    = 
       here(
         path_box,
@@ -171,6 +159,19 @@ icon_list <- iconList(
     iconHeight = 8,
     iconAnchorX = 4,
     iconAnchorY = 4
+  ),
+  ilc = makeIcon(
+    iconUrl = 
+      here(
+        path_box,
+        "Map",
+        "icons",
+        "icon_tank.svg"
+      ),
+    iconWidth  = 16,
+    iconHeight = 16,
+    iconAnchorX = 8,
+    iconAnchorY = 8
   ),
   dsw = makeIcon(
     iconUrl    =
@@ -186,82 +187,82 @@ icon_list <- iconList(
     iconAnchorY = 4
   )
 )
+```
 
-## Actual map ------------------------------------------------------------------
-
-village_code <- wp_census %>% pull(village_id)
-
+```{r}
 leaflet() %>%
   addTiles(options = tileOptions(opacity = 0.95)) %>%
   addPolygons(
-    data = villages,
-    opacity = .8,
+    data =  villages,
+    opacity = .5,
     color = "orange"
   ) %>%
-  addCircleMarkers(
-    data = hh_census %>% dplyr::filter(village_id %in% village_code),
-    radius = 4, 
-    color = "gray20",
-    opacity = 1,
-    fillColor = "gray20",
-    fillOpacity = 1,
-    label = ~label
-  ) %>%
   # If there are no DSW water points in the village, the map will throw an error.
-  # Comment these lines out to run itaddCircleMarkers(
+  # Comment these lines out to run ita
   addCircleMarkers(
     data = ea_wpt %>% dplyr::filter(program == "DSW"),
     radius = 11,
     stroke = FALSE,
-    color = "blue",
+    color = "darkblue",
     fillOpacity = 1,
     label = ~label
   ) %>%
   #If there are no ILC water points in the village, the map will throw an error.
   #Comment these lines out to run it
   addCircleMarkers(
+    data = ea_wpt %>% dplyr::filter(program == "ILC"),
+    radius = 11,
+    stroke = FALSE,
+    color = "blue",
+    fillOpacity = 1,
+    label = ~label
+  ) %>%
+  addCircleMarkers(
     data = ea_wcp,
     radius = 11,
     stroke = FALSE,
-    color = "red",
+    color = "blue",
     fillOpacity = 1,
     label = ~label
   ) %>%
   addCircleMarkers(
     data = ea_wpt %>% dplyr::filter(program == "ILC"),
     radius = 11,
-    stroke = FALSE,
-    color = "pink",
+    color = "blue",
     fillOpacity = 1,
     label = ~label
   ) %>%
   addCircleMarkers(
-    data = wp_census_uncollapsed %>% dplyr::filter(village_id %in% village_code),
+    data = wp_census,
     radius = 8, 
-    stroke = FALSE,
-    color = "lightblue",
-    fillOpacity = .5,
-    label = ~label
-  ) %>%
-  addCircleMarkers(
-    data = wp_census %>% dplyr::filter(village_id %in% village_code),
-    radius = 8, 
-    stroke = FALSE,
     color = "lightblue",
     fillOpacity = 1,
     label = ~label
   ) %>%
   addMarkers(
-    data = wp_census %>% dplyr::filter(intervention_type == "DSW", village_id %in% village_code),
+    data = wp_census %>% dplyr::filter(intervention_type == "DSW"),
     icon = icon_list$dsw
   ) %>%
   addMarkers(
-    data = wp_census %>% dplyr::filter(intervention_type == "ILC water point", village_id %in% village_code),
+    data = wp_census %>% dplyr::filter(intervention_type == "ILC water point"),
     icon = icon_list$ilc
   ) %>%
   addMarkers(
-    data = wp_census %>% dplyr::filter(intervention_type == "ILC water collection point", village_id %in% village_code),
-    icon = icon_list$ilc
+    data = wp_census %>% dplyr::filter(intervention_type == "ILC water collection point"),
+    icon = icon_list$wcp
+  ) %>%
+  addCircleMarkers(
+    data = hh_census,
+    radius = 4, 
+    color = "gray",
+    fillOpacity = .8,
+    stroke = FALSE,
+    label = ~label
   )
+```
+
+
+```{r}
+map
 ```
 

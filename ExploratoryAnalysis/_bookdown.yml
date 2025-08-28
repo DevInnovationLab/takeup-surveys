@@ -6,7 +6,7 @@ rmd_files: [
   "01-wp-map.Rmd",
   "02-wp-census.Rmd",
   "03-wp-tests.Rmd",
-  "04-hh-census.Rmd",
+  # "04-hh-census.Rmd",
   "05-hh-survey.Rmd",
   "06-monitoring-survey.Rmd"
 ]
