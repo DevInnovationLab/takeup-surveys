@@ -1,0 +1,627 @@
+---
+output:
+pdf_document: default
+html_document: default
+---
+
+```{r}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "janitor",
+    "vtable"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+
+```{r}
+# Winsorize function
+winsorize <- function(x, probs = c(0, 0.95)) {
+  q <- quantile(x, probs, na.rm = TRUE)
+  pmin(pmax(x, q[1]), q[2])
+}
+```
+
+
+
+# Sample representativeness
+
+```{r}
+villages <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  ) %>%
+  dplyr::filter(!(country == "Uganda" & ea_program_vil == "ILC"))
+```
+
+## Malawi
+
+According to Evidence Action admin data:
+
+- There are `r villages %>% dplyr::filter(country == "Malawi") %>% nrow` villages in Malawi with DSW or ILC
+  - `r villages %>% dplyr::filter(country == "Malawi", dsw) %>% nrow` with DSW
+  - `r villages %>% dplyr::filter(country == "Malawi", ilc) %>% nrow` with ILC
+  - `r villages %>% dplyr::filter(country == "Malawi", pre_expansion == "Footprint") %>% nrow` are footprint villages
+  - `r villages %>% dplyr::filter(country == "Malawi", pre_expansion == "Expansion") %>% nrow` are expansion villages
+  - `r villages %>% dplyr::filter(country == "Malawi", ilc_wpt > 0) %>% nrow` villages have ILC water points
+  - `r villages %>% dplyr::filter(country == "Malawi", ilc_wcp > 0) %>% nrow` villages have ILC water collection points
+  - `r villages %>% dplyr::filter(country == "Malawi") %>% pull(ilc_cluster_id) %>% n_distinct` ILC clusters
+  
+```{r}
+# MAP OF WATER POINTS AND WATER COLLECTION POINTS IN MALAWI
+```
+
+  
+- We wanted our sample to be representative of:
+  - All expansion villages
+  - All footprint villages
+  - All ILC villages
+  - We over sample from ILC villages because we wanted the data to be representative of ILC and less than 10% of villages have ILC.
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(pre_expansion, ea_program_vil) %>%
+  adorn_totals(where = "col")
+```
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(pre_expansion, ea_program_vil) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting()
+```
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi") %>% 
+  tabyl(pre_expansion, ilc)
+```
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi") %>% 
+  tabyl(pre_expansion, dsw)
+```
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi") %>% 
+  tabyl(pre_expansion, dsw)
+```
+
+> These numbers don't add up: seven villages have ilc villages and don't have an ILC WCP (`ilc` is FALSE). Check the data
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", sample == "Main sample") %>%
+  tabyl(pre_expansion, ea_program_vil)
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", sample == "Main sample") %>%
+  tabyl(pre_expansion, ea_program_vil) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting()
+```
+### Footprint group
+
+- Visited villages are comparable to other footprint villages with whether or not we include villages with ILC
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", pre_expansion == "Footprint") %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_d", "ilc_wpt_d", "ilc_wpt", "ilc_wcp_d", "ilc_wcp"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", pre_expansion == "Footprint", !ilc) %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_d", "ilc_wpt_d", "ilc_wpt", "ilc_wcp_d", "ilc_wcp"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+### Expansion villages
+
+- Since we over sampled ILC villages, visited villages are not comparable to other villages without corrections
+- If we exclude villages with ILC, then they are comparable
+- If we exclude villages sampled because of ILC, they also are
+- **Check what would happen if we used sampling weights for ILC villages**
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", pre_expansion == "Expansion") %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_d", "ilc_wpt_d", "ilc_wpt", "ilc_wcp_d", "ilc_wcp"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", pre_expansion == "Expansion", !ilc) %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_d", "ilc_wpt_d", "ilc_wpt", "ilc_wcp_d", "ilc_wcp"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", pre_expansion == "Expansion", sample_group_old %in% c(NA, "Expansion")) %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_d", "ilc_wpt_d", "ilc_wpt", "ilc_wcp_d", "ilc_wcp"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+> There is a missing village here!
+
+### ILC villages
+
+- Without any treatment, visited ILC villages are not comparable to non-visited villages. This is because we sampled up to 5 villages per cluster and always sampled the villages with the water point in a cluster, so we have more villages with ILC water points compared to the average.
+- If we winsorize the number of water points and water collection points at the 90th percentile, then the villages are comparable.
+- There are **XXXX** ILC clusters in Malawi. 
+- The modal cluster has XX villages with ZZ ILC water point and YY water collection points.
+- There are XXX large clusters (describe them).
+- We sampled at the cluster level (describe sampling).
+- X of the villages sampled are in large clusters.
+
+> Think about how we want to present this
+
+```{r}
+villages %>%
+  dplyr::filter(!is.na(ilc_cluster_id)) %>%
+  group_by(ilc_cluster_id) %>%
+  summarise(
+    n_villages = n_distinct(village_id),
+    n_wpt = sum(ilc_wpt),
+    n_wcp = sum(ilc_wcp)
+  ) %>% 
+  skim
+```
+
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", ilc) %>%
+  mutate(
+    across(
+      c(ilc_wcp, ilc_wpt),
+      ~ winsorize(.),
+      .names = "{.col}_w"
+    ) 
+  ) %>%
+  sumtable(
+    vars = c("dsw_wpt", "dsw_d", "ilc_wpt_d", "ilc_wcp_d", "ilc_wpt", "ilc_wcp", "ilc_wpt_w", "ilc_wcp_w"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", ilc, sample_group_old %in% c(NA, "ILC")) %>%
+  mutate(
+    across(
+      c(ilc_wcp, ilc_wpt),
+      ~ winsorize(.),
+      .names = "{.col}_w"
+    ) 
+  ) %>%
+  sumtable(
+    vars = c("dsw_wpt", "dsw_d", "ilc_wpt_d", "ilc_wcp_d", "ilc_wpt", "ilc_wcp", "ilc_wpt_w", "ilc_wcp_w"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", ilc, sample_group %in% c(NA, "ILC")) %>%
+  mutate(
+    across(
+      c(ilc_wcp, ilc_wpt),
+      ~ winsorize(.),
+      .names = "{.col}_w"
+    ) 
+  ) %>%
+  sumtable(
+    vars = c("dsw_wpt", "dsw_d", "ilc_wpt_d", "ilc_wcp_d", "ilc_wpt", "ilc_wcp", "ilc_wpt_w", "ilc_wcp_w"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+# Sample sizes
+  
+
+## Water points 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  )
+
+wp %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id),
+    `Evidence Action water points` = sum(intervention_type != "Non-program")
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  ) %>%
+  kable(
+    caption = "Sample sizes by country",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r}
+wp %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id),
+    `Functional water points` = sum(wp_func, na.rm = TRUE),
+    `Functional dispensers` = sum(jc_valve, na.rm = TRUE),
+    `Filled dispensers` = sum(jc_chlorine, na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr) & jc_chlorine, na.rm = TRUE),
+    `Color wheel TCR test` = sum(!is.na(disctcr) & jc_chlorine, na.rm = TRUE),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr) & jc_chlorine, na.rm = TRUE),
+    `Colorimeter TCR test` = sum(!is.na(metertcr) & jc_chlorine, na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  ) %>%
+  kable(
+    caption = "Sample of DSW water points",
+      col.names = c("Sample", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+
+```
+    
+    `ILC water points` = sum(intervention_type == "ILC water point", na.rm = TRUE),
+    `ILC water collection points` = sum(intervention_type == "ILC water collection point", na.rm = TRUE),
+    `Functional ILC water (collection) points`  = sum(str_detect(intervention_type, "ILC") & wp_func, na.rm = TRUE),
+    `Water points with DSW` = sum(intervention_type == "DSW", na.rm = TRUE),
+    `Functional water points with DSW`  = sum(str_detect(intervention_type, "DSW") & wp_func, na.rm = TRUE),
+    `Functional water points with and working and filled DSW` = sum(jc_chlorine & wp_func, na.rm = TRUE),
+    
+  ) 
+```
+
+```{r}
+wp %>%
+  dplyr::filter(country == "Malawi") %>%
+  group_by(sample_group) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id),
+    `ILC water points` = sum(str_detect(intervention_type, "ILC"), na.rm = TRUE),
+    `ILC water collection points` = sum(str_detect(intervention_type, "ILC water collection point"), na.rm = TRUE),
+    DSW = sum(intervention_type == "DSW", na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  ) %>%
+  pivot_longer(cols = -sample_group) %>%
+  pivot_wider(
+    names_from = sample_group,
+    values_from = value
+  ) %>%
+  kable(
+    caption = "Sample sizes in Malawi",
+      align = c("l", "c", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+```{r}
+wp %>%
+  dplyr::filter(country == "Uganda") %>%
+  group_by(sample_group) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id),
+    `ILC water points` = sum(str_detect(intervention_type, "ILC"), na.rm = TRUE),
+    `ILC water collection points` = sum(str_detect(intervention_type, "ILC water collection point"), na.rm = TRUE),
+    DSW = sum(intervention_type == "DSW", na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  ) %>%
+  pivot_longer(cols = -sample_group) %>%
+  pivot_wider(
+    names_from = sample_group,
+    values_from = value
+  ) %>%
+  kable(
+    caption = "Sample sizes in Uganda",
+      align = c("l", "c", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+> Check water points and water collection points definitions
+
+## Household census
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  )
+
+hh_census %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Households identified` = n_distinct(household_id),
+    `Households surveyed` = sum(response),
+    `Households matched to mapped water points` = sum(wp_identified),
+    `Households using EvAc sources` = sum(wp_intervention_type != "Non-program", na.rm = TRUE),
+    `DSW sources` = sum(wp_intervention_type == "DSW", na.rm = TRUE),
+    `ILC sources` = sum(str_detect(wp_intervention_type, "ILC"), na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  )  %>%
+  kable(
+    caption = "Number of observations in household survey",
+      col.names = c("", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+## Household survey
+
+- No household surveys were conducted in village 2101405067 because the water point with DSW is not used for drinking water by any households due to high salinity. This village wasn't replaced because (?)
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(survey == "Household Survey")
+
+hh_survey %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    Household = n_distinct(household_id),
+    `Using ILC water collection points` = sum(str_detect(wp_intervention_type, "ILC"), na.rm = TRUE),
+    `Using DSW water points` = sum(wp_intervention_type == "DSW", na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  )  %>%
+  kable(
+    caption = "Number of observations in household survey",
+      col.names = c("", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+
+## Monitoring survey
+
+```{r}
+mon_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(survey == "Monitoring Survey")
+
+mon_survey %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    Household = n_distinct(household_id),
+    ILC = sum(str_detect(wp_intervention_type, "ILC"), na.rm = TRUE),
+    DSW = sum(wp_intervention_type == "DSW", na.rm = TRUE),
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  ) %>%
+  pivot_longer(cols = -country) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = value
+  )  %>%
+  kable(
+    caption = "Number of observations in household survey",
+      col.names = c("", "Malawi", "Uganda"),
+      align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+## Chlorine tests
+
+```{r}
+wp %>%
+  group_by(country, intervention_type) %>%
+  summarise(
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  )
+```
+
+```{r}
+read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  group_by(country, wp_intervention_type) %>%
+  summarise(
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  )
+```
+
+```{r}
+read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    `Color wheel FCR test` = sum(!is.na(discfcr)),
+    `Color wheel TCR test` = sum(!is.na(disctcr)),
+    `Colorimeter FCR test` = sum(!is.na(meterfcr)),
+    `Colorimeter TCR test` = sum(!is.na(metertcr)),
+  )
+```
+
+## Potential contamination
+
+```{r}
+hh_survey %>%
+  dplyr::filter(!is.na(int_warned)) %>%
+  tabyl(int_warned, country) %>%
+  adorn_percentages(denominator = "col") %>%
+  adorn_pct_formatting()
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(int_warned == "Yes") %>%
+  tabyl(int_warned_who, country)
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(int_warned_who == "Other") %>%
+  tabyl(int_warned_who_o, country)
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(!is.na(int_warned_what)) %>%
+  mutate(int_warner = if_else(int_warned_who != "Other", as.character(int_warned_who), int_warned_who_o)) %>%
+  select(country, district, village, int_warner, int_warned_what) %>%
+  arrange(country, district, village, int_warner) %>%
+  kable(
+    caption = "What was the message?",
+      col.names = c("Country", "District", "Village", "Who contacted", "Message")
+  ) %>%
+  kable_styling(
+    full_width = FALSE, 
+    bootstrap_options = c("striped", "hover")
+  )
+```
+

@@ -1,0 +1,480 @@
+# Adoption rates
+
+```{r}
+pacman::p_load(
+  stringr,
+  sf,
+  tidyverse,
+  viridis,
+  janitor,
+  vtable
+)
+```
+
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Constructed",
+      "hh-survey-constructed.rds"
+    )
+  ) %>%
+  st_drop_geometry() 
+```
+
+## Compare colors
+
+
+```{r}
+color <-
+  hh_survey %>%
+  select(
+    #sample_group,
+    country,
+    ends_with("cr_c"),
+    matches("_c_02"),
+    matches("meter(.*)_c_01"),
+    ends_with("color")
+  ) %>%
+  set_names(
+    names(.) %>% 
+      str_remove_all("c_")
+  ) %>%
+  pivot_longer(
+    cols = -c(country),
+    names_pattern = "(.*)_(.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  dplyr::filter(!is.na(color)) %>%
+  rename(reading = c) %>%
+  mutate(
+    residual = if_else(str_detect(measure, "tcr"), "TCR", "FCR"),
+    instrument = if_else(str_detect(measure, "disc"), "Disc", "Meter")
+  ) %>%
+  rename(
+    `Detected at 0.1 ppm` = `01`,
+    `Detected at 0.2 ppm` = `02`,
+  ) %>%
+  group_by(country, residual, color, instrument) %>%
+  summarise(
+    n = n(),
+    sd = sd(reading, na.rm = TRUE),
+    mean = mean(reading, na.rm = TRUE),
+    across(
+      contains("Detected"),
+      ~ mean(., na.rm = TRUE)
+    )
+  ) %>%
+  mutate(
+    ub = mean + 1.96 * (sd/sqrt(n)),
+    lb = mean - 1.96 * (sd/sqrt(n))
+  )
+```
+
+
+### Average reading
+
+```{r}
+color %>%
+  dplyr::filter(
+    country == "Uganda",
+    color != "Other",
+    !str_detect(color, "3"),
+    !str_detect(color, "4")
+  ) %>%
+  ggplot(
+    aes(
+      x = instrument,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ color) +
+  labs(
+    title = "Uganda",
+    x = NULL,
+    y = "Reading (mg/L)"
+  )
+```
+
+```{r}
+color %>%
+  dplyr::filter(
+    country == "Malawi",
+    color != "Other",
+    !str_detect(color, "3"),
+    !str_detect(color, "4")
+  ) %>%
+  ggplot(
+    aes(
+      x = instrument,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ color) +
+  labs(
+    title = "Malawi",
+    x = NULL,
+    y = "Reading (mg/L)"
+  )
+```
+
+
+### Malawi TCR
+
+```{r}
+table %>%
+  ungroup %>%
+  dplyr::filter(country == "Malawi", residual == "TCR") %>%
+  select(-c(country, residual))
+```
+
+### Malawi FCR
+
+```{r}
+table %>%
+  ungroup %>%
+  dplyr::filter(country == "Malawi", residual == "FCR") %>%
+  select(-c(country, residual, color))
+```
+
+### Uganda TCR
+
+```{r}
+table %>%
+  ungroup %>%
+  dplyr::filter(country == "Uganda", residual == "TCR") %>%
+  select(-c(country, residual, color))
+```
+
+### Uganda FCR
+
+```{r}
+table %>%
+  ungroup %>%
+  dplyr::filter(country == "Uganda", residual == "FCR") %>%
+  select(-c(country, residual, color))
+```
+
+
+## Taking only readings into account
+
+```{r}
+adoption <-
+  hh_survey %>% 
+  set_names(
+    names(.) %>% str_replace_all("_c_0", "_0")
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(
+        discfcr_02, disctcr_02, 
+        meterfcr_02, metertcr_02,
+        meterfcr_01, metertcr_01
+      ),
+      list(
+        mean = ~ mean(. * 100, na.rm = TRUE),
+        sd = ~ sd(. * 100, na.rm = TRUE),
+        n = ~ n()
+      ),
+      .names = "{.col}__{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = -c(country),
+    names_pattern = "(.*)__(.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  mutate(
+    se = sd/sqrt(n),
+    ub = mean + 1.96 * se,
+    lb = mean - 1.96 * se,
+    residual = if_else(str_detect(measure, "tcr"), "TCR", "FCR"),
+    criterion = measure %>%
+      str_remove_all("tcr") %>%
+      str_remove_all("fcr") %>%
+      str_replace_all("_0", " > 0.") %>%
+      str_to_title() %>%
+      paste("mg/L") %>%
+      factor(
+        levels = c("Meter > 0.1 mg/L", "Meter > 0.2 mg/L", "Disc > 0.2 mg/L"),
+        ordered = TRUE
+      )
+  )
+
+adoption %>%
+  ggplot(
+    aes(
+      x = criterion,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ country) +
+  labs(
+    x = NULL,
+    y = "Adoption rate (%)"
+  )
+```
+
+```{r}
+adoption <-
+  hh_survey %>% 
+  set_names(
+    names(.) %>% str_replace_all("_c_0", "_0")
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      c(
+        discfcr_02, disctcr_02, 
+        meterfcr_02, metertcr_02,
+        meterfcr_01, metertcr_01
+      ),
+      list(
+        mean = ~ mean(. * 100, na.rm = TRUE),
+        sd = ~ sd(. * 100, na.rm = TRUE),
+        n = ~ n()
+      ),
+      .names = "{.col}__{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = -c(sample_group, country),
+    names_pattern = "(.*)__(.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  mutate(
+    se = sd/sqrt(n),
+    ub = mean + 1.96 * se,
+    lb = mean - 1.96 * se,
+    residual = if_else(str_detect(measure, "tcr"), "TCR", "FCR"),
+    criterion = measure %>%
+      str_remove_all("tcr") %>%
+      str_remove_all("fcr") %>%
+      str_replace_all("_0", " > 0.") %>%
+      str_to_title() %>%
+      paste("mg/L") %>%
+      factor(
+        levels = c("Meter > 0.1 mg/L", "Meter > 0.2 mg/L", "Disc > 0.2 mg/L"),
+        ordered = TRUE
+      )
+  )
+
+adoption %>%
+  dplyr::filter(country == "Uganda") %>%
+  ggplot(
+    aes(
+      x = criterion,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ sample_group) +
+  labs(
+    title = "Uganda",
+    x = NULL,
+    y = "Adoption rate (%)"
+  )
+```
+
+```{r}
+adoption %>%
+  dplyr::filter(country == "Malawi") %>%
+  ggplot(
+    aes(
+      x = criterion,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ sample_group) +
+  labs(
+    title = "Malawi",
+    x = NULL,
+    y = "Adoption rate (%)"
+  )
+```
+
+## Take color into account
+
+```{r}
+adoption <-
+  hh_survey %>% 
+  mutate(
+    discfcr_02 = if_else(discfcr_color == "1 - Clear", FALSE, discfcr_c_02), 
+    disctcr_02 = if_else(disctcr_color == "1 - Clear", FALSE, disctcr_c_02), 
+    meterfcr_02 = if_else(meterfcr_color == "1 - Clear", FALSE, meterfcr_c_02), 
+    metertcr_02 = if_else(metertcr_color == "1 - Clear", FALSE, metertcr_c_02),
+    meterfcr_01 = if_else(meterfcr_color == "1 - Clear", FALSE, meterfcr_c_01), 
+    metertcr_01 = if_else(metertcr_color == "1 - Clear", FALSE, metertcr_c_01)
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(
+        discfcr_02, disctcr_02, 
+        meterfcr_02, metertcr_02,
+        meterfcr_01, metertcr_01
+      ),
+      list(
+        mean = ~ mean(. * 100, na.rm = TRUE),
+        sd = ~ sd(. * 100, na.rm = TRUE),
+        n = ~ n()
+      ),
+      .names = "{.col}__{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = -c(country),
+    names_pattern = "(.*)__(.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  mutate(
+    se = sd/sqrt(n),
+    ub = mean + 1.96 * se,
+    lb = mean - 1.96 * se,
+    residual = if_else(str_detect(measure, "tcr"), "TCR", "FCR"),
+    criterion = measure %>%
+      str_remove_all("tcr") %>%
+      str_remove_all("fcr") %>%
+      str_replace_all("_0", " > 0.") %>%
+      str_to_title() %>%
+      paste("mg/L") %>%
+      factor(
+        levels = c("Meter > 0.1 mg/L", "Meter > 0.2 mg/L", "Disc > 0.2 mg/L"),
+        ordered = TRUE
+      )
+  )
+
+adoption %>%
+  ggplot(
+    aes(
+      x = criterion,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ country) +
+  labs(
+    x = NULL,
+    y = "Adoption rate (%)"
+  )
+```
+
+
+```{r}
+adoption <-
+  hh_survey %>% 
+  mutate(
+    discfcr_02 = discfcr_c_02, 
+    disctcr_02 = disctcr_c_02, 
+    meterfcr_02 = if_else(meterfcr_color == "1 - Clear", FALSE, meterfcr_c_02), 
+    metertcr_02 = if_else(metertcr_color == "1 - Clear", FALSE, metertcr_c_02),
+    meterfcr_01 = if_else(meterfcr_color == "1 - Clear", FALSE, meterfcr_c_01), 
+    metertcr_01 = if_else(metertcr_color == "1 - Clear", FALSE, metertcr_c_01)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      c(
+        discfcr_02, disctcr_02, 
+        meterfcr_02, metertcr_02,
+        meterfcr_01, metertcr_01
+      ),
+      list(
+        mean = ~ mean(. * 100, na.rm = TRUE),
+        sd = ~ sd(. * 100, na.rm = TRUE),
+        n = ~ n()
+      ),
+      .names = "{.col}__{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = -c(sample_group, country),
+    names_pattern = "(.*)__(.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  mutate(
+    se = sd/sqrt(n),
+    ub = mean + 1.96 * se,
+    lb = mean - 1.96 * se,
+    residual = if_else(str_detect(measure, "tcr"), "TCR", "FCR"),
+    criterion = measure %>%
+      str_remove_all("tcr") %>%
+      str_remove_all("fcr") %>%
+      str_replace_all("_0", " > 0.") %>%
+      str_to_title() %>%
+      paste("mg/L") %>%
+      factor(
+        levels = c("Meter > 0.1 mg/L", "Meter > 0.2 mg/L", "Disc > 0.2 mg/L"),
+        ordered = TRUE
+      )
+  )
+
+adoption %>%
+  dplyr::filter(country == "Uganda") %>%
+  ggplot(
+    aes(
+      x = criterion,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ sample_group) +
+  labs(
+    title = "Uganda",
+    x = NULL,
+    y = "Adoption rate (%)"
+  )
+```
+
+```{r}
+adoption %>%
+  dplyr::filter(country == "Malawi") %>%
+  ggplot(
+    aes(
+      x = criterion,
+      y = mean,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar() +
+  facet_grid(residual ~ sample_group) +
+  labs(
+    title = "Malawi",
+    x = NULL,
+    y = "Adoption rate (%)"
+  )
+```
+

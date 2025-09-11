@@ -1,0 +1,236 @@
+# Compare footprint and expansion groups
+
+```{r}
+pacman::p_load(
+  stringr,
+  sf,
+  tidyverse,
+  viridis,
+  janitor,
+  vtable
+)
+```
+
+- In Malawi
+  - Expansion villages have more DSW and ILC water points and more ILC water collection points than footprint villages. They are also more likely to have ILC.
+  - Expansion and footprint villages are not different in size, but a smaller share of households use Evidence Action water sources in footprint villages.
+  - Adoption rates are not different in expansion and footprint villages.
+  - Households in footprint villages are smaller and less likely to have children under 2 and under 5.
+  
+- In Uganda
+  - Expansion villages have more DSW water collection points, are less likely to have ILC, and have fewer ILC water points and water collection points than footprint villages.
+  - Expansion villages are larger (have more households) and have a higher share of households using Evidence Action water sources than footprint villages.
+  - Adoption rates may be slightly lower in footprint than in expansion villages.
+  - Households in footprint villages and expansion villages have similar sizes.
+  - Households in footprint villages are less likely to have children under 5.
+
+```{r}
+villages <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  ) %>%
+  dplyr::filter(!(country == "Uganda" & ea_program_vil == "ILC"))
+
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  dplyr::filter(sample_group != "ILC") %>%
+  st_drop_geometry() 
+
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  st_drop_geometry() 
+```
+
+# In the population of villages
+
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Malawi", dsw) %>%
+  mutate(ilc = as.numeric(ilc)) %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_wpt", "ilc_wcp", "ilc"),
+    group = "pre_expansion",
+    group.test = TRUE,
+    title = "All villages in Malawi"
+  )
+```
+
+```{r}
+villages %>% 
+  dplyr::filter(country == "Uganda", dsw) %>%
+  mutate(ilc = as.numeric(ilc)) %>%
+  sumtable(
+    vars = c("dsw_wpt", "ilc_wpt", "ilc_wcp", "ilc"),
+    group = "pre_expansion",
+    group.test = TRUE,
+    title = "All villages in Uganda"
+  )
+```
+
+# In the household census
+
+```{r}
+villages <-
+  hh_census %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    evac = (wp_intervention_type %in% c("DSW", "ILC water point", "ILC water collection point")) %>% sum(na.rm = TRUE),
+    hhs = n(),
+    share = evac/hhs
+  ) %>%
+  ungroup
+```
+
+```{r}
+villages_ug <-
+  villages %>%
+  dplyr::filter(country == "Uganda")
+
+map(
+  c("hhs", "evac", "share"),
+  ~ paste(.x, "~ sample_group") %>%
+    as.formula %>%
+    lm(., data = villages_ug)
+) %>% 
+  set_names(c("Number of households", "Number of users", "Share of users")) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!.*N)",
+    title = "Sampled Uganda villages"
+  )
+```
+
+```{r}
+villages_mw <-
+  villages %>%
+  dplyr::filter(country == "Malawi")
+  
+
+map(
+  c("hhs", "evac", "share"),
+  ~ paste(.x, "~ sample_group") %>%
+    as.formula %>%
+    lm(., data = villages_mw)
+) %>% 
+  set_names(c("Number of households", "Number of users", "Share of users")) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!.*N)",
+  )
+```
+
+```{r}
+map(
+  c("hh_members", "hh_under2", "hh_under5"),
+  ~ lm(
+    paste(., "~ sample_group") %>% as.formula,
+    data = hh_census %>% dplyr::filter(country == "Malawi")
+  )
+) %>% 
+  set_names(c("Household size", "Any child under 2", "Any child under 5")) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!.*N)",
+    title = "Malawi"
+  )
+```
+```{r}
+map(
+  c("hh_members", "hh_under2", "hh_under5"),
+  ~ lm(
+    paste(., "~ sample_group") %>% as.formula,
+    data = hh_census %>% dplyr::filter(country == "Uganda")
+  )
+) %>% 
+  set_names(c("Household size", "Any child under 2", "Any child under 5")) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!.*N)",
+    title = "Uganda"
+  )
+```
+
+# In the household survey
+
+```{r}
+hhs_mw <-
+  hh_survey %>%
+  dplyr::filter(country == "Malawi", sample_group != "ILC")
+
+map(
+  c(
+    "discfcr_02", "disctcr_02", 
+    "meterfcr_02", "metertcr_02",
+    "meterfcr_01", "metertcr_01"
+  ),
+  ~ paste(.x, "~ sample_group") %>%
+    as.formula %>%
+    lm(., data = hhs_mw)
+) %>% 
+  set_names(
+    c(
+      "CW FCR > 0.2", "CW TCR > 0.2",
+      "CM FCR > 0.2", "CM TCR > 0.2",
+      "CM FCR > 0.1", "CM TCR > 0.1"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!.*N)",
+  )
+```
+
+```{r}
+hhs_ug <-
+  hh_survey %>%
+  dplyr::filter(country == "Uganda", sample_group != "ILC")
+
+map(
+  c(
+    "discfcr_02", "disctcr_02", 
+    "meterfcr_02", "metertcr_02",
+    "meterfcr_01", "metertcr_01"
+  ),
+  ~ paste(.x, "~ sample_group") %>%
+    as.formula %>%
+    lm(., data = hhs_ug)
+) %>% 
+  set_names(
+    c(
+      "CW FCR > 0.2", "CW TCR > 0.2",
+      "CM FCR > 0.2", "CM TCR > 0.2",
+      "CM FCR > 0.1", "CM TCR > 0.1"
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!.*N)",
+  )
+```
+

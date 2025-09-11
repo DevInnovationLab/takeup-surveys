@@ -11,7 +11,8 @@ packages <-
     "tidyr",
     "dplyr",
     "knitr",
-    "kableExtra"
+    "kableExtra",
+    "modelsummary"
   )
 
 pacman::p_load(
@@ -36,29 +37,21 @@ hh_census <-
 ```
 
 ## Headline numbers table
+
 ```{r}
 hh_census %>%
   st_drop_geometry() %>% 
   dplyr::filter(!is.na(country)) %>%  
   mutate(
-    hh_dsw = wp_intervention_type == "DSW",
-    hh_ilc = wp_intervention_type %in% c("ILC water point", "ILC water collection point")
+    evac = wp_intervention_type %in% c("DSW", "ILC water point", "ILC water collection point")
   ) %>%
-  group_by(country, village_id) %>%
-  summarise(
-    n_households = n(),
-    share_dsw = mean(hh_dsw, na.rm = TRUE) * 100,
-    share_ilc = mean(hh_ilc, na.rm = TRUE) * 100,
-    .groups = "drop"
-  ) %>%
-  group_by(country) %>%
+  group_by(country, sample_group) %>%
   summarise(
     `Villages (n)` = n_distinct(village_id),
-    `Households (total)` = sum(n_households),
-    `Avg HHs per village` = mean(n_households),
-    `Avg DSW share per village (%)` = mean(share_dsw),
-    `Avg ILC share per village (%)` = mean(share_ilc),
-    .groups = "drop"
+    `Households (total)` = n(),
+    `Households using Evidence Action water points` = sum(evac, na.rm = TRUE),
+    `Avg HHs per village` = `Households (total)`/`Villages (n)`,
+    `EvAc share (%)` = (`Households using Evidence Action water points`/`Households (total)`)* 100 %>% round(1)
   ) %>%
   kable(
     digits = 1,
@@ -70,6 +63,9 @@ hh_census %>%
     bootstrap_options = c("striped", "hover")
   )
 ```
+
+
+
 
 ## Data for table 1 in Overleaf
 ```{r}
