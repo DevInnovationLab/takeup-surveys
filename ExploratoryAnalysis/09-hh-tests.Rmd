@@ -135,7 +135,7 @@ color %>%
 ### Malawi TCR
 
 ```{r}
-table %>%
+color %>%
   ungroup %>%
   dplyr::filter(country == "Malawi", residual == "TCR") %>%
   select(-c(country, residual))

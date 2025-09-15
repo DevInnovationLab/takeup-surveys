@@ -47,7 +47,7 @@ wp_analysis <-
 ```{r}
 eligiblity_df <-
   wp_census %>%
-  # Calculate the relevanat statistics
+  # Calculate the relevant statistics
   summarise(
     Visited =  n_distinct(wp_id),
     across(
@@ -185,6 +185,40 @@ wp_analysis %>%
     col.names = c("", "N", "Functional (%)"),
     align = c("l", "c", "c")
   ) 
+```
+
+### Analysis sample size
+
+```{r}
+counts_by_country <-
+  wp_analysis %>%
+  group_by(country) %>%
+  dplyr::filter(wp_func) %>%
+  summarise(
+    `ILC WP` = sum(ilc_wp, na.rm = TRUE),
+    `ILC WCP` = sum(ilc_wcp, na.rm = TRUE),
+    `DSW WP` = sum(dsw, na.rm = TRUE),
+    `ILC WP with meterfcr` = sum(ilc_wp & !is.na(meterfcr), na.rm = TRUE),
+    `ILC WP with metertcr` = sum(ilc_wp & !is.na(metertcr), na.rm = TRUE),
+    `ILC WCP with meterfcr`= sum(ilc_wcp & !is.na(meterfcr), na.rm = TRUE),
+    `ILC WCP with metertcr`= sum(ilc_wcp & !is.na(metertcr), na.rm = TRUE),
+    `DSW WP with meterfcr` = sum(dsw & !is.na(meterfcr), na.rm = TRUE),
+    `DSW WP with metertcr` = sum(dsw & !is.na(metertcr), na.rm = TRUE),
+    `DSW WP with discfcr` = sum(dsw & !is.na(discfcr), na.rm = TRUE),
+    `DSW WP with disctcr` = sum(dsw & !is.na(disctcr), na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(country)
+
+ilc_meter_counts_by_country %>%
+  kable(
+    caption = "Functional ILC WP/WCP and DSW WP with colorimeter readings",
+    align = c("l","r","r","r","r","r","r","r","r","r","r","r")
+  )
+
+wp_analysis %>% dplyr::filter(wp_func, dsw) %>% nrow()
+wp_analysis %>% dplyr::filter(ilc_wp) %>% nrow()
+wp_analysis %>% dplyr::filter(ilc_wcp) %>% nrow()
 ```
 
 ### Averages by village
@@ -456,7 +490,6 @@ dsw %>%
   select(" ", `N Obs`, Count, Percent)
 ```
 
-
 ### Chlorine dosage
 
 ```{r}
@@ -517,4 +550,95 @@ dsw %>%
     y = "Number of tests"
   ) + 
   theme(legend.position = "none")
+```
+
+
+### Colorimeter vs color wheel
+
+```{r}
+tol <- 0.0499
+
+# Map columns to instrument/residual/treated
+map <- tribble(
+  ~col,             ~instrument,   ~residual, ~treated,
+  "meterfcr_c",     "colorimeter", "FCR",     "chlorinated",
+  "metertcr_c",     "colorimeter", "TCR",     "chlorinated",
+  "discfcr_c",      "color wheel", "FCR",     "chlorinated",
+  "disctcr_c",      "color wheel", "TCR",     "chlorinated",
+  "meterfcr_un_c",  "colorimeter", "FCR",     "unchlorinated",
+  "metertcr_un_c",  "colorimeter", "TCR",     "unchlorinated",
+  "discfcr_un_c",   "color wheel", "FCR",     "unchlorinated",
+  "disctcr_un_c",   "color wheel", "TCR",     "unchlorinated"
+)
+
+wp_cons <- read_rds(file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed.rds"
+    ))
+
+pairs <- wp_cons %>%
+  select(any_of(map$col), dsw, ilc_wp, ilc_wcp, country, wp_id) %>%  # include a unique id
+  pivot_longer(cols = any_of(map$col), names_to = "col", values_to = "value") %>%
+  left_join(map, by = "col") %>%
+  mutate(value = as.numeric(value)) %>%
+  group_by(wp_id, country, dsw, ilc_wp, ilc_wcp, instrument, treated, residual) %>%
+  summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%  # or first(na.omit(value))
+  pivot_wider(names_from = residual, values_from = value) %>%
+  drop_na(FCR, TCR) %>%
+  mutate(system = case_when(
+    isTRUE(dsw) ~ "DSW",
+    isTRUE(ilc_wp) ~ "ILC_WP",
+    isTRUE(ilc_wcp) ~ "ILC_WCP",
+    TRUE ~ "Non-program"
+  ))
+
+overall <- pairs %>%
+  group_by(instrument, treated) %>%
+  summarise(
+    n_pairs = n(),
+    n_FCR_gt_TCR = sum(FCR > (TCR + tol)),
+    pct_FCR_gt_TCR = round(100 * n_FCR_gt_TCR / n_pairs, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(treated, instrument)
+
+overall %>% knitr::kable(
+  caption = paste0("Frequency of FCR > TCR by instrument (tolerance = ", tol, " ppm)"),
+  col.names = c("Instrument", "Status", "N pairs", "N (FCR > TCR)", "Percent (%)"),
+  align = "lcrrr"
+)
+```
+
+```{r}
+wp_cons %>%
+  summarise(
+    across(
+      .cols = any_of(c("metertcr","meterfcr","disctcr","discfcr")),
+      .fns  = ~ mean(., na.rm = TRUE),
+      .names = "{.col}_mean"
+    )
+  )
+```
+
+```{r}
+library(dplyr)
+
+overall_fp <- wp_cons %>%
+  summarise(
+    n_meter_un   = sum(!is.na(metertcr_un_c)),
+    n_meter_02_pos = sum(metertcr_un_c > 0.199, na.rm = T),
+    pct_meter_02_un = round(100 * mean(metertcr_un_c > (0.199), na.rm = TRUE), 2),
+    n_meter_01_pos = sum(metertcr_un_c > 0.099, na.rm = T),
+    pct_meter_01_un = round(100 * mean(metertcr_un_c > (0.099), na.rm = TRUE), 2),
+    n_disc_un    = sum(!is.na(disctcr_un_c)),
+    n_disc_pos = sum(disctcr_un_c > 0.1, na.rm = T),
+    pct_disc_un  = round(100 * mean(disctcr_un_c  > (0.1), na.rm = TRUE), 2)
+  )
+
+overall_fp
+
 ```
