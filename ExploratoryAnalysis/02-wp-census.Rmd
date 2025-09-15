@@ -187,6 +187,102 @@ wp_analysis %>%
   ) 
 ```
 
+```{r}
+wp_analysis %>%
+  transmute(
+    wp_func,
+    disp_tank_present,
+    jc_valve,
+    jc_chlorine,
+    dsw,
+    meterfcr = is.na(meterfcr), metertcr = is.na(metertcr), discfcr = is.na(discfcr), disctcr = is.na(disctcr),
+    tank_valve = disp_tank_present & jc_valve,
+    tank_valve_chlorine = disp_tank_present & jc_valve & jc_chlorine
+  ) %>%
+  summarise(
+    across(everything(),
+           ~ as.integer(sum(.x, na.rm = TRUE)),         # <- N as integer (no rounding)
+           .names = "{.col}__N"),
+    across(everything(),
+           ~ round(mean(.x, na.rm = TRUE) * 100, 2),    # <- only percent rounded
+           .names = "{.col}__pct")
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c(" ", ".value"),
+    names_pattern = "(.*)__(N|pct)"
+  ) %>%
+  kable(
+    caption   = "Number of water points found",
+    col.names = c("", "N", "Present (%)"),
+    align     = c("l", "c", "c")
+  )
+
+wp_analysis %>%
+  # mutate(
+  #   dsw = case_when(
+  #     wp_id == "2101208052004" ~ FALSE,
+  #     TRUE ~ dsw
+  #   ),
+  #   disp_tank_present = case_when(
+  #     wp_id == "6013001" ~ TRUE,
+  #     wp_id == "6013005" ~ TRUE,
+  #     TRUE ~ disp_tank_present
+  #   )
+  # ) %>%
+  dplyr::filter(wp_func) %>%
+  transmute(
+    dsw,
+    ilc_wp,
+    ilc_wcp,
+    non_program = !((dsw %in% TRUE) | (ilc_wp %in% TRUE) | (ilc_wcp %in% TRUE)),
+    disp_tank_present,
+    jc_valve,
+    jc_chlorine,
+    dsw,
+    meterfcr = !is.na(meterfcr) & dsw, metertcr = !is.na(metertcr) & dsw, discfcr = !is.na(discfcr) & dsw, disctcr = !is.na(disctcr) & dsw,
+    tank_valve = disp_tank_present & jc_valve,
+    tank_valve_chlorine = disp_tank_present & jc_valve & jc_chlorine
+  ) %>%
+  summarise(
+    across(everything(),
+           ~ as.integer(sum(.x, na.rm = TRUE)),
+           .names = "{.col}__N")
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c(" ", ".value"),
+    names_pattern = "(.*)__(N)"
+  ) %>%
+  kable(
+    caption   = "Number of water points found",
+    col.names = c("", "N"),
+    align     = c("l", "c")
+  )
+
+wp_analysis %>%
+  dplyr::filter(wp_func, ilc_wp) %>%
+  transmute(
+    ilc_wp,
+    meterfcr = !is.na(meterfcr), metertcr = !is.na(metertcr), discfcr = !is.na(discfcr), disctcr = !is.na(disctcr),
+  ) %>%
+  summarise(
+    across(everything(),
+           ~ as.integer(sum(.x, na.rm = TRUE)),
+           .names = "{.col}__N")
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c(" ", ".value"),
+    names_pattern = "(.*)__(N)"
+  ) %>%
+  kable(
+    caption   = "Number of water points found",
+    col.names = c("", "N"),
+    align     = c("l", "c")
+  )
+```
+
 ### Analysis sample size
 
 ```{r}
