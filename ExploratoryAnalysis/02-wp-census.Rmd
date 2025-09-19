@@ -35,7 +35,7 @@ wp_census <-
   ) %>%
   st_drop_geometry %>%
   # Calculate which WPs will be included in analysis -- this is being moved to the processing code
-  mutate(analysis = wp_multicompound & wp_drink) 
+  mutate(analysis = wp_multicompound & wp_drink)
 
 wp_analysis <-
   wp_census %>%
@@ -264,6 +264,28 @@ wp_analysis %>%
   dplyr::filter(wp_func, ilc_wp) %>%
   transmute(
     ilc_wp,
+    meterfcr = !is.na(meterfcr), metertcr = !is.na(metertcr), discfcr = !is.na(discfcr), disctcr = !is.na(disctcr),
+  ) %>%
+  summarise(
+    across(everything(),
+           ~ as.integer(sum(.x, na.rm = TRUE)),
+           .names = "{.col}__N")
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c(" ", ".value"),
+    names_pattern = "(.*)__(N)"
+  ) %>%
+  kable(
+    caption   = "Number of water points found",
+    col.names = c("", "N"),
+    align     = c("l", "c")
+  )
+
+wp_analysis %>%
+  dplyr::filter(wp_func, ilc_wcp) %>%
+  transmute(
+    ilc_wcp,
     meterfcr = !is.na(meterfcr), metertcr = !is.na(metertcr), discfcr = !is.na(discfcr), disctcr = !is.na(disctcr),
   ) %>%
   summarise(
@@ -737,4 +759,15 @@ overall_fp <- wp_cons %>%
 
 overall_fp
 
+```
+
+## Nonfunctionality of ILC water points
+
+```{r}
+ilc_wp <- wp_constructed %>% dplyr::filter(intervention_type == "ILC water point", !wp_func) %>%
+  select(wp_id,key,country,dsw,ilc_wp, ilc_wcp, wp_ilc_evac, wp_ilc_device_c, sourcetype, wp_type_o, wp_func_reason_ilc:wp_func_last)
+ilc_wcp <- wp_constructed %>% dplyr::filter(intervention_type == "ILC water collection point", !wp_func) %>%
+  select(wp_id,key,country,dsw,ilc_wp, ilc_wcp, wp_ilc_evac, wp_ilc_device_c, sourcetype, wp_type_o, wp_func_reason_ilc:wp_func_last)
+
+view(ilc_wcp)
 ```

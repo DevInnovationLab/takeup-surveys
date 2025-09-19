@@ -1,0 +1,418 @@
+---
+title: "wp_counts"
+author: "Marcus Kuo"
+date: "2025-09-19"
+output: html_document
+---
+
+# wp_counts
+
+## Make wp_counts table
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "here",
+    "stringr",
+    "kableExtra"
+    )
+
+pacman::p_load(packages, character.only = TRUE)
+path <- file.path(path_git, "output/Tables")
+
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  st_drop_geometry %>%
+  # Calculate which WPs will be included in analysis -- this is being moved to the processing code
+  mutate(analysis = wp_multicompound & wp_drink)
+```
+
+```{r}
+totals <-
+  wp_census %>%
+  transmute(
+    country, sample_group, village_id, wp_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points`= n_distinct(wp_id),
+    across(
+      -c(village_id, wp_id),
+      ~ sum(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+village_average <-
+  wp_census %>%
+  transmute(
+    country, sample_group, village_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(village_id, country, sample_group) %>%
+  summarise(
+    across(
+      everything(),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      -village_id,
+      ~ mean(., na.rm = TRUE) %>% round(1)
+    )
+  )
+```
+
+```{r}
+totals_country <-
+  wp_census %>%
+  transmute(
+    country, village_id, wp_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id),
+    across(
+      -c(village_id, wp_id),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  mutate(sample_group = "Total")
+```
+
+```{r}
+village_av_country <-
+  wp_census %>%
+  transmute(
+    country, village_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(village_id, country) %>%
+  summarise(
+    across(
+      everything(),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      -village_id,
+      ~ mean(., na.rm = TRUE) %>% round(1)
+    )
+  ) %>%
+  mutate(
+    sample_group = "Total"
+  )
+```
+
+```{r}
+table <-
+  totals %>%
+  left_join(village_average, by = c("country", "sample_group")) %>%
+  rename_with(~ str_remove_all(., ".x")) %>%
+  bind_rows(totals_country) %>%
+  arrange(country, sample_group) %>%
+  select(
+    country, sample_group, Villages,
+    starts_with("DSW"),
+    starts_with("ILC water point"),
+    everything()
+  )
+```
+
+```{r}
+table
+```
+
+## Exporting wp_counts table
+
+```{r}
+disp <- table %>%
+  ungroup() %>%                                           # avoid grouped-select warnings
+  mutate(sample_group = factor(sample_group,
+                               levels = c("Total","Expansion","Footprint","ILC"))) %>%
+  arrange(country, sample_group) %>%
+  mutate(.row = row_number())
+
+grp_idx <- disp %>% group_by(country) %>%
+  summarise(start = first(.row), end = last(.row), .groups = "drop")
+
+indent_rows <- which(disp$sample_group %in% c("Expansion","Footprint","ILC"))
+bold_rows   <- which(disp$sample_group == "Total")
+
+# 2) show frame: drop country + helper column
+disp_show <- disp %>% ungroup() %>%
+  select(
+    "sample_group",
+    "Villages",
+    "Water points",
+    "DSW water points",
+    "DSW water points.y",
+    "ILC water points",
+    "ILC water points.y",
+    "ILC water collection points",
+    "ILC water collection points.y"
+  ) %>%
+  mutate(across(-sample_group, ~ ifelse(is.na(.), "", as.character(.))))
+
+# 3) column labels (must match ncol(disp_show) == 9)
+colnames_level3 <- c(
+  "","Villages","Water points",
+  "Total","Village Avg.",
+  "Total","Village Avg.",
+  "Total","Village Avg."
+)
+
+# 4) build table
+tbl <- kbl(
+  disp_show,
+  format  = "latex",
+  booktabs = TRUE,
+  na = "",
+  label = "wp_counts",
+  align   = c("l", rep("r", ncol(disp_show) - 1)),
+  caption = "Number of water points identified",
+  col.names = colnames_level3
+) %>%
+  add_header_above(c(" " = 3, "DSW" = 2, "ILC WP" = 2, "ILC WCP" = 2),
+                 bold = TRUE, line = TRUE) %>% 
+  add_header_above(c(" " = 1, "(1)"=1,"(2)"=1,"(3)"=1,"(4)"=1,"(5)"=1,"(6)"=1,"(7)"=1,"(8)"=1),
+                 bold = FALSE, line = FALSE) %>%
+  kable_styling(latex_options = c("hold_position")) %>%
+  add_indent(indent_rows)
+
+# 5) country blocks without inner label-to-first-row rule
+for (i in seq_len(nrow(grp_idx))) {
+  tbl <- tbl %>%
+    pack_rows(grp_idx$country[i], grp_idx$start[i], grp_idx$end[i],
+              latex_gap_space = "0pt",
+              hline_before = TRUE, hline_after = TRUE)
+}
+print(tbl)
+
+save_kable(tbl, file = file.path(path, "wp_counts.tex"))
+```
+
+# Making wp_dsw table
+
+```{r}
+dsw_summary <- wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  mutate(disp_func = disp_tank_present & jc_valve) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    `Identified` = n_distinct(wp_id),
+    `Func. WP` = sum(wp_func & !is.na(wp_func), na.rm = TRUE),
+    `Func. disp.` = sum(disp_func & !is.na(disp_func), na.rm = TRUE),
+    `Filled disp.` = sum(jc_chlorine, na.rm = TRUE),
+    `Colorimeter` = sum(!is.na(meter_enum)),
+    `Color wheel` = sum(!is.na(cw_enum)),
+    .groups = "drop"
+  )
+```
+
+```{r}
+dsw_disp <- dsw_summary %>%
+  ungroup() %>%
+  mutate(
+    sample_group = fct_relevel(as.factor(sample_group),
+                               "Total", "Expansion", "Footprint", "ILC", after = 0)
+  ) %>%
+  arrange(country, sample_group) %>%
+  mutate(.row = row_number())
+
+dsw_grp_idx <- dsw_disp %>%
+  group_by(country) %>%
+  summarise(start = first(.row), end = last(.row), .groups = "drop")
+
+dsw_indent_rows <- which(dsw_disp$sample_group %in% c("Expansion","Footprint","ILC"))
+
+dsw_names <- c(
+  "sample_group",   # not ""
+  "Identified",
+  "Func. WP",
+  "Func. disp.",
+  "Filled disp.",
+  "Colorimeter",
+  "Color wheel"
+)
+dsw_visible <- c(
+  "",
+  "Identified",
+  "Func. WP",
+  "Func. disp.",
+  "Filled disp.",
+  "Colorimeter",
+  "Color wheel"
+)
+
+dsw_disp_show <- dsw_disp %>%
+  select(all_of(dsw_names)) %>%
+  mutate(across(-sample_group, ~ ifelse(is.na(.), "", as.character(.))))
+
+# ---------- Build LaTeX table ----------
+# Column-number header row
+dsw_colnum <- setNames(rep(1, ncol(dsw_disp_show)),
+                       c(" ", paste0("(", seq_len(ncol(dsw_disp_show)-1), ")")))
+
+# Top band across metrics
+# dsw_band <- c(" " = 1, "DSW water points" = ncol(dsw_disp_show) - 1)
+
+tbl_dsw <- kbl(
+  dsw_disp_show,
+  format = "latex",
+  booktabs = TRUE,
+  na = "",
+  col.names = dsw_visible,
+  label = "wp_dsw_counts",
+  align = c("l", rep("r", ncol(dsw_disp_show) - 1)),
+  caption = "DSW water points sample"
+) %>%
+  # add_header_above(dsw_band, bold = TRUE, line = TRUE) %>%
+  add_header_above(dsw_colnum, bold = FALSE, line = FALSE) %>%
+  kable_styling(latex_options = c("hold_position")) %>%
+  add_indent(dsw_indent_rows)
+
+# Country blocks
+for (i in seq_len(nrow(dsw_grp_idx))) {
+  tbl_dsw <- tbl_dsw %>%
+    pack_rows(
+      dsw_grp_idx$country[i],
+      dsw_grp_idx$start[i],
+      dsw_grp_idx$end[i],
+      latex_gap_space = "0pt",
+      hline_before = TRUE, hline_after = TRUE
+    )
+}
+
+# print(tbl_dsw)
+
+save_kable(tbl_dsw, file = file.path(path, "wp_dsw_counts.tex"))
+```
+
+```{r}
+ilc_summary <- wp_census %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>%
+  mutate(wpt = intervention_type == "ILC water point") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    `Villages (All)` = n_distinct(village_id),
+    `Villages (WP)` = if_else(wpt, village_id, NA) %>% n_distinct,
+    `WP Identified` = sum(wpt),
+    `WP Functional` = sum(wpt & wp_func),
+    `WCP Identified` = n_distinct(wp_id),
+    `WCP Functional` = sum(wp_func),
+    `WCP Tested with colorimeter` = sum(!is.na(meter_enum)),
+    `WCP Tested with color wheel` = sum(!is.na(cw_enum)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    sample_group = fct_relevel(as.factor(sample_group),
+                               "Expansion", "Footprint", "ILC", after = 0)
+  ) %>%
+  arrange(country, sample_group) %>%
+  mutate(.row = row_number())
+```
+
+```{r}
+ilc_grp_idx <- ilc_summary %>%
+  group_by(country) %>%
+  summarise(start = first(.row), end = last(.row), .groups = "drop")
+
+ilc_indent_rows <- which(ilc_summary$sample_group %in% c("Expansion","Footprint","ILC"))
+
+ilc_names <- c(
+  "sample_group",
+  "Villages (All)",
+  "Villages (WP)",
+  "WP Identified",
+  "WP Functional",
+  "WCP Identified",
+  "WCP Functional",
+  "WCP Tested with colorimeter",
+  "WCP Tested with color wheel"
+)
+
+ilc_visible <- c(
+  "",
+  "All",
+  "WP",
+  "Identified",
+  "Functional",
+  "Identified",
+  "Functional",
+  "Colorimeter",
+  "Color wheel"
+)
+
+ilc_disp_show <- ilc_summary %>%
+  select(all_of(ilc_names)) %>%
+  mutate(across(-sample_group, ~ ifelse(is.na(.), "", as.character(.))))
+
+# Column-number header row
+ilc_colnum <- setNames(rep(1, ncol(ilc_disp_show)),
+                       c(" ", paste0("(", seq_len(ncol(ilc_disp_show)-1), ")")))
+
+ilc_band <- c(
+  " " = 1,
+  "Villages" = 2,
+  "Water Points" = 2,
+  "Water Collection Points" = 4
+)
+
+tbl_ilc <- kbl(
+  ilc_disp_show,
+  format = "latex",
+  booktabs = TRUE,
+  na = "",
+  col.names = ilc_visible,
+  label = "wp_ilc_counts",
+  align = c("l", rep("r", ncol(ilc_disp_show) - 1)),
+  caption = "ILC villages and water points sample"
+) %>%
+  add_header_above(ilc_band, bold = TRUE, line = TRUE) %>%
+  add_header_above(ilc_colnum, bold = FALSE, line = FALSE) %>%
+  kable_styling(latex_options = c("hold_position")) %>%
+  add_indent(ilc_indent_rows)
+
+for (i in seq_len(nrow(ilc_grp_idx))) {
+  tbl_ilc <- tbl_ilc %>%
+    pack_rows(
+      ilc_grp_idx$country[i],
+      ilc_grp_idx$start[i],
+      ilc_grp_idx$end[i],
+      latex_gap_space = "0pt",
+      hline_before = TRUE, hline_after = TRUE
+    )
+}
+
+# print(tbl_ilc)
+
+save_kable(tbl_ilc, file = file.path(path, "wp_ilc_counts.tex"))
+```
