@@ -33,3 +33,184 @@ pm_census <-
     )
   )
 ```
+
+```{r}
+pm_survey_households <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Constructed",
+      "pm-survey-households.rds"
+    )
+  )
+```
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  )
+```
+
+
+```{r}
+pm_list_mw <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_malawi.csv"
+    )
+  )
+```
+
+```{r}
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  )
+
+sampled_villages <-
+  villages %>%
+  dplyr::filter(visited == "In sample")
+```
+
+## Household counts
+
+```{r}
+counts <-
+  pm_census %>%
+  mutate(country = str_to_sentence(country)) %>%
+  dplyr::filter(visited == "In sample") %>%
+  mutate(
+    cal_hh_count = as.numeric(cal_hh_count)
+  ) %>%
+  rowwise %>%
+  mutate(
+    households = sum(c_across(c(cal_hh_count, hh_moren)), na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    wps = n_distinct(wp_id),
+    households = sum(households %>% as.numeric + hh_moren, na.rm = TRUE),
+    in_census = sum(cal_hh_count %>% as.numeric, na.rm = TRUE),
+    outside = sum(hh_outsiden, na.rm = TRUE)
+  )
+```
+
+# Double counts
+
+```{r}
+repeated <-
+  pm_survey_households %>%
+  group_by(household_id) %>%
+  summarise(n_wps = n_distinct(wp_id)) %>%
+  dplyr::filter(n_wps > 1) %>%
+  left_join(hh_census) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    repeated = n(),
+    repeated_times = mean(n_wps) %>% round(2)
+  )
+```
+
+```{r}
+counts %>%
+  left_join(repeated) %>%
+  mutate(
+    net = households - outside - repeated,
+    av = households/wps,
+    av_net = net/wps,
+    pct = av_net/av
+  )
+```
+## Comparison of average number of households per water point
+
+```{r}
+census <- 
+  hh_census %>%
+  dplyr::filter(wp_intervention_type != "Non-program") %>%
+  mutate(
+    in_pm = wp_id %in% pm_survey_households$wp_id_c,
+    in_pm_id = if_else(in_pm, wp_id, NA)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    self_report = n(),
+    self_report_pm = sum(in_pm, na.rm = TRUE),
+    av_self_report = self_report/n_distinct(wp_id),
+    av_self_report_pm = self_report_pm/n_distinct(in_pm_id, na.rm = TRUE)
+  )
+```
+
+```{r}
+counts %>%
+  left_join(repeated) %>%
+  left_join(census) %>%
+  mutate(
+    net = households - outside - repeated,
+    av = households/wps,
+    av_net = net/wps,
+    pct1 = av_net/av_self_report,
+    pct2 = av_net/av_self_report_pm
+  )
+```
+## Households that we do not expect to match
+
+```{r}
+counts %>%
+  left_join(repeated) %>%
+  left_join(census) %>%
+  ungroup %>%
+  summarise(
+    across(
+      c(households, repeated, outside),
+      ~ sum(.)
+    )
+  )
+```
+
+## Comparison to Evidence Action
+
+### Malawi
+
+Number of promoters in EA list
+
+```{r}
+ea_promoters_malawi <-
+  pm_list_mw %>%
+  select(-wcp102_wpt_id) %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
+  unique
+
+ nrow(ea_promoters_malawi)
+```
+Number of villages in EA list
+
+```{r}
+ea_promoters_malawi %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+```
+
+
