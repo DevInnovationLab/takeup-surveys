@@ -1,0 +1,21 @@
+
+Regression Results: Association between Monitoring Survey and disctcr
+===============================================
+                        Dependent variable:    
+                    ---------------------------
+                              DISCTCR          
+-----------------------------------------------
+Promoter Survey              0.169***          
+                              (0.053)          
+                                               
+Constant                     0.232***          
+                              (0.046)          
+                                               
+-----------------------------------------------
+Observations                   1,429           
+R2                             0.007           
+Adjusted R2                    0.006           
+Residual Std. Error      0.833 (df = 1427)     
+F Statistic          10.208*** (df = 1; 1427)  
+===============================================
+Note:               *p<0.1; **p<0.05; ***p<0.01

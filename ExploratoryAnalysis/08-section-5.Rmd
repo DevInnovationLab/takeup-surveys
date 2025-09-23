@@ -1,5 +1,27 @@
 This is the code to generate the tables present in section 7 of the report, as well as numbers that are referenced in its text.
 
+```{r}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "glue",
+    "patchwork",
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra",
+    "vtable"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
 ## import
 ```{r}
 villages <-
@@ -85,9 +107,33 @@ pm_survey_households <-
       "pm-survey-households.rds"
     )
   )
+
+pm_list_mw <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_malawi.csv"
+    )
+  )
+
+pm_list_ug <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_uganda.csv"
+    )
+  )
 ```
 
-# pm survey corrections
+# pm survey - corrections
 ```{r}
 # join with wp census
 pm_survey <- pm_survey %>%
@@ -112,8 +158,6 @@ pm_survey <- pm_survey %>%
     )
   )
 # only remaining is MPOPI WAKWA LIWAYA/ MPOPI WAKWA DICKSON - in Liwaya, a village that was replaced - it is a DSW water point, so I add 1 to Malawi DSW
-pm_liwaya <- pm_survey %>%
-  dplyr::filter(wp_id == 2030413108002) 
 
 # merge intervention_type from wp census for the corrected water points
 pm_survey <- pm_survey %>%
@@ -122,8 +166,6 @@ pm_survey <- pm_survey %>%
             suffix = c("", "_new")) %>%
   mutate(intervention_type = coalesce(intervention_type, intervention_type_new)) %>%
   dplyr::select(-intervention_type_new)
-
-saveRDS(pm_survey, "pm_survey_with_corrections.rds")
 ```
 
 ```{r}
@@ -150,23 +192,8 @@ pm_survey <- pm_survey %>%
   distinct(wp_id, .keep_all = TRUE)
 ```
 
-# hh survey and census
-```{r}
-# creating household counts dataset
-hh_counts <- hh_census %>%
-  group_by(wp_id) %>%
-  summarise(hh_count_hhcensus = n(),
-            .groups = "drop")
-
-hh_census <- hh_census %>%
-  left_join(
-    hh_counts %>% 
-      select(hh_count_hhcensus, wp_id),
-    by = "wp_id"
-  )
-```
-
-# creating a variable for water point type 
+# creating group_cat
+group_cat is the variable for water point type
 ```{r}
 wp_census <- wp_census %>%
   mutate(
@@ -184,26 +211,44 @@ wp_census <- wp_census %>%
   ) %>%
   dplyr::filter(!is.na(sample_group), !is.na(intervention_type))
 
-# Create lookup table
+# create lookup table
 wp_lookup <- wp_census %>% 
-  select(wp_id, country, sample_group, intervention_type, group_cat) %>%
+  select(wp_id, ea_id, country, sample_group, intervention_type, group_cat) %>%
   distinct()
 
-# Join to other datasets
+wp_lookup_ea_id <- wp_census %>% 
+  select(ea_id, country, sample_group, intervention_type, group_cat) %>%
+  distinct(ea_id, .keep_all = TRUE) 
+
+# join to other datasets
 pm_survey <- pm_survey %>%
-  select(-any_of(c("country", "sample_group", "group_cat"))) %>%
+  select(-any_of(c("country", "sample_group", "group_cat", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
 
 hh_survey <- hh_survey %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
 
 hh_census <- hh_census %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
+
+hh_census <- hh_census %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  left_join(wp_lookup, by = "wp_id")
+
+ea_promoters_malawi <- pm_list_mw %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
+  left_join(wp_lookup_ea_id, by = c("i102_wpt_id" = "ea_id"))
+
+ea_promoters_uganda <- pm_list_ug %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
+  left_join(wp_lookup_ea_id, by = c("i102_wpt_id" = "ea_id"))
 ```
 
-# pm survey households corrections
+# pm survey households - corrections
 ```{r}
 #deleting test village
 pm_survey_households <- pm_survey_households %>%
@@ -238,7 +283,7 @@ pm_survey_households_clean <- pm_survey_households %>%
 write.csv(pm_survey_households_clean, "pm_survey_households_corrections.csv", row.names = FALSE)
 ```
 
-## section 7.3 - share of households identified by promoters
+## section 7.3 - share of households in hh census identified by promoters
 ```{r}
 hh_census %>%
   inner_join(pm_survey_households_clean, by = c("household_id")) %>%
@@ -251,16 +296,37 @@ hh_census %>%
   )
 ```
 
-##  7.2 EA promoter lists 
+## section 7.2 text - Uganda (sample: EA list versus promoter survey)
+In Uganda, Evidence Action provided information for 133 promoters in the sampled villages, representing 129 unique water points. Out of these, 119 are in the water point census, and 110 are included in the promoter survey. There are 10 promoter surveys for water points for which Evidence Action did not provide contact information, for a total of 120 promoter surveys in Uganda.
+```{r}
+ea_promoters_uganda <-
+  ea_promoters_uganda %>%
+  select(-wcp102_wpt_id) %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id)
+
+nrow(ea_promoters_uganda)
+
+ea_promoters_uganda %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+
+ea_promoters_uganda %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  distinct(i102_wpt_id) %>%
+  nrow
+
+ea_promoters_uganda %>%
+  dplyr::filter(i102_wpt_id %in% pm_survey$ea_id) %>%
+  distinct() %>%
+  nrow
+```
+
 ```{r}
 # ea list
-filtered_promoters_uganda <- promoter_list_uganda[promoter_list_uganda$villageid %in% wp_census$village_id, ]
-
-filtered_promoters_uganda <- promoter_list_uganda %>%
+ea_promoters_uganda <- ea_promoters_uganda %>%
   dplyr::filter(!is.na(main_contact) | !is.na(assistant_contact)) %>%
   mutate(villageid = as.character(villageid)) %>%
   dplyr::filter(villageid %in% wp_census$village_id) %>%
-  select(-wcp102_wpt_id) %>%
   unique %>%
   dplyr::filter(i102_wpt_id %in% wp_census$ea_id)
 
@@ -268,29 +334,50 @@ filtered_promoters_uganda <- promoter_list_uganda %>%
 pm_survey_uganda <- pm_survey %>%
     dplyr::filter(country == "UGANDA")
 
-pm_survey_NOT_in_ea_list_malawi <- pm_survey %>%
-  dplyr::filter(country == "UGANDA") %>%
-  left_join(wp_census %>% select(wp_id, ea_id), 
-          by = "wp_id") %>%
-  dplyr::filter(!ea_id %in% filtered_promoters_uganda$i102_wpt_id)
-
 # checking how many wp in pm survey are in ea list
+pm_survey_NOT_in_ea_list_uganda <- pm_survey %>%
+  dplyr::filter(country == "UGANDA") %>%
+  dplyr::filter(!ea_id %in% ea_promoters_uganda$i102_wpt_id)
+
 pm_survey_in_ea_list_uganda <- pm_survey %>%
   dplyr::filter(country == "UGANDA") %>%
-  left_join(wp_census %>% select(wp_id, ea_id), 
-          by = "wp_id") %>%
-  dplyr::filter(ea_id %in% filtered_promoters_uganda$i102_wpt_id)
+  dplyr::filter(ea_id %in% ea_promoters_uganda$i102_wpt_id)
+
+count(pm_survey_NOT_in_ea_list_uganda)
+count(pm_survey_in_ea_list_uganda)
+```
+
+## section 7.2 text - Malawi (sample: EA list versus promoter survey)
+In Malawi, Evidence Action provided information for 287 promoters in the sampled villages, representing 264 unique water points. Out of these, 207 are in the water point census (though 20 were identified as Non-program), and 142 are included in the promoter survey. There are 57 promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of 199 promoter surveys in Malawi. 
+```{r}
+ea_promoters_malawi <- ea_promoters_malawi %>%
+  select(-wcp102_wpt_id) %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
+  unique
+
+nrow(ea_promoters_malawi)
+
+ea_promoters_malawi %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+
+ea_promoters_malawi %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  distinct() %>%
+  nrow
+
+ea_promoters_malawi %>%
+  dplyr::filter(i102_wpt_id %in% pm_survey$ea_id) %>%
+  distinct(i102_wpt_id, .keep_all = TRUE) %>% # there are duplicate water points in the list
+  nrow
 ```
 
 ```{r}
 # ea list
-filtered_promoters_malawi <- promoter_list_malawi[promoter_list_malawi$villageid %in% wp_census$village_id, ]
-
-filtered_promoters_malawi <- filtered_promoters_malawi %>%
+ea_promoters_malawi <- ea_promoters_malawi %>%
   dplyr::filter(!is.na(main_contact) | !is.na(assistant_contact)) %>%
   mutate(villageid = as.character(villageid)) %>%
   dplyr::filter(villageid %in% wp_census$village_id) %>%
-  select(-wcp102_wpt_id) %>%
   unique %>%
   dplyr::filter(i102_wpt_id %in% wp_census$ea_id)
 
@@ -301,37 +388,33 @@ pm_survey_malawi <- pm_survey %>%
 # checking how many wp in pm survey are in ea list
 pm_survey_NOT_in_ea_list_malawi <- pm_survey %>%
   dplyr::filter(country == "MALAWI") %>%
-  left_join(wp_census %>% select(wp_id, ea_id), 
-          by = "wp_id") %>%
-  dplyr::filter(!ea_id %in% filtered_promoters_malawi$i102_wpt_id)
+  dplyr::filter(!ea_id %in% ea_promoters_malawi$i102_wpt_id)
 
 pm_survey_in_ea_list_malawi <- pm_survey %>%
   dplyr::filter(country == "MALAWI") %>%
-  left_join(wp_census %>% select(wp_id, ea_id), 
-          by = "wp_id") %>%
-  dplyr::filter(ea_id %in% filtered_promoters_malawi$i102_wpt_id)
+  dplyr::filter(ea_id %in% ea_promoters_malawi$i102_wpt_id)
+
+count(pm_survey_NOT_in_ea_list_malawi)
+count(pm_survey_in_ea_list_malawi)
 ```
 
-## 7.2: number of water points in ea list
+
+## table 7.2: number of water points in ea list
+number of water points by type
+
+For Uganda, 8 of the 119 water points in the EA promoter list were identified as Non-program and 1 as ILC, and are not shown. Similarly for Malawi, where 15 out of 207 were identified as Non-program.
 ```{r}
-filtered_promoters_uganda <- filtered_promoters_uganda %>%
-  mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
-  left_join(wp_census %>% select(ea_id, group_cat), 
-            by = c("i102_wpt_id" = "ea_id"))
-
-filtered_promoters_uganda %>%
-  count(group_cat, sort = TRUE)
-
-filtered_promoters_malawi <- filtered_promoters_malawi %>%
-  mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
-  left_join(wp_census %>% select(ea_id, group_cat), 
-            by = c("i102_wpt_id" = "ea_id"))
-
-filtered_promoters_malawi %>%
+ea_promoters_uganda %>%
   count(group_cat, sort = TRUE)
 ```
 
-## 7.2: number of water points in wp census (functional) and pm census
+```{r}
+ea_promoters_malawi %>%
+  count(group_cat, sort = TRUE)
+```
+
+## table 7.2: wp census (functional) and pm census
+number of water points by type
 ```{r}
 wp_counts_tbl <- wp_census %>%
   group_by(country, group_cat) %>% 
@@ -364,8 +447,8 @@ pm_wp_counts_tbl <- pm_survey %>%
   ) %>%
   # dplyr::filter(group_cat %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
   # dplyr::filter(!(country == "UGANDA" & group_cat == "ILC")) %>%
-  mutate(country = factor(country, levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
+  # mutate(country = factor(country, levels = c("UGANDA", "MALAWI"))) %>%
+  # mutate(group_cat = factor(group_cat, levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
   arrange(country, group_cat) %>%
   bind_rows(
     summarise(., 
@@ -378,7 +461,7 @@ pm_wp_counts_tbl <- pm_survey %>%
 pm_wp_counts_tbl
 ```
 
-## 7.1
+## table 7.1
 ```{r}
 # water point census water point count
 wp_count_tbl <- wp_census %>%
@@ -524,7 +607,7 @@ beneficiaries_tbl <- wp_count_tbl %>%
 beneficiaries_tbl
 ```
 
-## 7.1: country totals + CI
+## table 7.1: country totals + CI
 ```{r}
 country_level_estimates <- beneficiaries_tbl %>%
   group_by(country) %>%
@@ -568,7 +651,7 @@ country_level_estimates <- beneficiaries_tbl %>%
 country_level_estimates
 ```
 
-## 7.3 (5.1 but using HH census and HH survey - only WPs in promoter survey)
+## table 7.3 (5.1 but using HH census and HH survey - only WPs in promoter survey)
 ```{r}
 wp_count_tbl_wp_census <- wp_census %>%
   dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
@@ -699,6 +782,7 @@ beneficiaries_tbl_wp_census <- wp_count_tbl_wp_census %>%
   ) %>%
   select(
   country, group_cat,
+  n_wp_pm_census,
   avg_hh_count, se_hh_count,           
   avg_hh_size, se_hh_size,              
   indiv_access_sample, se_indiv_access_sample,
@@ -762,7 +846,7 @@ country_level_estimates_wp_census <- beneficiaries_tbl_wp_census %>%
 country_level_estimates_wp_census
 ```
  
-## 7.4
+## table 7.4
 ```{r}
 # number of water points in the promoter survey
 wp_count_pm <- pm_survey %>%
@@ -880,7 +964,7 @@ data_summary_tbl <- wp_count_pm  %>%
 print(data_summary_tbl)
 ```
 
-## 7.4 caption: number of villages in pm survey and wp census
+## table 7.4 caption: number of villages in pm survey and wp census
 ```{r}
 # total number of villages in the promoter survey
 vil_count_pm <- pm_survey %>%
@@ -903,9 +987,12 @@ vil_count_wp <- wp_census %>%
 print(vil_count_wp)
 ```
 
-## 7.5 balance tables: Uganda DSW Footprint
+## table 7.5 balance tables: Uganda DSW Footprint
 significant difference in jc_chlorine
 ```{r}
+install.packages("vtable")
+library(vtable)
+
 wp_census_pm <- wp_census %>%
   mutate(
     promoter_survey = if_else(
@@ -921,13 +1008,13 @@ wp_census_pm <- wp_census %>%
     group.test = TRUE)
 ```
 
-## 7.6 balance tables: Uganda DSW Footprint but between EA list and not EA list water points
+## table 7.6 (balance): Uganda DSW Footprint but between EA list and not EA list water points
 ```{r}
 wp_census_balance <- wp_census %>%
   # dplyr::filter(group_cat != "Non-program") %>%
   mutate(
     in_promoter_list = if_else(
-      ea_id %in% filtered_promoters_uganda$i102_wpt_id,  
+      ea_id %in% ea_promoters_uganda$i102_wpt_id,  
       "YES",                       
       "NO"                          
     )
@@ -939,7 +1026,7 @@ wp_census_balance <- wp_census %>%
     group.test = TRUE)
 ```
 
-## 7.7 balance tables: Uganda DSW Expansion
+## table 7.7 (balance):: Uganda DSW Expansion
 difference in jc_chlorine not significant. difference in disp_tank_present is significant, but since it does not translate to significant difference in chlorine presence, I don't think this is important
 ```{r}
 wp_census_pm <- wp_census %>%
@@ -957,7 +1044,7 @@ wp_census_pm <- wp_census %>%
     group.test = TRUE)
 ```
 
-## 7.8 balance tables: Malawi DSW Footprint
+## table 7.8 (balance):: Malawi DSW Footprint
 significant difference in meterfcr_02, but because there are just 3 water points in wp_census that the test was conducted for, I don't think this is very important
 ```{r}
 wp_census_pm <- wp_census %>%
@@ -975,7 +1062,7 @@ wp_census_pm <- wp_census %>%
     group.test = TRUE)
 ```
 
-## 7.9 balance tables: Malawi DSW Expansion
+## table 7.9 (balance):: Malawi DSW Expansion
 no significant differences
 ```{r}
 wp_census_pm <- wp_census %>%
@@ -993,7 +1080,7 @@ wp_census_pm <- wp_census %>%
     group.test = TRUE)
 ```
 
-## 7.10 balance tables: Malawi DSW in ILC vill
+## table 7.10 (balance):: Malawi DSW in ILC vill
 no significant differences
 ```{r}
 wp_census_pm <- wp_census %>%
@@ -1011,7 +1098,7 @@ wp_census_pm <- wp_census %>%
     group.test = TRUE)
 ```
 
-## 7.11 balance tables: Malawi ILC
+## table 7.11 (balance):: Malawi ILC
 no significant differences
 ```{r}
 wp_census_pm <- wp_census %>%
@@ -1028,6 +1115,144 @@ wp_census_pm <- wp_census %>%
     group = "promoter_survey",
     group.test = TRUE)
 ```
+
+# section 7.4.1 double-counting: how many hh ids come up more than once?
+500 households are listed twice
+```{r}
+hh_in_pm_summary <- pm_survey_households_clean %>%
+  count(household_id, name = "times_appeared") %>%
+  {
+    list(
+      frequency_table = count(., times_appeared, name = "n_households"),
+      total_unique_hh = nrow(.)
+    )
+  }
+
+hh_in_pm_summary$frequency_table
+
+print(paste("Total unique household IDs:", hh_in_pm_summary$total_unique_hh))
+```
+
+# section 7.4.1 double counting: number of water points used according to household census
+households listed more than once in promoter survey - referenced in "Double-counting households in the promoter list."
+68% of those listed more than once report only using 1 water point
+```{r}
+hh_multiple_appearances <- pm_survey_households_clean %>%
+  count(household_id, name = "times_appeared") %>%
+  dplyr::filter(times_appeared > 1) %>%
+  pull(household_id)
+
+hh_census_filtered <- hh_census %>%
+  dplyr::filter(household_id %in% hh_multiple_appearances)
+
+wp_distribution_census <- 
+  hh_census_filtered %>%
+  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(wp_secweekno) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample 
+total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    subtitle = "Limited to households with multiple appearances in PM survey data",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households with multiple PM survey appearances.")) +
+  theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
+
+all households in HH census - for comparison
+```{r}
+wp_distribution_census <- 
+  hh_census %>%
+  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(wp_secweekno) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample 
+total_households_census <- length(unique(trimws(as.character(hh_census$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included to date in the Household Census raw data.")) +
+  theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
+
+all households in promoter list
+```{r}
+hh_census_filtered <- hh_census %>%
+  dplyr::filter(household_id %in% pm_survey_households_clean$household_id)
+
+wp_distribution_census <- 
+  hh_census_filtered %>%
+  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(wp_secweekno) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample 
+total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    subtitle = "Limited to households in PM survey data",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included (filtered by PM survey participation).")) +
+  theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
+
 
 ## section 7.4.2: water points with some households outside of village (30%)
 ```{r}
@@ -1056,6 +1281,200 @@ overall_share <- pm_survey %>%
   )
 
 print(overall_share)
+```
+
+## section 7.4.2: (7.3 but for all water points)
+```{r}
+wp_count_tbl_wp_census <- wp_census %>%
+  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  group_by(country, group_cat) %>% 
+  summarise(
+    n_wp_pm_census = n_distinct(wp_id),               
+    .groups = "drop"
+  )
+
+# household count from census (with SE calculation like in 5.1)
+hh_count_tbl_wp_census <- hh_census %>%
+  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  group_by(country, group_cat, wp_id) %>%
+  summarise(
+    hh_count = n_distinct(household_id),   # households per wp
+    .groups = "drop"
+  ) %>%
+  group_by(country, group_cat) %>%
+  summarise(
+    avg_hh_count = mean(hh_count, na.rm = TRUE),
+    wp_values = list(hh_count[!is.na(hh_count)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    K = length(wp_values),
+    between_var = if(K > 1) sum((wp_values - avg_hh_count)^2) / (K * (K - 1)) else 0,
+    within_var = 0,
+    total_var = between_var + within_var,
+    se_hh_count = sqrt(total_var)
+  ) %>%
+  select(country, group_cat, avg_hh_count, se_hh_count)
+
+# hh size from household survey (with SE calculation like in 5.1)
+hh_size_tbl_wp_census <- hh_survey %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  group_by(country, group_cat, wp_id) %>% 
+  summarise(
+    hh_size = mean(hh_members, na.rm = TRUE), 
+    .groups = "drop"
+  ) %>%
+  group_by(country, group_cat) %>%
+  summarise(
+    avg_hh_size = mean(hh_size, na.rm = TRUE),
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    K = length(wp_hh_sizes),
+    between_var = if(K > 1) sum((wp_hh_sizes - avg_hh_size)^2) / (K * (K - 1)) else 0,
+    within_var = 0,
+    total_var = between_var + within_var,
+    se_hh_size = sqrt(total_var)
+  ) %>%
+  select(country, group_cat, avg_hh_size, se_hh_size)
+
+# chlorination rate from household survey (with SE calculation like in 5.1)
+chl_tbl_wp_census <- hh_survey %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  group_by(country, group_cat, wp_id) %>%
+  summarise(
+    wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
+    wp_se_chl_rate = sqrt(wp_chl_rate * (1 - wp_chl_rate) / n()), # SE for proportion within WP
+    .groups = "drop"
+  ) %>%
+  group_by(country, group_cat) %>%
+  summarise(
+    chl_rate = mean(wp_chl_rate, na.rm = TRUE),
+    # store individual water point rates and SEs
+    wp_rates = list(wp_chl_rate[!is.na(wp_chl_rate)]),
+    wp_ses = list(wp_se_chl_rate[!is.na(wp_se_chl_rate)]),
+    .groups = "drop"
+  ) %>%
+  # calculate SE using variance decomposition
+  rowwise() %>%
+  mutate(
+    K = length(wp_rates),
+    between_var = if(K > 1) sum((wp_rates - chl_rate)^2) / (K * (K - 1)) else 0,
+    within_var = if(K > 0) sum(wp_ses^2) / (K^2) else 0,
+    total_var = between_var + within_var,
+    se_chl_rate = sqrt(total_var)
+  ) %>%
+  select(country, group_cat, chl_rate, se_chl_rate)
+
+# importing the total numbers of each type of water point in each country
+country_totals <- tibble(
+  country = c("UGANDA", "UGANDA", 
+              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
+  group_cat = c("DSW Footprint", "DSW Expansion",
+                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
+  country_total = c(4843, 12875,
+                    3123, 12040, 1035, 2376)
+)
+
+# merge + calculations (same as in 5.1)
+beneficiaries_tbl_wp_census_ALL <- wp_count_tbl_wp_census %>%
+  left_join(hh_count_tbl_wp_census, by = c("country", "group_cat")) %>%
+  left_join(hh_size_tbl_wp_census, by = c("country", "group_cat")) %>%
+  left_join(chl_tbl_wp_census, by = c("country", "group_cat")) %>%
+  left_join(country_totals, by = c("country", "group_cat")) %>%  
+  mutate(
+    indiv_access_sample = avg_hh_count * avg_hh_size,
+    indiv_access_popn = indiv_access_sample * country_total,
+    indiv_with_chlorine_sample = indiv_access_sample * chl_rate,
+    # delta method: SE of product (assuming covariance = 0)
+    se_indiv_access_sample = sqrt(
+      (avg_hh_size^2) * (se_hh_count^2) + 
+      (avg_hh_count^2) * (se_hh_size^2)
+    ),
+    # SE when multiplying by a constant
+    se_indiv_access_popn = country_total * se_indiv_access_sample,
+    # 95% confidence interval for population estimate
+    ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
+    ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
+     # 95% confidence interval for chlorination rate
+    ci_lower_chl_rate = chl_rate - 1.96 * se_chl_rate,
+    ci_upper_chl_rate = chl_rate + 1.96 * se_chl_rate
+  ) %>%
+  mutate(
+    across(c(avg_hh_count, avg_hh_size, indiv_access_sample, indiv_access_popn, 
+         indiv_with_chlorine_sample, se_hh_count, se_hh_size, 
+         se_indiv_access_sample, se_indiv_access_popn, ci_lower_indiv_access_popn,
+         ci_upper_indiv_access_popn),
+       ~ round(.x, 2))
+  ) %>%
+  select(
+  country, group_cat,
+  n_wp_pm_census,
+  avg_hh_count, se_hh_count,           
+  avg_hh_size, se_hh_size,              
+  indiv_access_sample, se_indiv_access_sample,
+  country_total,                     
+  indiv_access_popn,  se_indiv_access_popn,
+  ci_lower_indiv_access_popn, ci_upper_indiv_access_popn,                        
+  chl_rate,  se_chl_rate,         
+  ci_lower_chl_rate, ci_upper_chl_rate,
+  indiv_with_chlorine_sample                       
+  ) %>%
+  dplyr::filter(group_cat %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
+  dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
+  mutate(country = factor(country, 
+                           levels = c("UGANDA", "MALAWI"))) %>%
+  mutate(group_cat = factor(group_cat, 
+                           levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
+  arrange(country, group_cat)
+
+beneficiaries_tbl_wp_census_ALL
+```
+
+```{r}
+country_level_estimates_wp_census <- beneficiaries_tbl_wp_census_ALL %>%
+  group_by(country) %>%
+  summarise(
+    total_indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE),
+    # SE for total access: square root of sum of squared SEs (assuming independence)
+    se_total_indiv_access_popn = sqrt(sum(se_indiv_access_popn^2, na.rm = TRUE)),
+    
+    weighted_avg_chl_rate = sum(chl_rate * country_total, na.rm = TRUE) / 
+                           sum(country_total, na.rm = TRUE),
+    # SE for weighted average: delta method for weighted means
+    total_weights = sum(country_total, na.rm = TRUE),
+    se_weighted_avg_chl_rate = sqrt(sum((country_total^2) * (se_chl_rate^2), na.rm = TRUE)) / 
+                              total_weights,
+    
+    .groups = "drop"
+  ) %>%
+  # confidence intervals
+  mutate(
+    # for total access
+    ci_lower_total_access = total_indiv_access_popn - 1.96 * se_total_indiv_access_popn,
+    ci_upper_total_access = total_indiv_access_popn + 1.96 * se_total_indiv_access_popn,
+    
+    # for weighted chlorination rate
+    ci_lower_weighted_chl_rate = weighted_avg_chl_rate - 1.96 * se_weighted_avg_chl_rate,
+    ci_upper_weighted_chl_rate = weighted_avg_chl_rate + 1.96 * se_weighted_avg_chl_rate,
+    
+    weighted_avg_chl_rate_pct = weighted_avg_chl_rate * 100,
+    ci_lower_weighted_chl_rate_pct = ci_lower_weighted_chl_rate * 100,
+    ci_upper_weighted_chl_rate_pct = ci_upper_weighted_chl_rate * 100
+  ) %>%
+  select(
+    country,
+    total_indiv_access_popn, 
+    ci_lower_total_access, ci_upper_total_access,
+    weighted_avg_chl_rate_pct,
+    ci_lower_weighted_chl_rate_pct, ci_upper_weighted_chl_rate_pct
+  )
+country_level_estimates_wp_census
 ```
 
 ## section 7.4.2 outside: estimates if we exclude households outside the village
@@ -1338,143 +1757,6 @@ beneficiaries_tbl_inside_no_double_totals <- beneficiaries_tbl_inside_no_double 
 beneficiaries_tbl_inside_no_double_totals
 ```
 
-# section 7.4.4 double-counting: how many hh ids come up more than once?
-500 households are listed twice
-```{r}
-hh_in_pm_summary <- pm_survey_households_clean %>%
-  count(household_id, name = "times_appeared") %>%
-  {
-    list(
-      frequency_table = count(., times_appeared, name = "n_households"),
-      total_unique_hh = nrow(.)
-    )
-  }
-
-hh_in_pm_summary$frequency_table
-
-print(paste("Total unique household IDs:", hh_in_pm_summary$total_unique_hh))
-```
-
-# section 7.4.4 double counting: number of water points used according to household census
-households listed more than once in promoter survey - referenced in "Double-counting households in the promoter list."
-68% of those listed more than once report only using 1 water point
-```{r}
-hh_multiple_appearances <- pm_survey_households_clean %>%
-  count(household_id, name = "times_appeared") %>%
-  dplyr::filter(times_appeared > 1) %>%
-  pull(household_id)
-
-hh_census_filtered <- hh_census %>%
-  dplyr::filter(household_id %in% hh_multiple_appearances)
-
-wp_distribution_census <- 
-  hh_census_filtered %>%
-  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
-  count(wp_secweekno) %>%
-  mutate(
-    percentage = round(n / sum(n) * 100, 1),
-    label = paste0(percentage, "%")
-  )
-
-# sample 
-total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
-
-# plot
-ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
-  geom_col() +
-  geom_text(
-    aes(label = label),
-    vjust = -0.5,
-    color = "black"
-  ) +
-  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
-  labs(
-    title = "Distribution of Water Points Used in Past Month per Household",
-    subtitle = "Limited to households with multiple appearances in PM survey data",
-    x = "Number of Water Points Used",
-    y = "Number of Households",
-    caption = paste0("Note: N= ",total_households_census," households with multiple PM survey appearances.")) +
-  theme +
-  theme(
-    plot.caption = element_text(hjust = 0, face = "italic"),
-    legend.position = "none"
-  )
-```
-
-all households in HH census - for comparison
-```{r}
-wp_distribution_census <- 
-  hh_census %>%
-  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
-  count(wp_secweekno) %>%
-  mutate(
-    percentage = round(n / sum(n) * 100, 1),
-    label = paste0(percentage, "%")
-  )
-
-# sample 
-total_households_census <- length(unique(trimws(as.character(hh_census$household_id))))
-
-# plot
-ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
-  geom_col() +
-  geom_text(
-    aes(label = label),
-    vjust = -0.5,
-    color = "black"
-  ) +
-  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
-  labs(
-    title = "Distribution of Water Points Used in Past Month per Household",
-    x = "Number of Water Points Used",
-    y = "Number of Households",
-    caption = paste0("Note: N= ",total_households_census," households included to date in the Household Census raw data.")) +
-  theme +
-  theme(
-    plot.caption = element_text(hjust = 0, face = "italic"),
-    legend.position = "none"
-  )
-```
-
-all households in promoter list
-```{r}
-hh_census_filtered <- hh_census %>%
-  dplyr::filter(household_id %in% pm_survey_households_clean$household_id)
-
-wp_distribution_census <- 
-  hh_census_filtered %>%
-  mutate(wp_secweekno = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
-  count(wp_secweekno) %>%
-  mutate(
-    percentage = round(n / sum(n) * 100, 1),
-    label = paste0(percentage, "%")
-  )
-
-# sample 
-total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
-
-# plot
-ggplot(wp_distribution_census, aes(x = as.factor(wp_secweekno), y = n, fill = as.factor(wp_secweekno))) +
-  geom_col() +
-  geom_text(
-    aes(label = label),
-    vjust = -0.5,
-    color = "black"
-  ) +
-  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
-  labs(
-    title = "Distribution of Water Points Used in Past Month per Household",
-    subtitle = "Limited to households in PM survey data",
-    x = "Number of Water Points Used",
-    y = "Number of Households",
-    caption = paste0("Note: N= ",total_households_census," households included (filtered by PM survey participation).")) +
-  theme +
-  theme(
-    plot.caption = element_text(hjust = 0, face = "italic"),
-    legend.position = "none"
-  )
-```
-
 ## section 7.4.4 water points in pm vs sample: regression of chlorination on households using WPs in promoter survey
 ```{r}
 # install.packages("stargazer")
@@ -1492,7 +1774,7 @@ uganda_hh_survey <- hh_survey %>%
 malawi_hh_survey <- hh_survey %>%
   dplyr::filter(country == "MALAWI")
 
-model <- lm(disctcr ~ promoter_survey, data = malawi_hh_survey)
+model <- lm(disctcr ~ promoter_survey, data = uganda_hh_survey)
 
 stargazer(model, 
           type = "text",   
@@ -1525,7 +1807,7 @@ stargazer(uganda_model,
           covariate.labels = c("Listed by Promoter"),
           out = "uganda_promoter_listing_results.txt")
 
-malawi_model <- lm(disctcr ~ listed_by_promoter, data = malawi_promoter_wp)
+malawi_model <- lm(disctcr ~ listed_by_promoter, data = uganda_promoter_wp)
 
 stargazer(malawi_model, 
           type = "text",   
@@ -1545,6 +1827,29 @@ mean(malawi_promoter_wp$listed_by_promoter, na.rm = TRUE)
 ```
 
 ## exploratory - not directly used in report:
+association between hh_listed by promoter and hh_count in hh census - it is positive and significant
+```{r}
+hh_counts_summary <- hh_census %>%
+  group_by(wp_id) %>%
+  summarise(
+    hh_counts_hhcensus = n_distinct(household_id),
+    .groups = "drop"
+  )
+
+uganda_footprint_comparison <- pm_survey %>%
+  dplyr::filter(country == "UGANDA" & group_cat == "DSW Footprint") %>%
+  select(wp_id, hh_listed, cal_hh_count) %>%
+  mutate(
+    hh_listed = as.numeric(hh_listed),
+    cal_hh_count = as.numeric(cal_hh_count)
+  ) %>%
+  left_join(hh_counts_summary, by = "wp_id") %>%
+  arrange(wp_id)
+
+regression_model <- lm(hh_counts_hhcensus ~ hh_listed, data = uganda_footprint_comparison)
+summary(regression_model)
+```
+
 avg number of hh listed and identified + share of water points with some households outside and using more than 1 WP - according to promoter
 ```{r}
 # hh and pm wp count
