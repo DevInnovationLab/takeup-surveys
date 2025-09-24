@@ -25,6 +25,35 @@ hh_survey <-
   dplyr::filter(survey == "Household Survey")
 ```
 
+## Sample size
+
+```{r}
+hh_survey %>%
+  group_by(country, sample_group, wp_intervention_type) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    Households = n_distinct(household_id),
+    `Households with drinking water available` = sum(water_sample, na.rm = TRUE),
+    `Drinking water from primary water source` = sum(str_detect(where_collect, "primary"), na.rm = TRUE),
+    `Water tested with color wheel` = sum(!is.na(disctcr) | !is.na(discfcr), na.rm = TRUE),
+    `Water tested with colorimeter` = sum(!is.na(metertcr) | !is.na(meterfcr), na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_survey %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    Households = n_distinct(household_id),
+    `Households served by EvAc` = sum(wp_intervention_type != "Non-program", na.rm = TRUE),
+    `Households with drinking water available` = sum(water_sample, na.rm = TRUE),
+    `Drinking water from primary water source` = sum(str_detect(where_collect, "primary"), na.rm = TRUE),
+    `Water tested with color wheel` = sum(!is.na(disctcr) | !is.na(discfcr), na.rm = TRUE),
+    `Water tested with colorimeter` = sum(!is.na(metertcr) | !is.na(meterfcr), na.rm = TRUE)
+  )
+```
+
 ## Number of observations
 
 ```{r}
@@ -92,15 +121,79 @@ ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
   )
 ```
 
-<!-- ## Household composition -->
+## Water treatment
 
-<!-- ```{r} -->
-<!-- hh_survey %>% -->
-<!--   group_by(country) %>% -->
-<!--   summarise( -->
-<!--     across( -->
-<!--       c(hh_under5, hh_under2), -->
-<!--       ~ mean((.) > 1, na.rm = TRUE) -->
-<!--     ) -->
-<!--   ) -->
-<!-- ``` -->
+```{r}
+hh_survey %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    across(
+      matches("make_watersafe_[1-9]"),
+      ~ case_when(water_sample ~ replace_na(., FALSE))
+    )
+  ) %>%
+  summarise(
+    any = mean(watertreat_any, na.rm = TRUE),
+    boil = mean(make_watersafe_1, na.rm = TRUE),
+    disp = mean(make_watersafe_2, na.rm = TRUE),
+    cl = mean(make_watersafe_3, na.rm = TRUE),
+    filter = mean(make_watersafe_4 | make_watersafe_5 |make_watersafe_6, na.rm = TRUE),
+    sodis = mean(make_watersafe_7, na.rm = TRUE),
+    decant = mean(make_watersafe_8, na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_survey %>%
+  mutate(cl_any = make_watersafe_2 | make_watersafe_3) %>%
+  group_by(country, sample_group, cl_any) %>%
+  summarise(
+    across(
+      all_of(test_vars),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+hh_survey %>%
+  mutate(
+    cl_any = make_watersafe_2 | make_watersafe_3,
+    cldisp = make_watersafe_2 %>% replace_na(FALSE)
+  ) %>%
+  group_by(country, sample_group, cldisp) %>%
+  summarise(
+    across(
+      all_of(test_vars),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(country == "Malawi", sample_group == "Expansion") %>%
+  mutate(dsw_source = wp_intervention_type == "DSW" & str_detect(where_collect, "primary")) %>%
+  group_by(dsw_source) %>%
+  summarise(
+    n = n(),
+    mean(disctcr_02, na.rm = TRUE)
+  )
+  feols(
+    disctcr_02 ~ dsw_source,
+    cluster = ~ village_id,
+    data = .
+  )
+```
+
+
+```{r}
+hh_survey %>%
+  dplyr::filter(country == "Malawi", sample_group == "Expansion") %>%
+  mutate(
+    cldisp = make_watersafe_2 %>% replace_na(FALSE)
+  ) %>%
+  tabyl(cldisp, disctcr_02) %>%
+  adorn_percentages()
+```
+

@@ -11,7 +11,8 @@ packages <-
     "stringr",
     "sf",
     "tidyverse",
-    "viridis"
+    "viridis", 
+    "broom"
   )
 
 pacman::p_load(
@@ -20,6 +21,19 @@ pacman::p_load(
 )
 ```
 
+```{r}
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  )
+```
 
 ```{r}
 wp_census <-
@@ -33,13 +47,574 @@ wp_census <-
       "wp-census.rds"
     )
   ) %>%
+<<<<<<< Updated upstream
   st_drop_geometry %>%
   # Calculate which WPs will be included in analysis -- this is being moved to the processing code
   mutate(analysis = wp_multicompound & wp_drink)
+=======
+  st_drop_geometry 
+>>>>>>> Stashed changes
 
 wp_analysis <-
   wp_census %>%
   dplyr::filter(analysis)
+```
+
+
+```{r}
+wp_census %>%
+  dplyr::filter(str_detect(intervention_type, "ILC"), sample_group == "ILC") %>%
+  group_by(intervention_type) %>%
+  summarise(
+    across(
+      c(matches("meter(*)01"), ends_with("02")),
+      ~(mean(., na.rm = TRUE) * 100) %>% round(1)
+    )
+  ) %>% 
+  select(-contains("un")) %>%
+  set_names(c("", "Colorimeter, FCR", "Colorimeter, TCR", "Color wheel, FCR", "Color wheel, TCR")) %>%
+  kable(
+    "html",
+    caption = "Percent of tests with chlorine residual above 0.2 PPM detected"
+  ) %>%
+      kable_styling(bootstrap_options = "striped", full_width = FALSE)
+```
+
+## Included in the report
+
+```{r}
+wp_census %>%
+  dplyr::filter(dsw, country == "Uganda") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      c(wp_func, disp_tank_present, jc_valve, jc_chlorine, discfcr_02, disctcr_02),
+      ~mean(. %>% replace_na(FALSE), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(dsw, country == "Uganda") %>%
+  summarise(
+    across(
+      c(wp_func, disp_tank_present, jc_valve, jc_chlorine, discfcr_02, disctcr_02),
+      ~mean(. %>% replace_na(FALSE), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+map(
+  c("wp_func", "disp_tank_present", "jc_chlorine", "jc_valve", "discfcr_02", "disctcr_02"),
+  ~ lm(
+    paste(., "~ sample_group") %>% as.formula,
+    data = wp_census %>%
+      mutate(
+        across(
+          c(wp_func, disp_tank_present, jc_chlorine, jc_valve, discfcr_02, disctcr_02),
+          ~ replace_na(., FALSE)
+        )
+    ) %>%
+    dplyr::filter(dsw, country == "Uganda") 
+  ) %>% 
+  tidy 
+) %>% 
+  bind_rows() %>%
+  mutate(p.value = round(p.value, 3))
+```
+
+
+
+
+### Main table
+
+```{r}
+totals <-
+  wp_census %>%
+  transmute(
+    country, sample_group, village_id, wp_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points`= n_distinct(wp_id),
+    across(
+      -c(village_id, wp_id),
+      ~ sum(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+village_average <-
+  wp_census %>%
+  transmute(
+    country, sample_group, village_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(village_id, country, sample_group) %>%
+  summarise(
+    across(
+      everything(),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      -village_id,
+      ~ mean(., na.rm = TRUE) %>% round(1)
+    )
+  )
+```
+
+```{r}
+totals_country <-
+  wp_census %>%
+  transmute(
+    country, village_id, wp_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Water points` = n_distinct(wp_id),
+    across(
+      -c(village_id, wp_id),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  mutate(sample_group = "Total")
+```
+
+```{r}
+village_av_country <-
+  wp_census %>%
+  transmute(
+    country, village_id,
+    `DSW water points` = intervention_type == "DSW",
+    `ILC water points` = intervention_type == "ILC water point",
+    `ILC water collection points` = intervention_type == "ILC water collection point"
+  ) %>%
+  group_by(village_id, country) %>%
+  summarise(
+    across(
+      everything(),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      -village_id,
+      ~ mean(., na.rm = TRUE) %>% round(1)
+    )
+  ) %>%
+  mutate(
+    sample_group = "Total"
+  )
+```
+
+```{r}
+table <-
+  totals %>%
+  left_join(village_average, by = c("country", "sample_group")) %>%
+  rename_with(~ str_remove_all(., ".x")) %>%
+  bind_rows(totals_country) %>%
+  arrange(country, sample_group) %>%
+  select(
+    country, sample_group, Villages,
+    starts_with("DSW"),
+    starts_with("ILC water point"),
+    everything()
+  )
+```
+
+```{r}
+table
+```
+
+
+## Functionality and sample sizes
+
+
+```{r}
+evac <-
+  villages %>%
+  dplyr::filter(visited == "In sample") %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    across(
+      c(dsw_wpt, ilc_wpt, ilc_wcp),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    n_villages = n_distinct(village_id),
+    across(
+      c(dsw_wpt, ilc_wpt, ilc_wcp),
+      list(
+        n = ~ sum(.),
+        mean = ~ mean(.),
+        sd = ~ sd(.)
+      )
+    )
+  )
+```
+```{r}
+evac <-
+  villages %>%
+  dplyr::filter(visited == "In sample") %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(dsw_wpt, ilc_wpt, ilc_wcp),
+      ~ sum(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+dsw_func <-
+  wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  mutate(disp_func = disp_tank_present & jc_valve) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    `Identified` = n_distinct(wp_id),
+    `WP functional` = sum(wp_func & !is.na(wp_func), na.rm = TRUE),
+    `Dispenser functional` = sum(disp_func & !is.na(disp_func), na.rm = TRUE),
+    Filled = sum(jc_chlorine, na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    `Village average` = mean(`Identified`) %>% round(2),
+    across(
+      c(`Identified`, `WP functional`, `Dispenser functional`, Filled),
+      ~ sum(.)
+    )
+  ) %>%
+  left_join(
+    evac %>%
+      transmute(
+        country, sample_group, n_villages, dsw_wpt_n, 
+        dsw_wpt_mean = round(dsw_wpt_mean, 2)
+      ),
+    .
+  ) %>%
+  select(
+    "country", "sample_group", "n_villages", "dsw_wpt_n", "dsw_wpt_mean",
+    "Identified", everything()
+  )
+
+dsw_func %>%
+  write_csv(
+    file.path(
+      path_git,
+      "output",
+      "tables",
+      "wp-dsw-func.csv"
+    )
+  )
+```
+
+```{r}
+dsw_country <-
+  wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  mutate(disp_func = disp_tank_present & jc_valve) %>%
+  group_by(country) %>%
+  summarise(
+    `Identified` = n_distinct(wp_id),
+    `WP functional` = sum(wp_func & !is.na(wp_func), na.rm = TRUE),
+    `Dispenser functional` = sum(disp_func & !is.na(disp_func), na.rm = TRUE),
+    Filled = sum(jc_chlorine, na.rm = TRUE)
+  ) 
+```
+
+
+```{r}
+wp_census %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>%
+  mutate(wpt = intervention_type == "ILC water point") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    `All` = n_distinct(village_id),
+    `WP` = if_else(wpt, village_id, NA) %>% n_distinct,
+    `WP Identified` = sum(wpt),
+    `WP Functional` = sum(wpt & wp_func),
+    `WCP Identified` = n_distinct(wp_id),
+    `WCP Functional` = sum(wp_func),
+    `WCP Tested with colorimeter` = sum(!is.na(meter_enum)),
+    `WCP Tested with color wheel` = sum(!is.na(cw_enum))
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention_type == "ILC water point") %>%
+  group_by(country) %>%
+  summarise(
+    `Found` = n_distinct(wp_id),
+    `WP functional` = sum(wp_func & !is.na(wp_func), na.rm = TRUE),
+    Colorimeter = sum(!is.na(meter_enum)),
+    Colorwheel = sum(!is.na(cw_enum)),
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention_type == "ILC water collection point") %>%
+  group_by(country) %>%
+  summarise(
+    `Found` = n_distinct(wp_id),
+    `WP functional` = sum(wp_func & !is.na(wp_func), na.rm = TRUE),
+    Colorimeter = sum(!is.na(meter_enum)),
+    Colorwheel = sum(!is.na(cw_enum)),
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>%
+  mutate(
+    across(
+      ends_with("cr"),
+      ~ na_if(., 0)
+    )
+  ) %>%
+  summarise(
+    across(
+      c(
+        disctcr, discfcr,
+        disctcr_02, discfcr_02,
+        meterfcr, metertcr,
+        meterfcr_01, metertcr_01,
+        metertcr_02, meterfcr_02
+      ),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+```{r}
+wp_census %>%
+  group_by(country, sample_group, intervention_type) %>%
+  summarise(
+    matched = mean(!is.na(ea_id)),
+    matched_n = sum(!is.na(ea_id)),
+    notmatched_n = sum(is.na(ea_id))
+  )
+```
+```{r}
+wp_census %>%
+  group_by(country, intervention_type) %>%
+  summarise(
+    matched = mean(!is.na(ea_id)),
+    matched_n = sum(!is.na(ea_id)),
+    notmatched_n = sum(is.na(ea_id))
+  )
+```
+
+```{r}
+wp_census %>%
+  group_by(country, intervention_type) %>%
+  summarise(
+    matched = mean(!is.na(ea_id)),
+    matched_n = sum(!is.na(ea_id)),
+    notmatched_n = sum(is.na(ea_id))
+  )
+```
+```{r}
+wp_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  tabyl(intervention_type, ea_program)
+```
+
+
+```{r}
+wp_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(intervention_type, ea_program)
+```
+```{r}
+wp_census %>%
+  group_by(country, intervention_type) %>%
+  summarise(
+    across(
+      c(meter_enum, meter_nocl_enum, cw_enum, cw_nocl_enum),
+      list(
+        tested_n = ~sum(!is.na(.)),
+        filled = ~sum(jc_chlorine, na.rm = TRUE)
+      )
+    )
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(jc_chlorine) %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(meter_enum, meter_nocl_enum, cw_enum, cw_nocl_enum),
+      list(
+        tested = ~mean(!is.na(.)),
+        tested_n = ~sum(!is.na(.))
+      )
+    )
+  )
+```
+```{r}
+wp_census %>%
+  group_by(country, intervention_type) %>%
+  summarise(
+    matched = mean(!is.na(ea_id)),
+    matched_n = sum(!is.na(ea_id))
+  )
+```
+
+
+
+### Number of water points found
+
+```{r}
+census <-
+  wp_census %>%
+  mutate(
+    ilc_wpt_census = intervention_type == "ILC water point",
+    ilc_wcp_census = intervention_type == "ILC water collection point",
+    dsw_wpt_census = intervention_type == "DSW",
+    dsw_matched = intervention_type == "DSW" & !is.na(ea_id)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      c(ilc_wpt_census, ilc_wcp_census, dsw_wpt_census, dsw_matched),
+      ~ sum(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+wp_counts <-
+  villages %>%
+  dplyr::filter(visited == "In sample") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      c(dsw_wpt, ilc_wpt, ilc_wcp),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  left_join(census)
+```
+
+```{r}
+wp_counts %>%
+  group_by(country) %>%
+  summarise(
+    across(
+      c(dsw_wpt, dsw_wpt_census, dsw_matched),
+    ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  mutate(pct = dsw_wpt_census/dsw_wpt)
+```
+
+## Chlorine testing
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      jc_mldispensed,
+      list(
+        n = ~sum(!is.na(.)),
+        mean = ~ mean(., na.rm = TRUE) %>% round(2),
+        sd = ~ sd(., na.rm = TRUE) %>% round(2)
+      )
+    ),
+    across(
+      all_of(test_vars),
+      list(
+        mean = ~ mean(. * 100, na.rm = TRUE) %>% round(1)
+      )
+    )
+  ) %>%
+  write_csv(
+    file.path(
+      path_git,
+      "output",
+      "tables",
+      "wp-dsw-cl.csv"
+    )
+  )
+```
+
+```{r}
+map(
+  test_vars,
+  ~ lm(
+    paste(., "~ sample_group") %>% as.formula,
+    wp_census %>% dplyr::filter(country == "Uganda")
+  ) %>% tidy
+) %>% 
+  bind_rows %>%
+  mutate(p.value = round(p.value, 3)) %>%
+  dplyr::filter(!str_detect(term, "Intercept")) %>%
+  mutate(outcome = test_vars)
+```
+
+
+## Functionality across all water sources
+
+```{r}
+wp_census %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    wp_n = n(),
+    wp_func = mean(wp_func, na.rm = TRUE)
+  ) 
+```
+```{r}
+wp_census %>%
+  group_by(country, sample_group, intervention_type) %>%
+  summarise(
+    wp_n = n(),
+    wp_func = mean(wp_func, na.rm = TRUE)
+  ) 
+```
+```{r}
+wp_census %>%
+  group_by(country) %>%
+  summarise(
+    wp_n = n(),
+    wp_func = mean(wp_func, na.rm = TRUE)
+  ) 
+```
+
+```{r}
+map(
+  c("Uganda", "Malawi"),
+  ~ lm(
+    wp_func ~ sample_group,
+    data = wp_census %>% dplyr::filter(country == .x)
+  ) %>%
+    tidy %>%
+    mutate(p.value = round(p.value, 3))
+)
 ```
 
 ## Eligible water points
@@ -47,6 +622,7 @@ wp_analysis <-
 ```{r}
 eligiblity_df <-
   wp_census %>%
+  group_by(country, sample_group) %>%
   # Calculate the relevant statistics
   summarise(
     Visited =  n_distinct(wp_id),
@@ -61,10 +637,16 @@ eligiblity_df <-
     `Used for drinking` = wp_drink,
     Functional = wp_func,
     `In analysis sample` = analysis
-  ) %>%
+  )
+
   # Make it one stat per line
+  
+```
+
+```{r}
+eligiblity_df %>%
   pivot_longer(
-    cols = everything(),
+    cols = -c(country, sample_group),
     names_to = "Name",
     values_to = "Counts"
   ) %>%
@@ -75,21 +657,17 @@ eligiblity_df <-
       levels = c("Visited", "Communal", "Used for drinking", "Functional", "In analysis sample"),
       ordered = TRUE
     )
-  )
-```
-
-```{r}
-eligiblity_df %>%
+  ) %>%
   ggplot(
     aes(
-      x = Name, 
-      y = Counts,
+      y = Name, 
+      x = Counts,
       label = Counts
     )
   ) +
   geom_col(fill = viridis(1)) + 
   geom_text(
-    vjust = 1.5,
+    hjust = 1.5,
     color = "white"
   ) +
   labs(
@@ -101,51 +679,12 @@ eligiblity_df %>%
       wp_census %>% pull(village_id) %>% n_distinct, 
       " villages"
     )
-  ) + 
+  ) +
+  facet_grid(country ~ sample_group) +
   theme
 ```
 
 ## Number of water points found
-
-```{r}
-wp_analysis %>%
-  dplyr::filter(country == "Malawi") %>%
-  select(wp_func, dsw, ilc_wp, ilc_wcp) %>%
-  mutate(
-    dsw_func = case_when(dsw == 1 ~ wp_func),
-    ilcwp_func = case_when(ilc_wp == 1 ~ wp_func),
-    ilcwcp_func = case_when(ilc_wcp == 1 ~ wp_func),
-  ) %>%
-  summarise(
-    wp_n = n(),
-    across(
-      c(
-        dsw_n = dsw,
-        ilcwp_n = ilc_wp,
-        ilcwcp_n = ilc_wcp
-      ),
-      ~ sum(., na.rm = TRUE)
-    ),
-    across(
-      ends_with("func"),
-      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
-    )
-  ) %>%
-  pivot_longer(
-    cols = everything(),
-    names_pattern = "(.*)_(.*)",
-    names_to = c("type", ".value")
-  ) %>%
-  set_names(c(" ", "N", "Percent functioning")) %>%
-  mutate(
-    ` ` = c("All water points", "DSW", "ILC water points", "ILC water collection points")
-  ) %>%
-  kable(
-    caption = "Number of water points found in Malawi",
-    col.names = c("", "N", "Functional (%)"),
-    align = c("l", "c", "c")
-  ) 
-```
 
 ```{r}
 wp_analysis %>%
@@ -328,7 +867,7 @@ counts_by_country <-
   ) %>%
   arrange(country)
 
-ilc_meter_counts_by_country %>%
+counts_by_country %>%
   kable(
     caption = "Functional ILC WP/WCP and DSW WP with colorimeter readings",
     align = c("l","r","r","r","r","r","r","r","r","r","r","r")
@@ -550,43 +1089,157 @@ wp_census %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
 ```
 
-## DSW water points
+## ILC water points
 
 ```{r}
-dsw <-
-  wp_census %>%
-  dplyr::filter(dsw == 1)
+wp_census %>%
+  dplyr::filter(str_detect(intervention_type, "ILC"), country == "Malawi") %>%
+  group_by(intervention_type) %>%
+  summarise(
+    N = n_distinct(wp_id),
+    Functional = sum(wp_func),
+    across(
+      c(
+        meterfcr_01,
+        meterfcr,
+        discfcr_02,
+        discfcr
+      ),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
 ```
+
+
+## DSW water points
+
+
+
 
 ### Functionality
 
+WHAT'S GOING ON HERE?
+
 ```{r}
-dsw %>%
+wp_census %>%
+  dplyr::filter(intervention_type == "DSW", disp_tank_present, is.na(jc_valve)) %>%
+  view
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(wp_func, intervention_type == "DSW") %>%
+  group_by(country) %>%
+  mutate(
+    disp_working = disp_tank_present & jc_valve
+  ) %>%
   summarise(
+    N = n(),
     across(
       c(
-        `Water point is functional` = wp_func,
-        `Casing is present` = disp_casing_present,
-        `PVC pole is present` = disp_pvc_pole_present,
-        `Tank is present` = disp_tank_present,
-        `Valve is working (conditional on tank being present)` = jc_valve,
-        `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+        disp_tank_present,
+        jc_valve,
+        `Dispenser is working` = disp_working,
+        `Dispenser is not empty (conditional on valve working)` = jc_chlorine,
+        meterfcr_un_01, discfcr_un_02, meterfcr_un_02,
+        meterfcr_01, discfcr_02, meterfcr_02
       ),
-      ~ (mean(., na.rm = TRUE) * 100) %>% round(1),
-      .names = "{.col}_Percent"
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
     ),
     across(
+      c(discfcr, jc_mldispensed),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+
+
+```{r}
+wp_census %>%
+  dplyr::filter(wp_func, intervention_type == "DSW") %>%
+  group_by(country) %>%
+  mutate(
+    disp_working = disp_tank_present & jc_valve
+  ) %>%
+  summarise(
+    N = n(),
+    across(
       c(
-        `Water point is functional` = wp_func,
-        `Casing is present` = disp_casing_present,
-        `PVC pole is present` = disp_pvc_pole_present,
-        `Tank is present` = disp_tank_present,
-        `Valve is working (conditional on tank being present)` = jc_valve,
-        `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+        disp_tank_present,
+        jc_valve,
+        `Dispenser is working` = disp_working,
+        `Dispenser is not empty (conditional on valve working)` = jc_chlorine,
+        meterfcr_un_01, discfcr_un_02, meterfcr_un_02,
+        meterfcr_01, discfcr_02, meterfcr_02
       ),
-      ~ sum(!is.na(.)),
-      .names = "{.col}_N Obs"
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
     ),
+    across(
+      c(discfcr, jc_mldispensed),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+
+
+```{r}
+lm(
+  disctcr ~ jc_mldispensed,
+  data = wp_census
+) %>% summary
+
+lm(
+  disctcr ~ jc_mldispensed,
+  data = wp_census %>% dplyr::filter(country == "Malawi")
+) %>% summary
+
+lm(
+  disctcr ~ jc_mldispensed,
+  data = wp_census %>% dplyr::filter(country == "Uganda")
+) %>% summary
+
+
+wp_census %>%
+  dplyr::filter(!is.na(wp_turbidity)) %>%
+  tabyl(wp_turbidity, country) %>%
+  adorn_percentages(denominator = "col")
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(wp_func, intervention_type == "DSW") %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    disp_working = disp_tank_present & jc_valve
+  ) %>%
+  summarise(
+    N = n(),
+    across(
+      c(
+        disp_tank_present,
+        jc_valve,
+        `Dispenser is working` = disp_working,
+        `Dispenser is not empty (conditional on valve working)` = jc_chlorine,
+        meterfcr_un_01, discfcr_un_02, meterfcr_un_02,
+        meterfcr_01, discfcr_02, meterfcr_02
+      ),
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
+    ),
+    across(
+      c(discfcr, jc_mldispensed),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    N = n(),
     across(
       c(
         `Water point is functional` = wp_func,
@@ -596,16 +1249,62 @@ dsw %>%
         `Valve is working (conditional on tank being present)` = jc_valve,
         `Dispenser is not empty (conditional on valve working)` = jc_chlorine
       ),
-      ~ sum(., na.rm = TRUE),
-      .names = "{.col}_Count"
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
+    )
+  )
+  #   across(
+  #     c(
+  #       `Water point is functional` = wp_func,
+  #       `Casing is present` = disp_casing_present,
+  #       `PVC pole is present` = disp_pvc_pole_present,
+  #       `Tank is present` = disp_tank_present,
+  #       `Valve is working (conditional on tank being present)` = jc_valve,
+  #       `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+  #     ),
+  #     ~ sum(!is.na(.)),
+  #     .names = "{.col}_N Obs"
+  #   ),
+  #   across(
+  #     c(
+  #       `Water point is functional` = wp_func,
+  #       `Casing is present` = disp_casing_present,
+  #       `PVC pole is present` = disp_pvc_pole_present,
+  #       `Tank is present` = disp_tank_present,
+  #       `Valve is working (conditional on tank being present)` = jc_valve,
+  #       `Dispenser is not empty (conditional on valve working)` = jc_chlorine
+  #     ),
+  #     ~ sum(., na.rm = TRUE),
+  #     .names = "{.col}_Count"
+  #   )
+  # )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  group_by(country) %>%
+  summarise(
+    n = n(),
+    filled = sum(jc_chlorine, na.rm = TRUE),
+    pct_filled = filled/n
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    n = n(),
+    across(
+      c(jc_chlorine, discfcr_02),
+      ~ sum(., na.rm = TRUE)
     )
   ) %>%
-  pivot_longer(
-    everything(),
-    names_pattern = "(.*)_(.*)",
-    names_to = c(" ", ".value")
-  ) %>%
-  select(" ", `N Obs`, Count, Percent)
+  mutate(
+    pct_filled = jc_chlorine/n,
+    pct_fcr = discfcr_02/n
+  )
 ```
 
 ### Chlorine dosage

@@ -33,26 +33,211 @@ hh_census <-
       "hh-census.rds"
     )
   ) %>%
-  st_drop_geometry() 
+  st_drop_geometry() %>%
+  mutate(
+    response = response * 100,
+    served = (wp_intervention_type != "Non-program") * 100
+  )
 ```
+
+```{r}
+hh_census %>% 
+  group_by(village_id, country, sample_group) %>%
+  summarise(n = n()) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    N = n(),
+    se = sd(n, na.rm = TRUE)/N,
+    n = mean(n)
+  )
+```
+
+```{r}
+hh_census %>% 
+  mutate(using = (wp_intervention_type != "Non-program")) %>%
+  group_by(village_id, country, sample_group) %>%
+  summarise(using = sum(using, na.rm = TRUE)) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    N = n(),
+    se = sd(using, na.rm = TRUE)/N,
+    n = mean(using)
+  )
+```
+
+
+## Sample size
+
+```{r}
+country <-
+  hh_census %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Households found` = n_distinct(household_id),
+    `Response rate (%)` = mean(response),
+    `Households served` = sum(wp_intervention_type != "Non-program", na.rm = TRUE),
+    `Percent served (%)` = mean(wp_intervention_type != "Non-program", na.rm = TRUE)
+  ) %>%
+  mutate(sample_group = country)
+```
+
+```{r}
+strata <-
+  hh_census %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    `Households found` = n_distinct(household_id),
+    `Response rate (%)` = mean(response),
+    `Households served` = sum(wp_intervention_type != "Non-program", na.rm = TRUE),
+    `Percent served (%)` = mean(wp_intervention_type != "Non-program", na.rm = TRUE)
+  )
+```
+
+```{r}
+hhc_sample <- 
+  country %>% 
+  dplyr::filter(country == "Malawi") %>%
+  bind_rows(
+    strata %>% dplyr::filter(country == "Malawi")
+  ) %>%
+  bind_rows(
+    country %>% dplyr::filter(country == "Uganda")
+  ) %>%
+  bind_rows(
+    strata %>% dplyr::filter(country == "Uganda")
+  ) %>%
+  ungroup %>%
+  select(sample_group, everything()) %>%
+  mutate(
+    `Response rate (%)` = `Response rate (%)` %>% round(1),
+    `Percent served (%)` = `Percent served (%)` %>% round(3) * 100
+  ) %>%
+  rename(` ` = sample_group) %>% 
+  select(-country) %>%
+  kable(
+    format = "latex",
+    caption = "Household census sample"
+  )
+
+hhc_sample
+```
+
+```{r}
+hh_census %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    mean(hh_members, na.rm = TRUE)
+  )
+```
+```{r}
+hh_census %>%
+  group_by(country) %>%
+  summarise(
+    mean(hh_members, na.rm = TRUE)
+  )
+```
+
+```{r}
+map(
+  c("Malawi", "Uganda"),
+  ~ feols(
+    hh_members ~ user | sample_group,
+    cluster = ~village_id,
+    data = hh_census %>%
+      dplyr::filter(country == .x) %>%
+      mutate(user = wp_intervention_type != "Non-program")
+  ) %>%
+    tidy
+) %>% bind_rows %>%
+  mutate(p.value = round(p.value, 3))
+
+map(
+  c("Expansion", "Footprint", "ILC"),
+  ~ feols(
+    hh_members ~ user,
+    cluster = ~village_id,
+    data = hh_census %>%
+      dplyr::filter(country == "Malawi", sample_group == .x) %>%
+      mutate(user = wp_intervention_type != "Non-program")
+  ) %>%
+    tidy
+) %>% bind_rows %>%
+  mutate(p.value = round(p.value, 3))
+
+map(
+  c("Malawi", "Uganda"),
+  ~ feols(
+    hh_members ~ user * sample_group,
+    cluster = ~village_id,
+    data = hh_census %>%
+      dplyr::filter(country == .x) %>%
+      mutate(user = wp_intervention_type != "Non-program")
+  ) %>%
+    tidy
+) %>% bind_rows %>%
+  mutate(p.value = round(p.value, 3))
+```
+
+```{r}
+hh_census %>%
+  group_by(country) %>%
+  summarise(
+    mean(hh_members, na.rm = TRUE)
+  )
+```
+
 
 ## Headline numbers table
 
 ```{r}
-hh_census %>%
+villages <-
+  hh_census %>%
   st_drop_geometry() %>% 
   dplyr::filter(!is.na(country)) %>%  
   mutate(
     evac = wp_intervention_type %in% c("DSW", "ILC water point", "ILC water collection point")
   ) %>%
+  group_by(village_id, country, sample_group) %>%
+  summarise(
+    hhs = n(),
+    hh_members = mean(hh_members, na.rm = TRUE),
+    evac_hhs = sum(evac, na.rm = TRUE),
+    evac_pct = evac_hhs/hhs
+  ) 
+
+strata <-
+  villages %>%
   group_by(country, sample_group) %>%
   summarise(
-    `Villages (n)` = n_distinct(village_id),
-    `Households (total)` = n(),
-    `Households using Evidence Action water points` = sum(evac, na.rm = TRUE),
-    `Avg HHs per village` = `Households (total)`/`Villages (n)`,
-    `EvAc share (%)` = (`Households using Evidence Action water points`/`Households (total)`)* 100 %>% round(1)
+    villages = n_distinct(village_id),
+    across(
+      contains("hhs"),
+      ~ sum(., na.rm = TRUE),
+      .names = "{.col}_total"
+    ),
+    across(
+      c(evac_pct),
+      ~ (mean(., na.rm = TRUE) * 100) %>% round(1)
+    ),
+    hh_members = mean(hh_members, na.rm = TRUE),
+    across(
+      c(hhs, evac_hhs),
+      list(
+        mean = ~ mean(., na.rm = TRUE),
+        var = ~ var(., na.rm = TRUE),
+        se = ~ sd(., na.rm = TRUE)/villages
+      )
+    )
   ) %>%
+  mutate(
+    hhs_ci = paste0("(", round(hhs_mean - 1.96 * hhs_se, 1), ", ", round(hhs_mean + 1.96 * hhs_se, 1), ")"), 
+    evac_ci = paste0("(", round(evac_hhs_mean - 1.96 * evac_hhs_se, 1), ", ", round(evac_hhs_mean + 1.96 * evac_hhs_se, 1), ")")
+  )
+
+strata %>%
+  select(-ends_with(c("_se", "_var"))) %>%
   kable(
     digits = 1,
     caption = "Village and Household Summary by Country",
@@ -64,57 +249,130 @@ hh_census %>%
   )
 ```
 
-
-
-
-## Data for table 1 in Overleaf
 ```{r}
-# Summarise to village-level first
-village_summary <- hh_census %>%
-  dplyr::filter(!is.na(country)) %>%  
-  group_by(country, village_id, ea_program_vil) %>%
-  summarise(
-    n_households = n_distinct(household_id),
-    consent_rate = mean(response, na.rm = TRUE),
-    .groups = "drop"
+weights <-
+  tribble(
+    ~ country, ~ sample_group, ~ pop,
+    "Uganda", "ILC", 651, 
+    "Uganda", "Footprint", 3171,
+    "Uganda", "Expansion", 4012,
+    "Malawi", "Footprint", 1161,
+    "Malawi", "Expansion", 4812, 
+    "Malawi", "ILC", 633
   )
 
-# Then summarise by country + program type
-summary_by_type <- village_summary %>%
-  group_by(country, ea_program_vil) %>%
-  summarise(
-    avg_households = mean(n_households),
-    avg_consent_rate = mean(consent_rate),
-    n_villages = n(),
-    .groups = "drop"
+strata <-
+  strata %>%
+  left_join(weights) %>%
+  mutate(
+    f = villages/pop,
+    total_stratum = evac_hhs_mean * pop,
+    var_stratum = (pop^2) * (1 - f) * (evac_hhs_var / villages),
+    se_stratum = sqrt(var_stratum)
   )
 
-# Add totals across all countries and types
-summary_total <- village_summary %>%
+stratum <-
+  strata %>%
+  transmute(
+    country, sample_group, pop, villages, members_av = hh_members,
+    hhs = hhs_mean,
+    hhs_ci = paste0("(", round(hhs - 1.96 * hhs_se, 1), ", ", round(hhs + 1.96 * hhs_se, 1), ")"),
+    served_hhs_av = evac_hhs_mean, 
+    served_hhs_se = evac_hhs_se, 
+    served_hhs = total_stratum, 
+    served_hhs_ci = paste0("(", round(served_hhs - 1.96 * se_stratum, 1), ", ", round(served_hhs + 1.96 * se_stratum, 1), ")"),
+    members_av
+  )
+
+country <-
+  strata %>%
   group_by(country) %>%
   summarise(
-    ea_program_vil = "All",
-    avg_households = sum(n_households, na.rm = TRUE) / n_distinct(village_id),
-    avg_consent_rate = mean(consent_rate),
-    n_villages = n_distinct(village_id),
-    .groups = "drop"
+    villages = sum(villages),
+    pop = sum(pop),
+    served_hhs = sum(total_stratum),
+    var = sum(var_stratum),
+    se = sqrt(var),
+    members_av = mean(hh_members),
+    ci_low = served_hhs - 1.96 * se,
+    ci_high = served_hhs + 1.96 * se
+  ) %>%
+  transmute(
+    country, villages,
+    sample_group = country, 
+    served_hhs, 
+    pop, members_av,
+    served_hhs_ci = paste0("(", ci_low %>% round(1), ", ", ci_high %>% round(1), ")"),
+    members_av
   )
 
-# Combine
-final_summary <- bind_rows(summary_by_type, summary_total)
+table <-
+  stratum %>%
+  bind_rows(country) %>%
+  arrange(country, sample_group) %>%
+  mutate(served_people = served_hhs * members_av) %>%
+  select(
+    country, sample_group, pop, villages, hhs, served_hhs, served_hhs_ci, members_av, served
+  )
 
-# Nicely formatted table
-kable(final_summary, digits = 3,
-      col.names = c("Country",
-                    "Village Type",
-                    "Average # of HH per Village",
-                    "Average Consent Rate",
-                    "# of Villages")) %>%
-kable_styling(
-    full_width = FALSE, 
-    bootstrap_options = c("striped", "hover")
-)
+table %>%
+  kable(
+    format = "latex",
+    caption = "Population served by Evidence Action"
+  )
 ```
+
+
+```{r}
+villages <-
+  hh_census %>%
+  dplyr::filter(!is.na(country)) %>%
+  st_drop_geometry() %>% 
+  mutate(
+    evac = wp_intervention_type %in% c("DSW", "ILC water point", "ILC water collection point")
+  ) %>%
+  group_by(village_id, country, sample_group) %>%
+  summarise(
+    hhs = n(),
+    evac_hhs = sum(evac, na.rm = TRUE)
+  )
+
+villages %>%
+  dplyr::filter(country == "Uganda") %>%
+  lm(
+    hhs ~ sample_group,
+    data = .
+  ) %>% summary
+
+villages %>%
+  dplyr::filter(country == "Malawi") %>%
+  lm(
+    hhs ~ sample_group,
+    data = .
+  ) %>% summary
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  feols(
+    hh_members ~ sample_group,
+    data = .,
+    cluster = ~village_id
+  ) %>% summary
+
+hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  feols(
+    hh_members ~ sample_group,
+    data = .,
+    cluster = ~village_id
+  ) %>% summary
+```
+
+
+
+
 
 ```{r}
 hh_summary <- hh_census %>%
