@@ -102,8 +102,6 @@ villages %>%
   tabyl(pre_expansion, dsw)
 ```
 
-> These numbers don't add up: seven villages have ilc villages and don't have an ILC WCP (`ilc` is FALSE). Check the data
-
 ```{r}
 villages %>% 
   dplyr::filter(country == "Malawi", sample == "Main sample") %>%
@@ -400,8 +398,6 @@ wp %>%
     bootstrap_options = c("striped", "hover")
   )
 ```
-
-> Check water points and water collection points definitions
 
 ## Household census
 
