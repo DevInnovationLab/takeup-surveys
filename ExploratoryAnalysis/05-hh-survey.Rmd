@@ -121,6 +121,49 @@ ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
   )
 ```
 
+## chlorination among promoters in hh survey
+```{r}
+chlorination_promoters <- hh_survey %>%
+  group_by(country, promoter_household) %>%
+  summarise(
+    chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
+  )
+
+chlorination_promoters
+```
+
+## box plot of chlorine test results by color of water
+```{r}
+hh_survey %>% 
+  dplyr::filter(metertcr < 3) %>%
+  ggplot(
+  aes(x=metertcr_color, y=metertcr)
+  ) + geom_boxplot()
+
+hh_survey %>% 
+  dplyr::filter(meterfcr < 3) %>%
+  ggplot(
+  aes(x=meterfcr_color, y=meterfcr)
+  ) + geom_boxplot()
+```
+
+```{r}
+test_vars_c <-
+  c(
+        "discfcr_c_02", "disctcr_c_02", 
+        "meterfcr_c_02", "metertcr_c_02",
+        "meterfcr_c_01", "metertcr_c_01"
+      )
+
+hh_survey %>%
+  # dplyr::filter(make_watersafe_2 == TRUE) %>%
+  group_by(make_watersafe_2, intervention_type) %>%
+  summarize(
+      across(all_of(test_vars_c), ~mean(.,na.rm = TRUE)))
+```
+
 ## Water treatment
 
 ```{r}
