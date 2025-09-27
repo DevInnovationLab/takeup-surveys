@@ -1326,7 +1326,7 @@ hh_valid <- as.data.frame(hh_census)[
 summary_data <- hh_valid %>%
   st_drop_geometry() %>%
   mutate(
-    used_any = rowSums(select(., all_of(wtmt_used)) == 1, na.rm = TRUE) > 0,
+    used_cl = rowSums(select(., all_of(wtmt_anycl)) == 1, na.rm = TRUE) > 0,
     category = case_when(
       vil_dsw_selfreport == 1 & vil_ilc_selfreport != 1 ~ "Village: DSW Only",
       vil_ilc_selfreport == 1 & vil_dsw_selfreport != 1 ~ "Village: ILC Only",
@@ -1334,12 +1334,12 @@ summary_data <- hh_valid %>%
       TRUE ~ "Village: Neither"
     )
   ) %>%
-  count(category, used_any, name = "n") %>%
+  count(category, wtmt_anycl, name = "n") %>%
   group_by(category) %>%
   mutate(
     total_n = sum(n),
     pct = round(100 * n / total_n, 1),
-    label = ifelse(used_any, "Used Treatment", "Did Not Use Treatment"),
+    label = ifelse(wtmt_anycl, "Used Treatment", "Did Not Use Treatment"),
     category_label = paste0(category, "\n(n = ", total_n, ")")
   )
 
@@ -1348,8 +1348,60 @@ ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
   geom_text(
   aes(
     label = paste0(pct, "%"),
-    vjust = ifelse(category == "Village: Both DSW & ILC" & used_any, 1.5, -0.4),
-    color = ifelse(category == "Village: Both DSW & ILC" & used_any, "white", "black")
+    vjust = ifelse(category == "Village: Both DSW & ILC" & wtmt_anycl, 1.5, -0.4),
+    color = ifelse(category == "Village: Both DSW & ILC" & wtmt_anycl, "white", "black")
+  ),
+  size = 3.5,
+  show.legend = FALSE
+  ) +
+  scale_color_identity() +
+  facet_wrap(~category_label, ncol = 2) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(
+    title = "Households Using Water Treatment by Reported DSW/ILC Availability in Village",
+    x = NULL,
+    y = "Share of Households (%)",
+    caption = paste0("Note: Total number of households in raw HH census data: ",total_households_census,".
+                     Each panel is a distinct group of households among the ", sum(summary_data$n), 
+                     " that report using a non-DSW/ILC water point (only these are asked about treatment in HH census).")
+  ) +
+  theme +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "none",
+    strip.text = element_text(face = "bold", size = 10)
+  )
+```
+
+## Share of households using chlorine treatment by whether village has DSW/ILC
+```{r}
+hh_valid <- as.data.frame(hh_census)[
+  !is.na(hh_census$wtmt_anycl), ]
+summary_data <- hh_valid %>%
+  st_drop_geometry() %>%
+  mutate(
+    category = case_when(
+      vil_dsw_selfreport == 1 & vil_ilc_selfreport != 1 ~ "Village: DSW Only",
+      vil_ilc_selfreport == 1 & vil_dsw_selfreport != 1 ~ "Village: ILC Only",
+      vil_dsw_selfreport == 1 & vil_ilc_selfreport == 1 ~ "Village: Both DSW & ILC",
+      TRUE ~ "Village: Neither"
+    )
+  ) %>%
+  count(category, wtmt_anycl, name = "n") %>%
+  group_by(category) %>%
+  mutate(
+    total_n = sum(n),
+    pct = round(100 * n / total_n, 1),
+    label = ifelse(wtmt_anycl, "Used Chlorine Treatment", "Did Not Use Chlorine Treatment"),
+    category_label = paste0(category, "\n(n = ", total_n, ")")
+  )
+ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
+  geom_col(width = 0.6) +
+  geom_text(
+  aes(
+    label = paste0(pct, "%"),
+    vjust = ifelse(category == "Village: Both DSW & ILC" & wtmt_anycl, 1.5, -0.4),
+    color = ifelse(category == "Village: Both DSW & ILC" & wtmt_anycl, "white", "black")
   ),
   size = 3.5,
   show.legend = FALSE
