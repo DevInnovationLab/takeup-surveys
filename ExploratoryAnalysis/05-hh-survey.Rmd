@@ -23,6 +23,19 @@ hh_survey <-
     )
   ) %>%
   dplyr::filter(survey == "Household Survey")
+
+hh_survey_constructed <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Constructed",
+      "hh-survey-constructed.rds"
+    )
+  ) %>%
+  dplyr::filter(survey == "Household Survey")
 ```
 
 ## Sample size
@@ -82,8 +95,6 @@ hh_survey %>%
 
 ## Number of water points per household
 
-LW: move this to hh survey
-
 ```{r}
 wp_distribution <- 
   hh_survey %>%
@@ -123,7 +134,7 @@ ggplot(wp_distribution, aes(x = "", y = n, fill = as.factor(wp_count))) +
 
 ## chlorination among promoters in hh survey
 ```{r}
-chlorination_promoters <- hh_survey %>%
+chlorination_promoters <- hh_survey_constructed %>%
   group_by(country, promoter_household) %>%
   summarise(
     chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
@@ -136,19 +147,32 @@ chlorination_promoters
 
 ## box plot of chlorine test results by color of water
 ```{r}
-hh_survey %>% 
+hh_survey_constructed %>% 
   dplyr::filter(metertcr < 3) %>%
   ggplot(
   aes(x=metertcr_color, y=metertcr)
   ) + geom_boxplot()
 
-hh_survey %>% 
+hh_survey_constructed %>% 
   dplyr::filter(meterfcr < 3) %>%
   ggplot(
   aes(x=meterfcr_color, y=meterfcr)
   ) + geom_boxplot()
+
+hh_survey_constructed %>% 
+  dplyr::filter(disctcr < 3) %>%
+  ggplot(
+  aes(x=disctcr_color, y=disctcr)
+  ) + geom_boxplot()
+
+hh_survey_constructed %>% 
+  dplyr::filter(discfcr < 3) %>%
+  ggplot(
+  aes(x=discfcr_color, y=discfcr)
+  ) + geom_boxplot()
 ```
 
+## Are chlorination rates more similar across colorimeter and color wheel among people who report treating the water?
 ```{r}
 test_vars_c <-
   c(
@@ -157,11 +181,43 @@ test_vars_c <-
         "meterfcr_c_01", "metertcr_c_01"
       )
 
-hh_survey %>%
-  # dplyr::filter(make_watersafe_2 == TRUE) %>%
+# note: currently wp_lookup is being created in 08-section-5. it should probably be earlier on so it can be referenced here
+hh_survey_constructed <- hh_survey_constructed %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  left_join(wp_lookup, by = "wp_id")
+
+hh_survey_constructed %>%
   group_by(make_watersafe_2, intervention_type) %>%
   summarize(
-      across(all_of(test_vars_c), ~mean(.,na.rm = TRUE)))
+      across(all_of(test_vars_c), ~mean(.,na.rm = TRUE))) %>%
+  dplyr::filter(intervention_type == "DSW")
+```
+
+## Are chlorination rates more similar across colorimeter and color wheel when the water is not clear?
+```{r}
+# TCR, and using metertcr_color (could also use disctcr_color)
+hh_survey_constructed %>%
+  group_by(metertcr_color, intervention_type) %>%
+  summarize(
+    metertcr_c_01 = mean(metertcr_c_01, na.rm = TRUE),
+    metertcr_c_02 = mean(metertcr_c_01, na.rm = TRUE),
+    disctcr_c_02 = mean(disctcr_c_02, na.rm = TRUE)
+  ) %>%
+  dplyr::filter(!is.na(intervention_type)) %>%
+  dplyr::filter(!is.na(metertcr_color))
+
+# FCR, and using meterfcr_color (could also use disctcr_color)
+hh_survey_constructed %>%
+  group_by(meterfcr_color, intervention_type) %>%
+  summarize(
+    meterfcr_c_01 = mean(meterfcr_c_01, na.rm = TRUE),
+    meterfcr_c_02 = mean(meterfcr_c_01, na.rm = TRUE),
+    discfcr_c_02 = mean(discfcr_c_02, na.rm = TRUE)
+  ) %>%
+  dplyr::filter(!is.na(intervention_type)) %>%
+  dplyr::filter(!is.na(meterfcr_color))
+```
+
 ```
 
 ## Water treatment
