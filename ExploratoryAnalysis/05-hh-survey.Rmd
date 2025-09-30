@@ -218,6 +218,109 @@ hh_survey_constructed %>%
   dplyr::filter(!is.na(meterfcr_color))
 ```
 
+## Crowding out by ILC?
+among all households in HH survey - but obviously it's lower in ILC villages since there's no dispensers to use for chlorination
+```{r}
+hh_survey <- hh_survey %>%
+  mutate(make_watersafe_anycl = make_watersafe_2 == TRUE | make_watersafe_3 == TRUE)
+
+summary_data <- hh_survey %>%
+  st_drop_geometry() %>%
+  mutate(
+    category = case_when(
+      ea_program_vil == "DSW" ~ "Village: DSW Only",
+      ea_program_vil == "ILC" ~ "Village: ILC Only",
+      ea_program_vil == "DSW & ILC" ~ "Village: Both DSW & ILC",
+      TRUE ~ "Village: Neither"
+    )
+  ) %>%
+  group_by(category) %>%
+  summarise(
+    total_n = n(),
+    used_cl = sum(make_watersafe_anycl == TRUE, na.rm = TRUE),
+    pct = round(100 * used_cl / total_n, 1)
+  ) %>%
+  mutate(
+    label = "Used Chlorine Treatment",
+    category_label = paste0(category, "\n(n = ", total_n, ")")
+  )
+
+ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
+  geom_col(width = 0.6) +
+  geom_text(
+    aes(label = paste0(pct, "%")),
+    vjust = -0.4,
+    color = "black",
+    size = 3.5
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  facet_wrap(~category_label, ncol = 2) +
+  labs(
+    title = "Share of Households Reporting Home Chlorine Use by Village Program",
+    x = NULL,
+    y = "Share of All Households (%)",
+    caption = paste0("Note: Denominator includes all households (n = ", sum(summary_data$total_n), 
+                     "), regardless of whether they responded to chlorine questions.")
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "none",
+    strip.text = element_text(face = "bold", size = 10)
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1)))
+```
+
+```{r}
+hh_survey <- hh_survey %>%
+  mutate(make_watersafe_anycl = make_watersafe_2 == TRUE | make_watersafe_3 == TRUE)
+
+summary_data <- hh_survey %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  # dplyr::filter(intervention_type == "NON-PROGRAM") %>%
+  st_drop_geometry() %>%
+  mutate(
+    category = case_when(
+      ea_program_vil == "DSW" ~ "Village: DSW Only",
+      ea_program_vil == "ILC" ~ "Village: ILC Only",
+      ea_program_vil == "DSW & ILC" ~ "Village: Both DSW & ILC",
+      TRUE ~ "Village: Neither"
+    )
+  ) %>%
+  group_by(category) %>%
+  summarise(
+    total_n = n(),
+    used_cl = sum(make_watersafe_anycl == TRUE, na.rm = TRUE),
+    pct = round(100 * used_cl / total_n, 1)
+  ) %>%
+  mutate(
+    label = "Used Chlorine Treatment",
+    category_label = paste0(category, "\n(n = ", total_n, ")")
+  )
+
+ggplot(summary_data, aes(x = label, y = pct, fill = label)) +
+  geom_col(width = 0.6) +
+  geom_text(
+    aes(label = paste0(pct, "%")),
+    vjust = -0.4,
+    color = "black",
+    size = 3.5
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  facet_wrap(~category_label, ncol = 2) +
+  labs(
+    title = "Share of Households Reporting Chlorine Use by Village Program",
+    x = NULL,
+    y = "Share of Households Using DSW WPs (%)",
+    caption = paste0(" ")
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "none",
+    strip.text = element_text(face = "bold", size = 10)
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1)))
 ```
 
 ## Water treatment
