@@ -409,7 +409,7 @@ hh_census %>%
   )
 ```
 
-## Share of households outside village
+## Share of households outside village among EA water points
 ```{r}
 hh_census %>%
   dplyr::filter(intervention_type != "NON-PROGRAM") %>%
@@ -425,10 +425,11 @@ hh_census %>%
     share_outside_wp = mean(outside_village, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  group_by(country) %>%
+  group_by(country, sample_group) %>%
   summarize(
     share_outside = mean(share_outside_wp, na.rm = TRUE),
-    n_wp = n()
+    n_wp = n(),
+    .groups  = "drop"
   )
 ```
 
