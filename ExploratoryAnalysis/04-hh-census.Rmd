@@ -409,6 +409,29 @@ hh_census %>%
   )
 ```
 
+## Share of households outside village
+```{r}
+hh_census %>%
+  dplyr::filter(intervention_type != "NON-PROGRAM") %>%
+  mutate(
+    outside_village = case_when(
+      inclusion == "Within village boundaries" ~ 0,
+      inclusion == "Up to 200m outside of village boundaries" ~ 1,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  group_by(country, sample_group, wp_id) %>%
+  summarize(
+    share_outside_wp = mean(outside_village, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(country) %>%
+  summarize(
+    share_outside = mean(share_outside_wp, na.rm = TRUE),
+    n_wp = n()
+  )
+```
+
 ## Number of observations and number/share of households using DSW and ILC water points
 
 ```{r}
