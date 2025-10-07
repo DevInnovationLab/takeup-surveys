@@ -13,7 +13,8 @@ packages <-
     "dplyr",
     "knitr",
     "kableExtra",
-    "vtable"
+    "vtable",
+    "stargazer"
   )
 
 pacman::p_load(
@@ -990,8 +991,8 @@ print(vil_count_wp)
 ## table 7.5 balance tables: Uganda DSW Footprint
 significant difference in jc_chlorine
 ```{r}
-install.packages("vtable")
-library(vtable)
+# install.packages("vtable")
+# library(vtable)
 
 wp_census_pm <- wp_census %>%
   mutate(
@@ -1757,7 +1758,7 @@ beneficiaries_tbl_inside_no_double_totals <- beneficiaries_tbl_inside_no_double 
 beneficiaries_tbl_inside_no_double_totals
 ```
 
-## section 7.4.4 water points in pm vs sample: regression of chlorination on households using WPs in promoter survey
+## section 7.4.4 regression of chlorination on households using WPs in promoter survey:  water points in pm vs sample
 ```{r}
 # install.packages("stargazer")
 library(stargazer)
@@ -1765,8 +1766,13 @@ library(stargazer)
 hh_survey <- hh_survey %>%
   mutate(monitoring_survey = ifelse(survey == "Monitoring Survey", 1, 0))
 
+# promoter_survey tells us if primary water point is in promoter survey, ea_list tells us if primary water point is in ea list
 hh_survey <- hh_survey %>%
-  mutate(promoter_survey = ifelse(wp_id %in% pm_survey$wp_id, 1, 0))
+  mutate(promoter_survey = ifelse(wp_id %in% pm_survey$wp_id, 1, 0)) %>%
+  mutate(ea_list = ifelse(
+  ea_id %in% ea_promoters_uganda$i102_wpt_id | ea_id %in% ea_promoters_malawi$i102_wpt_id,
+  1, 0
+  ))
 
 uganda_hh_survey <- hh_survey %>%
   dplyr::filter(country == "UGANDA")
@@ -1774,20 +1780,50 @@ uganda_hh_survey <- hh_survey %>%
 malawi_hh_survey <- hh_survey %>%
   dplyr::filter(country == "MALAWI")
 
+# promoter survey
 model <- lm(disctcr ~ promoter_survey, data = uganda_hh_survey)
-
 stargazer(model, 
           type = "text",   
-          title = "Regression Results: Association between Monitoring Survey and disctcr",
+          title = "Regression Results: Association between Promoter Survey and disctcr",
           dep.var.labels = "DISCTCR",
           covariate.labels = c("Promoter Survey"),
+          out = "regression_results.txt")
+
+model <- lm(disctcr ~ promoter_survey, data = malawi_hh_survey)
+stargazer(model, 
+          type = "text",   
+          title = "Regression Results: Association between Promoter Survey and disctcr",
+          dep.var.labels = "DISCTCR",
+          covariate.labels = c("Promoter Survey"),
+          out = "regression_results.txt")
+
+# ea list
+model <- lm(disctcr ~ ea_list + promoter_survey, data = uganda_hh_survey)
+stargazer(model, 
+          type = "text",   
+          title = "Regression Results: Association between EA list and disctcr",
+          dep.var.labels = "DISCTCR",
+          covariate.labels = c("EA list"),
+          out = "regression_results.txt") 
+
+model <- lm(disctcr ~ ea_list + promoter_survey, data = malawi_hh_survey)
+stargazer(model, 
+          type = "text",   
+          title = "Regression Results: Association between EA list and disctcr",
+          dep.var.labels = "DISCTCR",
+          covariate.labels = c("EA list"),
           out = "regression_results.txt") 
 ```
 
-## section 7.4.5 households listed by promoters vs others using water points in pm: regression of chlorination on being listed by promoter
+## section 7.4.5 regression of chlorination on being listed by promoter
+households listed by promoters vs others using water points in pm
+I regress chlorination on household presence in the promoter lists, limiting the sample to households using water points in the promoter survey
+- requires that you run the chunk above before to work
 ```{r}
 hh_survey <- hh_survey %>%
-  mutate(listed_by_promoter = ifelse(household_id %in% pm_survey_households$household_id, 1, 0))
+  mutate(
+    listed_by_promoter = ifelse(household_id %in% pm_survey_households$household_id, 1, 0)
+  )
 
 promoter_wp_households <- hh_survey %>%
   dplyr::filter(promoter_survey == 1)
@@ -1807,7 +1843,7 @@ stargazer(uganda_model,
           covariate.labels = c("Listed by Promoter"),
           out = "uganda_promoter_listing_results.txt")
 
-malawi_model <- lm(disctcr ~ listed_by_promoter, data = uganda_promoter_wp)
+malawi_model <- lm(disctcr ~ listed_by_promoter, data = malawi_promoter_wp)
 
 stargazer(malawi_model, 
           type = "text",   
@@ -1825,6 +1861,11 @@ mean(promoter_wp_households$listed_by_promoter, na.rm = TRUE)
 mean(uganda_promoter_wp$listed_by_promoter, na.rm = TRUE)
 mean(malawi_promoter_wp$listed_by_promoter, na.rm = TRUE)
 ```
+
+## responses to questions:
+are all households in HH census included in promoter list?
+
+as
 
 ## exploratory - not directly used in report:
 association between hh_listed by promoter and hh_count in hh census - it is positive and significant

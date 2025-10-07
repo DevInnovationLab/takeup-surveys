@@ -5,17 +5,17 @@ Malawi: Association between Being Listed by Promoter and Chlorination
                     ---------------------------
                               DISCTCR          
 -----------------------------------------------
-Listed by Promoter            0.117**          
-                              (0.056)          
+Listed by Promoter           0.113***          
+                              (0.034)          
                                                
-Constant                     0.320***          
-                              (0.047)          
+Constant                     0.137***          
+                              (0.031)          
                                                
 -----------------------------------------------
-Observations                   1,107           
-R2                             0.004           
-Adjusted R2                    0.003           
-Residual Std. Error      0.859 (df = 1105)     
-F Statistic           4.322** (df = 1; 1105)   
+Observations                   1,935           
+R2                             0.006           
+Adjusted R2                    0.005           
+Residual Std. Error      0.587 (df = 1933)     
+F Statistic          10.825*** (df = 1; 1933)  
 ===============================================
 Note:               *p<0.1; **p<0.05; ***p<0.01

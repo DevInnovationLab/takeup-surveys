@@ -1,21 +1,24 @@
 
-Regression Results: Association between Monitoring Survey and disctcr
+Regression Results: Association between EA list and promoter survey and disctcr in Malawi
 ===============================================
                         Dependent variable:    
                     ---------------------------
                               DISCTCR          
 -----------------------------------------------
-Promoter Survey              0.169***          
-                              (0.053)          
+EA list                      0.100***          
+                              (0.028)          
                                                
-Constant                     0.232***          
-                              (0.046)          
+promoter_survey               0.074**          
+                              (0.033)          
+                                               
+Constant                     0.075***          
+                              (0.026)          
                                                
 -----------------------------------------------
-Observations                   1,429           
-R2                             0.007           
-Adjusted R2                    0.006           
-Residual Std. Error      0.833 (df = 1427)     
-F Statistic          10.208*** (df = 1; 1427)  
+Observations                   2,416           
+R2                             0.014           
+Adjusted R2                    0.013           
+Residual Std. Error      0.555 (df = 2413)     
+F Statistic          17.284*** (df = 2; 2413)  
 ===============================================
 Note:               *p<0.1; **p<0.05; ***p<0.01
