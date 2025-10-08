@@ -1646,10 +1646,7 @@ country_totals_table14</code></pre>
 <h2>table 15</h2>
 <p>Balance tables: Uganda DSW Footprint. significant difference in
 jc_chlorine</p>
-<pre class="r"><code># install.packages(&quot;vtable&quot;)
-# library(vtable)
-
-wp_census_pm &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   mutate(
     promoter_survey = if_else(
       wp_id %in% pm_survey$wp_id,  
@@ -1659,15 +1656,47 @@ wp_census_pm &lt;- wp_census %&gt;%
   ) %&gt;%
   dplyr::filter(country == &quot;UGANDA&quot;, wp_category == &quot;DSW Footprint&quot;) %&gt;%
   sumtable(
-    vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
+    vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, 
+             &quot;disctcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, 
+             &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;promoter_survey&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##             Variable  N Percent   N Percent       Test
+## 1    promoter_survey NO         YES                   
+## 2            wp_func 22          39               X2=0
+## 3             ... No  0      0%   1      3%           
+## 4            ... Yes 22    100%  38     97%           
+## 5  disp_tank_present 21          38           X2=0.092
+## 6             ... No  1      5%   0      0%           
+## 7            ... Yes 20     95%  38    100%           
+## 8        jc_chlorine 19          36         X2=5.305**
+## 9             ... No  8     42%   4     11%           
+## 10           ... Yes 11     58%  32     89%           
+## 11        disctcr_02 11          32               X2=0
+## 12            ... No  0      0%   1      3%           
+## 13           ... Yes 11    100%  31     97%           
+## 14       meterfcr_02 11          32               X2=0
+## 15            ... No  1      9%   2      6%           
+## 16           ... Yes 10     91%  30     94%           
+## 17       meterfcr_01 11          32               X2=0
+## 18            ... No  0      0%   2      6%           
+## 19           ... Yes 11    100%  30     94%           
+## 20        disctcr_02 11          32               X2=0
+## 21            ... No  0      0%   1      3%           
+## 22           ... Yes 11    100%  31     97%           
+## 23       metertcr_02 11          32               X2=0
+## 24            ... No  0      0%   2      6%           
+## 25           ... Yes 11    100%  30     94%           
+## 26       metertcr_01 11          32               X2=0
+## 27            ... No  0      0%   2      6%           
+## 28           ... Yes 11    100%  30     94%</code></pre>
 </div>
 <div id="table-16" class="section level2">
 <h2>table 16</h2>
 <p>Balance tables: Uganda DSW Footprint but between EA list and not EA
 list water points</p>
-<pre class="r"><code>wp_census_balance &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   # dplyr::filter(wp_category != &quot;Non-program&quot;) %&gt;%
   mutate(
     in_promoter_list = if_else(
@@ -1680,7 +1709,37 @@ list water points</p>
   sumtable(
     vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;in_promoter_list&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##             Variable  N Percent   N Percent       Test
+## 1   in_promoter_list NO         YES                   
+## 2            wp_func 23          38               X2=0
+## 3             ... No  0      0%   1      3%           
+## 4            ... Yes 23    100%  37     97%           
+## 5  disp_tank_present 22          37            X2=0.07
+## 6             ... No  1      5%   0      0%           
+## 7            ... Yes 21     95%  37    100%           
+## 8        jc_chlorine 20          35         X2=4.531**
+## 9             ... No  8     40%   4     11%           
+## 10           ... Yes 12     60%  31     89%           
+## 11        discfcr_02 12          31               X2=0
+## 12            ... No  1      8%   1      3%           
+## 13           ... Yes 11     92%  30     97%           
+## 14       meterfcr_02 12          31               X2=0
+## 15            ... No  1      8%   2      6%           
+## 16           ... Yes 11     92%  29     94%           
+## 17       meterfcr_01 12          31           X2=0.009
+## 18            ... No  0      0%   2      6%           
+## 19           ... Yes 12    100%  29     94%           
+## 20        disctcr_02 12          31               X2=0
+## 21            ... No  0      0%   1      3%           
+## 22           ... Yes 12    100%  30     97%           
+## 23       metertcr_02 12          31           X2=0.009
+## 24            ... No  0      0%   2      6%           
+## 25           ... Yes 12    100%  29     94%           
+## 26       metertcr_01 12          31           X2=0.009
+## 27            ... No  0      0%   2      6%           
+## 28           ... Yes 12    100%  29     94%</code></pre>
 </div>
 <div id="table-17" class="section level2">
 <h2>table 17</h2>
@@ -1688,7 +1747,7 @@ list water points</p>
 significant. difference in disp_tank_present is significant, but since
 it does not translate to significant difference in chlorine presence, I
 don’t think this is important</p>
-<pre class="r"><code>wp_census_pm &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   mutate(
     promoter_survey = if_else(
       wp_id %in% pm_survey$wp_id,  
@@ -1700,14 +1759,44 @@ don’t think this is important</p>
   sumtable(
     vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;promoter_survey&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##             Variable  N Percent   N Percent       Test
+## 1    promoter_survey NO         YES                   
+## 2            wp_func 48          77         X2=6.634**
+## 3             ... No  7     15%   1      1%           
+## 4            ... Yes 41     85%  76     99%           
+## 5  disp_tank_present 40          76          X2=3.253*
+## 6             ... No  3      8%   0      0%           
+## 7            ... Yes 37     92%  76    100%           
+## 8        jc_chlorine 31          65         X2=4.081**
+## 9             ... No  7     23%   4      6%           
+## 10           ... Yes 24     77%  61     94%           
+## 11        discfcr_02 24          61           X2=0.727
+## 12            ... No  2      8%   1      2%           
+## 13           ... Yes 22     92%  60     98%           
+## 14       meterfcr_02 24          61           X2=2.432
+## 15            ... No  3     12%   1      2%           
+## 16           ... Yes 21     88%  60     98%           
+## 17       meterfcr_01 24          61               X2=0
+## 18            ... No  1      4%   1      2%           
+## 19           ... Yes 23     96%  60     98%           
+## 20        disctcr_02 24          61                   
+## 21            ... No  0      0%   0      0%           
+## 22           ... Yes 24    100%  61    100%           
+## 23       metertcr_02 24          61                   
+## 24            ... No  0      0%   0      0%           
+## 25           ... Yes 24    100%  61    100%           
+## 26       metertcr_01 24          61                   
+## 27            ... No  0      0%   0      0%           
+## 28           ... Yes 24    100%  61    100%</code></pre>
 </div>
 <div id="table-18" class="section level2">
 <h2>table 18</h2>
 <p>Balance tables: Malawi DSW Footprint. significant difference in
 meterfcr_02, but because there are just 3 water points in wp_census that
 the test was conducted for, I don’t think this is very important</p>
-<pre class="r"><code>wp_census_pm &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   mutate(
     promoter_survey = if_else(
       wp_id %in% pm_survey$wp_id,  
@@ -1719,12 +1808,42 @@ the test was conducted for, I don’t think this is very important</p>
   sumtable(
     vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;promoter_survey&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##             Variable  N Percent   N Percent       Test
+## 1    promoter_survey NO         YES                   
+## 2            wp_func  5          46            X2=0.17
+## 3             ... No  1     20%   2      4%           
+## 4            ... Yes  4     80%  44     96%           
+## 5  disp_tank_present  5          45               X2=0
+## 6             ... No  0      0%   1      2%           
+## 7            ... Yes  5    100%  44     98%           
+## 8        jc_chlorine  3          39           X2=0.091
+## 9             ... No  0      0%  10     26%           
+## 10           ... Yes  3    100%  29     74%           
+## 11        discfcr_02  3          29               X2=0
+## 12            ... No  0      0%   2      7%           
+## 13           ... Yes  3    100%  27     93%           
+## 14       meterfcr_02  4          30         X2=4.634**
+## 15            ... No  2     50%   1      3%           
+## 16           ... Yes  2     50%  29     97%           
+## 17       meterfcr_01  4          30               X2=0
+## 18            ... No  0      0%   1      3%           
+## 19           ... Yes  4    100%  29     97%           
+## 20        disctcr_02  3          29               X2=0
+## 21            ... No  0      0%   1      3%           
+## 22           ... Yes  3    100%  28     97%           
+## 23       metertcr_02  4          30               X2=0
+## 24            ... No  0      0%   1      3%           
+## 25           ... Yes  4    100%  29     97%           
+## 26       metertcr_01  4          30               X2=0
+## 27            ... No  0      0%   1      3%           
+## 28           ... Yes  4    100%  29     97%</code></pre>
 </div>
 <div id="table-19" class="section level2">
 <h2>table 19</h2>
 <p>Balance tables: Malawi DSW Expansion. no significant differences</p>
-<pre class="r"><code>wp_census_pm &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   mutate(
     promoter_survey = if_else(
       wp_id %in% pm_survey$wp_id,  
@@ -1736,13 +1855,43 @@ the test was conducted for, I don’t think this is very important</p>
   sumtable(
     vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;promoter_survey&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##             Variable  N Percent   N Percent     Test
+## 1    promoter_survey NO         YES                 
+## 2            wp_func 27          58         X2=0.155
+## 3             ... No  1      4%   0      0%         
+## 4            ... Yes 26     96%  58    100%         
+## 5  disp_tank_present 26          58             X2=0
+## 6             ... No  2      8%   3      5%         
+## 7            ... Yes 24     92%  55     95%         
+## 8        jc_chlorine 13          32             X2=0
+## 9             ... No  1      8%   3      9%         
+## 10           ... Yes 12     92%  29     91%         
+## 11        discfcr_02 12          29         X2=2.124
+## 12            ... No  2     17%   0      0%         
+## 13           ... Yes 10     83%  29    100%         
+## 14       meterfcr_02 12          30         X2=0.006
+## 15            ... No  2     17%   3     10%         
+## 16           ... Yes 10     83%  27     90%         
+## 17       meterfcr_01 12          30         X2=0.727
+## 18            ... No  2     17%   1      3%         
+## 19           ... Yes 10     83%  29     97%         
+## 20        disctcr_02 12          29         X2=2.124
+## 21            ... No  2     17%   0      0%         
+## 22           ... Yes 10     83%  29    100%         
+## 23       metertcr_02 12          29         X2=0.001
+## 24            ... No  2     17%   3     10%         
+## 25           ... Yes 10     83%  26     90%         
+## 26       metertcr_01 12          29         X2=0.145
+## 27            ... No  2     17%   2      7%         
+## 28           ... Yes 10     83%  27     93%</code></pre>
 </div>
 <div id="table-20" class="section level2">
 <h2>table 20</h2>
 <p>Balance tables: Malawi DSW in ILC vill. no significant
 differences</p>
-<pre class="r"><code>wp_census_pm &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   mutate(
     promoter_survey = if_else(
       wp_id %in% pm_survey$wp_id,  
@@ -1754,12 +1903,42 @@ differences</p>
   sumtable(
     vars = c(&quot;wp_func&quot;, &quot;disp_tank_present&quot;, &quot;jc_chlorine&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;promoter_survey&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##             Variable  N Percent   N Percent     Test
+## 1    promoter_survey NO         YES                 
+## 2            wp_func 22          44             X2=0
+## 3             ... No  0      0%   1      2%         
+## 4            ... Yes 22    100%  43     98%         
+## 5  disp_tank_present 22          44             X2=0
+## 6             ... No  1      5%   1      2%         
+## 7            ... Yes 21     95%  43     98%         
+## 8        jc_chlorine 17          33         X2=0.006
+## 9             ... No  4     24%   6     18%         
+## 10           ... Yes 13     76%  27     82%         
+## 11        discfcr_02 13          27             X2=0
+## 12            ... No  0      0%   1      4%         
+## 13           ... Yes 13    100%  26     96%         
+## 14       meterfcr_02 13          28         X2=0.755
+## 15            ... No  0      0%   4     14%         
+## 16           ... Yes 13    100%  24     86%         
+## 17       meterfcr_01 13          28         X2=0.044
+## 18            ... No  0      0%   2      7%         
+## 19           ... Yes 13    100%  26     93%         
+## 20        disctcr_02 13          27             X2=0
+## 21            ... No  0      0%   1      4%         
+## 22           ... Yes 13    100%  26     96%         
+## 23       metertcr_02 13          28             X2=0
+## 24            ... No  0      0%   1      4%         
+## 25           ... Yes 13    100%  27     96%         
+## 26       metertcr_01 13          28             X2=0
+## 27            ... No  0      0%   1      4%         
+## 28           ... Yes 13    100%  27     96%</code></pre>
 </div>
 <div id="table-21" class="section level2">
 <h2>table 21</h2>
 <p>Balance tables: Malawi ILC. no significant differences</p>
-<pre class="r"><code>wp_census_pm &lt;- wp_census %&gt;%
+<pre class="r"><code>wp_census %&gt;%
   mutate(
     promoter_survey = if_else(
       wp_id %in% pm_survey$wp_id,  
@@ -1771,7 +1950,31 @@ differences</p>
   sumtable(
     vars = c(&quot;wp_func&quot;, &quot;discfcr_02&quot;, &quot;meterfcr_02&quot;, &quot;meterfcr_01&quot;, &quot;disctcr_02&quot;, &quot;metertcr_02&quot;, &quot;metertcr_01&quot;),
     group = &quot;promoter_survey&quot;,
-    group.test = TRUE)</code></pre>
+    group.test = TRUE,
+    out = &quot;return&quot;) </code></pre>
+<pre><code>##           Variable   N Percent   N Percent       Test
+## 1  promoter_survey  NO         YES                   
+## 2          wp_func 135          45         X2=4.475**
+## 3           ... No  14     10%  11     24%           
+## 4          ... Yes 121     90%  34     76%           
+## 5       discfcr_02  33          29           X2=0.115
+## 6           ... No  24     73%  19     66%           
+## 7          ... Yes   9     27%  10     34%           
+## 8      meterfcr_02  31          28           X2=0.052
+## 9           ... No  24     77%  20     71%           
+## 10         ... Yes   7     23%   8     29%           
+## 11     meterfcr_01  31          28               X2=0
+## 12          ... No  19     61%  17     61%           
+## 13         ... Yes  12     39%  11     39%           
+## 14      disctcr_02  33          29               X2=0
+## 15          ... No  19     58%  16     55%           
+## 16         ... Yes  14     42%  13     45%           
+## 17     metertcr_02  31          28               X2=0
+## 18          ... No  21     68%  18     64%           
+## 19         ... Yes  10     32%  10     36%           
+## 20     metertcr_01  31          28           X2=0.007
+## 21          ... No  13     42%  13     46%           
+## 22         ... Yes  18     58%  15     54%</code></pre>
 </div>
 <div id="table-22" class="section level2">
 <h2>table 22</h2>
