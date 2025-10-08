@@ -216,7 +216,7 @@ malawi_wp <- malawi_wp %>%
     wp_category = case_when(
       program == 1 & pre_expansion == 1 & ilc == 0 ~ "DSW Footprint",
       program == 1 & pre_expansion == 0 & ilc == 0 ~ "DSW Expansion",
-      program == 2 ~ "ILC water points",
+      program == 2 ~ "ILC",
       program == 1 & ilc == 1 ~ "DSW in ILC village",
       TRUE ~ NA_character_
     ),
@@ -243,12 +243,12 @@ uganda_wcp_count <- nrow(uganda_wcp)
 
 # create table summary
 country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
-  count(country, wp_category, name = "count") %>%
+  count(country, wp_category, name = "country_total_ex_wcp") %>%
   mutate(
     country_total = case_when(
-      country == "MALAWI" & wp_category == "ILC water points" ~ count + malawi_wcp_count, # add up water points and water collection points to get all ILC points
-      country == "UGANDA" & wp_category == "ILC water points" ~ count + uganda_wcp_count,
-      TRUE ~ count
+      country == "MALAWI" & wp_category == "ILC" ~ country_total_ex_wcp + malawi_wcp_count, # add up water points and water collection points to get all ILC points
+      country == "UGANDA" & wp_category == "ILC" ~ country_total_ex_wcp + uganda_wcp_count,
+      TRUE ~ country_total_ex_wcp
     )
   ) %>%
   arrange(country, wp_category)
