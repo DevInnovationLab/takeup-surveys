@@ -621,7 +621,6 @@ Table 8 but using HH census and HH survey; only using WPs in promoter survey
 ```{r}
 # column 1: household count and SE
 hh_count_tbl_wp_census <- hh_census %>%
-  dplyr::filter(inclusion == "Within village boundaries") %>%  # include this row to obtain estimates if we only considered households located in the village
   dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
   group_by(country, wp_category, wp_id) %>%
   summarise(
@@ -1963,11 +1962,11 @@ country_sums <- table1 %>%
     by = "country"
   ) %>%
   left_join(
-    table12_ex_outside %>% group_by(country) %>% summarise(table12 = sum(indiv_access_popn, na.rm = TRUE)),
+    table12_ex_outside %>% group_by(country) %>% summarise(table12_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
   ) %>%
   left_join(
-    table10_ex_outside %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
+    table10_ex_outside %>% group_by(country) %>% summarise(table10_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
   ) %>%
   left_join(
@@ -1981,6 +1980,19 @@ country_sums <- table1 %>%
   left_join(
     table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
+  ) %>%
+  left_join(
+    table12 %>% group_by(country) %>% summarise(table12 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10 %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) 
+
+country_sums <- country_sums%>%
+  mutate(
+    pm_to_census_ratio = table8 / table1
   )
 
 # calculate differences for waterfall chart
@@ -1998,9 +2010,9 @@ create_waterfall <- function(country_name, country_data) {
     amount = c(
       country_data$table1,
       country_data$table1_ex_outside - country_data$table1,
-      country_data$table12 - country_data$table1_ex_outside,
-      country_data$table10 - country_data$table12,
-      country_data$table14 - country_data$table10,
+      country_data$table10_ex_outside - country_data$table1_ex_outside,
+      country_data$table10_ex_outside - country_data$table10_ex_outside,
+      country_data$table14 - country_data$table10_ex_outside,
       country_data$table13 - country_data$table14,
       country_data$table8 - country_data$table13,
       country_data$table8
