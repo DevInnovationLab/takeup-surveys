@@ -148,7 +148,7 @@ pm_list_ug <-
   )
 ```
 
-# pm survey - corrections
+# corrections: pm_survey
 ```{r}
 # join with wp census
 pm_survey <- pm_survey %>%
@@ -207,15 +207,15 @@ pm_survey <- pm_survey %>%
   distinct(wp_id, .keep_all = TRUE)
 ```
 
-# creating group_cat
-group_cat is the variable for water point type
+# creating wp_category
+wp_category is the variable for water point type in a given village type
 ```{r}
 wp_census <- wp_census %>%
   mutate(
     country = toupper(country),
     sample_group = toupper(sample_group),
     intervention_type = toupper(intervention_type),
-    group_cat = case_when(
+    wp_category = case_when(
       intervention_type == "NON-PROGRAM" ~ "Non-program",
       intervention_type %in% c("ILC WATER POINT", "ILC WATER COLLECTION POINT") ~ "ILC",
       intervention_type == "DSW" & sample_group == "FOOTPRINT" ~ "DSW Footprint",
@@ -228,42 +228,42 @@ wp_census <- wp_census %>%
 
 # create lookup table
 wp_lookup <- wp_census %>% 
-  select(wp_id, ea_id, country, sample_group, intervention_type, group_cat) %>%
+  select(wp_id, ea_id, country, sample_group, intervention_type, wp_category) %>%
   distinct()
 
 wp_lookup_ea_id <- wp_census %>% 
-  select(ea_id, country, sample_group, intervention_type, group_cat) %>%
+  select(ea_id, country, sample_group, intervention_type, wp_category) %>%
   distinct(ea_id, .keep_all = TRUE) 
 
 # join to other datasets
 pm_survey <- pm_survey %>%
-  select(-any_of(c("country", "sample_group", "group_cat", "ea_id"))) %>%
+  select(-any_of(c("country", "sample_group", "wp_category", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
 
 hh_survey <- hh_survey %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "wp_category", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
 
 hh_census <- hh_census %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "wp_category", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
 
 hh_census <- hh_census %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "wp_category", "ea_id"))) %>%
   left_join(wp_lookup, by = "wp_id")
 
 ea_promoters_malawi <- pm_list_mw %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "wp_category", "ea_id"))) %>%
   mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
   left_join(wp_lookup_ea_id, by = c("i102_wpt_id" = "ea_id"))
 
 ea_promoters_uganda <- pm_list_ug %>%
-  select(-any_of(c("country", "sample_group", "intervention_type", "group_cat", "ea_id"))) %>%
+  select(-any_of(c("country", "sample_group", "intervention_type", "wp_category", "ea_id"))) %>%
   mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
   left_join(wp_lookup_ea_id, by = c("i102_wpt_id" = "ea_id"))
 ```
 
-# pm survey households - corrections
+# corrections: pm_survey_households
 ```{r}
 #deleting test village
 pm_survey_households <- pm_survey_households %>%
@@ -298,7 +298,8 @@ pm_survey_households_clean <- pm_survey_households %>%
 write.csv(pm_survey_households_clean, "pm_survey_households_corrections.csv", row.names = FALSE)
 ```
 
-## section 7.3 - share of households in hh census identified by promoters
+## table 8 
+Main estimates using promoter survey and monitoring survey
 ```{r}
 hh_census %>%
   inner_join(pm_survey_households_clean, by = c("household_id")) %>%
@@ -489,7 +490,7 @@ wp_count_tbl <- wp_census %>%
 # household count and promoter census water point count
 hh_count_tbl <- pm_survey  %>%
   mutate(hh_listed = as.numeric(hh_listed)) %>%
-  group_by(country, group_cat) %>% 
+  group_by(country, wp_category) %>% 
   summarise(
     n_wp_pm_census = n_distinct(wp_id),               
     avg_hh_count = mean(hh_listed, na.rm = TRUE),
@@ -504,17 +505,17 @@ hh_count_tbl <- pm_survey  %>%
     total_var = between_var + within_var,
     se_hh_count = sqrt(total_var)
   ) %>%
-  select(country, group_cat, n_wp_pm_census, avg_hh_count, se_hh_count)
+  select(country, wp_category, avg_hh_count, se_hh_count)
   
-# hh size
+# column 2: hh size and SE
 hh_size_tbl <- hh_survey %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, group_cat, wp_id) %>% 
+  group_by(country, wp_category, wp_id) %>% 
   summarise(
     hh_size = mean(hh_members, na.rm = TRUE), 
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     avg_hh_size = mean(hh_size, na.rm = TRUE),
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
@@ -528,18 +529,18 @@ hh_size_tbl <- hh_survey %>%
     total_var = between_var + within_var,
     se_hh_size = sqrt(total_var)
   ) %>%
-  select(country, group_cat, avg_hh_size, se_hh_size)
+  select(country, wp_category, avg_hh_size, se_hh_size)
 
-# chlorination rate
+# column 6: chlorination rate
 chl_tbl <- hh_survey %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, group_cat, wp_id) %>%
+  group_by(country, wp_category, wp_id) %>%
   summarise(
     wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
     wp_se_chl_rate = sqrt(wp_chl_rate * (1 - wp_chl_rate) / n()), # SE for proportion within WP
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     chl_rate = mean(wp_chl_rate, na.rm = TRUE),
     # store individual water point rates and SEs
@@ -547,7 +548,7 @@ chl_tbl <- hh_survey %>%
     wp_ses = list(wp_se_chl_rate[!is.na(wp_se_chl_rate)]),
     .groups = "drop"
   ) %>%
-  # calculate SE using variance decomposition
+  # calculating SE
   rowwise() %>%
   mutate(
     K = length(wp_rates),
@@ -556,26 +557,27 @@ chl_tbl <- hh_survey %>%
     total_var = between_var + within_var,
     se_chl_rate = sqrt(total_var)
   ) %>%
-  select(country, group_cat, chl_rate, se_chl_rate)
+  select(country, wp_category, chl_rate, se_chl_rate)
 
-# importing the total numbers of each type of water point in each country (calculated in STATA)
+# column 4: total numbers of each type of water point in each country (calculated in STATA)
 country_totals <- tibble(
   country = c("UGANDA", "UGANDA", 
               "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  group_cat = c("DSW Footprint", "DSW Expansion",
+  wp_category = c("DSW Footprint", "DSW Expansion",
                 "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
   country_total = c(4843, 12875,
                     3123, 12040, 1035, 2376)
 )
 
-# merge + calculations
-beneficiaries_tbl <- wp_count_tbl %>%
-  left_join(hh_count_tbl, by = c("country", "group_cat")) %>%
-  left_join(hh_size_tbl, by = c("country", "group_cat")) %>%
-  left_join(chl_tbl, by = c("country", "group_cat")) %>%
-  left_join(country_totals, by = c("country", "group_cat")) %>%  
+# merge + calculations (for columns 3, 5, and CI for column 6)
+table8 <- hh_count_tbl %>%
+  left_join(hh_size_tbl, by = c("country", "wp_category")) %>%
+  left_join(chl_tbl, by = c("country", "wp_category")) %>%
+  left_join(country_totals, by = c("country", "wp_category")) %>%  
   mutate(
+    # column 3
     indiv_access_sample = avg_hh_count * avg_hh_size,
+    # column 5
     indiv_access_popn = indiv_access_sample * country_total,
     indiv_with_chlorine_sample = indiv_access_sample * chl_rate,
     # delta method: SE of product (assuming covariance = 0)
@@ -583,12 +585,12 @@ beneficiaries_tbl <- wp_count_tbl %>%
       (avg_hh_size^2) * (se_hh_count^2) + 
       (avg_hh_count^2) * (se_hh_size^2)
     ),
-    # SE when multiplying by a constant
+    # column 5 SE (variable multiplied by a constant)
     se_indiv_access_popn = country_total * se_indiv_access_sample,
-    # 95% confidence interval for population estimate
+    # column 5 95% confidence interval
     ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
     ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
-     # 95% confidence interval for chlorination rate
+     # column 6 95% confidence interval
     ci_lower_chl_rate = chl_rate - 1.96 * se_chl_rate,
     ci_upper_chl_rate = chl_rate + 1.96 * se_chl_rate
   ) %>%
@@ -600,24 +602,18 @@ beneficiaries_tbl <- wp_count_tbl %>%
        ~ round(.x, 2))
   ) %>%
   select(
-  country, group_cat,
-  avg_hh_count, se_hh_count,           
-  avg_hh_size, se_hh_size,              
-  indiv_access_sample, se_indiv_access_sample,
-  country_total,                     
-  indiv_access_popn,  se_indiv_access_popn,
-  ci_lower_indiv_access_popn, ci_upper_indiv_access_popn,                        
-  chl_rate,  se_chl_rate,         
-  ci_lower_chl_rate, ci_upper_chl_rate,
-  indiv_with_chlorine_sample                       
+  country, wp_category, avg_hh_count, se_hh_count, avg_hh_size, se_hh_size, indiv_access_sample, se_indiv_access_sample,
+  country_total, indiv_access_popn,  se_indiv_access_popn, # se_indiv_access_popn is not used directly in table 8, but is needed for CI calculation below
+  ci_lower_indiv_access_popn, ci_upper_indiv_access_popn, chl_rate, ci_lower_chl_rate, ci_upper_chl_rate
   ) %>%
-  dplyr::filter(group_cat %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
-  dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
+  # presentation settings
+  dplyr::filter(wp_category %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
+  dplyr::filter(!(country == "UGANDA" & wp_category == "ILC"))  %>%
   mutate(country = factor(country, 
                            levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
+  mutate(wp_category = factor(wp_category, 
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
+  arrange(country, wp_category)
 
 beneficiaries_tbl
 ```
@@ -628,7 +624,7 @@ country_level_estimates <- beneficiaries_tbl %>%
   group_by(country) %>%
   summarise(
     total_indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE),
-    # SE for total access: square root of sum of squared SEs (assuming independence)
+    # SE: square root of sum of squared SEs (assuming independence)
     se_total_indiv_access_popn = sqrt(sum(se_indiv_access_popn^2, na.rm = TRUE)),
     
     weighted_avg_chl_rate = sum(chl_rate * country_total, na.rm = TRUE) / 
@@ -640,8 +636,7 @@ country_level_estimates <- beneficiaries_tbl %>%
     
     .groups = "drop"
   ) %>%
-
-  # confidence intervals
+  # confidence interval
   mutate(
     # for total access
     ci_lower_total_access = total_indiv_access_popn - 1.96 * se_total_indiv_access_popn,
@@ -679,18 +674,19 @@ wp_count_tbl_wp_census <- wp_census %>%
 # household count from census (with SE calculation like in 5.1)
 hh_count_tbl_wp_census <- hh_census %>%
   dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>%
+  group_by(country, wp_category, wp_id) %>%
   summarise(
-    hh_count = n_distinct(household_id),   # households per wp
+    hh_count = n_distinct(household_id),   # number of households per wp
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     avg_hh_count = mean(hh_count, na.rm = TRUE),
-    wp_values = list(hh_count[!is.na(hh_count)]),
+    wp_values = list(hh_count[!is.na(hh_count)]), # used in calculating SE below
     .groups = "drop"
   ) %>%
   rowwise() %>%
+  # calculating SE
   mutate(
     K = length(wp_values),
     between_var = if(K > 1) sum((wp_values - avg_hh_count)^2) / (K * (K - 1)) else 0,
@@ -698,18 +694,18 @@ hh_count_tbl_wp_census <- hh_census %>%
     total_var = between_var + within_var,
     se_hh_count = sqrt(total_var)
   ) %>%
-  select(country, group_cat, avg_hh_count, se_hh_count)
+  select(country, wp_category, avg_hh_count, se_hh_count)
 
-# hh size from household survey (with SE calculation like in 5.1)
+# column 2: household size and SE 
 hh_size_tbl_wp_census <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
   dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>% 
+  group_by(country, wp_category, wp_id) %>% 
   summarise(
     hh_size = mean(hh_members, na.rm = TRUE), 
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     avg_hh_size = mean(hh_size, na.rm = TRUE),
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
@@ -723,19 +719,19 @@ hh_size_tbl_wp_census <- hh_survey %>%
     total_var = between_var + within_var,
     se_hh_size = sqrt(total_var)
   ) %>%
-  select(country, group_cat, avg_hh_size, se_hh_size)
+  select(country, wp_category, avg_hh_size, se_hh_size)
 
-# chlorination rate from household survey (with SE calculation like in 5.1)
+# column 6: chlorination rate
 chl_tbl_wp_census <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
   dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>%
+  group_by(country, wp_category, wp_id) %>%
   summarise(
     wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
     wp_se_chl_rate = sqrt(wp_chl_rate * (1 - wp_chl_rate) / n()), # SE for proportion within WP
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     chl_rate = mean(wp_chl_rate, na.rm = TRUE),
     # store individual water point rates and SEs
@@ -743,7 +739,7 @@ chl_tbl_wp_census <- hh_survey %>%
     wp_ses = list(wp_se_chl_rate[!is.na(wp_se_chl_rate)]),
     .groups = "drop"
   ) %>%
-  # calculate SE using variance decomposition
+  # calculating SE
   rowwise() %>%
   mutate(
     K = length(wp_rates),
@@ -752,17 +748,7 @@ chl_tbl_wp_census <- hh_survey %>%
     total_var = between_var + within_var,
     se_chl_rate = sqrt(total_var)
   ) %>%
-  select(country, group_cat, chl_rate, se_chl_rate)
-
-# importing the total numbers of each type of water point in each country
-country_totals <- tibble(
-  country = c("UGANDA", "UGANDA", 
-              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  group_cat = c("DSW Footprint", "DSW Expansion",
-                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
-  country_total = c(4843, 12875,
-                    3123, 12040, 1035, 2376)
-)
+  select(country, wp_category, chl_rate, se_chl_rate)
 
 # merge + calculations (same as in 5.1)
 beneficiaries_tbl_wp_census <- wp_count_tbl_wp_census %>%
@@ -771,7 +757,9 @@ beneficiaries_tbl_wp_census <- wp_count_tbl_wp_census %>%
   left_join(chl_tbl_wp_census, by = c("country", "group_cat")) %>%
   left_join(country_totals, by = c("country", "group_cat")) %>%  
   mutate(
+    # column 3
     indiv_access_sample = avg_hh_count * avg_hh_size,
+    # column 5
     indiv_access_popn = indiv_access_sample * country_total,
     indiv_with_chlorine_sample = indiv_access_sample * chl_rate,
     # delta method: SE of product (assuming covariance = 0)
@@ -779,12 +767,12 @@ beneficiaries_tbl_wp_census <- wp_count_tbl_wp_census %>%
       (avg_hh_size^2) * (se_hh_count^2) + 
       (avg_hh_count^2) * (se_hh_size^2)
     ),
-    # SE when multiplying by a constant
+    # column 5 SE (variable multiplied by a constant)
     se_indiv_access_popn = country_total * se_indiv_access_sample,
-    # 95% confidence interval for population estimate
+    # column 5 95% confidence interval
     ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
     ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
-     # 95% confidence interval for chlorination rate
+     # column 6 95% confidence interval
     ci_lower_chl_rate = chl_rate - 1.96 * se_chl_rate,
     ci_upper_chl_rate = chl_rate + 1.96 * se_chl_rate
   ) %>%
@@ -812,9 +800,9 @@ beneficiaries_tbl_wp_census <- wp_count_tbl_wp_census %>%
   dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
   mutate(country = factor(country, 
                            levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
+  mutate(wp_category = factor(wp_category, 
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
+  arrange(country, wp_category)
 
 beneficiaries_tbl_wp_census
 ```
@@ -825,7 +813,7 @@ country_level_estimates_wp_census <- beneficiaries_tbl_wp_census %>%
   group_by(country) %>%
   summarise(
     total_indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE),
-    # SE for total access: square root of sum of squared SEs (assuming independence)
+    # SE: square root of sum of squared SEs (assuming independence)
     se_total_indiv_access_popn = sqrt(sum(se_indiv_access_popn^2, na.rm = TRUE)),
     
     weighted_avg_chl_rate = sum(chl_rate * country_total, na.rm = TRUE) / 
@@ -837,7 +825,7 @@ country_level_estimates_wp_census <- beneficiaries_tbl_wp_census %>%
     
     .groups = "drop"
   ) %>%
-  # confidence intervals
+  # confidence interval
   mutate(
     # for total access
     ci_lower_total_access = total_indiv_access_popn - 1.96 * se_total_indiv_access_popn,
@@ -860,8 +848,8 @@ country_level_estimates_wp_census <- beneficiaries_tbl_wp_census %>%
   )
 country_level_estimates_wp_census
 ```
- 
-## table 7.4
+
+## table 11
 ```{r}
 # number of water points in the promoter survey
 wp_count_pm <- pm_survey %>%
@@ -930,32 +918,32 @@ vil_count_wp_census <- wp_census %>%
   )
 
 # total number of households that report using the water points in the wp census, regardless of whether they are in the promoter survey or not
-hh_count_wp_census <- hh_census %>%
+census_hh_listed <- hh_census %>%
   dplyr::filter(wp_id %in% wp_census$wp_id) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
-    total_hh_wp_census = n_distinct(household_id),
+    census_hh_listed = n_distinct(household_id),
     .groups = "drop"
   )
 
 avg_hh_per_wp_pm <- pm_survey %>%
   mutate(hh_listed = as.numeric(hh_listed)) %>%
-  group_by(country, group_cat) %>% 
+  group_by(country, wp_category) %>% 
   summarise(
-    avg_hh_per_wp_pm = round(mean(hh_listed, na.rm = TRUE), 2),               
+    pm_avg_hh_per_wp = round(mean(hh_listed, na.rm = TRUE), 2),               
     .groups = "drop"
   )
 
-avg_hh_per_wp_census <- hh_census %>%
+census_avg_hh_per_wp <- hh_census %>%
   dplyr::filter(wp_id %in% wp_census$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>%
+  group_by(country, wp_category, wp_id) %>%
   summarise(
-    hh_count = n_distinct(household_id),   # households per wp
+    census_hh_listed = n_distinct(household_id),   # households per wp
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
-    avg_hh_per_wp_census = round(mean(hh_count, na.rm = TRUE), 2),  # avg across wps
+    census_avg_hh_per_wp = round(mean(census_hh_listed, na.rm = TRUE), 2),  # avg across wps
     .groups = "drop"
   )
 
@@ -1335,16 +1323,15 @@ hh_count_tbl_wp_census <- hh_census %>%
 # hh size from household survey (with SE calculation like in 5.1)
 hh_size_tbl_wp_census <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
-  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>% 
+  group_by(country, wp_category, wp_id) %>% 
   summarise(
     hh_size = mean(hh_members, na.rm = TRUE), 
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     avg_hh_size = mean(hh_size, na.rm = TRUE),
-    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]), # used in SE calculations below
     .groups = "drop"
   ) %>%
   rowwise() %>%
@@ -1355,19 +1342,19 @@ hh_size_tbl_wp_census <- hh_survey %>%
     total_var = between_var + within_var,
     se_hh_size = sqrt(total_var)
   ) %>%
-  select(country, group_cat, avg_hh_size, se_hh_size)
+  select(country, wp_category, avg_hh_size, se_hh_size)
 
-# chlorination rate from household survey (with SE calculation like in 5.1)
+# column 6: chlorination rate
 chl_tbl_wp_census <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
-  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>%
+  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  group_by(country, wp_category, wp_id) %>%
   summarise(
     wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
     wp_se_chl_rate = sqrt(wp_chl_rate * (1 - wp_chl_rate) / n()), # SE for proportion within WP
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     chl_rate = mean(wp_chl_rate, na.rm = TRUE),
     # store individual water point rates and SEs
@@ -1403,7 +1390,9 @@ beneficiaries_tbl_wp_census_ALL <- wp_count_tbl_wp_census %>%
   left_join(chl_tbl_wp_census, by = c("country", "group_cat")) %>%
   left_join(country_totals, by = c("country", "group_cat")) %>%  
   mutate(
+    # column 3
     indiv_access_sample = avg_hh_count * avg_hh_size,
+    # column 5
     indiv_access_popn = indiv_access_sample * country_total,
     indiv_with_chlorine_sample = indiv_access_sample * chl_rate,
     # delta method: SE of product (assuming covariance = 0)
@@ -1411,15 +1400,16 @@ beneficiaries_tbl_wp_census_ALL <- wp_count_tbl_wp_census %>%
       (avg_hh_size^2) * (se_hh_count^2) + 
       (avg_hh_count^2) * (se_hh_size^2)
     ),
-    # SE when multiplying by a constant
+    # column 5 SE (variable multiplied by a constant)
     se_indiv_access_popn = country_total * se_indiv_access_sample,
-    # 95% confidence interval for population estimate
+    # column 5 95% confidence interval
     ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
     ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
-     # 95% confidence interval for chlorination rate
+     # column 6 95% confidence interval
     ci_lower_chl_rate = chl_rate - 1.96 * se_chl_rate,
     ci_upper_chl_rate = chl_rate + 1.96 * se_chl_rate
   ) %>%
+  # rounding
   mutate(
     across(c(avg_hh_count, avg_hh_size, indiv_access_sample, indiv_access_popn, 
          indiv_with_chlorine_sample, se_hh_count, se_hh_size, 
@@ -1444,19 +1434,18 @@ beneficiaries_tbl_wp_census_ALL <- wp_count_tbl_wp_census %>%
   dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
   mutate(country = factor(country, 
                            levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
+  mutate(wp_category = factor(wp_category, 
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
+  arrange(country, wp_category)
 
 beneficiaries_tbl_wp_census_ALL
 ```
 
-```{r}
-country_level_estimates_wp_census <- beneficiaries_tbl_wp_census_ALL %>%
+country_totals_table12 <- table12 %>%
   group_by(country) %>%
   summarise(
     total_indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE),
-    # SE for total access: square root of sum of squared SEs (assuming independence)
+    # SE: square root of sum of squared SEs (assuming independence)
     se_total_indiv_access_popn = sqrt(sum(se_indiv_access_popn^2, na.rm = TRUE)),
     
     weighted_avg_chl_rate = sum(chl_rate * country_total, na.rm = TRUE) / 
@@ -1468,9 +1457,8 @@ country_level_estimates_wp_census <- beneficiaries_tbl_wp_census_ALL %>%
     
     .groups = "drop"
   ) %>%
-  # confidence intervals
+  # confidence interval
   mutate(
-    # for total access
     ci_lower_total_access = total_indiv_access_popn - 1.96 * se_total_indiv_access_popn,
     ci_upper_total_access = total_indiv_access_popn + 1.96 * se_total_indiv_access_popn,
     
@@ -1489,7 +1477,7 @@ country_level_estimates_wp_census <- beneficiaries_tbl_wp_census_ALL %>%
     weighted_avg_chl_rate_pct,
     ci_lower_weighted_chl_rate_pct, ci_upper_weighted_chl_rate_pct
   )
-country_level_estimates_wp_census
+country_totals_table12
 ```
 
 ## section 7.4.2 outside: estimates if we exclude households outside the village
@@ -1512,9 +1500,8 @@ hh_count_tbl <- pm_survey %>%
     hh_inside = case_when(
       !is.na(hh_outsiden) ~ hh_listed - hh_outsiden,
       TRUE ~ hh_listed
-    )
-  ) %>%
-  group_by(country, group_cat) %>% 
+    )) %>%
+  group_by(country, wp_category) %>% 
   summarise(
     n_wp_pm_census = n_distinct(wp_id),               
     avg_hh_count = mean(hh_inside, na.rm = TRUE),  # Using inside households
@@ -1522,22 +1509,22 @@ hh_count_tbl <- pm_survey %>%
     .groups = "drop"
   )
   
-# hh size (unchanged)
+# column 2: hh size and SE
 hh_size_tbl <- hh_survey %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, group_cat, wp_id) %>% 
+  group_by(country, wp_category, wp_id) %>% 
   summarise(
     hh_size = mean(hh_members, na.rm = TRUE), 
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
+  group_by(country, wp_category) %>%
   summarise(
     avg_hh_size = mean(hh_size, na.rm = TRUE),
     sd_hh_size = sd(hh_size, na.rm = TRUE),
     .groups = "drop"
   )
 
-# chlorination rate (unchanged)
+# column 6: chlorination rate
 chl_tbl <- hh_survey %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
   group_by(country, group_cat) %>%
@@ -1547,11 +1534,11 @@ chl_tbl <- hh_survey %>%
     .groups = "drop"
   )
 
-# country totals (unchanged)
+# column 4: total numbers of each type of water point in each country (calculated in STATA)
 country_totals <- tibble(
   country = c("UGANDA", "UGANDA", 
               "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  group_cat = c("DSW Footprint", "DSW Expansion",
+  wp_category = c("DSW Footprint", "DSW Expansion",
                 "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
   country_total = c(4843, 12875,
                     3123, 12040, 1035, 2376)
@@ -1564,7 +1551,9 @@ beneficiaries_tbl_inside <- wp_count_tbl %>%
   left_join(chl_tbl, by = c("country", "group_cat")) %>%
   left_join(country_totals, by = c("country", "group_cat")) %>%  
   mutate(
+    # column 3
     indiv_access_sample = avg_hh_count * avg_hh_size,
+    # column 5
     indiv_access_popn = indiv_access_sample * country_total,
     indiv_with_chlorine_sample = indiv_access_sample * chl_rate
   ) %>%
@@ -1587,9 +1576,9 @@ beneficiaries_tbl_inside <- wp_count_tbl %>%
   dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
   mutate(country = factor(country, 
                            levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
+  mutate(wp_category = factor(wp_category, 
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
+  arrange(country, wp_category)
 
 beneficiaries_tbl_inside
 
@@ -1604,7 +1593,7 @@ beneficiaries_tbl_inside_totals <- beneficiaries_tbl_inside %>%
     total_indiv_access_popn, 
   )
 
-beneficiaries_tbl_inside_totals
+country_totals_table13
 ```
 
 ## section 7.4.3 excluding double-counted households and those outside village
@@ -1620,32 +1609,31 @@ double_counted_households <- pm_survey_households_clean %>%
   dplyr::filter(wp_secweek == "NO" | is.na(wp_secweek)) %>%
   pull(household_id)
 
-# For double-counted households, determine their "correct" water point assignment
+# for double-counted households, determine their "correct" water point assignment
 primary_assignments <- pm_survey_households_clean %>%
   dplyr::filter(household_id %in% double_counted_households) %>%
-  # Get the water point they're actually associated with in hh_census
+  # get the water point they're actually associated with in hh_census
   left_join(
     hh_census %>% select(household_id, wp_id) %>% rename(hh_census_wp_id = wp_id), 
     by = "household_id"
   ) %>%
-  # Check if their hh_census wp_id matches any of their pm_survey wp_id_c values
+  # check if their hh_census wp_id matches any of their pm_survey wp_id_c values
   group_by(household_id) %>%
   mutate(
-    # Check if the hh_census wp_id matches any of the wp_id_c values for this household
     hh_census_wp_matches = any(hh_census_wp_id == wp_id_c, na.rm = TRUE),
-    # If hh_census wp_id matches one of the pm_survey wp_id_c, use that matching one
+    # if hh_census wp_id matches one of the pm_survey wp_id_c, use that matching one
     correct_wp_id_c = case_when(
       hh_census_wp_matches & !is.na(hh_census_wp_id) ~ wp_id_c[wp_id_c == hh_census_wp_id][1],
-      TRUE ~ min(wp_id_c, na.rm = TRUE)  # Otherwise, use first wp_id_c (current logic)
+      TRUE ~ min(wp_id_c, na.rm = TRUE)  # otherwise, use first wp_id_c for simplicity (current logic)
     )
   ) %>%
-  # Keep only the correct assignment for each household
+  # keep only the correct assignment for each household
   dplyr::filter(wp_id_c == correct_wp_id_c) %>%
   select(household_id, wp_id_c) %>%
   distinct() %>%
   mutate(is_primary_assignment = TRUE)
 
-# Create adjustment factors for each water point
+# create adjustment factors for each water point
 wp_adjustments <- pm_survey_households_clean %>%
   left_join(primary_assignments, by = c("household_id", "wp_id_c")) %>%
   mutate(
@@ -1657,12 +1645,11 @@ wp_adjustments <- pm_survey_households_clean %>%
     .groups = "drop"
   )
 
-# Updated household count table with double-counting adjustment
-hh_count_tbl <- pm_survey %>%
+# column 1: household count and SE
+hh_count_tbl <- pm_survey  %>%
   mutate(
     hh_listed = as.numeric(hh_listed),
     hh_outsiden = as.numeric(hh_outsiden),
-    # Calculate inside households - subtract outside if available, otherwise use listed
     hh_inside = case_when(
       !is.na(hh_outsiden) ~ hh_listed - hh_outsiden,
       TRUE ~ hh_listed
@@ -1671,7 +1658,7 @@ hh_count_tbl <- pm_survey %>%
   left_join(wp_adjustments, by = c("wp_id" = "wp_id_c")) %>%
   mutate(
     households_to_subtract = coalesce(households_to_subtract, 0),
-    # Adjust for double-counted households
+    # adjust for double-counted households
     hh_inside_adjusted = hh_inside - households_to_subtract
   ) %>%
   group_by(country, group_cat) %>% 
@@ -1692,12 +1679,11 @@ wp_count_tbl <- wp_census %>%
 
 hh_size_tbl <- hh_survey %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, group_cat, wp_id) %>% 
+  group_by(country, wp_category, wp_id) %>% 
   summarise(
     hh_size = mean(hh_members, na.rm = TRUE), 
     .groups = "drop"
   ) %>%
-  group_by(country, group_cat) %>%
   summarise(
     avg_hh_size = mean(hh_size, na.rm = TRUE),
     sd_hh_size = sd(hh_size, na.rm = TRUE),
@@ -1713,10 +1699,11 @@ chl_tbl <- hh_survey %>%
     .groups = "drop"
   )
 
+# column 4: total numbers of each type of water point in each country (calculated in STATA)
 country_totals <- tibble(
   country = c("UGANDA", "UGANDA", 
               "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  group_cat = c("DSW Footprint", "DSW Expansion",
+  wp_category = c("DSW Footprint", "DSW Expansion",
                 "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
   country_total = c(4843, 12875,
                     3123, 12040, 1035, 2376)
@@ -1729,7 +1716,9 @@ beneficiaries_tbl_inside_no_double <- wp_count_tbl %>%
   left_join(chl_tbl, by = c("country", "group_cat")) %>%
   left_join(country_totals, by = c("country", "group_cat")) %>%  
   mutate(
+    # column 3
     indiv_access_sample = avg_hh_count * avg_hh_size,
+    # column 5
     indiv_access_popn = indiv_access_sample * country_total,
     indiv_with_chlorine_sample = indiv_access_sample * chl_rate
   ) %>%
@@ -1752,11 +1741,11 @@ beneficiaries_tbl_inside_no_double <- wp_count_tbl %>%
   dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
   mutate(country = factor(country, 
                            levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
+  mutate(wp_category = factor(wp_category, 
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
+  arrange(country, wp_category)
 
-beneficiaries_tbl_inside_no_double
+print(hh_outside_share)
 
 beneficiaries_tbl_inside_no_double_totals <- beneficiaries_tbl_inside_no_double %>%
   group_by(country) %>%
