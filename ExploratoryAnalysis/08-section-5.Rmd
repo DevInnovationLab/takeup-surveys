@@ -2015,228 +2015,42 @@ comparison_table <- bind_rows(hh_census_stats, pm_census_stats, pm_survey_stats)
 print(comparison_table)
 ```
 
-## old table versions
-
-5.1
+number of water points used per household - households in promoter lists
 ```{r}
-# water point census water point count
-wp_count_tbl <- wp_census %>%
-  group_by(country, group_cat) %>% 
-  summarise(
-    n_wp_wp_census = n_distinct(wp_id),               
-    .groups = "drop"
-  )
+# number of water points used per household - households in promoter lists
+hh_census_filtered <- hh_census %>%
+  dplyr::filter(household_id %in% pm_survey_households_clean$household_id)
 
-# household count and promoter census water point count
-hh_count_tbl <- pm_survey %>%
-  mutate(hh_listed = as.numeric(hh_listed)) %>%
-  group_by(country, group_cat) %>% 
-  summarise(
-    n_wp_pm_census = n_distinct(wp_id),               
-    avg_hh_count = mean(hh_listed, na.rm = TRUE),
-    sd_hh_count = sd(hh_listed, na.rm = TRUE),
-    .groups = "drop"
-  )
-  
-# hh size
-hh_size_tbl <- hh_survey %>%
-  dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, group_cat, wp_id) %>% 
-  summarise(
-    hh_size = mean(hh_members, na.rm = TRUE), 
-    .groups = "drop"
-  ) %>%
-  group_by(country, group_cat) %>%
-  summarise(
-    avg_hh_size = mean(hh_size, na.rm = TRUE),
-    sd_hh_size = sd(hh_size, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-# chlorination rate
-chl_tbl <- hh_survey %>%
-  dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, group_cat) %>%
-  summarise(
-    chl_rate = mean(disctcr > 0.2, na.rm = TRUE),  
-    sd_chl_rate = sd(disctcr > 0.2, na.rm = TRUE),  
-    .groups = "drop"
-  )
-
-# importing the total numbers of each type of water point in each country (calculated in STATA)
-country_totals <- tibble(
-  country = c("UGANDA", "UGANDA", 
-              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  group_cat = c("DSW Footprint", "DSW Expansion",
-                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
-  country_total = c(4843, 12875,
-                    3123, 12040, 1035, 2376)
-)
-
-# merge + calculations
-beneficiaries_tbl <- wp_count_tbl %>%
-  left_join(hh_count_tbl, by = c("country", "group_cat")) %>%
-  left_join(hh_size_tbl, by = c("country", "group_cat")) %>%
-  left_join(chl_tbl, by = c("country", "group_cat")) %>%
-  left_join(country_totals, by = c("country", "group_cat")) %>%  
+wp_distribution_census <- 
+  hh_census_filtered %>%
+  mutate(total_wp_used = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(total_wp_used) %>%
   mutate(
-    beneficiaries = avg_hh_count * avg_hh_size * chl_rate
-  ) %>%
-  mutate(
-    across(c(avg_hh_count, avg_hh_size, beneficiaries, sd_hh_count, sd_hh_size),
-           ~ round(.x, 2))
-  )  %>%
-  dplyr::filter(group_cat %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
-  dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
-  mutate(country = factor(country, 
-                           levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
-                           levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
-
-beneficiaries_tbl
-```
-
-5.3: 5.1 (water points in promoter survey), but data from household census and household survey
-```{r}
-wp_count_tbl_wp_census <- wp_census %>%
-  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat) %>% 
-  summarise(
-    n_wp_pm_census = n_distinct(wp_id),               
-    .groups = "drop"
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
   )
 
-# hh count
-hh_count_tbl_wp_census <- hh_census %>%
-  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>%
-  summarise(
-    hh_count = n_distinct(household_id),   # households per wp
-    .groups = "drop"
-  ) %>%
-  group_by(country, group_cat) %>%
-  summarise(
-    avg_hh_count = mean(hh_count, na.rm = TRUE),  # avg across wps
-    sd_hh_count = sd(hh_count, na.rm = TRUE),
-    .groups = "drop"
+# sample 
+total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = as.factor(total_wp_used))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    subtitle = "Limited to households in PM survey data",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included (filtered by PM survey participation).")) +
+  theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
   )
-
-# hh size
-hh_size_tbl_wp_census <- hh_survey %>%
-  dplyr::filter(survey == "Household Survey") %>%
-  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat, wp_id) %>% 
-  summarise(
-    hh_size = mean(hh_members, na.rm = TRUE), 
-    .groups = "drop"
-  ) %>%
-  group_by(country, group_cat) %>%
-  summarise(
-    avg_hh_size = mean(hh_size, na.rm = TRUE),
-    sd_hh_size = sd(hh_size, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-# chlorination rate
-chl_tbl_wp_census <- hh_survey %>%
-  dplyr::filter(survey == "Household Survey") %>%
-  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
-  group_by(country, group_cat) %>%
-  summarise(
-    chl_rate = mean(disctcr > 0.2, na.rm = TRUE),  
-    sd_chl_rate = sd(disctcr > 0.2, na.rm = TRUE),  
-    .groups = "drop"
-  )
-
-country_totals <- tibble(
-  country = c("UGANDA", "UGANDA", 
-              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  group_cat = c("DSW Footprint", "DSW Expansion",
-                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
-  country_total = c(4843, 12875,
-                    3123, 12040, 1035, 2376)
-)
-
-# merge + calculations
-beneficiaries_tbl_wp_census <- wp_count_tbl_wp_census %>%
-  left_join(hh_count_tbl_wp_census, by = c("country", "group_cat")) %>%
-  left_join(hh_size_tbl_wp_census, by = c("country", "group_cat")) %>%
-  left_join(chl_tbl_wp_census, by = c("country", "group_cat")) %>%
-  left_join(country_totals, by = c("country", "group_cat")) %>%  
-  mutate(
-    beneficiaries = avg_hh_count * avg_hh_size * chl_rate,
-    popn_beneficiaries = beneficiaries * country_total  
-  ) %>%
-  mutate(
-    across(c(avg_hh_count, avg_hh_size, beneficiaries, sd_hh_count, sd_hh_size),
-           ~ round(.x, 2)),
-    across(c(popn_beneficiaries),
-           ~ round(.x, 0))
-  )  %>%
-  dplyr::filter(group_cat %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
-  dplyr::filter(!(country == "UGANDA" & group_cat == "ILC"))  %>%
-  mutate(country = factor(country, 
-                           levels = c("UGANDA", "MALAWI"))) %>%
-  mutate(group_cat = factor(group_cat, 
-                           levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, group_cat)
-
-beneficiaries_tbl_wp_census
-```
-
-## old cleaning code
-```{r}
-# pm_census_flagged <- pm_survey %>%
-#   mutate(
-#     wp_clean   = str_remove(wp_id, "^WP"),
-#     wp_vilpart = if_else(nchar(wp_clean) > 3, str_sub(wp_clean, 1, -4), wp_clean),
-#     wp_number  = str_sub(wp_clean, -3),
-#     new_wp_id  = paste0(village_id, wp_number),
-#     no_match   = if_else(
-#       !str_detect(as.character(village_id), paste0(wp_vilpart, "$")),
-#       "YES", "NO"
-#     )
-#   ) 
-
-# pm_census_flagged %>%
-#   dplyr::filter(no_match == "YES") %>%
-#   select(country, district, village, village_id, wp_name, wp_id) %>%
-#   write_csv("pm_census_issue_new.csv")
-```
-
-I edited pm_census_issue_new.csv in Excel. I added a column called new_wp_id and put in WP IDs I found in WP census by searching for WP name. I named the new file pm_census_issue_new_completed.csv
-
-```{r}
-# import back csv file + merge
-# pm_census_fixed <- read.csv("pm_census_issue_new_completed.csv", colClasses = c(new_wp_id = "character")) %>%
-#   select(village_id, wp_id, new_wp_id, wp_name)
-# 
-# pm_census_select_flagged <- pm_census_select_flagged %>%
-#   mutate(
-#     village_id = as.character(village_id),
-#     new_wp_id  = as.character(new_wp_id)
-#   ) %>%
-#   dplyr::filter(village_id != "1010602004") # filtering out a test village
-# 
-# pm_census_fixed <- pm_census_fixed %>%
-#   mutate(
-#     village_id = as.character(village_id),
-#     new_wp_id  = as.character(new_wp_id)
-#   ) %>%
-#   dplyr::filter(village_id != "1010602004") # filtering out a test village
-# 
-# pm_survey <- pm_census_select_flagged %>%
-#   left_join(pm_census_fixed, by = c("village_id", "wp_name")) %>%
-#   mutate(
-#     wp_id = coalesce(new_wp_id.y, new_wp_id.x)  # keep manual fix if available
-#   ) %>%
-#   select(-new_wp_id.x, -new_wp_id.y, -no_match, -wp_clean, -wp_vilpart, -wp_number)
-# 
-# pm_survey <- pm_survey %>%
-#   left_join(
-#     wp_census %>% 
-#       select(wp_id, sample_group, intervention_type),
-#     by = "wp_id"
-#   )
 ```
