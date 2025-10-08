@@ -29,10 +29,27 @@ pacman::p_load(
 )
 ```
 
-## import
+## setup
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, error = TRUE)
 
+# print tables nicely
+options(knitr.table.format = "html")
+knit_print.data.frame <- function(x, ...) {
+  res <- kable(x, format = "html") %>%
+    kable_styling(
+      bootstrap_options = c("striped", "hover", "condensed"),
+      full_width = TRUE,
+      position = "left",
+      font_size = 9
+    ) %>%
+    scroll_box(width = "100%", height = "400px") 
+  knitr::asis_output(res)
+}
+registerS3method("knit_print", "data.frame", knit_print.data.frame)
+registerS3method("knit_print", "tbl_df", knit_print.data.frame)
+
+# import
 path_box <- "/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup"
 
 villages <-
@@ -450,7 +467,15 @@ table8 <- hh_count_tbl %>%
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
   arrange(country, wp_category)
 
-table8
+table8 %>%
+  ungroup() %>%  
+  kable(format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 9
+  ) %>%
+  scroll_box(width = "100%")
 
 # country totals and CIs
 country_totals_table8 <- table8 %>%
@@ -661,7 +686,15 @@ table10 <- hh_count_tbl_wp_census %>%
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
   arrange(country, wp_category)
 
-table10
+table10 %>%
+  ungroup() %>%  
+  kable(format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 9
+  ) %>%
+  scroll_box(width = "100%")
 
 country_totals_table10 <- table10 %>%
   group_by(country) %>%
@@ -920,7 +953,15 @@ table12 <- hh_count_tbl_wp_census %>%
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
   arrange(country, wp_category)
 
-table12
+table12 %>%
+  ungroup() %>%  # Remove rowwise grouping
+  kable(format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 9
+  ) %>%
+  scroll_box(width = "100%")
 
 country_totals_table12 <- table12 %>%
   group_by(country) %>%
@@ -1079,7 +1120,15 @@ table13 <- hh_count_tbl %>%
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
   arrange(country, wp_category)
 
-table13
+table13 %>%
+  ungroup() %>%  # Remove rowwise grouping
+  kable(format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 9
+  ) %>%
+  scroll_box(width = "100%")
 
 # country totals and CIs
 country_totals_table13 <- table13 %>%
@@ -1293,7 +1342,15 @@ table14 <- hh_count_tbl %>%
                            levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
   arrange(country, wp_category)
 
-table14
+table14 %>%
+  ungroup() %>%  # Remove rowwise grouping
+  kable(format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 9
+  ) %>%
+  scroll_box(width = "100%")
 
 # country totals and CIs
 country_totals_table14 <- table14 %>%
