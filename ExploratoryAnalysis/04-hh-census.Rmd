@@ -412,7 +412,7 @@ hh_census %>%
 ## Share of households outside village among EA water points
 ```{r}
 hh_census %>%
-  dplyr::filter(intervention_type != "NON-PROGRAM") %>%
+  # dplyr::filter(intervention_type != "NON-PROGRAM") %>%
   mutate(
     outside_village = case_when(
       inclusion == "Within village boundaries" ~ 0,
@@ -431,6 +431,28 @@ hh_census %>%
     n_wp = n(),
     .groups  = "drop"
   )
+```
+
+# households using water points outside village
+```{r}
+hh_census %>%
+  # dplyr::filter(intervention_type != "NON-PROGRAM") %>%
+  dplyr::filter(!is.na(country)) %>%
+  mutate(
+    hh_location = case_when(
+      inclusion == "Within village boundaries" ~ "Inside village",
+      inclusion == "Up to 200m outside of village boundaries" ~ "Outside village (200m buffer)",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  dplyr::filter(!is.na(hh_location), !is.na(wp_source)) %>%
+  group_by(country, hh_location, wp_source) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(country, hh_location) %>%
+  mutate(
+    total = sum(n),
+    percentage = round(n / total * 100, 1)
+  ) 
 ```
 
 ## Number of observations and number/share of households using DSW and ILC water points
