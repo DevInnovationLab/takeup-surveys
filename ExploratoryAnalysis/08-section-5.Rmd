@@ -20,7 +20,8 @@ packages <-
     "kableExtra",
     "vtable",
     "stargazer",
-    "ggplot2"
+    "ggplot2",
+    "haven"
   )
 
 pacman::p_load(
@@ -185,6 +186,74 @@ wp_census <-
     )
   ) %>%
   mutate(ea_id = as.character(ea_id))
+
+malawi_wp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-water-points.dta") %>%
+  mutate(
+    villageid = as.character(villageid)
+  )
+malawi_villages <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-villages.dta") %>%
+  mutate(
+    villageid = as.character(villageid)
+  )
+uganda_wp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-points (luizaandrade@uchicago.edu).dta") %>%
+  mutate(
+    villageid = as.character(villageid)
+  )
+uganda_villages <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-villages.dta") %>%
+    mutate(
+    villageid = as.character(villageid)
+  )
+malawi_wcp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-water-collection-points.dta")
+uganda_wcp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-collection-points.dta")
+```
+
+# country totals
+```{r}
+# malawi 
+malawi_wp <- malawi_wp %>%
+  left_join(malawi_villages %>% select(villageid, ilc), by = "villageid") %>%
+  mutate(
+    wp_category = case_when(
+      program == 1 & pre_expansion == 1 & ilc == 0 ~ "DSW Footprint",
+      program == 1 & pre_expansion == 0 & ilc == 0 ~ "DSW Expansion",
+      program == 2 ~ "ILC water points",
+      program == 1 & ilc == 1 ~ "DSW in ILC village",
+      TRUE ~ NA_character_
+    ),
+    country = "MALAWI"
+  )
+
+malawi_wcp_count <- nrow(malawi_wcp)
+
+# uganda
+uganda_wp <- uganda_wp %>%
+  left_join(uganda_villages %>% select(villageid, ilc), by = "villageid") %>%
+  mutate(
+    wp_category = case_when(
+      program == 1 & pre_expansion == 1 & ilc == 0 ~ "DSW Footprint",
+      program == 1 & pre_expansion == 0 & ilc == 0 ~ "DSW Expansion",
+      program == 2 ~ "ILC",
+      program == 1 & ilc == 1 ~ "DSW in ILC village",
+      TRUE ~ NA_character_
+    ),
+    country = "UGANDA"
+  )
+
+uganda_wcp_count <- nrow(uganda_wcp)
+
+# create table summary
+country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
+  count(country, wp_category, name = "count") %>%
+  mutate(
+    country_total = case_when(
+      country == "MALAWI" & wp_category == "ILC water points" ~ count + malawi_wcp_count, # add up water points and water collection points to get all ILC points
+      country == "UGANDA" & wp_category == "ILC water points" ~ count + uganda_wcp_count,
+      TRUE ~ count
+    )
+  ) %>%
+  arrange(country, wp_category)
+
+country_totals
 ```
 
 # corrections: pm_survey
@@ -384,6 +453,16 @@ hh_size_tbl <- hh_survey %>%
   ) %>%
   select(country, wp_category, avg_hh_size, se_hh_size)
 
+# column 4: total numbers of each type of water point in each country (calculated in STATA)
+# country_totals1 <- tibble(
+#   country = c("UGANDA", "UGANDA", 
+#               "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
+#   wp_category = c("DSW Footprint", "DSW Expansion",
+#                 "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
+#   country_total = c(4843, 12875,
+#                     3123, 12040, 1035, 2376)
+# )
+
 # column 6: chlorination rate
 chl_tbl <- hh_survey %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
@@ -411,16 +490,6 @@ chl_tbl <- hh_survey %>%
     se_chl_rate = sqrt(total_var)
   ) %>%
   select(country, wp_category, chl_rate, se_chl_rate)
-
-# column 4: total numbers of each type of water point in each country (calculated in STATA)
-country_totals <- tibble(
-  country = c("UGANDA", "UGANDA", 
-              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  wp_category = c("DSW Footprint", "DSW Expansion",
-                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
-  country_total = c(4843, 12875,
-                    3123, 12040, 1035, 2376)
-)
 
 # merge + calculations (for columns 3, 5, and CI for column 6)
 table8 <- hh_count_tbl %>%
@@ -504,17 +573,6 @@ country_totals_table8
 ## table 9 [numbers are currently off in col 4 - EA list]
 Number of water points in different datasets by type
 ```{r}
-# manually add country totals, calculated in STATA
-country_totals <- tibble::tribble(
-  ~country, ~wp_category, ~country_total,
-  "MALAWI", "DSW Footprint", 3123,
-  "MALAWI", "DSW Expansion", 12040,
-  "MALAWI", "DSW in ILC village", 1035,
-  "MALAWI", "ILC", 2376,
-  "UGANDA", "DSW Footprint", 4843,
-  "UGANDA", "DSW Expansion", 12875
-)
-
 wp_table <- wp_census %>%
   group_by(country, wp_category) %>%
   summarise(
@@ -1065,16 +1123,6 @@ chl_tbl <- hh_survey %>%
   ) %>%
   select(country, wp_category, chl_rate, se_chl_rate)
 
-# column 4: total numbers of each type of water point in each country (calculated in STATA)
-country_totals <- tibble(
-  country = c("UGANDA", "UGANDA", 
-              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  wp_category = c("DSW Footprint", "DSW Expansion",
-                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
-  country_total = c(4843, 12875,
-                    3123, 12040, 1035, 2376)
-)
-
 # merge + calculations (for columns 3, 5, and CI for column 6)
 table13 <- hh_count_tbl %>%
   left_join(hh_size_tbl, by = c("country", "wp_category")) %>%
@@ -1286,16 +1334,6 @@ chl_tbl <- hh_survey %>%
     se_chl_rate = sqrt(total_var)
   ) %>%
   select(country, wp_category, chl_rate, se_chl_rate)
-
-# column 4: total numbers of each type of water point in each country (calculated in STATA)
-country_totals <- tibble(
-  country = c("UGANDA", "UGANDA", 
-              "MALAWI", "MALAWI", "MALAWI", "MALAWI"),
-  wp_category = c("DSW Footprint", "DSW Expansion",
-                "DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"),
-  country_total = c(4843, 12875,
-                    3123, 12040, 1035, 2376)
-)
 
 # merge + calculations (for columns 3, 5, and CI for column 6)
 table14 <- hh_count_tbl %>%
@@ -1594,7 +1632,7 @@ share_outside_tbl
 ## tables excl outside HHs for waterfall charts
 table 1 estimates excluding outside households
 ```{r}
-# import table 1 numbers for each village type (sample_group)
+# table 1 numbers for each village type (sample_group)
 table1 <- tibble::tribble(
   ~country, ~sample_group, ~indiv_access_popn,
   "MALAWI", "EXPANSION", 1775112,
