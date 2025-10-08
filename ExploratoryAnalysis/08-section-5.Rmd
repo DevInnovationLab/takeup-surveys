@@ -1,4 +1,9 @@
-This is the code to generate the tables present in section 7 of the report, as well as numbers that are referenced in its text.
+---
+title: "Section 5 Analysis"
+output: html_document
+---
+
+This is the code to generate the tables present in section 6 of the report, as well as numbers that are referenced in its text.
 
 ```{r}
 packages <-
@@ -25,7 +30,11 @@ pacman::p_load(
 ```
 
 ## import
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+
+path_box <- "/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup"
+
 villages <-
   read_rds(
     file.path(
