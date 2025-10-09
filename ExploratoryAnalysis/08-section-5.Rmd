@@ -2053,7 +2053,7 @@ create_waterfall <- function(country_name, country_data) {
                                   "dataset" = "#FDB462",    # yellow for unexplained part
                                   "total" = "#4575b4")) +   
     labs(title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
-         y = "people with access (thousand)",
+         y = "People with access",
          x = NULL) +
     theme_minimal() +
     theme(
