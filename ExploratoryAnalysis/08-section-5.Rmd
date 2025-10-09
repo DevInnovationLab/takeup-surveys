@@ -42,7 +42,7 @@ knit_print.data.frame <- function(x, ...) {
       bootstrap_options = c("striped", "hover", "condensed"),
       full_width = TRUE,
       position = "left",
-      font_size = 9
+      font_size = 11
     ) %>%
     scroll_box(width = "100%", height = "400px") 
   knitr::asis_output(res)
@@ -1954,7 +1954,7 @@ country_totals_table10_ex_out
 # waterfall charts
 ```{r}
 #combine all relevant country totals into 1 table
-country_sums <- table1 %>%
+estimates <- table1 %>%
   group_by(country) %>%
   summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
   left_join(
@@ -1990,7 +1990,7 @@ country_sums <- table1 %>%
     by = "country"
   ) 
 
-country_sums <- country_sums%>%
+estimates <- estimates%>%
   mutate(
     pm_to_census_ratio = table8 / table1
   )
@@ -2003,36 +2003,34 @@ create_waterfall <- function(country_name, country_data) {
                  "Exclude \ncensus\nout-of-village\nhouseholds", 
                  "Unit of\nobservation",
                  "Sample \nselection\nof water points",
+                 "Double \n-counting",
+                 "Promoter\nsurvey\nout-of-village\nhouseholds",
                  "Dataset",
-                 "Double-counting",
-                 "Add \npromoter\nsurvey\nout-of-village\nhouseholds",
                  "Table 8"),
     amount = c(
       country_data$table1,
       country_data$table1_ex_outside - country_data$table1,
-      country_data$table10_ex_outside - country_data$table1_ex_outside,
-      country_data$table10_ex_outside - country_data$table10_ex_outside,
-      country_data$table14 - country_data$table10_ex_outside,
+      country_data$table12_ex_outside - country_data$table1_ex_outside,
+      country_data$table10_ex_outside - country_data$table12_ex_outside,
       country_data$table13 - country_data$table14,
       country_data$table8 - country_data$table13,
+      country_data$table14 - country_data$table10_ex_outside,
       country_data$table8
     )
   )
   
-  # Round to nearest 50,000
+  # round (to 50k)
   df <- df %>%
     mutate(amount_rounded = round(amount / 50000) * 50000)
   
-  # Make category a factor to preserve order
   df$category <- factor(df$category, levels = df$category)
   
-  # Calculate positions using rounded values
   df <- df %>%
     mutate(
       id = row_number(),
       type = case_when(
         id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",                     
+        id == 7 ~ "dataset",                     
         amount_rounded < 0 ~ "decrease",
         TRUE ~ "increase"
       ),
@@ -2069,8 +2067,8 @@ create_waterfall <- function(country_name, country_data) {
 }
 
 # Create plots for each country
-uganda_data <- country_sums %>% filter(country == "UGANDA")
-malawi_data <- country_sums %>% filter(country == "MALAWI")
+uganda_data <- estimates %>% filter(country == "UGANDA")
+malawi_data <- estimates %>% filter(country == "MALAWI")
 
 create_waterfall("Uganda", uganda_data)
 create_waterfall("Malawi", malawi_data)
