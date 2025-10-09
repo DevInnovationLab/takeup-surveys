@@ -570,7 +570,7 @@ country_totals_table8 <- table8 %>%
 country_totals_table8
 ```
 
-## table 9 [numbers are currently off in col 4 - EA list]
+## table 9 [numbers are currently off in cols 2-5]
 Number of water points in different datasets by type
 ```{r}
 wp_table <- wp_census %>%
