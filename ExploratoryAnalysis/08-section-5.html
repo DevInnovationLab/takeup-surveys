@@ -1090,16 +1090,6 @@ hh_size_tbl &lt;- hh_survey %&gt;%
   ) %&gt;%
   select(country, wp_category, avg_hh_size, se_hh_size)
 
-# column 4: total numbers of each type of water point in each country (calculated in STATA)
-# country_totals1 &lt;- tibble(
-#   country = c(&quot;UGANDA&quot;, &quot;UGANDA&quot;, 
-#               &quot;MALAWI&quot;, &quot;MALAWI&quot;, &quot;MALAWI&quot;, &quot;MALAWI&quot;),
-#   wp_category = c(&quot;DSW Footprint&quot;, &quot;DSW Expansion&quot;,
-#                 &quot;DSW Footprint&quot;, &quot;DSW Expansion&quot;, &quot;DSW in ILC village&quot;, &quot;ILC&quot;),
-#   country_total = c(4843, 12875,
-#                     3123, 12040, 1035, 2376)
-# )
-
 # column 6: chlorination rate
 chl_tbl &lt;- hh_survey %&gt;%
   dplyr::filter(survey == &quot;Monitoring Survey&quot;) %&gt;%

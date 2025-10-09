@@ -2050,7 +2050,7 @@ create_waterfall <- function(country_name, country_data) {
     theme(
       legend.position = "none",
       axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      plot.title = element_text(size = 14, face = "bold"),
+      # plot.title = element_text(size = 14, face = "bold"),
       panel.grid.major.x = element_blank()
     ) +
     scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
@@ -2061,8 +2061,22 @@ create_waterfall <- function(country_name, country_data) {
 uganda_data <- estimates %>% filter(country == "UGANDA")
 malawi_data <- estimates %>% filter(country == "MALAWI")
 
-create_waterfall("Uganda", uganda_data)
-create_waterfall("Malawi", malawi_data)
+waterfall_uganda <- create_waterfall("Uganda", uganda_data)
+waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+
+ggsave("output/waterfall_uganda.pdf", 
+       plot = waterfall_uganda, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+
+ggsave("output/waterfall_malawi.pdf", 
+       plot = waterfall_malawi, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
 ```
 
 ## section 6.2: sample: EA list versus promoter survey (Uganda) [numbers are currently off]
