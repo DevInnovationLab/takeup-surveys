@@ -1,0 +1,103 @@
+## Difference in means tests
+
+
+Villages in large clusters are not significantly different from villages in small clusters, so we will calculate the average number of households per village while disregarding the size of the cluster
+
+```{r}
+cluster_hhs <-
+  hh_census %>%
+  dplyr::filter(sample_group == "ILC") %>%
+  group_by(village_id) %>%
+  summarise(
+    hhs = n_distinct(household_id),
+    hh_members_c = sum(hh_members, na.rm = TRUE),
+    users = sum(wp_intervention_type != "Non-program")
+  ) %>%
+  left_join(
+    clusters %>%
+      mutate(village_id = as.character(wcp_villageid)) %>%
+      group_by(village_id) %>%
+      summarise(
+        across(
+          c(large_cluster, verylarge_cluster),
+          ~ any(. == 1)
+        )
+      )
+  )
+
+c("hhs", "hh_members", "users") %>%
+  map(
+    ~ feols(
+      paste(., "~ verylarge_cluster") %>% as.formula,
+      data = cluster_hhs,
+      weights = ~ weight,
+      cluster = ~ ilc_clusterid
+    )
+  ) %>%
+  modelsummary(stars = TRUE)
+```
+
+```{r}
+c("hhs", "hh_members", "users") %>%
+  map(
+    ~ feols(
+      paste(., "~ verylarge_cluster") %>% as.formula,
+      data = cluster_hhs,
+      weights = ~ weight,
+      cluster = ~ ilc_clusterid
+    )
+  ) %>%
+  modelsummary(stars = TRUE)
+```
+
+### Are chlorination rates different in large ILC clusters?
+
+```{r}
+cluster_hhs <-
+  hh_survey %>%
+  dplyr::filter(sample_group == "ILC") %>%
+  group_by(village_id) %>%
+  summarise(
+    across(
+      outcomes,
+      ~ mean(., na.rm = TRUE)
+    )
+  ) %>%
+  left_join(
+    clusters %>%
+      mutate(village_id = as.character(wcp_villageid)) %>%
+      group_by(village_id, ilc_clusterid) %>%
+      summarise(
+        across(
+          c(large_cluster, verylarge_cluster),
+          ~ any(. == 1)
+        ),
+        weight
+      )
+  )
+
+outcomes %>%
+  map(
+    ~ feols(
+      paste(., "~ large_cluster") %>% as.formula,
+      data = cluster_hhs,
+      weights = ~ weight,
+      cluster = ~ ilc_clusterid
+    )
+  ) %>%
+  modelsummary(stars = TRUE)
+```
+
+```{r}
+outcomes %>%
+  map(
+    ~ feols(
+      paste(., "~ verylarge_cluster") %>% as.formula,
+      data = cluster_hhs,
+      weights = ~ weight,
+      cluster = ~ ilc_clusterid
+    )
+  ) %>%
+  modelsummary(stars = TRUE)
+```
+

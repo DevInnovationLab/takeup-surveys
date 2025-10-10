@@ -1,0 +1,9 @@
+--- 
+title: "Estimating Chlorination Take-up in Malawi and Uganda"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+---
+
+# Introduction
+
+This notebook presents the code used for analaysis in the report to GiveWell. To see the code used to create each exhibit, click on the `Code` button.

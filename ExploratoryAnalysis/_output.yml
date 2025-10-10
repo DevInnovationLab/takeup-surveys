@@ -4,7 +4,7 @@ bookdown::gitbook:
     toc:
       collapse: section
       before: |
-        <li><a href="./">Wrangle Water Point Census</a></li>
+        <li><a href="./">GiveWell report</a></li>
   code_folding: hide
   self_contained: true
 
