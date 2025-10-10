@@ -1,0 +1,134 @@
+# Import household survey data 
+
+Note: change in protocol Aug 4th for Malawi, and around Aug 6th for Uganda.
+
+```{r 01-import-survey}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "haven",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load household survey dataset
+
+```{r}
+hh_raw_ug <- 
+  read_dta(
+    file.path(
+      path_box,
+      "DATA - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "3_HH Survey",
+      "DIL Household Survey_checked.dta"
+    )
+  ) %>%
+  haven::as_factor(levels = "labels") %>%
+  mutate(
+    size_ot = as.character(size_ot)
+  ) %>%
+  remove_empty %>%
+  select(
+    -contains("hr")
+  )
+
+hh_raw_ug_ilc <- 
+  read_dta(
+    file.path(
+      path_box,
+      "DATA - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "3_HH Survey",
+      "DIL Household Survey_V3_checked.dta"
+    )
+  ) %>%
+  haven::as_factor(levels = "labels") %>%
+  mutate(
+    size_ot = as.character(size_ot)
+  ) %>%
+  remove_empty %>%
+  select(
+    -contains("hr")
+  )
+
+hh_raw_mw <- 
+  read_dta(
+    file.path(
+      path_box,
+      "DATA - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "3_household_survey",
+      "DIL_Household_checked_Malawi.dta"
+    )
+  ) %>%
+  haven::as_factor(levels = "labels") %>%
+  remove_empty() %>%
+  select(
+    -contains("hr")
+  ) %>%
+  mutate(
+    across(
+      c(int_promoter, int_warned),
+      ~ case_when(
+        . == 0 ~ "No",
+        . == 1 ~ "Yes"
+      )
+    ),
+    int_promoter_last = case_when(
+      int_promoter == 1 ~ "In the past 30 days",
+      int_promoter == 2 ~	"In the past 6 months",
+      int_promoter == 3	~	"In the past year",
+      int_promoter == 4	~	"It's been more than a year",
+      int_promoter == -999 ~ "Don't know"
+    ),
+    int_warned_who = case_when(
+      int_warned_who == 1 ~ "The promoter",
+      int_warned_who == 2 ~ "Someone from outside the village",
+      int_warned_who == 3 ~ "A neighbor",
+      int_warned_who == -666 ~ "Other"
+    )
+  )
+
+hh_raw <- 
+  hh_raw_mw %>%
+  bind_rows(hh_raw_ug) %>%
+  bind_rows(hh_raw_ug_ilc)
+```
+
+## Save into R format
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Raw",
+    "hh-survey"
+  )
+
+hh_raw %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

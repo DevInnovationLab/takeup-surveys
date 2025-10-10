@@ -1,0 +1,449 @@
+# Create final household survey data
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "assertthat",
+    "janitor",
+    "sf"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+### Household survey
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Clean",
+      "hh-survey-clean.rds"
+      )
+    ) %>%
+  mutate(village_id = village_id_pl)
+```
+
+### Chlorine testing
+
+```{r}
+tests <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Constructed",
+      "hh-survey-chlorine.rds"
+    )
+  ) %>%
+  select(
+    key,
+    disctcr_c, disctcr_color, disctcr_c_02,
+    discfcr_c, discfcr_color, discfcr_c_02,
+    metertcr_c, metertcr_color, metertcr_c_02, metertcr_c_01,
+    meterfcr_c, meterfcr_color, meterfcr_c_02, meterfcr_c_01,
+  )
+```
+
+### GPS
+
+```{r}
+gps <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Spatial",
+      "hh-gps.rds"
+    )
+  )
+```
+
+### Promoter census
+
+```{r}
+pm_survey <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Final",
+      "pm-survey.rds"
+      )
+    ) %>%
+  select(wp_id) %>%
+  unique %>%
+  mutate(promoter_wp = TRUE)
+```
+
+
+### Household census
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Constructed",
+      "hh-census-constructed.rds"
+    )
+  ) 
+
+villages <-
+  hh_census %>%
+  select( 
+    country,
+    district_id, district, 
+    village, village_id,
+    sample_group, sample,
+    ea_program_vil,
+    vil_rain, potential_interference,
+    ilc_cluster_id, vil_replaced
+  ) %>%
+  unique
+
+hh_census <- 
+  hh_census %>%
+  select(
+    household_id, wp_id = wp_id_c,
+    wp_sec_notworking:vil_ilc_selfreport,
+    hh_dsw:wp_disctcr_un_02,
+    hhh_educ, hhh_gender, hhh_age_hhc = hhh_age,
+    hh_hhsincompound, hh_members, hh_adults, hh_males, hh_females, hh_pregnant,
+    hh_under5, hh_under2
+  )
+```
+
+## Combine data
+
+We previously calculated the distances from households to various water points in the household census processing scripts. We merge this data to the household survey data by household ID, then only select analysis variables for the final dataset.
+
+### Chlorine tests
+
+```{r}
+assert_that(
+ all(tests$key %in% hh_survey$key)
+)
+
+hh_survey_joined <-
+  hh_survey %>%
+  left_join(tests, relationship = "one-to-one")
+```
+
+### Household census
+
+```{r eval = FALSE}
+assert_that(
+ all(hh_survey$household_id %in% hh_census$household_id)
+)
+
+hh_survey %>% 
+  dplyr::filter(!(household_id %in% hh_census$household_id)) %>%
+  view
+```
+
+
+```{r}
+hh_survey_joined <-
+  hh_survey_joined %>%
+  rename(
+    wp_dsw_selfreport = wp_dsw_c,
+    wp_ilc_selfreport = wp_ilc_c
+  ) %>%
+  select(-c(wp_dsw, wp_ilc)) %>%
+  inner_join(hh_census, relationship = "many-to-one")
+```
+
+## Select final variables
+
+### ID variables
+
+```{r}
+ids <-
+  hh_survey_joined %>%
+  select(
+    key,
+    household_id,
+    village_id
+  ) %>%
+  left_join(villages)
+```
+
+### Meta data
+
+```{r}
+meta <-
+  hh_survey_joined %>%
+  transmute(
+    key,
+    date,
+    hhs = TRUE,
+    survey = survey_type %>%
+      fct_recode(
+        "Household Survey" = "Household Survey (HH Census Respondents)",
+        "Monitoring Survey" = "Monitoring Survey (Promoter Respondents)"
+      )
+  )
+```
+
+### Household characteristics 
+
+```{r}
+household <-
+  hh_survey_joined %>%
+  rename(
+    resp_age = age_resp,
+    resp_sex = sex,
+    resp_hhh = relation
+  ) %>%
+  mutate(
+    hhh_gender = coalesce(hhh_gender_c, hhh_gender),
+    resp_educ = 
+      case_when(
+        # Uganda
+        educ %in% c("Never attended school / did not complete class", "Informal Training") ~ "None",
+        educ %in% c("Pre-primary", "P1", "P2", "P3", "P4", "P5", "P6") ~ "Pre-primary",
+        educ %in% c("P7", "PLE", "S1", "S2", "S3") ~ "Primary",
+        educ %in% c("S4", "O level", "S5", "S6", "A level", "Polytechnic") ~ "Secondary",
+        educ %in% c("College (non-University)", "University") ~ "Post-secondary",
+        # Malawi
+        educ_mw == "No formal education / Never attended school" ~ "None",
+        educ_mw == "Some Primary School (Did not complete Standard 8)" ~ "Pre-primary",
+        educ_mw %in% c("Primary School Leaving Certificate (PSLCE) (Completed Standard 8)", "Junior Certificate of Education (JCE) (Completed Form 2)") ~ "Primary",
+        educ_mw %in% c("Malawi School Certificate of Education (MSCE) (Completed Form 4)", "Vocational/Technical Training (e.g., TEVETA certification)") ~ "Secondary",
+        educ_mw %in% c("Diploma (e.g., teaching, nursing, other post-secondary diploma)", "Bachelor's Degree") ~ "Post-secondary"
+      )
+  ) %>%
+  select(
+    key,
+    starts_with("resp_"),
+    hhh_gender,
+    starts_with("hh_")
+  ) %>%
+  select(
+    -c(
+      resp_signature, 
+      contains("hh_idbck"),
+      contains("_pl"),
+      contains("rand")
+    )
+  )
+```
+
+### Water point characteristics
+
+```{r}
+wp <-
+  hh_survey_joined %>%
+  select(
+    key,
+    wpuse_yn = use_waterpoint_c,
+    wpuse_whynot = notuse,
+    wpuse_whynot_o = notuse_ot,
+    wp_more_c,
+    wp_count_pastmonth,
+    wp_intervention_type
+  )
+```
+
+### Water sample
+
+```{r}
+water <-
+  hh_survey_joined %>%
+  mutate(water_sample = coalesce(glass_water, give_water)) %>%
+  select(
+    key, wp_id,
+    prepare_water = prepare_water_c,
+    starts_with("prep_different_"),
+    water_sample,
+    notgivewater, notgivewater_ot,
+    storage, other_cont, other_plastic, 
+    access_contain, access_contain_ot, 
+    cover_storage, cover_storage_ot,
+    howlong_waterprep, 
+    who_collected, who_collected_ot,
+    age_child, size, size_ot,
+    watertreat_any = do_anything_c,
+    starts_with("make_watersafe_"),
+    mix = mix_c, 
+    where_collect, where_collect_ot,
+    collect, collect_oth,
+    starts_with("int_")
+  ) %>%
+  select(
+    -c(int_promoter, int_warned),
+    -ends_with("pl"),
+    -matches("make_watersafe(*)_c"),
+    -matches("prep_different(*)_c")
+  )
+```
+
+### Water treatment
+
+```{r}
+water_treatment <-
+  hh_survey_joined %>%
+  select(
+    key, contains("everdo_"), 
+    contains("reason_notchlorinate_"),
+    often_chlorinate
+  )
+```
+
+### Data quality flags
+
+```{r}
+flags <-
+  hh_survey_joined %>%
+  select(
+    key,
+    starts_with("flag_")
+  )
+```
+
+
+### Combine all
+
+```{r}
+final <-
+  ids %>%
+  left_join(villages) %>%
+  left_join(meta) %>%
+  left_join(household) %>%
+  left_join(wp) %>%
+  left_join(water) %>%
+  left_join(water_treatment) %>%
+  left_join(tests) %>%
+  left_join(pm_survey) %>%
+  left_join(flags) %>%
+  dplyr::filter(!vil_replaced) %>%
+  remove_empty()
+```
+
+
+```{r}
+hhs <-
+  hh_survey_joined %>% 
+  select(
+    key,
+    all_of(setdiff(names(.), names(final)))
+  ) %>%
+  right_join(final) %>%
+  remove_empty()
+```
+
+## Export data
+
+### Save constructed data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Constructed",
+    "hh-survey-constructed"
+  )
+
+hhs %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+### Save spatial data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Spatial",
+    "hh-survey-constructed"
+  )
+
+gps %>%
+  left_join(hhs) %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+### Save analysis data
+
+```{r}
+final <-
+  final %>%
+  set_names(
+    names(.) %>% 
+      str_replace_all("cr_c$", "cr") %>%
+      str_replace_all("c_0", "0") %>%
+      str_remove_all("_c$")
+  )
+
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Final",
+    "hh-survey"
+  )
+
+final %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+```{r}
+stata <-
+  final %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  )
+  
+stata %>% 
+  write_dta(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.dta"
+    )
+)
+```

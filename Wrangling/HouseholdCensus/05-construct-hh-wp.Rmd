@@ -1,0 +1,160 @@
+# Construct primary water point
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "sf",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+```{r}
+hhc_clean <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Clean",
+      "hh-census-clean.rds"
+      )
+    )
+```
+
+```{r}
+wp_corrections <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "HouseholdCensus",
+      "manual-wp-match.csv"
+      )
+    ) %>%
+  mutate(
+    village_id = as.character(village_id),
+    wp_id_fixed = wp_id
+  )
+```
+
+
+## Primary water point
+
+```{r}
+hhc_wp <-
+  hhc_clean %>% 
+  dplyr::filter(consent) %>%
+  left_join(wp_corrections) %>%
+  transmute(
+    household_id, date, country,
+    wp_source,
+    wp_source_o,
+    wp_name_c = coalesce(wp_name, wp_name_coa),
+    wp_id = coalesce(wp_id_fixed, wp_id_pl),
+    flag_wp_id = is.na(wp_id_pl),
+    wp_match,
+    wp_match_comments
+  )
+```
+
+
+```{r}
+hhc_wp %>% 
+  dplyr::filter(is.na(wp_id)) %>% 
+  tabyl(wp_source)
+```
+
+```{r}
+hhc_wp %>% 
+  dplyr::filter(
+    is.na(wp_id), 
+    wp_source == "From a water point in this village"
+  ) %>% 
+  tabyl(date, country)
+```
+
+## Water points that should have been matched
+
+```{r}
+wp_tomatch <-
+  hhc_clean %>%
+  dplyr::filter(
+    is.na(wp_id_pl),
+    !(wp_name %in% wp_corrections$wp_name),
+    !is.na(wp_dsw) | !is.na(wp_ilc_c) | !is.na(wp_ilc_device_c)
+  ) %>%
+  group_by(
+    country,
+    village_id,
+    wp_name_coa
+  ) %>%
+  summarise(
+    n_hhs = n_distinct(household_id),
+    across(
+      starts_with("wp_"),
+      ~ mean(.)
+    )
+  ) %>%
+  select(village_id, wp_name_coa, wp_id_coa, everything()) %>%
+  arrange(village_id, wp_name_coa)
+```
+
+## Water points that should have been mapped 
+
+```{r}
+wp_tomap <-
+  hhc_clean %>%
+  dplyr::filter(
+    is.na(wp_id_pl),
+    !(wp_name_o %in% wp_corrections$wp_name),
+    wp_source_communal_c,
+    wp_oth_location == "Located within the village",
+    !str_detect(wp_name_o, "RIVE"),
+    !str_detect(wp_name_o, "PRIVATE"),
+    !str_detect(wp_other_comments, "PRIVATE")
+  ) %>%
+  select(
+    household_id,
+    village_id,
+    wp_name_o,
+    wp_other_desc,
+    wp_other_dsw,
+    wp_other_ilc,
+    wp_source_communal,
+    wp_oth_location,
+    wp_other_comments,
+    wp_id_o
+  ) 
+```
+
+## Export data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Constructed",
+    "hh-wp"
+  )
+
+hhc_wp %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

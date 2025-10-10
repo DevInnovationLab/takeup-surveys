@@ -1,0 +1,10 @@
+---
+title: "Wrangle Household Survey"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+---
+
+# Introduction
+
+This document cleans and wrangles data from the household survey.

@@ -1,0 +1,78 @@
+# Construct DSW spotcheck
+
+```{r}
+pacman::p_load(
+  tidyverse
+)
+```
+
+## Load data
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Create indicators
+
+```{r}
+dsw <-
+  wp %>%
+  select(
+    key, wp_id,
+    contains("disp"),
+    contains("jc_"),
+    dsw_use, dsw_use_howmuch
+  ) %>%
+  mutate(
+    jc_wait = as.numeric(jc_wait_diff) %>% abs,
+    disp_func = jc_valve,
+    disp_filled = jc_chlorine,
+    disp_dose = 
+      case_when(
+        jc_mldispensed > 3 ~ "More than 3 mL",
+        jc_mldispensed == 3 ~ "3 mL",
+        jc_mldispensed > 2.5 & jc_mllost ~ "3 mL",
+        jc_mldispensed > 2.5 & !jc_mllost ~ "Less than 3 mL",
+        jc_mldispensed < 2.5 ~ "Less than 3 mL",  
+      )
+  ) %>%
+  select(
+    -c(
+      disp_dsw_id_yn,
+      disp_barcode_yn,
+      disp_dsw_date_yn,
+      no_disp_dsw_datephoto,
+      contains("jc_wait_")
+    )
+  )
+```
+
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-census-dsw"
+  ) 
+
+dsw %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

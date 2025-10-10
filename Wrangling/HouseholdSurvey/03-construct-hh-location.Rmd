@@ -1,0 +1,68 @@
+# Construct household location
+
+```{r construct-hh-location}
+packages <-
+  c(
+    "tidyverse",
+    "sf",
+    "skimr",
+    "janitor",
+    "haven",
+    "viridis",
+    "leaflet",
+    "randomcoloR"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+
+```{r, warning = FALSE, message = FALSE}
+hh_clean <-
+  read_rds(
+    here(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Clean",
+      "hh-survey-clean.rds"
+    )
+  )
+```
+
+## Create spatial version of the data set
+
+We choose to project the coordinates to the [EPSG code](https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf) `4326`, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. 
+
+Note that the spatial datasets include only households who gave consent for their GPS coordinates to be recorded.
+
+```{r}
+hh_sf <- 
+  hh_clean %>%
+  dplyr::filter(!is.na(gpslongitude) & !is.na(gpslatitude)) %>%
+  select(key, starts_with("gps")) %>%
+  st_as_sf(
+    coords = c("gpslongitude", "gpslatitude"), 
+    crs = 4326
+    )
+```
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Spatial",
+    "hh-gps"
+  )
+
+hh_sf %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

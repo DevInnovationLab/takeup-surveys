@@ -1,0 +1,385 @@
+# Construct chlorine testing variables
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "janitor",
+    "sf"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+```{r}
+collapsed <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  ) %>%
+  st_drop_geometry()
+```
+
+## Colorimeter
+
+```{r}
+meter <-
+  collapsed %>%
+  dplyr::filter(colorimeter) %>%
+  select(
+    wp_id, wp_id_c,
+    country, district, district_id, village, village_id,
+    sourcetype,
+    wp_turbidity,
+    jc_mldispensed, jc_mllost,
+    meter_enum,
+    meterid,
+    meterfcr_vialid,
+    meterfcr_wait,
+    meterfcr,
+    matches("^meterfcr_error"),
+    matches("^meterfcr_color"),
+    matches("^meterfcr(.*)timestamp"),
+    matches("^meterfcr(.*)photo"),
+    metertcr_vialid,
+    metertcr,
+    matches("^metertcr_error"),
+    matches("^metertcr_color"),
+    matches("^metertcr(.*)timestamp"),
+    matches("^metertcr(.*)photo")
+  ) %>%
+  select(-contains("nocl"))
+
+meter_un <-
+  collapsed %>%
+  dplyr::filter(colorimeter_un == 1) %>%
+  select(
+    wp_id, wp_id_c,
+    meter_nocl_enum,
+    meterid_un,
+    meterfcr_nocl_vialid,
+    meterfcr_nocl_wait,
+    meterfcr_un,
+    matches("meterfcr_nocl_error"),
+    matches("meterfcr_nocl_color"),
+    matches("meterfcr_nocl(.*)timestamp"),
+    matches("meterfcr_nocl(.*)photo"),
+    metertcr_nocl_vialid,
+    metertcr_un,
+    matches("metertcr_nocl_error"),
+    matches("metertcr_nocl_color"),
+    matches("metertcr_nocl(.*)timestamp"),
+    matches("^metertcr_nocl(.*)photo")
+  )
+```
+
+### Calculate readings differences
+
+### Calculate durations
+
+```{r}
+meter_constructed <-
+  meter %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    meterfcr_dur_zero = meterfcr_timestamp1 - meterfcr_timestamp0,
+    meterfcr_dur_reagent = meterfcr_timestamp3 - meterfcr_timestamp1,
+    meterfcr_dur_wait = meterfcr_timestamp4 - meterfcr_timestamp3,
+    meterfcr_dur_color = meterfcr_timestamp5 - meterfcr_timestamp4,
+    meterfcr_dur_clean = meterfcr_timestamp6 - meterfcr_timestamp5,
+    metertcr_dur_zero = metertcr_timestamp1 - metertcr_timestamp0,
+    metertcr_dur_reagent = metertcr_timestamp3 - metertcr_timestamp1,
+    metertcr_dur_wait = metertcr_timestamp4 - metertcr_timestamp3,
+    metertcr_dur_color = metertcr_timestamp5 - metertcr_timestamp4,
+    metertcr_dur_clean = metertcr_timestamp6 - metertcr_timestamp5
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    country, district, district_id, village, village_id,
+    sourcetype,
+    wp_turbidity,
+    meter_enum,
+    meterid,
+    contains("jc"),
+    contains("fcr"),
+    contains("tcr"),
+    -contains("timestamp")
+  )
+
+meter_un_constructed <-
+  meter_un %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    meterfcr_nocl_dur_zero = meterfcr_nocl_timestamp1 - meterfcr_nocl_timestamp0,
+    meterfcr_nocl_dur_reagent = meterfcr_nocl_timestamp3 - meterfcr_nocl_timestamp1,
+    meterfcr_nocl_dur_wait = meterfcr_nocl_timestamp4 - meterfcr_nocl_timestamp3,
+    meterfcr_nocl_dur_color = meterfcr_nocl_timestamp5 - meterfcr_nocl_timestamp4,
+    meterfcr_nocl_dur_clean = meterfcr_nocl_timestamp6 - meterfcr_nocl_timestamp5,
+    metertcr_nocl_dur_zero = metertcr_nocl_timestamp1 - metertcr_nocl_timestamp0,
+    metertcr_nocl_dur_reagent = metertcr_nocl_timestamp3 - metertcr_nocl_timestamp1,
+    metertcr_nocl_dur_wait = metertcr_nocl_timestamp4 - metertcr_nocl_timestamp3,
+    metertcr_nocl_dur_color = metertcr_nocl_timestamp5 - metertcr_nocl_timestamp4,
+    metertcr_nocl_dur_clean = metertcr_nocl_timestamp6 - metertcr_nocl_timestamp5
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    meter_nocl_enum,
+    meterid_un,
+    contains("jc"),
+    contains("fcr"),
+    contains("tcr"),
+    -contains("timestamp")
+  )
+```
+
+### Manual corrections
+
+Observations with E-15, very dark pink color, and high color wheel test result: chlorine residual is too high for the colorimeter to read. We're assigning a high value of 2.4 -- which is not the exact level. Water points may also be in here if a high-range test was conducted (since they should not be).
+
+```{r}
+error15_fcr <-
+  c("WP3008002", # high-range test done and gave reading of above 4
+    "WP3008005", # high-range test done and gave reading of above 4
+    "WP2100501004018", # error 15, disc reading above 3
+    "WP9006001", # high-range tests done and gave reading of 2.4
+    "WP4001001", # high-range tests done and gave reading of 3.4
+    "WP4001002", # high-range tests done and gave reading of 3.4
+    "WP2005003" # high-range/out-of-range error; between e04 and the bright pink color, the measure is likely actually above 2.2 and an out-of-range error
+  )
+error15_tcr <-
+  c("WP3008002",
+    "WP3008005",
+    "WP2100501004018", # error 15, disc reading above 3
+    "WP9006001", # high-range tests done and gave reading of 2.43
+    "WP4001001", # high-range tests done and gave reading of 3.3
+    "WP4001002" # high-range tests done and gave reading of 3.4
+    )
+
+error15_fcr_un <-
+  c("")
+error15_tcr_un <-
+  c("")
+```
+
+### Final readings
+
+```{r}
+meter_final <-
+  meter_constructed %>%
+  rename(
+    meterfcr_r = meterfcr,
+    metertcr_r = metertcr
+  ) %>%
+  mutate(
+    meterfcr_c = 
+      case_when(
+        wp_id %in% error15_fcr ~ 2.4,
+        TRUE ~ meterfcr_r
+      ),
+    metertcr_c = 
+      case_when(
+        wp_id %in% error15_tcr ~ 2.4,
+        TRUE ~ metertcr_r
+      ),
+    meter_diff_c = metertcr_c - meterfcr_c
+  )
+
+meter_un_final <-
+  meter_un_constructed %>%
+  rename(
+    meterfcr_un_r = meterfcr_un,
+    metertcr_un_r = metertcr_un
+  ) %>%
+  mutate(
+    meterfcr_un_c = 
+      case_when(
+        wp_id %in% error15_fcr_un ~ 2.4,
+        TRUE ~ meterfcr_un_r
+      ),
+    metertcr_un_c = 
+      case_when(
+        wp_id %in% error15_tcr_un ~ 2.4,
+        TRUE ~ metertcr_un_r
+      )
+  )
+```
+
+## Color wheel
+
+```{r}
+disc <-
+  collapsed %>%
+  dplyr::filter(colorwheel) %>%
+  select(
+    wp_id, wp_id_c,
+    discid,
+    tubeid,
+    tubeid_testtube,
+    matches("disc(.*)wait"),
+    matches("disc(.*)cr$"),
+    matches("disc(.*)color"),
+    matches("^disc(.*)photo"),
+    matches("disc(.*)timestamp")
+  ) %>%
+  select(-contains("nocl"))
+
+disc_un <-
+  collapsed %>%
+  dplyr::filter(colorwheel_un) %>%
+  select(
+    wp_id, wp_id_c,
+    discid_nocl,
+    tubeid_nocl,
+    tubeid_testtube_nocl,
+    starts_with("discfcr_nocl"),
+    starts_with("no_discfcr_nocl"),
+    starts_with("discfcr_un"),
+    starts_with("disctcr_nocl"),
+    starts_with("no_disctcr_nocl"),
+    starts_with("disctcr_un")
+  )
+```
+
+### Calculate durations
+
+```{r}
+disc_constructed <-
+  disc %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    discfcr_dur_prep = discfcr_timestamp1 - discfcr_timestamp0,
+    discfcr_dur_wait = discfcr_timestamp2 - discfcr_timestamp1,
+    disctcr_dur_prep = disctcr_timestamp1 - disctcr_timestamp0,
+    disctcr_dur_wait = disctcr_timestamp2 - disctcr_timestamp1,
+    disc_diff_c = disctcr - discfcr
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    contains("id"),
+    matches("fcr(.*)wait"),
+    contains("fcr"),
+    matches("tcr(.*)wait"),
+    contains("tcr"),
+    -contains("timestamp"),
+    disc_diff_c
+  )
+
+disc_un_constructed <-
+  disc_un %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    #discfcr_dur_prep = discfcr_timestamp1 - discfcr_timestamp0,
+    discfcr_nocl_dur_wait = discfcr_nocl_timestamp2 - discfcr_nocl_timestamp1,
+    #disctcr_dur_prep = disctcr_timestamp1 - disctcr_timestamp0,
+    disctcr_nocl_dur_wait = disctcr_nocl_timestamp2 - disctcr_nocl_timestamp1
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    matches("fcr(.*)wait"),
+    contains("fcr"),
+    matches("tcr(.*)wait"),
+    contains("tcr"),
+    -contains("timestamp")
+  )
+```
+
+### Final readings
+
+```{r}
+disc_final <-
+  disc_constructed %>%
+  mutate(
+    discfcr_c = discfcr,
+    disctcr_c = disctcr
+  ) %>%
+  rename(
+    discfcr_r = discfcr,
+    disctcr_r = disctcr
+  )
+
+disc_un_final <-
+  disc_un_constructed %>%
+  mutate(
+    discfcr_un_c = discfcr_un,
+    disctcr_un_c = disctcr_un
+  ) %>%
+  rename(
+    discfcr_un_r = discfcr_un,
+    disctcr_un_r = disctcr_un
+  )
+```
+
+
+## Merge 
+
+```{r}
+test <-
+  meter_final %>%
+  full_join(disc_final, by = c("wp_id_c", "wp_id")) %>%
+  full_join(meter_un_final, by = c("wp_id_c", "wp_id")) %>%
+  full_join(disc_un_final, by = c("wp_id_c", "wp_id")) %>%
+  select(
+    wp_id, wp_id_c,
+    country, district, district_id, village, village_id,
+    meterfcr_c,
+    metertcr_c,
+    discfcr_c,
+    disctcr_c,
+    meterfcr_un_c,
+    metertcr_un_c,
+    discfcr_un_c,
+    disctcr_un_c,
+    everything()
+  ) %>%
+  mutate(
+    across(
+      c(meterfcr_c:disctcr_un_c),
+      ~ . >= 0.1,
+      .names = "{.col}_01"
+    ),
+    across(
+      c(meterfcr_c:disctcr_un_c),
+      ~ . >= 0.2,
+      .names = "{.col}_02"
+    )
+  ) 
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-chlorine"
+  )
+
+write_meta(
+  test,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

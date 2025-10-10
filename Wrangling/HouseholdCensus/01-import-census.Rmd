@@ -1,0 +1,119 @@
+# Import household census data 
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+Corrections to the raw data were done by IPA. We load the dataset that already includes these corrections.
+
+```{r}
+hh_raw_ug <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "2_HH Census",
+      "DIL Household Census_checked.dta"
+    )
+  )
+```
+
+```{r}
+hh_raw_ug_ilc <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "2_HH Census",
+      "ILC",
+      "2_dta",
+      "DIL Household Census_checked_V3.dta"
+    )
+  )
+```
+
+```{r}
+hh_raw_mw <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "2_household_census",
+      "DIL_Household_Census_checked_Malawi.dta"
+    )
+  )
+```
+
+## Combine Uganda and Malawi data
+
+We want to conduct the wrangling and HFCs for both countries at the same time, so we combine them here.
+
+```{r}
+hhc_raw <-
+  hh_raw_mw %>%
+  bind_rows(hh_raw_ug) %>%
+  bind_rows(hh_raw_ug_ilc)
+```
+
+## Adjust variable formats
+
+```{r}
+hhc_raw <-
+  hhc_raw %>%
+  as_factor(levels = "labels") %>%
+  mutate(
+    duration = as.numeric(duration),
+    country_pl = ifelse(key == "uuid:447617f9-4a55-40a2-ac71-6a11f2802fff", "Malawi", country_pl)
+  ) %>%
+  remove_empty()
+```
+
+## Explore data
+
+There are `r length(hhc_raw)` variables in the water point census data. The level of observation is a household. Main location variables are `district_pl`, `village_pl`, `gpslongitude`, `gpslatitude`.
+
+## Save into R format
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Raw",
+    "hh-census-corrected"
+  )
+  
+hhc_raw %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path),
+)
+```

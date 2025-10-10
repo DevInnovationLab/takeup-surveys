@@ -1,0 +1,113 @@
+# Construct treatment variables
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Make corrections
+
+Corrections from manually checking the maps and matches
+
+```{r}
+manual_treatment <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "ilc-dsw-corrections.csv"
+    )
+  ) %>%
+  rename(correction_comments = comments)
+
+assert_that(
+  manual_treatment %>% 
+    pull(wp_id) %>%
+    n_distinct
+  ==
+    nrow(manual_treatment)
+)
+```
+
+## Create indicators
+
+```{r}
+wp_tmt <-
+  wp %>%
+  left_join(manual_treatment) %>%
+  mutate(
+    dsw = coalesce(dsw, wp_dsw),
+    ilc_wp = coalesce(ilc_wp, wp_ilc_device),
+    ilc_wcp = coalesce(ilc_wcp, wp_ilc),
+    across(
+      c(dsw, ilc_wp, ilc_wcp),
+      ~ tidyr::replace_na(., FALSE)
+    ),
+    intervention_type = case_when(
+      dsw ~ "DSW",
+      ilc_wp ~ "ILC water point",
+      ilc_wcp ~ "ILC water collection point",
+      TRUE ~ "Non-program"
+    ) %>% 
+      as_factor,
+    treatment = case_when(
+      dsw ~ "DSW",
+      ilc_wp ~ "ILC",
+      ilc_wcp ~ "ILC",
+      TRUE ~ "Non-program"
+    ) %>% 
+      as_factor,
+    across(
+      c(wp_dsw, wp_ilc_device, wp_ilc),
+      ~ replace_na(., FALSE),
+      .names = "{.col}_c"
+    )
+  ) %>%
+  select(
+    key, wp_id,
+    wp_dsw_c, wp_ilc_device_c, wp_ilc_c,
+    dsw, ilc_wp, ilc_wcp,
+    treatment, intervention_type
+  )
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-treatment"
+  )
+
+write_meta(
+  wp_tmt,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+

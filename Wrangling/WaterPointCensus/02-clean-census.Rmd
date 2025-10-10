@@ -1,0 +1,285 @@
+# Clean Water Point Census 
+
+In this script, we tidy the water point census by fixing the naming of 
+observations and format variables.
+
+```{r clean-census}
+pacman::p_load(
+  tidyverse,
+  haven,
+  janitor
+)
+```
+
+```{r}
+wp_raw <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Raw",
+      "wp-census.rds"
+      )
+  )
+```
+
+
+## Create unique ID
+
+In Malawi and Uganda, enumerators will only go to villages in the sample, so we don't need to worry about filtering.
+
+We also check that `key` is unique.
+
+```{r}
+assert_that(
+  n_distinct(wp_raw$key) == nrow(wp_raw)
+)
+```
+
+## Corrections
+
+```{r}
+wp_corrected <-
+  wp_raw %>%
+  mutate(
+    across(
+      village_id_pl,
+      ~ case_when(
+        . == "1050304002" ~ "1050702004",
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+
+## Replace NAs
+
+Some of the "don't know" and "unsure" values in the survey are coded differently, so we standardize them to 9999. -666 corresponds to "other," but we deal with this later.
+
+```{r}
+wp_clean <- 
+  wp_corrected %>%
+  mutate(
+    across(
+      where(is.character),
+      ~ . %>%
+        na_if("[.]") %>%
+        na_if("")
+    ),
+    across(
+      where(is.numeric),
+      ~ . %>% 
+        na_if(-999) %>%
+        na_if(999) %>%
+        na_if(9999)
+    ),
+    across(
+      where(~ all(unique(.) %in% c(0, 1, NA))),
+      ~ as.logical(.)
+    ),
+    across(
+      where(is_dummy),
+      ~ (. == "Yes")
+    ),
+    across(
+      where(~ is.factor(.) & all(levels(.) %in% c("Don't know", "No", "Yes", NA))),
+      ~ case_when(
+        . == "Yes" ~ TRUE,
+        . == "No" ~ FALSE
+      ),
+      .names = "{.col}"
+    ),
+    across(
+      c(ilc_tabletstock, contains("timestamp")),
+      as.numeric
+    )
+  ) 
+```
+
+## Clean text variables
+
+```{r}
+wp_clean <- 
+  wp_clean %>%
+   mutate(
+    # first across: wp_name* and *_pl (minus 2 exceptions)
+    across(
+     where(is.character),
+     ~ ifelse(
+       grepl("photo|uuid", .x), 
+       .x, 
+       str_to_upper(.x)
+     )
+    ),
+    across(
+      c(disp_dsw_id),
+      ~ as.numeric(.)
+    )
+  )
+```
+
+## Clean date of survey
+
+We have submissiondate, starttime, endtime, and today as date variables from the survey.
+
+We will use "submissiondate" for the date.
+
+```{r}
+wp_clean <- 
+  wp_clean %>%
+  mutate(
+    date = as_date(ymd_hms(submissiondate))
+  ) %>%
+  dplyr::filter(date >= ymd("2025-06-17"))
+```
+
+## Rename variables indicating which sections where completed
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  dplyr::select(-c(key_pl, village, country, sections)) %>%
+  rename(
+    spotcheck = sections_1,
+    colorwheel = sections_2,
+    colorimeter = sections_3,
+    colorwheel_un = sections_4,
+    colorimeter_un = sections_5,
+    no_testing = sections_0
+    ) %>% 
+  rename_with(
+    ~ str_remove_all(.x, "_pl"),
+    ends_with("_pl")
+  )
+```
+
+## Clean location variables
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  mutate(
+    wp_id,
+    country = country %>% str_to_title %>% as_factor,
+    district_id = coalesce(districtmw, districtug),
+    district = district %>% str_to_title %>% as_factor,
+    village = village_name %>% str_to_title %>% as_factor
+  )
+```
+
+## Remove surveycto coding variables
+
+```{r}
+wp_clean <-
+  wp_clean %>% 
+  select(
+    where(~ !all(.x %in% c("Acknowledged. Please continue", NA))),
+    -contains(
+      c(
+        "_materials_",
+        "cr_confirm"
+      )
+    ),
+    -c(
+      ends_with("_label"),
+      lead_zero,
+      water_point_rpt_count,
+      contains("index"),
+      contains("crhr"),
+      wp_func_reason,
+      wp_func_reason_ilc,
+      wp_pay_purpose,
+      disp_dsw_id2,
+      disp_barcode2,
+      ilc_devicepic_na,
+      ilc_stock_whynot_1,
+      ilc_stock_whynot__666,
+      jc_mldispensed2,
+      jc_wait,
+      meterfcr_timestamp0_hfc:`_hfcokayvar`
+    )
+  ) %>%
+  remove_empty() %>%
+  remove_constant() 
+```
+
+## Clean photo paths
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  mutate(
+    across(
+      contains(c("photo", "pic", "metadata")),
+      ~ . %>% 
+        str_remove_all("https://dilsurvey.surveycto.com/view/submission-attachment/") %>%
+        str_replace("\\?.*", "") %>%
+        str_remove_all("MEDIA\\\\")
+    )
+  )
+```
+
+## Manual corrections
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  dplyr::filter(
+    !(village_id == 2050706034 & today == "2025-AUG-7")
+  )
+```
+
+## De-identify
+
+```{r}
+wp_deid <-
+  wp_clean %>%
+  select(
+    -c(
+      enumerator,
+      enumerator_name,
+      wp_name_1:cal_wp_name,
+      wp_landmarks
+    )
+  )
+```
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Clean",
+    "wp-census-clean"
+  )
+
+wp_clean %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Clean",
+    "wp-census-clean-deid"
+  )
+
+wp_deid %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

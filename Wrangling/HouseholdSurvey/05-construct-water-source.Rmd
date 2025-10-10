@@ -1,0 +1,69 @@
+# Combine with water point data
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  janitor
+)
+```
+
+## Load data
+
+```{r, warning = FALSE, message = FALSE}
+hh_clean <-
+  read_rds(
+    here(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Clean",
+      "hh-survey-clean.rds"
+    )
+  )
+```
+
+## Check water point ID presence
+
+```{r}
+hh_clean %>%
+  dplyr::filter(is.na(wp_id_pl)) %>%
+  tabyl(survey_type)
+```
+The water point ID should never be missing for household survey households
+
+```{r}
+hh_clean %>%
+  dplyr::filter(is.na(wp_id_pl) & is.na(wp_id_coa)) %>%
+  select(contains("pl")) %>%
+  view
+```
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Constructed",
+      "hh-census-constructed.rds"
+    )
+  ) 
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    consent, 
+    household_id %in% (hh_clean %>%
+      dplyr::filter(str_detect(survey_type, "Household")) %>%
+      pull(household_id)),
+    is.na(wp_id_c)
+  ) %>%
+  select(village_id, wp_name, wp_name_coa) %>%
+  unique %>%
+  view
+```
+

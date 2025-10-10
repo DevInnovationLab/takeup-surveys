@@ -1,0 +1,11 @@
+delete_merged_file: true
+output_dir: ./Notebooks/
+rmd_files: [
+  "index.Rmd",
+  "01-import-census.Rmd",
+  "02-clean-census.Rmd",
+  "03-construct-hh-location.Rmd",
+  "04-construct-hh-distances.Rmd",
+  "05-construct-hh-wp.Rmd",
+  "06-create-final-hh-census.Rmd"
+]

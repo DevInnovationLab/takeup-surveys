@@ -1,0 +1,168 @@
+# Create final household survey data
+
+```{r}
+pacman::p_load(
+    tidyverse,
+    here,
+    haven,
+    skimr,
+    kableExtra,
+    assertthat,
+    sf
+  )
+
+```
+
+## Load data
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+      )
+    )
+```
+
+## Change format
+
+```{r eval = FALSE}
+vars <-
+  hh_survey %>%
+  select(
+    household_id, country, sample_group, wp_intervention_type, 
+    watertreat_any, contains("make_watersafe"), contains("everdo_")
+  ) %>%
+  select(-make_watersafe_ot) %>%
+  pivot_longer(
+    cols = contains("make_watersafe"),
+    names_pattern = "make_watersafe_(.*)",
+    values_to = "adopted"
+  ) %>%
+  mutate(
+    adopted = adopted %>% replace_na(FALSE),
+    method = case_when(
+      name == "1"    ~ "Boil",
+      name == "2"    ~ "Chlorine from dispenser",
+      name == "3"    ~ "Chlorine from other source",
+      name == "4"    ~ "Strain through a cloth",
+      name == "5"    ~ "Use water filter",
+      name == "6"    ~ "Sand/composite",
+      name == "7"    ~ "Solar disinfection",
+      name == "8"    ~ "Let it stand and settle",
+      name == "_666" ~ "Other",
+      name == "_999" ~ "Don't know"
+    )
+  ) %>%
+  dplyr::filter(!is.na(method)) %>%
+  select(-name)
+```
+
+```{r}
+vars <-
+  hh_survey %>%
+  select(
+    household_id, country, sample_group, wp_intervention_type, contains("everdo_"),
+    -c(contains("label"), everdo_list_count, contains("method"), everdo_ot, everdo_concat)
+  ) %>%
+  pivot_longer(
+    cols = contains("everdo_"),
+    names_pattern = "everdo_(.*)",
+    values_to = "adopted"
+  ) %>%
+  mutate(
+    adopted = adopted %>% replace_na(FALSE),
+    method = case_when(
+      name == "0"    ~ "No treatment",
+      name == "22"   ~ "None (water is alredy treated)",
+      name == "1"    ~ "Boil",
+      name == "2"    ~ "Chlorine from dispenser",
+      name == "3"    ~ "Chlorine from other source",
+      name == "4"    ~ "Strain through a cloth",
+      name == "5"    ~ "Use water filter",
+      name == "6"    ~ "Sand/composite",
+      name == "7"    ~ "Solar disinfection",
+      name == "8"    ~ "Let it stand and settle",
+      name == "_666" ~ "Other",
+      name == "_999" ~ "Don't know"
+    )
+  ) %>%
+  dplyr::filter(!is.na(method)) %>%
+  select(-name)
+```
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Final",
+    "ever-do"
+  )
+
+vars %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+```{r}
+vars <-
+  hh_survey %>%
+  select(
+    household_id, country, sample_group, wp_intervention_type, often_chlorinate, contains("reason_notchlorinate_"), -reason_notchlorinate_ot
+  ) %>%
+  pivot_longer(
+    cols = contains("reason_notchlorinate_"),
+    names_pattern = "reason_notchlorinate_(.*)",
+    values_to = "adopted"
+  ) %>%
+  mutate(
+    adopted = adopted %>% replace_na(FALSE),
+    method = case_when(
+      often_chlorinate == "Always" ~ "I always chlorinate the water",
+      name == "1"    ~ "The bad smell of chlorine",
+      name == "2"    ~ "The bad taste of chlorine",
+      name == "3"    ~ "I sometimes forget",
+      name == "4"    ~ "Water is already clean most of the time",
+      name == "5"    ~ "Household decision",
+      name == "6"    ~ "Oftentimes, the dispenser is empty",
+      name == "7"    ~ "I only apply chlorine only when some household is sick",
+      name == "8"    ~ "I don't have easy access to chlorine",
+      name == "_666" ~ "Other"
+    )
+  ) %>%
+  dplyr::filter(!is.na(method)) %>%
+  select(-name)
+```
+
+```{r}
+hh_survey %>%
+  tabyl(reason_notchlorinate_ot)
+```
+
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Final",
+    "why-not-chlorinate"
+  )
+
+vars %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+

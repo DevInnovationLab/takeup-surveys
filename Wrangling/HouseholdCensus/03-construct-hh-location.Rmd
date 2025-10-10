@@ -1,0 +1,122 @@
+# Construct household location
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  sf,
+  skimr,
+  janitor,
+  asserthat
+)
+```
+
+
+```{r, warning = FALSE, message = FALSE}
+hhc_clean <-
+  read_rds(
+    here(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Clean",
+      "hh-census-clean.rds"
+    )
+  )
+```
+
+```{r}
+hhc_gps_corrections <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "HouseholdCensus",
+      "manual-bad-hh-gps.csv"
+    )
+  )
+```
+
+
+## Check missing values
+
+```{r}
+hhc_clean %>%
+  tabyl(consent_gps) %>%
+  adorn_pct_formatting()
+```
+
+```{r}
+assert_that(
+  hhc_clean %>%
+  dplyr::filter(
+    is.na(consent_gps),
+    consent,
+    visit_found
+  ) %>%
+    nrow() == 0
+)
+```
+```{r}
+hhc_gps <-
+  hhc_clean %>%
+  dplyr::filter(
+    consent_gps,
+    !(household_id %in% hhc_gps_corrections$household_id)
+  ) %>%
+  transmute(
+    key,
+    district_id, country,
+    date,
+    longitude_c,
+    latitude_c,
+    altitude_c,
+    accuracy_c,
+    missing_gps
+  )
+```
+
+```{r}
+hhc_gps %>%
+  dplyr::filter(missing_gps) %>%
+  tabyl(date, country)
+```
+
+## Create spatial version of the data set
+
+We choose to project the coordinates to the [EPSG code](https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf) `4326`, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. The spatial version of the dataset only includes households that gave consent for their GPS coordinates to be recorded.
+
+```{r}
+hhc_gps %>%
+  skim
+```
+
+```{r}
+hh_sf <- 
+  hhc_gps %>%
+  dplyr::filter(!missing_gps) %>%
+  st_as_sf(
+    coords = c("longitude_c", "latitude_c"), 
+    crs = 4326
+  ) %>%
+  select(key, country, district_id, ends_with("_c"))
+```
+
+## Save data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Spatial",
+    "hh-gps"
+  )
+
+hh_sf %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

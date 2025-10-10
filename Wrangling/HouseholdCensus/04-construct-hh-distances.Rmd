@@ -1,0 +1,93 @@
+# Construct household distance
+
+In this script, we compute the distances between households.
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "sf"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+```{r}
+hh_sf <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Spatial",
+      "hh-gps.rds"
+    )
+  )
+```
+
+```{r}
+hh <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Clean",
+      "hh-census-clean.rds"
+      )
+    )
+```
+
+## Compute distances
+
+We separate data frame into district-level data frames to reduce run time and calculate distances between all water points in the same district.
+
+```{r}
+hh_district <-
+  hh_sf %>%
+  group_by(district_id) %>%
+  group_split %>%
+  map(
+    ~ st_distance_df(
+      ., "key",
+      ., "key"
+    )
+  ) %>%
+  bind_rows() %>% 
+  dplyr::filter(
+    key.x != key.y
+  )
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Constructed",
+    "hh-distances"
+  )
+
+hh_district %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+
+

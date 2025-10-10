@@ -1,0 +1,144 @@
+# Construct treatment variables
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Type of water source
+
+We create a simplified version of source type that groups similar source types 
+together. We will use this column to check for duplicates.
+
+We also will also replace missing values in source type to "Other". 
+
+```{r}
+sourcetype <-
+  wp %>% 
+  rename(sourcetype = wp_type) %>% 
+  transmute(
+    key, wp_id,
+    sourcetype,
+    sourcetype_simp = case_when(
+      str_detect(sourcetype, "Borehole") ~ "Borehole",
+      str_detect(sourcetype, "well") ~ "Dug well",
+      str_detect(sourcetype, "spring") ~ "Spring",
+      sourcetype %in% c("Municipal water supply", "Rainwater collection") ~ sourcetype,
+      str_detect(sourcetype, "water source") ~ "Surface water",
+      !is.na(sourcetype) ~ "Other"
+    )
+  )
+```
+
+## Water source functionality
+
+```{r}
+functionality <-
+  wp %>%
+  transmute(
+    key, wp_id,
+    wp_func,
+    wp_func_last,
+    wp_turbidity,
+    wp_notfunc_dry = wp_func_reason_1, 
+    wp_notfunc_pump = wp_func_reason_2,
+    wp_notfunc_ilc_dry = wp_func_reason_ilc_1,
+    wp_notfunc_ilc_pump = wp_func_reason_ilc_2,
+    wp_notfunc_ilc_pipe = wp_func_reason_ilc_3,
+    wp_notfunc_ilc_tank = wp_func_reason_ilc_4,
+    wp_notfunc_ilc_closed = wp_func_reason_ilc_5,
+    wp_notfunc_ilc_power = wp_func_reason_ilc_7,
+    wp_notfunc_ilc_panel = wp_func_reason_ilc_8
+  ) %>%
+  # Comments indicate that these are functional
+  mutate(
+    wp_func_c = case_when(
+      wp_id %in% c("WP2101104017001", "WP2030409076001", "WP2070301001045") ~ TRUE,
+      TRUE ~ wp_func
+    ),
+    across(
+      contains("wp_notfunc"),
+      ~ case_when(
+         !(wp_id %in% c("WP2101104017001", "WP2030409076001", "WP2070301001045")) ~ .
+      )
+    )
+  )
+```
+
+## Payments
+
+```{r}
+pay <-
+  wp %>%
+  select(
+    key, wp_id,
+    contains("pay"),
+    contains("cost")
+  ) %>%
+  mutate(
+    wp_pay_c = if_else(wp_id != "WP2010503012013", wp_pay, FALSE),
+    wp_pay_userfees = if_else(wp_id != "WP2010503012013", wp_pay_purpose_1, NA),
+    wp_pay_maintenance = if_else(wp_id != "WP2010503012013", wp_pay_purpose_2, NA),
+  ) %>%
+  select(-contains("purpose"))
+```
+
+## Water point use
+
+```{r}
+use <-
+  wp %>%
+  select(
+    key, wp_id,
+    wp_use_howmuch
+  )
+```
+
+## Combine all
+
+```{r}
+wp_spotcheck <-
+  sourcetype %>%
+  inner_join(functionality, unmatched = "error") %>%
+  inner_join(pay, unmatched = "error") %>%
+  inner_join(use, unmatched = "error")
+```
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-spotcheck"
+  )
+
+write_meta(
+  wp_spotcheck,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

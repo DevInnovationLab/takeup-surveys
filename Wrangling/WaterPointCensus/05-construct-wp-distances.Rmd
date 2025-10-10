@@ -1,0 +1,75 @@
+# Construct distances between water points
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "sf",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r}
+sources_clean_sf <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-clean.rds"
+    )
+  )
+```
+
+Separate data frame into district-level data frames to reduce run time.
+
+```{r}
+sources_district <-
+  sources_clean_sf %>%
+  group_by(district) %>%
+  group_split
+```
+
+Calculate distances between all water points in the same district
+
+```{r}
+sources_dist <-
+  sources_district %>%
+  map(
+    ~ st_distance_df(
+      ., "key",
+      ., "key"
+    )
+  ) %>%
+  bind_rows() %>% 
+  dplyr::filter(
+    key.x != key.y
+  )
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "water-point-distances"
+  )
+
+write_meta(
+  sources_dist,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
