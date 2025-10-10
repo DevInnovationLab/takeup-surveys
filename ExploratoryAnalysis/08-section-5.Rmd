@@ -2587,6 +2587,30 @@ country_totals_table10_fcr <- table10_fcr %>%
 country_totals_table10_fcr
 ```
 
+# differences in HH size - difference in means test
+```{r}
+comparison <- table8 %>%
+  select(country, wp_category, avg_hh_size_table8 = avg_hh_size, se_hh_size_table8 = se_hh_size) %>%
+  left_join(
+    table10 %>% select(country, wp_category, avg_hh_size_table10 = avg_hh_size, se_hh_size_table10 = se_hh_size),
+    by = c("country", "wp_category")
+  ) %>%
+  mutate(
+    diff = avg_hh_size_table8 - avg_hh_size_table10,
+    se_diff = sqrt(se_hh_size_table8^2 + se_hh_size_table10^2),
+    z_stat = diff / se_diff,
+    p_value = 2 * pnorm(-abs(z_stat)),
+    significant = p_value < 0.05
+  ) %>%
+  select(country, wp_category, 
+         avg_hh_size_table8, avg_hh_size_table10, diff,
+         se_diff, z_stat, p_value, significant)
+
+comparison %>%
+  kable(digits = 4) %>%
+  kable_styling()
+```
+
 ## exploratory - not directly referenced in report:
 number of villages in pm_survey and wp_census: all villages are in the pm_survey
 ```{r}
