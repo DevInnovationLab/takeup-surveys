@@ -1,0 +1,97 @@
+# Import water point census data 
+
+```{r 01-import-census}
+pacman::p_load(
+  tidyverse,
+  haven,
+  janitor
+)
+```
+
+## Load water point dataset
+
+```{r}
+wp_raw_ug <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "1_Water point Census",
+      "DIL Water Point Census_checked.dta"
+    )
+  )
+
+wp_raw_ug_ilc <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "1_Water point Census",
+      "ILC",
+      "2_dta",
+      "DIL Water Point Census_checked_V3.dta"
+    )
+  )
+
+wp_raw_mw <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "1_waterpoint_census",
+      "DIL_Waterpoint_Checked_Malawi.dta"
+      )
+    ) 
+```
+
+We want to conduct the wrangling and HFCs for both countries at the same time, so we combine them here.
+
+```{r}
+wp_raw <-
+  map(
+    list(wp_raw_mw, wp_raw_ug, wp_raw_ug_ilc),
+    ~ .x %>%
+      remove_empty %>% 
+      mutate(
+        across(
+          c(
+            contains(c("duration", "timestamp"))
+          ), 
+          ~ as.numeric(.x)
+        )
+      )
+  ) %>%
+  bind_rows %>%
+  as_factor(levels = "labels")
+```
+
+## Save into R format
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Raw",
+    "wp-census"
+  )
+
+wp_raw %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

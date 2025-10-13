@@ -1,0 +1,107 @@
+# Construct chlorine testing variables (construct-chlorine-tests)
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "janitor",
+    "sf"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+```{r}
+hh <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Clean",
+      "hh-survey-clean.rds"
+      )
+    )
+```
+
+### Manual corrections
+
+Observations with E-15 and very dark pink color: chlorine residual is too high for the colorimeter to read. We're assigning a high-value, which doesn't mean that's the exact reading.
+
+```{r}
+error15_fcr <-
+  c(
+    "uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb",
+    "uuid:8bd53cc5-7bd7-4682-834d-2999b6d27da4"
+  )
+error15_tcr <-
+  c(
+    "uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb",
+    "uuid:4be915eb-a15d-48a0-bbfb-73fb65349e21"
+  )
+
+hh <-
+  hh %>%
+  mutate(
+    meterfcr_c = 
+      case_when(
+        key %in% error15_fcr ~ 2.4,
+        TRUE ~ meterfcr
+      ),
+    metertcr_c = 
+      case_when(
+        key %in% error15_tcr ~ 2.4,
+        TRUE ~ metertcr
+      )
+  )
+```
+
+## Create final chlorine variables
+
+```{r}
+hh <- 
+  hh %>%
+  mutate(
+    discfcr_c = discfcr,
+    disctcr_c = disctcr
+  ) %>%
+  mutate(
+    across(
+      ends_with("cr_c"),
+      ~ . >= 0.1,
+      .names = "{.col}_01"
+    ),
+    across(
+      ends_with("cr_c"),
+      ~ . >= 0.2,
+      .names = "{.col}_02"
+    )
+  ) %>%
+  select(
+    key, household_id,
+    matches("tcr"), matches("fcr"),
+    -where(~(levels(.) %>% n_distinct()) == 1)
+  )
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Constructed",
+    "hh-survey-chlorine"
+  ) 
+
+write_meta(
+  hh,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

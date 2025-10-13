@@ -1,0 +1,313 @@
+# Clean Household Survey (clean-survey)
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "janitor",
+    "assertthat",
+    "str2str"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r}
+hh_raw <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "hh-survey.rds"
+      )
+  )
+```
+
+## Check unique ID
+
+```{r}
+hh_unique <-
+  hh_raw %>%
+  mutate(
+    household_id = coalesce(household_id, household_id_pl)
+  )
+```
+
+
+We check the uniqueness of the household ID variable, since the enumerators should only submit the form once the household will no longer be visited again.
+
+```{r eval = FALSE}
+assert_that(
+  n_distinct(hh_raw$household_id_pl) == nrow(hh_raw)
+)
+```
+
+Some duplicate entries are coming from non-responses
+
+```{r eval = FALSE}
+hh_unique %>%
+  group_by(household_id, survey_type) %>%
+  dplyr::filter(n() > 1) %>%
+  select(
+    key, household_id_pl, 
+    enumerator_id, village_id_pl, 
+    submissiondate, starttime,
+    full_names_pl, visit_landmarks_pl,
+    respo_availability, consent,
+    duration, complete, comment
+  ) %>%
+  arrange(household_id_pl) %>%
+  view
+
+hh_unique %>%
+  group_by(country_pl, household_id_pl) %>%
+  dplyr::filter(n() > 1, household_id_pl != "ZOU8362510MW2") %>%
+  summarise(
+    message = paste("Duplicate entries:", paste(key, collapse = ", "))
+  ) %>%
+  view
+```
+```{r}
+hh_unique %>%
+  tabyl(respo_availability, consent)
+```
+People with missing consent turned out not to be using the water point described
+
+```{r eval = FALSE}
+hh_unique %>%
+  dplyr::filter(respo_availability == "Yes", is.na(consent)) %>%
+  view
+```
+
+```{r}
+hh_consented <-
+  hh_unique %>%
+  dplyr::filter(consent == "Yes" & !is.na(consent))
+```
+
+These 
+```{r}
+hh_consented <-
+  hh_consented %>%
+  group_by(household_id, survey_type) %>%
+  dplyr::filter(
+    !((n() > 1) & (starttime == min(starttime)))
+  ) %>%
+  ungroup
+```
+
+```{r}
+assert_that(
+  hh_consented %>%
+  select(household_id, survey_type) %>%
+  unique %>%
+  nrow ==
+  nrow(hh_consented)
+)
+```
+
+## Corrections
+
+```{r}
+hh_corrected <-
+  hh_consented %>%
+  mutate(
+    across(
+      village_id_pl,
+      ~ case_when(
+        . == "1050304002" ~ "1050702004",
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+## Replace missing codes
+
+Some of the "don't know" and "unsure" values in the survey are coded differently, so we standardize them to 9999. -666 corresponds to "other," but we deal with this later.
+
+```{r}
+hh_clean <-
+  hh_corrected %>%
+  mutate(
+    across(
+      where(is.character) & !where(is.factor), 
+      ~ . %>%
+        str_replace_all("[.]", "") %>%
+        na_if("") %>%
+        na_if("-999") %>%
+        na_if("9999")
+    ),
+    across(
+      where(is.numeric),
+      ~ na_if(., -999) %>%
+        na_if(9999)
+    ),
+    across(
+      contains("timestamp"),
+      as.numeric
+    )
+  )
+```
+
+## Replace NAs from skip patterns
+
+```{r}
+hh_clean <-
+  hh_clean %>%
+  mutate(
+    across(
+      make_watersafe_1:make_watersafe_8,
+      ~ case_when(
+        do_anything == "No" ~ 0,
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+
+## Clean text variables
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+   across(
+      c(ends_with("_pl"), matches("name"), matches("comment")),
+    ~ . %>% str_squish %>% str_to_upper
+    ),
+   across(
+     where(is.character), 
+     ~ ifelse(grepl("HTTP|photo|uuid|size_ot", .x), str_to_lower(.x), .x)
+   )
+  )
+```
+
+## Clean date of survey
+
+We have SubmissionDate, starttime, and endtime. 
+
+We will use "submissiondate" for the date.
+
+```{r}
+hh_clean <- 
+  hh_clean  %>% 
+  mutate(date = as.Date(substr(submissiondate, 1, 10)))
+```
+
+```{r}
+hh_clean %>%
+  tabyl(date, country_pl)
+```
+
+## Turn dummy vairables into logical
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+    across(
+      where(~ all(unique(.) %in% c(0, 1, NA))),
+      ~ as.logical(.)
+    ),
+    across(
+      where(is_dummy),
+      ~ (. == "Yes")
+    ),
+    across(
+      where(~ (is.factor(.) | is.character(.))
+            & all(levels(.) %in% c("Don’t Know", "Don’t Know", "Don't know", "No", "Yes", NA))),
+      ~ case_when(
+        . == "Yes" ~ TRUE,
+        . == "No" ~ FALSE
+      ),
+      .names = "{.col}_c"
+    )
+  ) 
+```
+
+
+## Merge variables
+
+The questions related to characteristics of the household head were not asked if the respondent herself was the household head.
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+    hhh_educ_ug_c = if_else(relation == "Me/respondent is the HoH", educ, hh_educ),
+    hhh_educ_mw_c = if_else(relation == "Me/respondent is the HoH", educ_mw, hh_educ),
+    hhh_gender_c = if_else(relation == "Me/respondent is the HoH", sex, gender_hhh),
+    hhh_age_c = if_else(relation == "Me/respondent is the HoH", age_resp, hhh_age),
+    educ = case_when(
+      # Uganda
+      educ %in% c("Never attended school / did not complete class", "Informal Training") ~ "None",
+      educ %in% c("Pre-primary", "P1", "P2", "P3", "P4", "P5", "P6") ~ "Pre-primary",
+      educ %in% c("P7", "PLE", "S1", "S2", "S3") ~ "Primary",
+      educ %in% c("S4", "O level", "S5", "S6", "A level", "Polytechnic") ~ "Secondary",
+      educ %in% c("College (non-University)", "University") ~ "Post-secondary",
+      # Malawi
+      educ_mw == "No formal education / Never attended school" ~ "None",
+      educ_mw == "Some Primary School (Did not complete Standard 8)" ~ "Pre-primary",
+      educ_mw %in% c("Primary School Leaving Certificate (PSLCE) (Completed Standard 8)", "Junior Certificate of Education (JCE) (Completed Form 2)") ~ "Primary",
+      educ_mw %in% c("Malawi School Certificate of Education (MSCE) (Completed Form 4)", "Vocational/Technical Training (e.g., TEVETA certification)") ~ "Secondary",
+      educ_mw %in% c("Diploma (e.g., teaching, nursing, other post-secondary diploma)", "Bachelor's Degree") ~ "Post-secondary"
+    )
+  )
+```
+
+## Drop surveycto coding variables
+
+```{r}
+hh_clean <-
+  hh_clean %>% 
+  dplyr::select(
+    -c(
+      hh_randtxt,
+      hh_randnum,
+      hh_randnum_int,
+      vil_id
+    ),
+    -matches("index")
+  )
+```
+
+## Combine household_id and household_id_pl
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+    household_id = coalesce(household_id, household_id_pl)
+  ) %>%
+  select(-household_id_pl)
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Clean",
+    "hh-survey-clean"
+  )
+
+write_meta(
+  hh_clean,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

@@ -1,0 +1,11 @@
+delete_merged_file: true
+output_dir: ./Notebooks/
+rmd_files: [
+  "index.Rmd",
+  "01-import-survey.Rmd",
+  "02-clean-survey.Rmd",
+  "03-construct-hh-location.Rmd",
+  "04-construct-chlorine-tests.Rmd",
+  "05-construct-sensitivity-flags.Rmd",
+  "06-create-final-hh-survey.Rmd"
+]

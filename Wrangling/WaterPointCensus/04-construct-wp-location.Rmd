@@ -1,0 +1,61 @@
+# Construct water point location
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "sf",
+    "skimr",
+    "janitor",
+    "haven"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+
+```{r}
+wp <-
+  read_rds(
+    here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-characteristics.rds"
+    )
+  )
+```
+
+## Create spatial version of the data set
+
+We choose to project the coordinates to the [EPSG code](https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf) `4326`, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. 
+
+```{r}
+wp_sf <- 
+  wp %>%
+  st_as_sf(
+    coords = c("wp_gpslongitude", "wp_gpslatitude"), 
+    crs = 4326
+  ) 
+```
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-gps-clean"
+  ) 
+
+wp_sf %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

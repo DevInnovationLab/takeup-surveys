@@ -1,0 +1,172 @@
+# Construct data quality flags (construct-sensitivity-flags)
+
+```{r}
+packages <- c(
+  "tidyverse",
+  "here",
+  "haven",
+  "skimr",
+  "janitor",
+  "googlesheets4"
+)
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+```{r}
+hh <- read_rds(
+  file.path(
+    path_box,
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Clean",
+    "hh-survey-clean.rds"
+  )
+)
+
+gsheet <-
+  gs4_get("https://docs.google.com/spreadsheets/d/1wLCxkLwPlxcfOH14ziLS5s4pqCHf2k4NaBYckLqUYew/edit?usp=sharing")
+
+gsheet_id <-
+  gsheet$spreadsheet_id
+```
+
+## Flag if data is marked on the issues log as low-quality
+
+```{r}
+flags_ug <- 
+  read_sheet(
+    ss = gsheet, 
+    sheet = "Uganda Household Survey"
+  ) %>%
+  mutate(
+    across(
+      everything(), 
+      as.character
+    ),
+    sheet_row = row_number() + 1L
+  )
+
+flags_mw <- 
+  read_sheet(
+    ss = gsheet, 
+    sheet = "Malawi Household Survey"
+  ) %>%
+  mutate(
+    across(
+      everything(), 
+      as.character
+    ),
+    sheet_row = row_number() + 1L
+  )
+
+flags <- 
+  bind_rows(
+    flags_ug, 
+    flags_mw
+  ) %>%
+  mutate(
+    `data team comments` = str_to_lower(`data team comments`)
+  )
+
+low_quality_ids <- 
+  flags %>%
+  dplyr::filter(
+    str_detect(
+      `data team comments`, "low-quality") | 
+      str_detect(`data team comments`, "low quality")
+  ) %>%
+  pull(household_id)
+
+hh <- 
+  hh %>%
+  mutate(
+    flag_low_quality = !is.na(household_id) & (household_id %in% low_quality_ids)
+  )
+```
+
+## Flag if there was Evidence Action/promoter interference
+
+```{r}
+interference_vil_ids <- c(
+  ### Uganda
+  "1070401003", # Buloke
+  "1101109006", # Saaka B
+  "1101308001", # Bukunya
+  "1050103005", # Buwenge Bunawale	
+  "1050901001", # Kaiti Kaiti
+
+  ### Malawi
+  "2030309037", # Mataka 2
+  "2041608019", # Saidi Mataka
+  "2030901003", # Likhomo
+  
+  ### Household respondents reported being warned
+  "1130904002",
+  "1101309001",
+  "1020306002",
+  "1130904002",
+  "1101309001",
+  "1160604001",
+  "1190401001",
+  "1130904002",
+  "1190401001",
+  "1090403006",
+  "1130904002",
+  "2020708036",
+  "2020317075",
+  "2030106036"
+
+  
+  
+)
+
+hh <- 
+  hh %>%
+  mutate(
+    flag_interference = !is.na(village_id_pl) & (village_id_pl %in% interference_vil_ids)
+  )
+```
+
+## Flag if the village had a low proportion of water come from the primary source
+
+```{r}
+low_primary_collection_vil_ids <- c(
+  ""
+)
+
+hh <- hh %>%
+  mutate(
+    flag_low_primary_collection = 
+      !is.na(village_id_pl) & (village_id_pl %in% low_primary_collection_vil_ids)
+  ) %>%
+  select(
+    household_id,
+    contains("flag")
+  )
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Constructed",
+    "hh-survey-constructed"
+  )
+
+write_meta(
+  hh,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

@@ -1,0 +1,210 @@
+# Clean Household Census
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "janitor",
+    "assertthat"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r}
+hhc_raw <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Raw",
+      "hh-census-corrected.rds"
+      )
+  )
+```
+
+## Create unique ID
+
+We check the uniqueness of the key variable.
+
+```{r}
+assert_that(
+  n_distinct(hhc_raw$key) == nrow(hhc_raw)
+)
+```
+
+```{r}
+assert_that(
+  n_distinct(hhc_raw$household_id) == nrow(hhc_raw)
+)
+```
+## Corrections
+
+```{r}
+hhc_corrected <-
+  hhc_raw %>%
+  mutate(
+    across(
+      village_id_pl,
+      ~ case_when(
+        . == "1050304002" ~ "1050702004",
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+
+## Replace NAs
+
+In the case that a character variable has "-999" or "9999" as its input, we can replace this entry with NA, since these entries correspond to responses saying "do not know" or "cannot tell." We also impute "." as NAs, converting these too. -666 corresponds to "other," but we deal with this later.
+
+```{r}
+hhc_clean <-
+  hhc_corrected %>%
+  mutate(
+    across(
+      where(is.character) & !where(is.factor), 
+      ~ . %>%
+        na_if("[.]") %>%
+        na_if("") %>%
+        na_if("-999") %>%
+        na_if("9999")
+    ),
+    across(
+      where(is.numeric),
+      ~ na_if(., -999) %>%
+        na_if(9999)
+    )
+  )
+```
+
+## Clean text variables
+
+```{r}
+hhc_clean <- 
+  hhc_clean %>%
+  mutate(
+   across(
+      (ends_with("_pl") | matches("name") | matches("comment")) & !any_of(c("country_pl", "village_pl")),
+    ~ . %>% str_squish %>% str_to_upper
+    )
+  )
+```
+
+## Drop SurveyCTO coding variables
+
+```{r}
+hhc_clean <-
+  hhc_clean %>% 
+  select(
+    -c(
+      gen_formid,
+      hh_randnum,
+      randomdraw_bc,
+      gen_label_hhsurvey,
+      temp_hh_id,
+      country,
+      countryl,
+      key_pl
+    )
+  )
+```
+
+## Clean date of survey
+
+```{r}
+hhc_clean <- 
+  hhc_clean %>% 
+  mutate(
+    date = as_date(submissiondate)
+  )
+```
+
+## Convert factors into dummy variables
+
+Recoding the values:
+- 1 ~ Yes
+- 0 ~ No,
+- 9999 ~ Don't know
+- NA ~ Missing
+
+```{r}
+hhc_clean <-
+  hhc_clean %>% 
+  mutate(
+    across(
+      where(~ all(unique(.) %in% c(0, 1, NA))),
+      ~ as.logical(.)
+    ),
+    across(
+      where(is_dummy),
+      ~ (. == "Yes")
+    ),
+    across(
+      where(
+        ~ (is.factor(.) | is.character(.)) & 
+          (all(levels(.) %in% c("Don't know", "No", "Yes")))
+        ),
+      ~ case_when(
+        . == "Yes" ~ TRUE,
+        . == "No" ~ FALSE
+      ),
+      .names = "{.col}_c"
+    )
+  )
+```
+
+## Clean location variables
+
+```{r}
+hhc_clean <-
+  hhc_clean %>%
+  # sometimes, the country pull is missing. Instead of waiting for IPA to correct the data, we can get it from the enumerator ID to avoid the code breaking in script 6.
+  mutate(
+    country_pl = case_when(
+      is.na(country_pl) & str_detect(enumerator_id, "MW") ~ "Malawi",
+      is.na(country_pl) & !str_detect(enumerator_id, "MW") ~ "Uganda",
+      TRUE ~ country_pl
+    )
+  ) %>%
+  mutate(
+    country = country_pl %>% str_to_title %>% as_factor,
+    district_id = coalesce(districtmw, districtug),
+    district_name = district_pl %>% str_to_title %>% as_factor,
+    village_name = village_name_pl %>% str_to_title %>% as_factor,
+    village_id = village_id_pl,
+    longitude_c = coalesce(gpslongitude, gps_altlongitude),
+    latitude_c = coalesce(gpslatitude, gps_altlatitude),
+    altitude_c = coalesce(gpsaltitude, gps_altaltitude),
+    accuracy_c = coalesce(gpsaccuracy, gps_altaccuracy),
+    missing_gps = is.na(longitude_c) | is.na(latitude_c)
+  )
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Clean",
+    "hh-census-clean"
+  )
+
+hhc_clean %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

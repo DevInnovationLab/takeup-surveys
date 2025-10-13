@@ -1,0 +1,428 @@
+# Create final water point census data
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "here",
+    "sf",
+    "janitor",
+    "units",
+    "leaflet",
+    "viridis",
+    "assertthat"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+### Evidence Action
+
+```{r}
+villages <-
+   read_rds(
+   here(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  ) %>%
+  rename(
+    ea_dsw = dsw,
+    ea_n_dsw_vil = dsw_wpt,
+    ea_ilc = ilc,
+    ea_n_ilc_wp_vil = ilc_wpt,
+    ea_n_ilc_wcp_vil = ilc_wcp
+  )
+```
+
+### GPS
+
+```{r}
+wp_gps <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-collapsed.rds"
+    )
+  ) %>%
+  select(wp_id_c)
+```
+
+### Census
+
+```{r}
+collapsed <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  ) %>%
+  select(
+    -c(district_id, country, district, village)
+  )
+```
+
+### Promoter survey
+
+```{r}
+promoter <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Final",
+      "pm-survey.rds"
+    )
+  )
+```
+
+### Evidence Action water point ID
+
+```{r}
+matches <-
+  read_rds(
+    here(
+        path_box,
+        "Data",
+        "WaterPointCensus",
+        "DataSets",
+        "Constructed",
+        "wp-ea-matched.rds"
+      )
+  )
+```
+
+### Chlorine testing
+
+```{r}
+tests <-
+  read_rds(
+    here(
+        path_box,
+        "Data",
+        "WaterPointCensus",
+        "DataSets",
+        "Constructed",
+        "wp-chlorine.rds"
+      )
+  ) %>%
+  select(
+    wp_id_c, 
+    ends_with("r_c"),
+    ends_with("un_c"),
+    ends_with("01"),
+    ends_with("02")
+  )
+```
+
+## Merge 
+
+```{r}
+wp <-
+  collapsed %>% 
+  left_join(
+    matches,
+    by = c("wp_id_c"),
+    relationship = "one-to-one"
+  ) %>% 
+  left_join(
+    tests,
+    by = c("wp_id_c"),
+    relationship = "one-to-one"
+  ) %>%
+  mutate(
+    across(
+      c(contains("tcr"), contains("fcr")),
+      ~ case_when(intervention_type != "Non-program" ~ .)
+    )
+  ) %>%
+  left_join(
+    villages,
+    relationship = "many-to-one"
+  ) %>%
+  mutate(
+    promoter_surveyed = wp_id_c %in% promoter$wp_id
+  )
+```
+
+```{r}
+wp_gps <-
+  left_join(wp_gps, wp)
+```
+
+```{r}
+assert_that(
+  nrow(wp) == n_distinct(wp$wp_id_c)
+)
+```
+## Check data
+
+### DSW water points
+
+```{r}
+dsw <-
+  wp %>%
+  mutate(matched = !is.na(ea_id)) %>%
+  dplyr::filter(dsw)
+```
+
+```{r}
+dsw %>%
+  tabyl(matched)
+```
+
+
+```{r}
+dsw %>%
+  tabyl(ea_program_vil, matched)
+```
+```{r}
+wp %>% tabyl(ilc_wp, ilc_wcp)
+```
+
+```{r}
+wp %>% 
+  dplyr::filter(ilc_wp, !ilc_wcp, !vil_replaced) %>%
+  select(wp_id_c)
+```
+
+
+## Export constructed data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-constructed"
+  ) 
+
+wp %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-gps-constructed"
+  ) 
+
+wp_gps %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+## Select analysis variables
+
+### IDs
+
+```{r}
+ids <-
+  wp %>%
+  select(
+    wp_id_c,
+    country,
+    village_id, village, ilc_cluster_id,
+    district_id, district,
+    country,
+    sample_group, sample,
+    vil_replaced, potential_interference,
+    ea_program_vil,
+    wp_name,
+    promoter_surveyed
+  )
+```
+
+### Meta data
+
+```{r}
+meta <-
+  wp %>%
+  select(
+    wp_id_c,
+    date, 
+    ends_with("enum"),
+    contains("comments")
+  )
+```
+
+### Eligibility
+
+```{r}
+eligibility <-
+  wp %>%
+  transmute(
+    wp_id_c,
+    wp_multicompound, wp_drink,
+    analysis = wp_drink & wp_multicompound
+  )
+```
+
+### Evidence Action programs
+
+```{r}
+intervention <-
+  wp %>%
+  transmute(
+    wp_id_c,
+    dsw,
+    across(
+      c(ilc_wp, ilc_wcp),
+      ~ replace_na(., FALSE)
+    ),
+    ilc = ilc_wp | ilc_wcp,
+    intervention_type,
+    ea_id, ea_program, ea_ilc_wpt
+  )
+```
+
+### Water point characteristics
+
+```{r}
+chars <-
+  wp %>%
+  transmute(
+    wp_id_c,
+    sourcetype,
+    wp_func, wp_func_reason, wp_func_last,
+    wp_turbidity
+  )
+```
+
+### Dispenser spotcheck
+
+```{r}
+dispenser <-
+  wp %>%
+  select(
+    wp_id_c,
+    matches("disp(.*)present"),
+    jc_valve, 
+    jc_chlorine = jc_chlorine_c, 
+    jc_mllost,  jc_mldispensed
+  )
+```
+
+### Chlorine testing
+
+```{r}
+chlorine <-
+  wp %>%
+  select(
+    wp_id_c,
+    ends_with("cr_c"),
+    ends_with("un_c"),
+    ends_with("01"),
+    ends_with("02")
+  ) 
+```
+
+### Costs
+
+```{r}
+costs <-
+  wp %>%
+  select(
+    wp_id_c,
+    wp_pay,
+    wp_cost,
+    wp_cost_period
+  )
+```
+
+### Data quality flags
+
+```{r}
+flags <-
+  wp %>%
+  select(
+    wp_id_c,
+    contains("flag")
+  ) 
+```
+
+
+## Export final data
+
+```{r}
+final <-
+  ids %>%
+  left_join(meta, relationship = "one-to-one", unmatched = "error") %>%
+  left_join(eligibility, relationship = "one-to-one", unmatched = "error") %>%
+  left_join(intervention, relationship = "one-to-one", unmatched = "error") %>%
+  left_join(dispenser, relationship = "one-to-one", unmatched = "error") %>%
+  left_join(chars, relationship = "one-to-one", unmatched = "error") %>%
+  left_join(costs, relationship = "one-to-one") %>%
+  left_join(chlorine, relationship = "one-to-one") %>%
+  dplyr::filter(!vil_replaced) %>%
+  rename(wp_id = wp_id_c) %>%
+  set_names(
+    names(.) %>% 
+      str_replace_all("cr_c$", "cr") %>%
+      str_replace_all("c_0", "0") %>%
+      str_replace_all("un_c", "un"),
+  )
+```
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Final",
+    "wp-census"
+  ) 
+
+final %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+
+final %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  write_dta(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.dta"
+    ) 
+  )
+```

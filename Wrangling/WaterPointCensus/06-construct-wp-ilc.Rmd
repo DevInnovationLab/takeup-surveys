@@ -1,0 +1,75 @@
+# Construct ILC spotcheck
+
+```{r}
+pacman::p_load(
+  tidyverse
+)
+```
+
+## Load data
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+
+intervention <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-treatment.rds"
+    )
+  ) %>%
+  select(key, ilc_wp)
+  
+```
+
+## Construct indictators
+
+```{r}
+ilc <-
+  wp %>%
+  dplyr::filter(!is.na(ilc_wcps)) %>%
+  left_join(intervention) %>%
+  select(
+    key, wp_id, wp_ilc_device, wp_ilc, ilc_wp, spotcheck,
+    starts_with("ilc"),
+    -c(
+      ilc_stock_whynot,
+      ilc_stock_whynot_o,
+      ilc_wcps # I don't think this information is correct
+    )
+  )
+```
+
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-constructed-dsw"
+  ) 
+
+dsw %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

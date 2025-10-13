@@ -1,0 +1,10 @@
+---
+title: "Process household census"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+---
+
+# Introduction
+
+This document cleans and processes data from the household census.

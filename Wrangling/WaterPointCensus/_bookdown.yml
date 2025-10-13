@@ -1,0 +1,14 @@
+delete_merged_file: true
+output_dir: ./Notebooks/
+rmd_files: [
+  "index.Rmd",
+  "01-import-census.Rmd",
+  "02-clean-census.Rmd",
+  "03-construct-wp-variables.Rmd",
+  "04-construct-wp-location.Rmd",
+  "05-construct-wp-distances.Rmd",
+  "06-collapse-wp-census.Rmd",
+  "07-match-ea.Rmd",
+  "08-construct-chlorine-tests.Rmd",
+  "09-combine-datasets.Rmd"
+]

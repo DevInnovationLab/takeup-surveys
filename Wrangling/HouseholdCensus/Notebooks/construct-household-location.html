@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>4 Construct household location | Process household census</title>
+  <meta name="description" content="4 Construct household location | Process household census" />
+  <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="4 Construct household location | Process household census" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="4 Construct household location | Process household census" />
+  
+  
+  
+
+
+
+<meta name="date" content="2025-10-02" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="clean-household-census.html"/>
+<link rel="next" href="construct-household-distance.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
+<li class="chapter" data-level="2" data-path="import-household-census-data.html"><a href="import-household-census-data.html"><i class="fa fa-check"></i><b>2</b> Import household census data</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="import-household-census-data.html"><a href="import-household-census-data.html#load-data"><i class="fa fa-check"></i><b>2.1</b> Load data</a></li>
+<li class="chapter" data-level="2.2" data-path="import-household-census-data.html"><a href="import-household-census-data.html#combine-uganda-and-malawi-data"><i class="fa fa-check"></i><b>2.2</b> Combine Uganda and Malawi data</a></li>
+<li class="chapter" data-level="2.3" data-path="import-household-census-data.html"><a href="import-household-census-data.html#adjust-variable-formats"><i class="fa fa-check"></i><b>2.3</b> Adjust variable formats</a></li>
+<li class="chapter" data-level="2.4" data-path="import-household-census-data.html"><a href="import-household-census-data.html#explore-data"><i class="fa fa-check"></i><b>2.4</b> Explore data</a></li>
+<li class="chapter" data-level="2.5" data-path="import-household-census-data.html"><a href="import-household-census-data.html#save-into-r-format"><i class="fa fa-check"></i><b>2.5</b> Save into R format</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="clean-household-census.html"><a href="clean-household-census.html"><i class="fa fa-check"></i><b>3</b> Clean Household Census</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="clean-household-census.html"><a href="clean-household-census.html#create-unique-id"><i class="fa fa-check"></i><b>3.1</b> Create unique ID</a></li>
+<li class="chapter" data-level="3.2" data-path="clean-household-census.html"><a href="clean-household-census.html#corrections"><i class="fa fa-check"></i><b>3.2</b> Corrections</a></li>
+<li class="chapter" data-level="3.3" data-path="clean-household-census.html"><a href="clean-household-census.html#replace-nas"><i class="fa fa-check"></i><b>3.3</b> Replace NAs</a></li>
+<li class="chapter" data-level="3.4" data-path="clean-household-census.html"><a href="clean-household-census.html#clean-text-variables"><i class="fa fa-check"></i><b>3.4</b> Clean text variables</a></li>
+<li class="chapter" data-level="3.5" data-path="clean-household-census.html"><a href="clean-household-census.html#drop-surveycto-coding-variables"><i class="fa fa-check"></i><b>3.5</b> Drop SurveyCTO coding variables</a></li>
+<li class="chapter" data-level="3.6" data-path="clean-household-census.html"><a href="clean-household-census.html#clean-date-of-survey"><i class="fa fa-check"></i><b>3.6</b> Clean date of survey</a></li>
+<li class="chapter" data-level="3.7" data-path="clean-household-census.html"><a href="clean-household-census.html#convert-factors-into-dummy-variables"><i class="fa fa-check"></i><b>3.7</b> Convert factors into dummy variables</a></li>
+<li class="chapter" data-level="3.8" data-path="clean-household-census.html"><a href="clean-household-census.html#clean-location-variables"><i class="fa fa-check"></i><b>3.8</b> Clean location variables</a></li>
+<li class="chapter" data-level="3.9" data-path="clean-household-census.html"><a href="clean-household-census.html#export-data"><i class="fa fa-check"></i><b>3.9</b> Export data</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="construct-household-location.html"><a href="construct-household-location.html"><i class="fa fa-check"></i><b>4</b> Construct household location</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="construct-household-location.html"><a href="construct-household-location.html#check-missing-values"><i class="fa fa-check"></i><b>4.1</b> Check missing values</a></li>
+<li class="chapter" data-level="4.2" data-path="construct-household-location.html"><a href="construct-household-location.html#create-spatial-version-of-the-data-set"><i class="fa fa-check"></i><b>4.2</b> Create spatial version of the data set</a></li>
+<li class="chapter" data-level="4.3" data-path="construct-household-location.html"><a href="construct-household-location.html#save-data"><i class="fa fa-check"></i><b>4.3</b> Save data</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="construct-household-distance.html"><a href="construct-household-distance.html"><i class="fa fa-check"></i><b>5</b> Construct household distance</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="construct-household-distance.html"><a href="construct-household-distance.html#load-data-1"><i class="fa fa-check"></i><b>5.1</b> Load data</a></li>
+<li class="chapter" data-level="5.2" data-path="construct-household-distance.html"><a href="construct-household-distance.html#compute-distances"><i class="fa fa-check"></i><b>5.2</b> Compute distances</a></li>
+<li class="chapter" data-level="5.3" data-path="construct-household-distance.html"><a href="construct-household-distance.html#export-data-1"><i class="fa fa-check"></i><b>5.3</b> Export data</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html"><i class="fa fa-check"></i><b>6</b> Construct primary water point</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#load-data-2"><i class="fa fa-check"></i><b>6.1</b> Load data</a></li>
+<li class="chapter" data-level="6.2" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#primary-water-point"><i class="fa fa-check"></i><b>6.2</b> Primary water point</a></li>
+<li class="chapter" data-level="6.3" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#water-points-that-should-have-been-matched"><i class="fa fa-check"></i><b>6.3</b> Water points that should have been matched</a></li>
+<li class="chapter" data-level="6.4" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#water-points-that-should-have-been-mapped"><i class="fa fa-check"></i><b>6.4</b> Water points that should have been mapped</a></li>
+<li class="chapter" data-level="6.5" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#export-data-2"><i class="fa fa-check"></i><b>6.5</b> Export data</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html"><i class="fa fa-check"></i><b>7</b> Create final household census data</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#load-data-3"><i class="fa fa-check"></i><b>7.1</b> Load data</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-census"><i class="fa fa-check"></i><b>7.1.1</b> Household census</a></li>
+<li class="chapter" data-level="7.1.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-census"><i class="fa fa-check"></i><b>7.1.2</b> Water point census</a></li>
+<li class="chapter" data-level="7.1.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#villages"><i class="fa fa-check"></i><b>7.1.3</b> Villages</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#construct-final-indicators"><i class="fa fa-check"></i><b>7.2</b> Construct final indicators</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-responses"><i class="fa fa-check"></i><b>7.2.1</b> Non-responses</a></li>
+<li class="chapter" data-level="7.2.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#id-variables"><i class="fa fa-check"></i><b>7.2.2</b> ID variables</a></li>
+<li class="chapter" data-level="7.2.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-head-characteristics"><i class="fa fa-check"></i><b>7.2.3</b> Household head characteristics</a></li>
+<li class="chapter" data-level="7.2.4" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-composition"><i class="fa fa-check"></i><b>7.2.4</b> Household composition</a></li>
+<li class="chapter" data-level="7.2.5" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-use"><i class="fa fa-check"></i><b>7.2.5</b> Water point use</a></li>
+<li class="chapter" data-level="7.2.6" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#primary-water-points"><i class="fa fa-check"></i><b>7.2.6</b> Primary water points</a></li>
+<li class="chapter" data-level="7.2.7" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-users-knowledge"><i class="fa fa-check"></i><b>7.2.7</b> Non-users knowledge</a></li>
+<li class="chapter" data-level="7.2.8" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#meta-data"><i class="fa fa-check"></i><b>7.2.8</b> Meta data</a></li>
+<li class="chapter" data-level="7.2.9" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#flags"><i class="fa fa-check"></i><b>7.2.9</b> Flags</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#combine-and-save-data"><i class="fa fa-check"></i><b>7.3</b> Combine and save data</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#only-final-indicators"><i class="fa fa-check"></i><b>7.3.1</b> Only final indicators</a></li>
+<li class="chapter" data-level="7.3.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#analysis-data"><i class="fa fa-check"></i><b>7.3.2</b> Analysis data</a></li>
+<li class="chapter" data-level="7.3.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#all-data"><i class="fa fa-check"></i><b>7.3.3</b> All data</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Process household census</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="construct-household-location" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">4</span> Construct household location<a href="construct-household-location.html#construct-household-location" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="construct-household-location.html#cb23-1" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
+<span id="cb23-2"><a href="construct-household-location.html#cb23-2" tabindex="-1"></a>  tidyverse,</span>
+<span id="cb23-3"><a href="construct-household-location.html#cb23-3" tabindex="-1"></a>  sf,</span>
+<span id="cb23-4"><a href="construct-household-location.html#cb23-4" tabindex="-1"></a>  skimr,</span>
+<span id="cb23-5"><a href="construct-household-location.html#cb23-5" tabindex="-1"></a>  janitor,</span>
+<span id="cb23-6"><a href="construct-household-location.html#cb23-6" tabindex="-1"></a>  asserthat</span>
+<span id="cb23-7"><a href="construct-household-location.html#cb23-7" tabindex="-1"></a>)</span></code></pre></div>
+<pre><code>## Installing package into &#39;C:/Users/luizaandrade/AppData/Local/R/win-library/4.4&#39;
+## (as &#39;lib&#39; is unspecified)</code></pre>
+<pre><code>## Warning: package &#39;asserthat&#39; is not available for this version of R
+## 
+## A version of this package for your version of R might be available elsewhere,
+## see the ideas at
+## https://cran.r-project.org/doc/manuals/r-patched/R-admin.html#Installing-packages</code></pre>
+<pre><code>## Warning: unable to access index for repository http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4:
+##   cannot open URL &#39;http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES&#39;</code></pre>
+<pre><code>## Warning: &#39;BiocManager&#39; not available.  Could not check Bioconductor.
+## 
+## Please use `install.packages(&#39;BiocManager&#39;)` and then retry.</code></pre>
+<pre><code>## Warning in p_install(package, character.only = TRUE, ...):</code></pre>
+<pre><code>## Warning in library(package, lib.loc = lib.loc, character.only = TRUE,
+## logical.return = TRUE, : there is no package called &#39;asserthat&#39;</code></pre>
+<pre><code>## Warning in pacman::p_load(tidyverse, sf, skimr, janitor, asserthat): Failed to install/load:
+## asserthat</code></pre>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="construct-household-location.html#cb31-1" tabindex="-1"></a>hhc_clean <span class="ot">&lt;-</span></span>
+<span id="cb31-2"><a href="construct-household-location.html#cb31-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb31-3"><a href="construct-household-location.html#cb31-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
+<span id="cb31-4"><a href="construct-household-location.html#cb31-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb31-5"><a href="construct-household-location.html#cb31-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb31-6"><a href="construct-household-location.html#cb31-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb31-7"><a href="construct-household-location.html#cb31-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb31-8"><a href="construct-household-location.html#cb31-8" tabindex="-1"></a>      <span class="st">&quot;Clean&quot;</span>,</span>
+<span id="cb31-9"><a href="construct-household-location.html#cb31-9" tabindex="-1"></a>      <span class="st">&quot;hh-census-clean.rds&quot;</span></span>
+<span id="cb31-10"><a href="construct-household-location.html#cb31-10" tabindex="-1"></a>    )</span>
+<span id="cb31-11"><a href="construct-household-location.html#cb31-11" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="construct-household-location.html#cb32-1" tabindex="-1"></a>hhc_gps_corrections <span class="ot">&lt;-</span></span>
+<span id="cb32-2"><a href="construct-household-location.html#cb32-2" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
+<span id="cb32-3"><a href="construct-household-location.html#cb32-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb32-4"><a href="construct-household-location.html#cb32-4" tabindex="-1"></a>      path_git,</span>
+<span id="cb32-5"><a href="construct-household-location.html#cb32-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
+<span id="cb32-6"><a href="construct-household-location.html#cb32-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb32-7"><a href="construct-household-location.html#cb32-7" tabindex="-1"></a>      <span class="st">&quot;manual-bad-hh-gps.csv&quot;</span></span>
+<span id="cb32-8"><a href="construct-household-location.html#cb32-8" tabindex="-1"></a>    )</span>
+<span id="cb32-9"><a href="construct-household-location.html#cb32-9" tabindex="-1"></a>  )</span></code></pre></div>
+<pre><code>## Rows: 12 Columns: 4
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (4): household_id, comment, date, initials
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div id="check-missing-values" class="section level2 hasAnchor" number="4.1">
+<h2><span class="header-section-number">4.1</span> Check missing values<a href="construct-household-location.html#check-missing-values" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="construct-household-location.html#cb34-1" tabindex="-1"></a>hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb34-2"><a href="construct-household-location.html#cb34-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(consent_gps) <span class="sc">%&gt;%</span></span>
+<span id="cb34-3"><a href="construct-household-location.html#cb34-3" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
+<pre><code>##  consent_gps     n percent valid_percent
+##        FALSE   122    0.5%          0.5%
+##         TRUE 22196   92.5%         99.5%
+##           NA  1684    7.0%             -</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="construct-household-location.html#cb36-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb36-2"><a href="construct-household-location.html#cb36-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb36-3"><a href="construct-household-location.html#cb36-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb36-4"><a href="construct-household-location.html#cb36-4" tabindex="-1"></a>    <span class="fu">is.na</span>(consent_gps),</span>
+<span id="cb36-5"><a href="construct-household-location.html#cb36-5" tabindex="-1"></a>    consent,</span>
+<span id="cb36-6"><a href="construct-household-location.html#cb36-6" tabindex="-1"></a>    visit_found</span>
+<span id="cb36-7"><a href="construct-household-location.html#cb36-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb36-8"><a href="construct-household-location.html#cb36-8" tabindex="-1"></a>    <span class="fu">nrow</span>() <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb36-9"><a href="construct-household-location.html#cb36-9" tabindex="-1"></a>)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="construct-household-location.html#cb38-1" tabindex="-1"></a>hhc_gps <span class="ot">&lt;-</span></span>
+<span id="cb38-2"><a href="construct-household-location.html#cb38-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb38-3"><a href="construct-household-location.html#cb38-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb38-4"><a href="construct-household-location.html#cb38-4" tabindex="-1"></a>    consent_gps,</span>
+<span id="cb38-5"><a href="construct-household-location.html#cb38-5" tabindex="-1"></a>    <span class="sc">!</span>(household_id <span class="sc">%in%</span> hhc_gps_corrections<span class="sc">$</span>household_id)</span>
+<span id="cb38-6"><a href="construct-household-location.html#cb38-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb38-7"><a href="construct-household-location.html#cb38-7" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb38-8"><a href="construct-household-location.html#cb38-8" tabindex="-1"></a>    key,</span>
+<span id="cb38-9"><a href="construct-household-location.html#cb38-9" tabindex="-1"></a>    district_id, country,</span>
+<span id="cb38-10"><a href="construct-household-location.html#cb38-10" tabindex="-1"></a>    date,</span>
+<span id="cb38-11"><a href="construct-household-location.html#cb38-11" tabindex="-1"></a>    longitude_c,</span>
+<span id="cb38-12"><a href="construct-household-location.html#cb38-12" tabindex="-1"></a>    latitude_c,</span>
+<span id="cb38-13"><a href="construct-household-location.html#cb38-13" tabindex="-1"></a>    altitude_c,</span>
+<span id="cb38-14"><a href="construct-household-location.html#cb38-14" tabindex="-1"></a>    accuracy_c,</span>
+<span id="cb38-15"><a href="construct-household-location.html#cb38-15" tabindex="-1"></a>    missing_gps</span>
+<span id="cb38-16"><a href="construct-household-location.html#cb38-16" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="construct-household-location.html#cb39-1" tabindex="-1"></a>hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb39-2"><a href="construct-household-location.html#cb39-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(missing_gps) <span class="sc">%&gt;%</span></span>
+<span id="cb39-3"><a href="construct-household-location.html#cb39-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(date, country)</span></code></pre></div>
+<pre><code>##        date Malawi Uganda
+##  2025-07-08      0      4
+##  2025-07-09      0     26
+##  2025-07-10      0      3
+##  2025-07-14      0      4
+##  2025-07-15      0     58
+##  2025-07-16      0    114
+##  2025-07-18      0    168
+##  2025-07-28      0      2
+##  2025-07-31      0      1
+##  2025-08-12      0      1
+##  2025-08-15      1      0
+##  2025-08-16      0      3</code></pre>
+</div>
+<div id="create-spatial-version-of-the-data-set" class="section level2 hasAnchor" number="4.2">
+<h2><span class="header-section-number">4.2</span> Create spatial version of the data set<a href="construct-household-location.html#create-spatial-version-of-the-data-set" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>We choose to project the coordinates to the <a href="https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf">EPSG code</a> <code>4326</code>, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. The spatial version of the dataset only includes households that gave consent for their GPS coordinates to be recorded.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="construct-household-location.html#cb41-1" tabindex="-1"></a>hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb41-2"><a href="construct-household-location.html#cb41-2" tabindex="-1"></a>  skim</span></code></pre></div>
+<table>
+<caption><span id="tab:unnamed-chunk-27">Table 4.1: </span>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">Piped data</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">22185</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">9</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">character</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">Date</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">factor</td>
+<td align="left">1</td>
+</tr>
+<tr class="odd">
+<td align="left">logical</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">numeric</td>
+<td align="left">4</td>
+</tr>
+<tr class="odd">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: character</strong></p>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="13%" />
+<col width="19%" />
+<col width="5%" />
+<col width="5%" />
+<col width="8%" />
+<col width="12%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">empty</th>
+<th align="right">n_unique</th>
+<th align="right">whitespace</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">key</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">41</td>
+<td align="right">41</td>
+<td align="right">0</td>
+<td align="right">22185</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">district_id</td>
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right">3</td>
+<td align="right">0</td>
+<td align="right">29</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: Date</strong></p>
+<table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="17%" />
+<col width="13%" />
+<col width="13%" />
+<col width="13%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">min</th>
+<th align="left">max</th>
+<th align="left">median</th>
+<th align="right">n_unique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">date</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">2025-07-02</td>
+<td align="left">2025-09-30</td>
+<td align="left">2025-08-01</td>
+<td align="right">60</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: factor</strong></p>
+<table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="17%" />
+<col width="10%" />
+<col width="11%" />
+<col width="29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">ordered</th>
+<th align="right">n_unique</th>
+<th align="left">top_counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">country</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">2</td>
+<td align="left">Mal: 11469, Uga: 10716</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: logical</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="left">count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">missing_gps</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0.02</td>
+<td align="left">FAL: 21800, TRU: 385</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<colgroup>
+<col width="14%" />
+<col width="10%" />
+<col width="14%" />
+<col width="7%" />
+<col width="7%" />
+<col width="8%" />
+<col width="7%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">longitude_c</td>
+<td align="right">385</td>
+<td align="right">0.98</td>
+<td align="right">34.53</td>
+<td align="right">0.83</td>
+<td align="right">32.89</td>
+<td align="right">33.83</td>
+<td align="right">34.62</td>
+<td align="right">35.31</td>
+<td align="right">35.65</td>
+<td align="left">▂▅▃▂▇</td>
+</tr>
+<tr class="even">
+<td align="left">latitude_c</td>
+<td align="right">385</td>
+<td align="right">0.98</td>
+<td align="right">-7.62</td>
+<td align="right">7.99</td>
+<td align="right">-15.98</td>
+<td align="right">-15.37</td>
+<td align="right">-14.29</td>
+<td align="right">0.81</td>
+<td align="right">1.39</td>
+<td align="left">▇▁▁▁▇</td>
+</tr>
+<tr class="odd">
+<td align="left">altitude_c</td>
+<td align="right">387</td>
+<td align="right">0.98</td>
+<td align="right">904.13</td>
+<td align="right">288.43</td>
+<td align="right">-245.90</td>
+<td align="right">637.50</td>
+<td align="right">1020.25</td>
+<td align="right">1116.70</td>
+<td align="right">1918.50</td>
+<td align="left">▁▃▇▇▁</td>
+</tr>
+<tr class="even">
+<td align="left">accuracy_c</td>
+<td align="right">385</td>
+<td align="right">0.98</td>
+<td align="right">7.47</td>
+<td align="right">107.97</td>
+<td align="right">0.70</td>
+<td align="right">4.30</td>
+<td align="right">4.70</td>
+<td align="right">4.90</td>
+<td align="right">9625.30</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="construct-household-location.html#cb42-1" tabindex="-1"></a>hh_sf <span class="ot">&lt;-</span> </span>
+<span id="cb42-2"><a href="construct-household-location.html#cb42-2" tabindex="-1"></a>  hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb42-3"><a href="construct-household-location.html#cb42-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>missing_gps) <span class="sc">%&gt;%</span></span>
+<span id="cb42-4"><a href="construct-household-location.html#cb42-4" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(</span>
+<span id="cb42-5"><a href="construct-household-location.html#cb42-5" tabindex="-1"></a>    <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">&quot;longitude_c&quot;</span>, <span class="st">&quot;latitude_c&quot;</span>), </span>
+<span id="cb42-6"><a href="construct-household-location.html#cb42-6" tabindex="-1"></a>    <span class="at">crs =</span> <span class="dv">4326</span></span>
+<span id="cb42-7"><a href="construct-household-location.html#cb42-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb42-8"><a href="construct-household-location.html#cb42-8" tabindex="-1"></a>  <span class="fu">select</span>(key, country, district_id, <span class="fu">ends_with</span>(<span class="st">&quot;_c&quot;</span>))</span></code></pre></div>
+</div>
+<div id="save-data" class="section level2 hasAnchor" number="4.3">
+<h2><span class="header-section-number">4.3</span> Save data<a href="construct-household-location.html#save-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="construct-household-location.html#cb43-1" tabindex="-1"></a>path <span class="ot">&lt;-</span></span>
+<span id="cb43-2"><a href="construct-household-location.html#cb43-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb43-3"><a href="construct-household-location.html#cb43-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb43-4"><a href="construct-household-location.html#cb43-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb43-5"><a href="construct-household-location.html#cb43-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb43-6"><a href="construct-household-location.html#cb43-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb43-7"><a href="construct-household-location.html#cb43-7" tabindex="-1"></a>    <span class="st">&quot;hh-gps&quot;</span></span>
+<span id="cb43-8"><a href="construct-household-location.html#cb43-8" tabindex="-1"></a>  )</span>
+<span id="cb43-9"><a href="construct-household-location.html#cb43-9" tabindex="-1"></a></span>
+<span id="cb43-10"><a href="construct-household-location.html#cb43-10" tabindex="-1"></a>hh_sf <span class="sc">%&gt;%</span> </span>
+<span id="cb43-11"><a href="construct-household-location.html#cb43-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb43-12"><a href="construct-household-location.html#cb43-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb43-13"><a href="construct-household-location.html#cb43-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb43-14"><a href="construct-household-location.html#cb43-14" tabindex="-1"></a>  )</span></code></pre></div>
+<pre><code>## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
+## `sfl` provided. Falling back to `character`.
+## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
+## `sfl` provided. Falling back to `character`.</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-29">Table 4.2: </span>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">Piped data</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">21800</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">6</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">character</td>
+<td align="left">3</td>
+</tr>
+<tr class="odd">
+<td align="left">factor</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">numeric</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: character</strong></p>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="13%" />
+<col width="19%" />
+<col width="5%" />
+<col width="5%" />
+<col width="8%" />
+<col width="12%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">empty</th>
+<th align="right">n_unique</th>
+<th align="right">whitespace</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">key</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">41</td>
+<td align="right">41</td>
+<td align="right">0</td>
+<td align="right">21800</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">district_id</td>
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right">3</td>
+<td align="right">0</td>
+<td align="right">29</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">geometry</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">29</td>
+<td align="right">38</td>
+<td align="right">0</td>
+<td align="right">21794</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: factor</strong></p>
+<table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="17%" />
+<col width="10%" />
+<col width="11%" />
+<col width="29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">ordered</th>
+<th align="right">n_unique</th>
+<th align="left">top_counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">country</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">2</td>
+<td align="left">Mal: 11468, Uga: 10332</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table style="width:100%;">
+<colgroup>
+<col width="15%" />
+<col width="10%" />
+<col width="15%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="6%" />
+<col width="8%" />
+<col width="7%" />
+<col width="7%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">altitude_c</td>
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">904.13</td>
+<td align="right">288.43</td>
+<td align="right">-245.9</td>
+<td align="right">637.5</td>
+<td align="right">1020.25</td>
+<td align="right">1116.7</td>
+<td align="right">1918.5</td>
+<td align="left">▁▃▇▇▁</td>
+</tr>
+<tr class="even">
+<td align="left">accuracy_c</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">7.47</td>
+<td align="right">107.97</td>
+<td align="right">0.7</td>
+<td align="right">4.3</td>
+<td align="right">4.70</td>
+<td align="right">4.9</td>
+<td align="right">9625.3</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="clean-household-census.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="construct-household-distance.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": null,
+    "text": null
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": null,
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+</body>
+
+</html>
