@@ -1,12 +1,32 @@
 # Household survey
 
 ```{r}
-library(stringr)
-library(sf)
-library(tidyverse)
-library(modelsummary)
-library(fixest)
-library(glue)
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "glue",
+    "patchwork",
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra",
+    "vtable",
+    "stargazer",
+    "ggplot2",
+    "haven",
+    "estimatr",
+    "modelsummary",
+    "fixest",
+    "haven"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
 ```
 
 
@@ -399,3 +419,56 @@ hh_survey %>%
   adorn_percentages()
 ```
 
+# spot checks and back checks 
+spot check: variables of interest are meter_fill, meter_rinse, coninterpret etc; link to hh_survey / hh_census using hh_id
+back checks: variables of interest are ; link to hh_survey / hh_census using household_id_pl
+
+in both, it seems survey_type is identifying between census/survey or household/monitoring
+```{r}
+library(haven)
+
+# 213 rows, hh_id is NA for 20
+spotcheck_uganda <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "2_raw_data",
+      "6_Spot Check Survey",
+      "2_dta",
+      "Household Survey Spot Check.dta"
+    )
+  )
+
+# spotcheck_malawi <-
+#   read_dta(
+#     file.path(
+#       path_box,
+#       "Data - SHARED WITH IPA",
+#       "Malawi",
+#       "02_Baseline",
+#       "03_Data Cleaning",
+#       "2_raw_data",
+#       "6_Spot Check Survey",
+#       "2_dta",
+#       "Household Survey Spot Check.dta"
+#     )
+#   )
+
+backcheck_uganda <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "2_raw_data",
+      "7_Backcheck Survey",
+      "DIL Household Survey Backcheck.dta"
+    )
+  )
+```
