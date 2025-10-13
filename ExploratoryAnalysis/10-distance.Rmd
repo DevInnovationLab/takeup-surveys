@@ -1,0 +1,173 @@
+---
+title: "10-distance"
+output: html_document
+date: "2025-10-13"
+---
+
+```{r}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "glue",
+    "patchwork",
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra",
+    "vtable",
+    "stargazer",
+    "ggplot2",
+    "haven",
+    "estimatr",
+    "geosphere"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) #%>%
+ # dplyr::filter(survey == "Household Survey")
+
+hh_survey_constructed <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Spatial",
+      "hh-survey-constructed.rds"
+    )
+  ) #%>%
+  #dplyr::filter(survey == "Household Survey")
+
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+ # st_drop_geometry() %>%
+  mutate(
+    response = response * 100,
+    served = (wp_intervention_type != "Non-program") * 100
+  )
+
+hh_census_constructed <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Spatial",
+      "hh-census-constructed.rds"
+    )
+  ) %>%
+ # st_drop_geometry() %>%
+  mutate(
+    response = response * 100,
+    served = (wp_intervention_type != "Non-program") * 100
+  )
+
+wp_constructed <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-constructed.rds"
+    )
+  )
+
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  )
+```
+
+## adding geometry to hh census and wp census
+```{r}
+hh_census <- hh_census %>%
+  left_join(hh_census_constructed %>% select(geometry, household_id),
+            by = "household_id")
+
+wp_census <- wp_census %>%
+  mutate(wp_id = paste0("WP", wp_id)) %>%
+  left_join(wp_constructed %>% select(geometry, wp_id),
+            by = "wp_id")
+```
+
+# calculating distance
+```{r}
+hh_census <- hh_census %>%
+  mutate(
+    hh_lon = st_coordinates(geometry)[, 1],
+    hh_lat = st_coordinates(geometry)[, 2]
+  )
+
+wp_census <- wp_census %>%
+  mutate(
+    point_geom = st_collection_extract(geometry, type = "POINT")
+  )
+
+wp_coords <- st_coordinates(wp_census$point_geom)
+wp_census <- wp_census %>%
+  mutate(
+    wp_lon = wp_coords[, 1],
+    wp_lat = wp_coords[, 2]
+  )
+
+hh_with_primary <- hh_census %>%
+  left_join(
+    wp_census %>%
+      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat),
+    by = "wp_id"
+  )
+
+# Step 3: Calculate distance to primary water point
+hh_with_primary <- hh_with_primary %>%
+  mutate(
+    dist_to_primary_km = distHaversine(
+      cbind(hh_lon, hh_lat),
+      cbind(primary_wp_lon, primary_wp_lat)
+    ) / 1000
+  )
+
+# Check results
+summary(hh_with_primary$dist_to_primary_km)
+```
+
