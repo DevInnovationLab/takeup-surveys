@@ -21,7 +21,8 @@ packages <-
     "vtable",
     "stargazer",
     "ggplot2",
-    "haven"
+    "haven",
+    "estimatr"
   )
 
 pacman::p_load(
@@ -765,6 +766,7 @@ country_totals_table10
 ```
 
 ## table 11
+Number of households identified by different instruments
 ```{r}
 # number of water points in the promoter survey
 wp_count_pm <- pm_survey %>%
@@ -879,7 +881,6 @@ Table 10 but for all water points
 ```{r}
 # column 1: household count and SE
 hh_count_tbl_wp_census <- hh_census %>%
-  # dplyr::filter(inclusion == "Within village boundaries") %>%  # include this row to obtain estimates if we only considered households located in the village
   group_by(country, wp_category, wp_id) %>%
   summarise(
     hh_count = n_distinct(household_id),   # number of households per wp
@@ -930,7 +931,7 @@ hh_size_tbl_wp_census <- hh_survey %>%
 # column 6: chlorination rate
 chl_tbl_wp_census <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
-  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  # dplyr::filter(hh_dsw == "TRUE") %>%
   group_by(country, wp_category, wp_id) %>%
   summarise(
     wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
@@ -1696,7 +1697,6 @@ hh_size_tbl_wp_census <- hh_survey %>%
 # column 6: chlorination rate
 chl_tbl_wp_census <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
-  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
   group_by(country, wp_category, wp_id) %>%
   summarise(
     wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
@@ -1989,22 +1989,22 @@ estimates <- estimates%>%
 create_waterfall <- function(country_name, country_data) {
   
   df <- data.frame(
-    category = c("Table 1", 
+     category = c("Table 1", 
                  "Exclude \ncensus\nout-of-village\nhouseholds", 
                  "Unit of\nobservation",
                  "Sample \nselection\nof water points",
+                 "Dataset",
                  "Double \n-counting",
                  "Promoter\nsurvey\nout-of-village\nhouseholds",
-                 "Dataset",
                  "Table 8"),
     amount = c(
       country_data$table1,
       country_data$table1_ex_outside - country_data$table1,
       country_data$table12_ex_outside - country_data$table1_ex_outside,
       country_data$table10_ex_outside - country_data$table12_ex_outside,
+      country_data$table14 - country_data$table10_ex_outside,
       country_data$table13 - country_data$table14,
       country_data$table8 - country_data$table13,
-      country_data$table14 - country_data$table10_ex_outside,
       country_data$table8
     )
   )
@@ -2020,7 +2020,7 @@ create_waterfall <- function(country_name, country_data) {
       id = row_number(),
       type = case_when(
         id == 1 | id == n() ~ "total",
-        id == 7 ~ "dataset",                     
+        id == 5 ~ "dataset",                     
         amount_rounded < 0 ~ "decrease",
         TRUE ~ "increase"
       ),
@@ -2057,7 +2057,7 @@ create_waterfall <- function(country_name, country_data) {
                        labels = scales::comma)
 }
 
-# Create plots for each country
+# create plots for each country
 uganda_data <- estimates %>% filter(country == "UGANDA")
 malawi_data <- estimates %>% filter(country == "MALAWI")
 
@@ -2609,6 +2609,90 @@ comparison <- table8 %>%
 comparison %>%
   kable(digits = 4) %>%
   kable_styling()
+```
+
+# diff in chlorination
+```{r}
+hh_survey_filtered <- hh_survey %>%
+  dplyr::filter(wp_category %in% c("DSW Expansion", "DSW Footprint")) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  # First aggregate to water point level
+  group_by(country, wp_category, wp_id, village_id) %>%
+  summarise(
+    wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(expansion_dummy = ifelse(wp_category == "DSW Expansion", 1, 0))
+
+# Uganda regression - use regular lm
+uganda_data <- hh_survey_filtered %>% filter(country == "UGANDA")
+uganda_reg_lm <- lm(wp_chl_rate ~ expansion_dummy, data = uganda_data)
+
+# Malawi regression - use regular lm
+malawi_data <- hh_survey_filtered %>% filter(country == "MALAWI")
+malawi_reg_lm <- lm(wp_chl_rate ~ expansion_dummy, data = malawi_data)
+
+# Get cluster-robust standard errors using lm_robust for reference
+uganda_reg_robust <- lm_robust(wp_chl_rate ~ expansion_dummy,
+                               data = uganda_data,
+                               clusters = village_id,
+                               se_type = "CR2")
+
+malawi_reg_robust <- lm_robust(wp_chl_rate ~ expansion_dummy,
+                               data = malawi_data,
+                               clusters = village_id,
+                               se_type = "CR2")
+
+# Extract cluster-robust SEs
+uganda_se <- uganda_reg_robust$std.error
+malawi_se <- malawi_reg_robust$std.error
+
+# Use stargazer with custom SEs
+library(stargazer)
+stargazer(uganda_reg_lm, malawi_reg_lm,
+          type = "text",
+          se = list(uganda_se, malawi_se),
+          title = "Chlorination Regressions by Country",
+          column.labels = c("Uganda", "Malawi"),
+          covariate.labels = c("DSW Expansion (vs. Footprint)"),
+          dep.var.labels = "Chlorination Level (disctcr)",
+          keep.stat = c("n", "rsq"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = "Standard errors clustered at village level in parentheses")
+```
+
+```{r}
+hh_survey_chlorine <- hh_survey %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  mutate(
+    chlorination = ifelse(disctcr > 0.2, 1, 0)  # Create binary indicator for each household
+  )
+
+# Run regression with cluster-robust standard errors
+library(estimatr)
+regression_model_robust <- lm_robust(
+  chlorination ~ hh_members, 
+  data = hh_survey_chlorine,
+  clusters = village_id,
+  se_type = "CR2"
+)
+
+# For stargazer, run regular lm and extract clustered SEs
+regression_model <- lm(disctcr ~ hh_members, data = hh_survey_chlorine)
+
+# Extract cluster-robust SEs from lm_robust
+# clustered_se <- regression_model_robust$std.error
+
+# Use stargazer with clustered SEs
+stargazer(regression_model,
+          type = "text",
+          # se = list(clustered_se),
+          title = "Household Size and Chlorination",
+          dep.var.labels = "Chlorination (TCR > 0.2)",
+          covariate.labels = c("HH members"),
+          keep.stat = c("n", "rsq", "adj.rsq", "f"),
+          notes = "Standard errors clustered at village level in parentheses")
 ```
 
 ## exploratory - not directly referenced in report:
