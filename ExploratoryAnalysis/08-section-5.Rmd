@@ -2079,6 +2079,77 @@ ggsave("output/waterfall_malawi.pdf",
        device = "pdf")
 ```
 
+# breaking down differences in chlorination
+```{r}
+wp_selection_diff <- table12 %>%
+  select(country, wp_category, chl_rate) %>%
+  rename(chl_rate_t12 = chl_rate) %>%
+  left_join(
+    table10 %>% select(country, wp_category, chl_rate) %>% rename(chl_rate_t10 = chl_rate),
+    by = c("country", "wp_category")
+  ) %>%
+  mutate(diff_wp_selection = chl_rate_t12 - chl_rate_t10)
+
+hh_selection_diff <- table10 %>%
+  select(country, wp_category, chl_rate) %>%
+  rename(chl_rate_t10 = chl_rate) %>%
+  left_join(
+    table8 %>% select(country, wp_category, chl_rate) %>% rename(chl_rate_t8 = chl_rate),
+    by = c("country", "wp_category")
+  ) %>%
+  mutate(diff_hh_selection = chl_rate_t10 - chl_rate_t8)
+
+combined_comparison <- table12 %>%
+  select(country, wp_category, chl_rate) %>%
+  rename(chl_rate_t12 = chl_rate) %>%
+  left_join(
+    table10 %>% select(country, wp_category, chl_rate) %>% rename(chl_rate_t10 = chl_rate),
+    by = c("country", "wp_category")
+  ) %>%
+  left_join(
+    table8 %>% select(country, wp_category, chl_rate) %>% rename(chl_rate_t8 = chl_rate),
+    by = c("country", "wp_category")
+  ) %>%
+  mutate(
+    diff_t12_to_t10 = chl_rate_t12 - chl_rate_t10,
+    diff_t10_to_t8 = chl_rate_t10 - chl_rate_t8,
+    diff_t12_to_t8 = chl_rate_t12 - chl_rate_t8
+  )
+
+print(combined_comparison)
+
+# Reshape for grouped bar chart
+chart_data_long <- combined_comparison %>%
+  select(country, wp_category, diff_t12_to_t10, diff_t10_to_t8, diff_t12_to_t8) %>%
+  pivot_longer(
+    cols = starts_with("diff"),
+    names_to = "stage",
+    values_to = "change"
+  ) %>%
+  mutate(
+    stage = factor(stage,
+                   levels = c("diff_t12_to_t10", "diff_t10_to_t8", "diff_t12_to_t8"),
+                   labels = c("WP Selection\n(T12→T10)", "HH Selection\n(T10→T8)", "Total Difference\n(T12→T8)"))
+  )
+
+ggplot(chart_data_long, aes(x = wp_category, y = change, fill = stage)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+  facet_wrap(~country, scales = "free_x") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Breakdown of Chlorination Rate Differences by Selection Stage",
+    x = "Water Point Category",
+    y = "Difference in Chlorination Rate",
+    fill = "Selection Stage"
+  ) +
+  theme() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+```
+
 ## section 6.2: sample: EA list versus promoter survey (Uganda) [numbers are currently off]
 In Uganda, Evidence Action provided information for 133 promoters in the sampled villages, representing 129 unique water points. Out of these, 119 are in the water point census, and 110 are included in the promoter survey. There are 10 promoter surveys for water points for which Evidence Action did not provide contact information, for a total of 120 promoter surveys in Uganda.
 ```{r}
