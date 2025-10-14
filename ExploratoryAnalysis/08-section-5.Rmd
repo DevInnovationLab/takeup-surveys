@@ -2954,3 +2954,40 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
     legend.position = "none"
   )
 ```
+
+chlorination rates with different filters
+```{r}
+tests <- hh_survey %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(wp_id %in% pm_survey$wp_id) %>%
+  # dplyr::filter(hh_dsw == 1 | hh_ilc == 1)
+  dplyr::filter(hh_dsw == 0 & hh_ilc == 0)
+
+chl_tbl <- tests %>%
+  group_by(country, wp_category) %>%
+  summarise(
+    wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
+    .groups = "drop")
+  # ) %>%
+  # group_by(country, wp_category) %>%
+  # summarise(
+  #   chl_rate = mean(wp_chl_rate, na.rm = TRUE),
+  #   .groups = "drop"
+  # ) 
+chl_tbl
+```
+
+exploring self-reports as compared to intervention_type - I see no difference
+```{r}
+table <- hh_survey %>%
+  dplyr::filter(hh_dsw == 0 & hh_ilc == 0) %>%
+  # dplyr::filter(intervention_type == "Non-program")
+  select(intervention_type)
+
+table(hh_survey$hh_dsw)
+
+table(hh_survey$intervention_type)
+
+table(hh_survey$hh_ilc, hh_survey$intervention_type, useNA = "always")
+```
