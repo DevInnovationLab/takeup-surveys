@@ -2425,6 +2425,46 @@ stargazer(uganda_model, malawi_model,
           keep.stat = c("n", "rsq", "adj.rsq"))
 ```
 
+# number of water points used per household - households in promoter lists
+```{r}
+# number of water points used per household - households in promoter lists
+hh_census_filtered <- hh_census %>%
+  dplyr::filter(household_id %in% pm_survey_households_clean$household_id)
+
+wp_distribution_census <- 
+  hh_census_filtered %>%
+  mutate(total_wp_used = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(total_wp_used) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample 
+total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = as.factor(total_wp_used))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    subtitle = "Limited to households in PM survey data",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included (filtered by PM survey participation).")) +
+  # theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
+
 ## FCR instead of TCR
 table 8 with FCR instead of TCR 
 ```{r}
@@ -2939,46 +2979,6 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
     x = "Number of Water Points Used",
     y = "Number of Households",
     caption = paste0("Note: N= ",total_households_census," households included to date in the Household Census raw data.")) +
-  # theme +
-  theme(
-    plot.caption = element_text(hjust = 0, face = "italic"),
-    legend.position = "none"
-  )
-```
-
-number of water points used per household - households in promoter lists
-```{r}
-# number of water points used per household - households in promoter lists
-hh_census_filtered <- hh_census %>%
-  dplyr::filter(household_id %in% pm_survey_households_clean$household_id)
-
-wp_distribution_census <- 
-  hh_census_filtered %>%
-  mutate(total_wp_used = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
-  count(total_wp_used) %>%
-  mutate(
-    percentage = round(n / sum(n) * 100, 1),
-    label = paste0(percentage, "%")
-  )
-
-# sample 
-total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
-
-# plot
-ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = as.factor(total_wp_used))) +
-  geom_col() +
-  geom_text(
-    aes(label = label),
-    vjust = -0.5,
-    color = "black"
-  ) +
-  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
-  labs(
-    title = "Distribution of Water Points Used in Past Month per Household",
-    subtitle = "Limited to households in PM survey data",
-    x = "Number of Water Points Used",
-    y = "Number of Households",
-    caption = paste0("Note: N= ",total_households_census," households included (filtered by PM survey participation).")) +
   # theme +
   theme(
     plot.caption = element_text(hjust = 0, face = "italic"),
