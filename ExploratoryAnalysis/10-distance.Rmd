@@ -121,53 +121,119 @@ wp_census <-
 
 ## adding geometry to hh census and wp census
 ```{r}
-hh_census <- hh_census %>%
+hh_census_geom <- hh_census %>%
   left_join(hh_census_constructed %>% select(geometry, household_id),
             by = "household_id")
 
-wp_census <- wp_census %>%
+wp_census_geom <- wp_census %>%
   mutate(wp_id = paste0("WP", wp_id)) %>%
   left_join(wp_constructed %>% select(geometry, wp_id),
             by = "wp_id")
+
+wp_census_geom <- wp_census_geom %>%
+  dplyr::filter(!st_is_empty(geometry))
 ```
 
 # calculating distance
 ```{r}
-hh_census <- hh_census %>%
+hh_census_geom <- hh_census_geom %>%
   mutate(
     hh_lon = st_coordinates(geometry)[, 1],
     hh_lat = st_coordinates(geometry)[, 2]
   )
 
-wp_census <- wp_census %>%
+wp_census_geom <- wp_census_geom %>%
   mutate(
     point_geom = st_collection_extract(geometry, type = "POINT")
   )
 
-wp_coords <- st_coordinates(wp_census$point_geom)
-wp_census <- wp_census %>%
+wp_coords <- st_coordinates(wp_census_geom$point_geom)
+wp_census_geom <- wp_census_geom %>%
   mutate(
     wp_lon = wp_coords[, 1],
     wp_lat = wp_coords[, 2]
   )
 
-hh_with_primary <- hh_census %>%
+# distance to primary WP
+hh_with_primary <- hh_census_geom %>%
   left_join(
-    wp_census %>%
+    wp_census_geom %>%
+      mutate(wp_id = gsub("^WP", "", wp_id)) %>%  
       select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat),
     by = "wp_id"
   )
 
-# Step 3: Calculate distance to primary water point
 hh_with_primary <- hh_with_primary %>%
   mutate(
-    dist_to_primary_km = distHaversine(
+    dist_to_primary_m = distHaversine(
       cbind(hh_lon, hh_lat),
       cbind(primary_wp_lon, primary_wp_lat)
-    ) / 1000
+    )
   )
 
-# Check results
-summary(hh_with_primary$dist_to_primary_km)
+# distance to nearest WP
+ea_water_points <- wp_census_geom %>%
+  dplyr::filter(intervention_type != "Non-program") %>%
+  select(wp_id, ea_wp_lon = wp_lon, ea_wp_lat = wp_lat)
+
+hh_with_primary <- hh_with_primary %>%
+  rowwise() %>%
+  mutate(
+    dist_to_nearest_ea_m = min(
+      distHaversine(
+        cbind(hh_lon, hh_lat),
+        cbind(ea_water_points$ea_wp_lon, ea_water_points$ea_wp_lat)
+      ),
+      na.rm = TRUE
+    )
+  ) %>%
+  ungroup()
+```
+
+# regressions
+```{r}
+hh_with_primary <- hh_with_primary %>%
+  left_join(
+    hh_survey %>%
+      select(household_id, disctcr, discfcr),
+      by = "household_id"
+  ) %>%
+  mutate(
+    disc_tcr_detected = as.numeric(disctcr > 0.2)
+  )
+```
+
+```{r}
+table <- hh_with_primary %>%
+  group_by(disc_tcr_detected) %>%
+  summarize(
+    mean_dist = mean(dist_to_primary_m, na.rm = TRUE),
+    n = n()
+  )
+
+print(table)
+```
+
+```{r}
+
+model <- lm_robust(disctcr ~ dist_to_primary_m + dist_to_nearest_ea_m, 
+                   data = hh_with_primary,
+                   clusters = village_id,
+                   se_type = "stata")
+
+clustered_se <- model$std.error
+
+model_lm <- lm(disctcr ~ dist_to_primary_m + dist_to_nearest_ea_m, data = hh_with_primary)
+
+stargazer(model_lm,  
+          type = "text",
+          title = "Effect of Distance to Primary Water Point on TCR Detection",
+          dep.var.labels = "TCR Detected",
+          covariate.labels = c("Distance to Primary WP (m)"),
+          se = list(clustered_se),  # But use the clustered SEs from lm_robust
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = "Clustered standard errors (by village) in parentheses",
+          notes.append = FALSE)
 ```
 
