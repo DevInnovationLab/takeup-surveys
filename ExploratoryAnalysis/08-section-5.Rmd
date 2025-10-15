@@ -607,6 +607,37 @@ cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), 
 cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
 ```
 
+# test for difference between table 1 and 12
+```{r}
+#t12 uganda
+mean_t12_uganda <- country_totals_table12$total_indiv_access_popn[country_totals_table12$country == "UGANDA"]
+ci_lower_t12_uganda <- country_totals_table12$ci_lower_total_access[country_totals_table12$country == "UGANDA"]
+ci_upper_t12_uganda <- country_totals_table12$ci_upper_total_access[country_totals_table12$country == "UGANDA"]
+se_t12_uganda <- (ci_upper_t12_uganda - ci_lower_t12_uganda) / (2 * 1.96)
+
+#t12 malawi
+mean_t12_malawi <- country_totals_table12$total_indiv_access_popn[country_totals_table12$country == "MALAWI"]
+ci_lower_t12_malawi <- country_totals_table12$ci_lower_total_access[country_totals_table12$country == "MALAWI"]
+ci_upper_t12_malawi <- country_totals_table12$ci_upper_total_access[country_totals_table12$country == "MALAWI"]
+se_t12_malawi <- (ci_upper_t12_malawi - ci_lower_t12_malawi) / (2 * 1.96)
+
+# test
+diff_means_uganda <- mean_t1_uganda - mean_t12_uganda
+se_diff_uganda <- sqrt(se_t1_uganda^2 + se_t12_uganda^2)
+z_stat_uganda <- diff_means_uganda / se_diff_uganda
+p_value_uganda <- 2 * (1 - pnorm(abs(z_stat_uganda)))
+
+# test
+diff_means_malawi <- mean_t1_malawi - mean_t12_malawi
+se_diff_malawi <- sqrt(se_t1_malawi^2 + se_t12_malawi^2)
+z_stat_malawi <- diff_means_malawi / se_diff_malawi
+p_value_malawi <- 2 * (1 - pnorm(abs(z_stat_malawi)))
+
+# p-values
+cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), "\n")
+cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
+```
+
 ## table 9 [numbers are currently off in cols 2-5]
 Number of water points in different datasets by type
 ```{r}
