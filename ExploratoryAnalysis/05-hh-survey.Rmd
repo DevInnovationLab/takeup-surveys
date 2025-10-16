@@ -420,10 +420,9 @@ hh_survey %>%
 ```
 
 # spot checks and back checks 
-spot check: variables of interest are meter_fill, meter_rinse, coninterpret etc; link to hh_survey / hh_census using hh_id
-back checks: variables of interest are ; link to hh_survey / hh_census using household_id_pl
-
 in both, it seems survey_type is identifying between census/survey or household/monitoring
+
+# TO DO - cleaning duplicates
 ```{r}
 library(haven)
 
@@ -443,21 +442,23 @@ spotcheck_uganda <-
     )
   )
 
-# spotcheck_malawi <-
-#   read_dta(
-#     file.path(
-#       path_box,
-#       "Data - SHARED WITH IPA",
-#       "Malawi",
-#       "02_Baseline",
-#       "03_Data Cleaning",
-#       "2_raw_data",
-#       "6_Spot Check Survey",
-#       "2_dta",
-#       "Household Survey Spot Check.dta"
-#     )
-#   )
+# 
+spotcheck_malawi <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "02_Data Management",
+      "4_data",
+      "4_monitoring",
+      "1_Spotchecks",
+      "Household Survey Spot Check.dta"
+    )
+  )
 
+# 336 obs, hh_id is NA for 0
 backcheck_uganda <-
   read_dta(
     file.path(
@@ -470,5 +471,224 @@ backcheck_uganda <-
       "7_Backcheck Survey",
       "DIL Household Survey Backcheck.dta"
     )
+  ) %>%
+  rename(hh_id = caseid) %>% 
+  dplyr::filter(!is.na(hh_id))
+  
+
+# matched, 289 obs, hh_id is NA for 0
+backcheck_malawi <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "02_Data Management",
+      "4_data",
+      "3_backcheck",
+      "3_post_hfc_data",
+      "DIL_Household_Backcheck_checked.dta"
+    )
+  ) %>%
+  rename(hh_id = caseid)
+
+backcheck_malawi <- backcheck_malawi %>%
+  mutate(
+    (country = "MALAWI"),
+    duration = as.numeric(duration)
+    ) 
+
+backcheck_uganda <- backcheck_uganda %>%
+  mutate(
+    (country = "UGANDA"),
+    duration = as.numeric(duration)
+    ) 
+
+backcheck <- bind_rows(backcheck_malawi, backcheck_uganda)
+```
+
+## analyzing backchecks - compare to hh survey
+```{r}
+
+```
+
+## analyzing spotchecks
+Note the spotchecks concern all of 1) hh census, 2) hh survey, 3) monitoring survey, 4) promoter survey.
+
+COMMENTS
+- I don't see that there are separate chlorine tests in spot checks
+- chlorine test steps followed in c90% of cases in Malawi, with higher scores for color disc
+- chlorine test steps followed in almost 100% of cases in Uganda, but much smaller sample
+- readings for colorwheel are similar (not statistically different); indeed, on average the main enumerator's reading is higher than the checker's (exception: TCR in Uganda)
+### chlorine test steps
+```{r}
+spotcheck_vars <- c(
+  "colordisc_rinse", "colordisc_fill", "colordisc_wip", "colordisc_dpd",
+  "colordisc_sachet", "colordisc_swirl", "colordisc_wait",
+  "colordisc_light", "colordisc_wash", "meter_rinse", "meter_fill",
+  "meter_blank", "meter_wipe", "meter_dpd", "meter_vials",
+  "meter_sachet", "meter_swirl", "meter_wait", "meter_wash"
+)
+
+spotcheck_summary_malawi <- spotcheck_malawi %>% 
+  select(all_of(spotcheck_vars)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  dplyr::filter(value %in% c(0, 1)) %>%
+  group_by(variable) %>%
+  summarise(
+    n_ones = sum(value == 1),
+    n_zeros = sum(value == 0),
+    total = n(),
+    share_correct = mean(value == 1)
+  )
+
+print(spotcheck_summary_malawi)
+
+spotcheck_summary_uganda <- spotcheck_uganda %>%  # Change this line
+  select(all_of(spotcheck_vars)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  dplyr::filter(value %in% c(0, 1)) %>%
+  group_by(variable) %>%
+  summarise(
+    n_ones = sum(value == 1),
+    n_zeros = sum(value == 0),
+    total = n(),
+    share_correct = mean(value == 1)
+  )
+
+print(spotcheck_summary_uganda)
+```
+
+### chlorine test results
+issue: small sample size
+results: differences mostly negative, insignificant
+
+why is the sample size so small?
+malawi: 1264 rows -> 381 with hh id and in hh survey -> 125 matched (why so low)
+uganda: 226 rows -> 82 with hh id and in hh survey -> 28 matched (also low)
+```{r}
+spotcheck_malawi <- spotcheck_malawi %>%
+  dplyr::filter(surveytype == 2) %>%
+  dplyr::filter(
+    !is.na(hh_id),
+    !hh_id %in% c("", "None", "-999", "N/A")
+  )
+
+spotcheck_uganda <- spotcheck_uganda %>%
+  dplyr::filter(surveytype == 2) %>%
+  dplyr::filter(
+    !is.na(hh_id),
+    !hh_id %in% c("", "None", "-999", "N/A")
   )
 ```
+
+uganda: 
+```{r}
+# match to hh survey
+hh_survey_spotchecks_malawi <- hh_survey %>%
+  dplyr::filter(country == "MALAWI") %>%
+  left_join(
+    spotcheck_malawi %>% select(hh_id, tcr, fcr),
+    by = c("household_id" = "hh_id"))
+
+hh_survey_spotchecks_uganda <- hh_survey %>%
+  dplyr::filter(country == "UGANDA") %>%
+  left_join(
+    spotcheck_uganda %>% select(hh_id, tcr, fcr),
+    by = c("household_id" = "hh_id"))
+```
+
+```{r}
+# compare results with hh_survey results
+
+test_comparison_malawi <- hh_survey_spotchecks_malawi %>%
+  select(disctcr, discfcr, tcr, fcr) %>%
+  mutate(
+    diff_tcr = disctcr - tcr, # if >0, then higher reading by enumerator than checker
+    diff_fcr = discfcr - fcr
+  ) %>%
+  dplyr::filter(abs(fcr) < 100)%>% # to get rid of one really high result, clearly an error
+  dplyr::filter(abs(tcr) < 100) %>%  
+  summarize(
+    diff_tcr_mean = mean(diff_tcr, na.rm = TRUE),
+    diff_fcr_mean = mean(diff_fcr, na.rm = TRUE),
+    n = n()
+  )
+
+print(test_comparison_malawi)
+
+test_comparison_uganda <- hh_survey_spotchecks_uganda %>%
+  select(disctcr, discfcr, tcr, fcr) %>%
+  mutate(
+    diff_tcr = disctcr - tcr, # if >0, then higher reading by enumerator than checker
+    diff_fcr = discfcr - fcr
+  ) %>%
+  dplyr::filter(fcr < 100) %>% # to get rid of one really high result, clearly an error
+  summarize(
+    diff_tcr_mean = mean(diff_tcr, na.rm = TRUE),
+    diff_fcr_mean = mean(diff_fcr, na.rm = TRUE),
+    n = n()
+  )
+
+print(test_comparison_uganda)
+
+# test for malawi
+malawi_data <- hh_survey_spotchecks_malawi %>%
+  select(disctcr, discfcr, tcr, fcr) %>%
+  mutate(
+    diff_tcr = disctcr - tcr,
+    diff_fcr = discfcr - fcr
+  ) %>%
+  dplyr::filter(fcr < 100) %>%
+  dplyr::filter(tcr < 100)
+
+tcr_test_malawi <- t.test(malawi_data$disctcr, malawi_data$tcr, paired = TRUE)
+fcr_test_malawi <- t.test(malawi_data$discfcr, malawi_data$fcr, paired = TRUE)
+
+cat("MALAWI RESULTS:\n")
+cat("TCR difference test:\n")
+cat("  p-value:", round(tcr_test_malawi$p.value, 4), "\n")
+cat("FCR difference test:\n")
+cat("  p-value:", round(fcr_test_malawi$p.value, 4), "\n")
+
+# test for uganda
+uganda_data <- hh_survey_spotchecks_uganda %>%
+  select(disctcr, discfcr, tcr, fcr) %>%
+  mutate(
+    diff_tcr = disctcr - tcr,
+    diff_fcr = discfcr - fcr
+  ) %>%
+  dplyr::filter(fcr < 100)
+
+tcr_test_uganda <- t.test(uganda_data$disctcr, uganda_data$tcr, paired = TRUE)
+fcr_test_uganda <- t.test(uganda_data$discfcr, uganda_data$fcr, paired = TRUE)
+
+cat("UGANDA RESULTS:\n")
+cat("TCR difference test:\n")
+cat("  p-value:", round(tcr_test_uganda$p.value, 4), "\n")
+cat("FCR difference test:\n")
+cat("  p-value:", round(fcr_test_uganda$p.value, 4), "\n")
+```
+
+### REMAINING TO DO (lower priority)
+"comment" to see if there's anything interesting
+
+for hh survey:
+- (low priority) hhs_section_1 to hhs_section_10
+
+for hh census (low priority):
+- hhc_section_1
+- hhc_section_2
+- hhc_section_4
+- hhc_section_3
+
+for promoter survey (low priority): 
+- prom_section_1
+- prom_section_2
+- prom_section_3
+- prom_section_4
+- prom_section_5
+- prom_section_6
+- prom_section_7
+- prom_section_8
