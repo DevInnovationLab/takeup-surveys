@@ -492,25 +492,6 @@ backcheck_malawi <-
     )
   ) %>%
   rename(hh_id = caseid)
-
-backcheck_malawi <- backcheck_malawi %>%
-  mutate(
-    (country = "MALAWI"),
-    duration = as.numeric(duration)
-    ) 
-
-backcheck_uganda <- backcheck_uganda %>%
-  mutate(
-    (country = "UGANDA"),
-    duration = as.numeric(duration)
-    ) 
-
-backcheck <- bind_rows(backcheck_malawi, backcheck_uganda)
-```
-
-## analyzing backchecks - compare to hh survey
-```{r}
-
 ```
 
 ## analyzing spotchecks
@@ -692,3 +673,31 @@ for promoter survey (low priority):
 - prom_section_6
 - prom_section_7
 - prom_section_8
+
+## analyzing backchecks - compare to hh survey
+currently - not much important to compare, because we don't have chlorine tests
+
+1) confirmation of correct WP
+<b>1.9 Is ${wp_name_pl} the primary water source that your household uses for collecting drinking water?: only 1 case of no (across both countries) - good sign
+
+# REMAINING TO DO (lower priority):
+check consistency between hh survey and back check of:
+- other water treatment methods (make_watersafe ...)
+- hh_members
+- wp_dsw and wp_ilc - checks of awareness of dispenser
+### merging
+```{r}
+hh_survey_backcheck_uganda <- hh_survey %>%
+  dplyr::filter(country == "UGANDA") %>%
+  left_join(
+    backcheck_uganda %>% select(hh_id, )
+    by = c("household_id" = "hh_id")
+  )
+
+hh_survey_backcheck_uganda <- hh_survey %>%
+  dplyr::filter(country == "UGANDA") %>%
+  left_join(
+    backcheck_uganda %>% select(hh_id, )
+    by = c("household_id" = "hh_id")
+  )
+```
