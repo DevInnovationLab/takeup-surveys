@@ -61,7 +61,11 @@ We want to conduct the wrangling and HFCs for both countries at the same time, s
 ```{r}
 wp_raw <-
   map(
-    list(wp_raw_mw, wp_raw_ug, wp_raw_ug_ilc),
+    list(
+      wp_raw_mw, 
+      wp_raw_ug
+      #, wp_raw_ug_ilc
+    ),
     ~ .x %>%
       remove_empty %>% 
       mutate(
@@ -90,6 +94,46 @@ path <-
   )
 
 wp_raw %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+## De-identify
+
+```{r}
+wp_raw_deid <-
+  wp_raw %>%
+  dplyr::filter(month(submissiondate) < 9) %>%
+  select(
+    -c(
+      enumerator,
+      enumerator_name,
+      wp_name_1:cal_wp_name,
+      wp_landmarks
+    )
+  )
+
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Raw",
+    "wp-census-deid"
+  )
+  
+
+wp_raw_deid %>%
+  write_dta(
+    file.path(
+      path_box,
+      paste0(path, ".dta")
+    )
+  )
+
+wp_raw_deid %>%
   write_meta(
     path_data = file.path(path_box, path),
     path_meta = file.path(path_git, path)

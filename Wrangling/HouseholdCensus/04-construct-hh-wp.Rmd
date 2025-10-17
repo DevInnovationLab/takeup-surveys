@@ -1,0 +1,194 @@
+# Construct primary water point
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "sf",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+This is the clean household data
+
+```{r}
+hhc_clean <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Clean",
+      "hh-census-clean.rds"
+      )
+    )
+```
+
+These are corrections based on notes from the field. These water sources were initially considered as not mapped in the water point census, but it was just a problem on loading the data between instruments. So the corrections below fix their IDs to match the water points census.
+
+```{r}
+wp_corrections <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "HouseholdCensus",
+      "manual-wp-match.csv"
+      )
+    ) %>%
+  mutate(
+    village_id = as.character(village_id),
+    wp_id_fixed = wp_id
+  )
+```
+
+
+## Primary water point
+
+When data from a water point in the census didn't properly load, a household would be marked as not using a water point served by Evidence Action if their primary water source had DSW/ILC but it wasn't matched at first. To avoid this problem, an additional variable was added that allowed the enumerators to manually enter the information for that water point. The code below combines the data that was pre-loaded and the manually added data.
+
+```{r}
+hhc_wp <-
+  hhc_clean %>% 
+  dplyr::filter(consent) %>%
+  left_join(wp_corrections) %>%
+  transmute(
+    household_id, date, country,
+    wp_source,
+    wp_source_o,
+    wp_name_c = coalesce(wp_name, wp_name_coa),
+    wp_id = coalesce(wp_id_fixed, wp_id_pl),
+    flag_wp_id = is.na(wp_id_pl),
+    wp_match,
+    wp_match_comments
+  )
+```
+
+## Check missing patterns
+
+```{r}
+hhc_wp %>% 
+  dplyr::filter(is.na(wp_id)) %>% 
+  tabyl(wp_source)
+```
+
+```{r}
+hhc_wp %>% 
+  dplyr::filter(
+    is.na(wp_id), 
+    wp_source == "From a water point in this village"
+  ) %>% 
+  tabyl(date, country)
+```
+
+## Water points that should have been matched
+
+These water points were not in the water point census, but the enumerator indicated that they have DSW/ILC.
+
+```{r}
+wp_notmatched <-
+  hhc_clean %>%
+  dplyr::filter(
+    is.na(wp_id_pl),
+    !(wp_name %in% wp_corrections$wp_name),
+    !is.na(wp_dsw) | !is.na(wp_ilc_c) | !is.na(wp_ilc_device_c)
+  ) %>%
+  select(country, village_id, household_id, starts_with("wp"))
+
+
+wp_notmatched %>%
+  tabyl(wp_source)
+```
+
+There are 7 households that list a water point without DSW/ILC that is not in the dataset, two that use water points that are supposed to have DSW, but their names were not recorded, and a third one that is actually a tap inside the household.
+
+```{r}
+wp_notmatched %>%
+  dplyr::filter(
+    wp_source == "From a water point in this village"
+  ) %>% 
+  select(
+    country, village_id, household_id, wp_name, wp_name_coa,
+    wp_ilc_device_c, wp_ilc_c, wp_dsw,
+    contains("comments")
+  ) %>%
+  arrange(
+    country, village_id, wp_name
+  ) %>%
+  view
+```
+
+Correction based on enumerator comments
+
+```{r}
+hhc_clean <-
+  hhc_clean %>%
+  mutate(
+    wp_source = if_else(
+      household_id == "TO3004205413",
+      "Piped water into the household",
+      wp_source
+    )
+  )
+```
+
+## Water points that should have been mapped 
+
+These are shared with IPA for double-checking
+
+```{r}
+wp_tomap <-
+  hhc_clean %>%
+  dplyr::filter(
+    is.na(wp_id_pl),
+    !(wp_name_o %in% wp_corrections$wp_name),
+    wp_source_communal_c,
+    wp_oth_location == "Located within the village",
+    !str_detect(wp_name_o, "RIVE"),
+    !str_detect(wp_name_o, "PRIVATE"),
+    !str_detect(wp_other_comments, "PRIVATE")
+  ) %>%
+  select(
+    household_id,
+    village_id,
+    wp_name_o,
+    wp_other_desc,
+    wp_other_dsw,
+    wp_other_ilc,
+    wp_source_communal,
+    wp_oth_location,
+    wp_other_comments,
+    wp_id_o
+  ) 
+```
+
+## Export data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Constructed",
+    "hh-wp"
+  )
+
+hhc_wp %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

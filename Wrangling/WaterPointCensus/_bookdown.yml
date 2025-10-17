@@ -4,11 +4,14 @@ rmd_files: [
   "index.Rmd",
   "01-import-census.Rmd",
   "02-clean-census.Rmd",
-  "03-construct-wp-variables.Rmd",
-  "04-construct-wp-location.Rmd",
-  "05-construct-wp-distances.Rmd",
-  "06-collapse-wp-census.Rmd",
-  "07-match-ea.Rmd",
-  "08-construct-chlorine-tests.Rmd",
-  "09-combine-datasets.Rmd"
+  "03-construct-wp-characteristics.Rmd",
+  "04-construct-wp-spotcheck.Rmd",
+  "05-construct-wp-tests.Rmd",
+  "06-construct-wp-location.Rmd",
+  "07-construct-wp-distances.Rmd",
+  "08-collapse-wp-census.Rmd",
+  "09-construct-wp-intervention.Rmd",
+  "10-match-ea.Rmd",
+  "11-construct-chlorine-tests.Rmd",
+  "12-combine-datasets.Rmd"
 ]

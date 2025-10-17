@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-07" />
+<meta name="date" content="2025-10-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,7 +30,7 @@
   
   
 <link rel="prev" href="construct-chlorine-testing-variables-construct-chlorine-tests.html"/>
-<link rel="next" href="combine-with-water-point-data.html"/>
+<link rel="next" href="create-final-household-survey-data.html"/>
 
 
 
@@ -1965,7 +1965,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">Wrangle Water Point Census</a></li>
+<li><a href="./">Wrangle Household Survey</a></li>
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
@@ -1983,7 +1983,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="3.5" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#clean-text-variables"><i class="fa fa-check"></i><b>3.5</b> Clean text variables</a></li>
 <li class="chapter" data-level="3.6" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#clean-date-of-survey"><i class="fa fa-check"></i><b>3.6</b> Clean date of survey</a></li>
 <li class="chapter" data-level="3.7" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#turn-dummy-vairables-into-logical"><i class="fa fa-check"></i><b>3.7</b> Turn dummy vairables into logical</a></li>
-<li class="chapter" data-level="3.8" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#merge-variables"><i class="fa fa-check"></i><b>3.8</b> Merge variables</a></li>
+<li class="chapter" data-level="3.8" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#merge-variables"><i class="fa fa-check"></i><b>3.8</b> Merge variables</a>
+<ul>
+<li class="chapter" data-level="3.8.1" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#education"><i class="fa fa-check"></i><b>3.8.1</b> Education</a></li>
+<li class="chapter" data-level="3.8.2" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#household-head-characteristics"><i class="fa fa-check"></i><b>3.8.2</b> Household head characteristics</a></li>
+</ul></li>
 <li class="chapter" data-level="3.9" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#drop-surveycto-coding-variables"><i class="fa fa-check"></i><b>3.9</b> Drop surveycto coding variables</a></li>
 <li class="chapter" data-level="3.10" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#combine-household_id-and-household_id_pl"><i class="fa fa-check"></i><b>3.10</b> Combine household_id and household_id_pl</a></li>
 <li class="chapter" data-level="3.11" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#export-data"><i class="fa fa-check"></i><b>3.11</b> Export data</a></li>
@@ -2010,48 +2014,40 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="6.4" data-path="construct-data-quality-flags-construct-sensitivity-flags.html"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#flag-if-the-village-had-a-low-proportion-of-water-come-from-the-primary-source"><i class="fa fa-check"></i><b>6.4</b> Flag if the village had a low proportion of water come from the primary source</a></li>
 <li class="chapter" data-level="6.5" data-path="construct-data-quality-flags-construct-sensitivity-flags.html"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#export-data-2"><i class="fa fa-check"></i><b>6.5</b> Export data</a></li>
 </ul></li>
-<li class="chapter" data-level="7" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html"><i class="fa fa-check"></i><b>7</b> Combine with water point data</a>
+<li class="chapter" data-level="7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html"><i class="fa fa-check"></i><b>7</b> Create final household survey data</a>
 <ul>
-<li class="chapter" data-level="7.1" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html#load-data-2"><i class="fa fa-check"></i><b>7.1</b> Load data</a></li>
-<li class="chapter" data-level="7.2" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html#check-water-point-id-presence"><i class="fa fa-check"></i><b>7.2</b> Check water point ID presence</a></li>
+<li class="chapter" data-level="7.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#load-data-2"><i class="fa fa-check"></i><b>7.1</b> Load data</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-survey"><i class="fa fa-check"></i><b>7.1.1</b> Household survey</a></li>
+<li class="chapter" data-level="7.1.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-testing"><i class="fa fa-check"></i><b>7.1.2</b> Chlorine testing</a></li>
+<li class="chapter" data-level="7.1.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#gps"><i class="fa fa-check"></i><b>7.1.3</b> GPS</a></li>
+<li class="chapter" data-level="7.1.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#village-level-data"><i class="fa fa-check"></i><b>7.1.4</b> Village-level data</a></li>
+<li class="chapter" data-level="7.1.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census"><i class="fa fa-check"></i><b>7.1.5</b> Household census</a></li>
+<li class="chapter" data-level="7.1.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-census"><i class="fa fa-check"></i><b>7.1.6</b> Water point census</a></li>
 </ul></li>
-<li class="chapter" data-level="8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html"><i class="fa fa-check"></i><b>8</b> Create final household survey data</a>
+<li class="chapter" data-level="7.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-data"><i class="fa fa-check"></i><b>7.2</b> Combine data</a>
 <ul>
-<li class="chapter" data-level="8.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#load-data-3"><i class="fa fa-check"></i><b>8.1</b> Load data</a>
-<ul>
-<li class="chapter" data-level="8.1.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-survey"><i class="fa fa-check"></i><b>8.1.1</b> Household survey</a></li>
-<li class="chapter" data-level="8.1.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-testing"><i class="fa fa-check"></i><b>8.1.2</b> Chlorine testing</a></li>
-<li class="chapter" data-level="8.1.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#gps"><i class="fa fa-check"></i><b>8.1.3</b> GPS</a></li>
-<li class="chapter" data-level="8.1.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#promoter-census"><i class="fa fa-check"></i><b>8.1.4</b> Promoter census</a></li>
-<li class="chapter" data-level="8.1.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census"><i class="fa fa-check"></i><b>8.1.5</b> Household census</a></li>
+<li class="chapter" data-level="7.2.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-tests"><i class="fa fa-check"></i><b>7.2.1</b> Chlorine tests</a></li>
+<li class="chapter" data-level="7.2.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census-1"><i class="fa fa-check"></i><b>7.2.2</b> Household census</a></li>
+<li class="chapter" data-level="7.2.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-data"><i class="fa fa-check"></i><b>7.2.3</b> Water point data</a></li>
 </ul></li>
-<li class="chapter" data-level="8.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-data"><i class="fa fa-check"></i><b>8.2</b> Combine data</a>
+<li class="chapter" data-level="7.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#select-final-variables"><i class="fa fa-check"></i><b>7.3</b> Select final variables</a>
 <ul>
-<li class="chapter" data-level="8.2.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-tests"><i class="fa fa-check"></i><b>8.2.1</b> Chlorine tests</a></li>
-<li class="chapter" data-level="8.2.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census-1"><i class="fa fa-check"></i><b>8.2.2</b> Household census</a></li>
+<li class="chapter" data-level="7.3.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#id-variables"><i class="fa fa-check"></i><b>7.3.1</b> ID variables</a></li>
+<li class="chapter" data-level="7.3.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#meta-data"><i class="fa fa-check"></i><b>7.3.2</b> Meta data</a></li>
+<li class="chapter" data-level="7.3.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-characteristics"><i class="fa fa-check"></i><b>7.3.3</b> Household characteristics</a></li>
+<li class="chapter" data-level="7.3.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-characteristics"><i class="fa fa-check"></i><b>7.3.4</b> Water point characteristics</a></li>
+<li class="chapter" data-level="7.3.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-sample"><i class="fa fa-check"></i><b>7.3.5</b> Water sample</a></li>
+<li class="chapter" data-level="7.3.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-treatment"><i class="fa fa-check"></i><b>7.3.6</b> Water treatment</a></li>
+<li class="chapter" data-level="7.3.7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#data-quality-flags"><i class="fa fa-check"></i><b>7.3.7</b> Data quality flags</a></li>
+<li class="chapter" data-level="7.3.8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-all"><i class="fa fa-check"></i><b>7.3.8</b> Combine all</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#select-final-variables"><i class="fa fa-check"></i><b>8.3</b> Select final variables</a>
+<li class="chapter" data-level="7.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#export-data-3"><i class="fa fa-check"></i><b>7.4</b> Export data</a>
 <ul>
-<li class="chapter" data-level="8.3.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#id-variables"><i class="fa fa-check"></i><b>8.3.1</b> ID variables</a></li>
-<li class="chapter" data-level="8.3.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#meta-data"><i class="fa fa-check"></i><b>8.3.2</b> Meta data</a></li>
-<li class="chapter" data-level="8.3.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-characteristics"><i class="fa fa-check"></i><b>8.3.3</b> Household characteristics</a></li>
-<li class="chapter" data-level="8.3.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-characteristics"><i class="fa fa-check"></i><b>8.3.4</b> Water point characteristics</a></li>
-<li class="chapter" data-level="8.3.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-sample"><i class="fa fa-check"></i><b>8.3.5</b> Water sample</a></li>
-<li class="chapter" data-level="8.3.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-treatment"><i class="fa fa-check"></i><b>8.3.6</b> Water treatment</a></li>
-<li class="chapter" data-level="8.3.7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#data-quality-flags"><i class="fa fa-check"></i><b>8.3.7</b> Data quality flags</a></li>
-<li class="chapter" data-level="8.3.8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-all"><i class="fa fa-check"></i><b>8.3.8</b> Combine all</a></li>
+<li class="chapter" data-level="7.4.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-constructed-data"><i class="fa fa-check"></i><b>7.4.1</b> Save constructed data</a></li>
+<li class="chapter" data-level="7.4.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-spatial-data"><i class="fa fa-check"></i><b>7.4.2</b> Save spatial data</a></li>
+<li class="chapter" data-level="7.4.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-analysis-data"><i class="fa fa-check"></i><b>7.4.3</b> Save analysis data</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#export-data-3"><i class="fa fa-check"></i><b>8.4</b> Export data</a>
-<ul>
-<li class="chapter" data-level="8.4.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-constructed-data"><i class="fa fa-check"></i><b>8.4.1</b> Save constructed data</a></li>
-<li class="chapter" data-level="8.4.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-spatial-data"><i class="fa fa-check"></i><b>8.4.2</b> Save spatial data</a></li>
-<li class="chapter" data-level="8.4.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-analysis-data"><i class="fa fa-check"></i><b>8.4.3</b> Save analysis data</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html"><i class="fa fa-check"></i><b>9</b> Create final household survey data</a>
-<ul>
-<li class="chapter" data-level="9.1" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html#load-data-4"><i class="fa fa-check"></i><b>9.1</b> Load data</a></li>
-<li class="chapter" data-level="9.2" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html#change-format"><i class="fa fa-check"></i><b>9.2</b> Change format</a></li>
 </ul></li>
 </ul>
 
@@ -2073,201 +2069,188 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="construct-data-quality-flags-construct-sensitivity-flags" class="section level1 hasAnchor" number="6">
 <h1><span class="header-section-number">6</span> Construct data quality flags (construct-sensitivity-flags)<a href="construct-data-quality-flags-construct-sensitivity-flags.html#construct-data-quality-flags-construct-sensitivity-flags" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb44-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-2" tabindex="-1"></a>  <span class="st">&quot;tidyverse&quot;</span>,</span>
-<span id="cb44-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-3" tabindex="-1"></a>  <span class="st">&quot;here&quot;</span>,</span>
-<span id="cb44-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-4" tabindex="-1"></a>  <span class="st">&quot;haven&quot;</span>,</span>
-<span id="cb44-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-5" tabindex="-1"></a>  <span class="st">&quot;skimr&quot;</span>,</span>
-<span id="cb44-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-6" tabindex="-1"></a>  <span class="st">&quot;janitor&quot;</span>,</span>
-<span id="cb44-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-7" tabindex="-1"></a>  <span class="st">&quot;googlesheets4&quot;</span></span>
-<span id="cb44-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-8" tabindex="-1"></a>)</span>
-<span id="cb44-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-9" tabindex="-1"></a></span>
-<span id="cb44-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-10" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
-<span id="cb44-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-11" tabindex="-1"></a>  packages,</span>
-<span id="cb44-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-12" tabindex="-1"></a>  <span class="at">character.only =</span> <span class="cn">TRUE</span></span>
-<span id="cb44-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb44-13" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb47-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-2" tabindex="-1"></a>  <span class="st">&quot;tidyverse&quot;</span>,</span>
+<span id="cb47-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-3" tabindex="-1"></a>  <span class="st">&quot;here&quot;</span>,</span>
+<span id="cb47-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-4" tabindex="-1"></a>  <span class="st">&quot;haven&quot;</span>,</span>
+<span id="cb47-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-5" tabindex="-1"></a>  <span class="st">&quot;skimr&quot;</span>,</span>
+<span id="cb47-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-6" tabindex="-1"></a>  <span class="st">&quot;janitor&quot;</span>,</span>
+<span id="cb47-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-7" tabindex="-1"></a>  <span class="st">&quot;googlesheets4&quot;</span></span>
+<span id="cb47-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-8" tabindex="-1"></a>)</span>
+<span id="cb47-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-9" tabindex="-1"></a></span>
+<span id="cb47-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-10" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
+<span id="cb47-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-11" tabindex="-1"></a>  packages,</span>
+<span id="cb47-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-12" tabindex="-1"></a>  <span class="at">character.only =</span> <span class="cn">TRUE</span></span>
+<span id="cb47-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb47-13" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <div id="load-data-1" class="section level2 hasAnchor" number="6.1">
 <h2><span class="header-section-number">6.1</span> Load data<a href="construct-data-quality-flags-construct-sensitivity-flags.html#load-data-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-1" tabindex="-1"></a>hh <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(</span>
-<span id="cb45-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb45-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-3" tabindex="-1"></a>    path_box,</span>
-<span id="cb45-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-4" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb45-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-5" tabindex="-1"></a>    <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb45-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-6" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb45-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-7" tabindex="-1"></a>    <span class="st">&quot;Clean&quot;</span>,</span>
-<span id="cb45-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-8" tabindex="-1"></a>    <span class="st">&quot;hh-survey-clean.rds&quot;</span></span>
-<span id="cb45-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-9" tabindex="-1"></a>  )</span>
-<span id="cb45-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-10" tabindex="-1"></a>)</span>
-<span id="cb45-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-11" tabindex="-1"></a></span>
-<span id="cb45-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-12" tabindex="-1"></a>gsheet <span class="ot">&lt;-</span></span>
-<span id="cb45-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb45-13" tabindex="-1"></a>  <span class="fu">gs4_get</span>(<span class="st">&quot;https://docs.google.com/spreadsheets/d/1wLCxkLwPlxcfOH14ziLS5s4pqCHf2k4NaBYckLqUYew/edit?usp=sharing&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-1" tabindex="-1"></a>hh <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(</span>
+<span id="cb48-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb48-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-3" tabindex="-1"></a>    path_box,</span>
+<span id="cb48-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-4" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb48-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-5" tabindex="-1"></a>    <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
+<span id="cb48-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-6" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb48-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-7" tabindex="-1"></a>    <span class="st">&quot;Clean&quot;</span>,</span>
+<span id="cb48-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-8" tabindex="-1"></a>    <span class="st">&quot;hh-survey-clean.rds&quot;</span></span>
+<span id="cb48-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-9" tabindex="-1"></a>  )</span>
+<span id="cb48-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-10" tabindex="-1"></a>)</span>
+<span id="cb48-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-11" tabindex="-1"></a></span>
+<span id="cb48-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-12" tabindex="-1"></a>gsheet <span class="ot">&lt;-</span></span>
+<span id="cb48-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb48-13" tabindex="-1"></a>  <span class="fu">gs4_get</span>(<span class="st">&quot;https://docs.google.com/spreadsheets/d/1wLCxkLwPlxcfOH14ziLS5s4pqCHf2k4NaBYckLqUYew/edit?usp=sharing&quot;</span>)</span></code></pre></div>
 </details>
-<pre><code>## ! Using an auto-discovered,
-##   cached token.</code></pre>
-<pre><code>##   To suppress this message,
-##   modify your code or options
-##   to clearly consent to the
-##   use of a cached token.</code></pre>
-<pre><code>##   See gargle&#39;s
-##   &quot;Non-interactive auth&quot;
-##   vignette for more details:</code></pre>
+<pre><code>## ! Using an auto-discovered, cached token.</code></pre>
+<pre><code>##   To suppress this message, modify your code or options to clearly consent to the use of a cached token.</code></pre>
+<pre><code>##   See gargle&#39;s &quot;Non-interactive auth&quot; vignette for more details:</code></pre>
 <pre><code>##   &lt;https://gargle.r-lib.org/articles/non-interactive-auth.html&gt;</code></pre>
-<pre><code>## ℹ The googlesheets4 package
-##   is using a cached token for
-##   &#39;luizaandrade@uchicago.edu&#39;.</code></pre>
-<pre><code>## Auto-refreshing stale OAuth token.</code></pre>
+<pre><code>## ℹ The googlesheets4 package is using a cached token for &#39;luizaandrade@uchicago.edu&#39;.</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb52-1" tabindex="-1"></a>gsheet_id <span class="ot">&lt;-</span></span>
-<span id="cb52-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb52-2" tabindex="-1"></a>  gsheet<span class="sc">$</span>spreadsheet_id</span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb54-1" tabindex="-1"></a>gsheet_id <span class="ot">&lt;-</span></span>
+<span id="cb54-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb54-2" tabindex="-1"></a>  gsheet<span class="sc">$</span>spreadsheet_id</span></code></pre></div>
 </details>
 </div>
 <div id="flag-if-data-is-marked-on-the-issues-log-as-low-quality" class="section level2 hasAnchor" number="6.2">
 <h2><span class="header-section-number">6.2</span> Flag if data is marked on the issues log as low-quality<a href="construct-data-quality-flags-construct-sensitivity-flags.html#flag-if-data-is-marked-on-the-issues-log-as-low-quality" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-1" tabindex="-1"></a>flags_ug <span class="ot">&lt;-</span> </span>
-<span id="cb53-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-2" tabindex="-1"></a>  <span class="fu">read_sheet</span>(</span>
-<span id="cb53-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-3" tabindex="-1"></a>    <span class="at">ss =</span> gsheet, </span>
-<span id="cb53-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-4" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">&quot;Uganda Household Survey&quot;</span></span>
-<span id="cb53-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb53-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb53-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-7" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb53-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-8" tabindex="-1"></a>      <span class="fu">everything</span>(), </span>
-<span id="cb53-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-9" tabindex="-1"></a>      as.character</span>
-<span id="cb53-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-10" tabindex="-1"></a>    ),</span>
-<span id="cb53-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-11" tabindex="-1"></a>    <span class="at">sheet_row =</span> <span class="fu">row_number</span>() <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span></span>
-<span id="cb53-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb53-12" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-1" tabindex="-1"></a>flags_ug <span class="ot">&lt;-</span> </span>
+<span id="cb55-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-2" tabindex="-1"></a>  <span class="fu">read_sheet</span>(</span>
+<span id="cb55-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-3" tabindex="-1"></a>    <span class="at">ss =</span> gsheet, </span>
+<span id="cb55-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-4" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">&quot;Uganda Household Survey&quot;</span></span>
+<span id="cb55-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb55-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb55-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-7" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb55-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-8" tabindex="-1"></a>      <span class="fu">everything</span>(), </span>
+<span id="cb55-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-9" tabindex="-1"></a>      as.character</span>
+<span id="cb55-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-10" tabindex="-1"></a>    ),</span>
+<span id="cb55-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-11" tabindex="-1"></a>    <span class="at">sheet_row =</span> <span class="fu">row_number</span>() <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb55-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb55-12" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## ✔ Reading from
-##   &quot;HFCs Issues Log&quot;.</code></pre>
-<pre><code>## ✔ Range
-##   &#39;&#39;Uganda Household Survey&#39;&#39;.</code></pre>
+<pre><code>## ✔ Reading from &quot;HFCs Issues Log&quot;.</code></pre>
+<pre><code>## ✔ Range &#39;&#39;Uganda Household Survey&#39;&#39;.</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-1" tabindex="-1"></a>flags_mw <span class="ot">&lt;-</span> </span>
-<span id="cb56-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-2" tabindex="-1"></a>  <span class="fu">read_sheet</span>(</span>
-<span id="cb56-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-3" tabindex="-1"></a>    <span class="at">ss =</span> gsheet, </span>
-<span id="cb56-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-4" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">&quot;Malawi Household Survey&quot;</span></span>
-<span id="cb56-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb56-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb56-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-7" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb56-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-8" tabindex="-1"></a>      <span class="fu">everything</span>(), </span>
-<span id="cb56-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-9" tabindex="-1"></a>      as.character</span>
-<span id="cb56-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-10" tabindex="-1"></a>    ),</span>
-<span id="cb56-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-11" tabindex="-1"></a>    <span class="at">sheet_row =</span> <span class="fu">row_number</span>() <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span></span>
-<span id="cb56-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb56-12" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-1" tabindex="-1"></a>flags_mw <span class="ot">&lt;-</span> </span>
+<span id="cb58-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-2" tabindex="-1"></a>  <span class="fu">read_sheet</span>(</span>
+<span id="cb58-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-3" tabindex="-1"></a>    <span class="at">ss =</span> gsheet, </span>
+<span id="cb58-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-4" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">&quot;Malawi Household Survey&quot;</span></span>
+<span id="cb58-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb58-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb58-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-7" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb58-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-8" tabindex="-1"></a>      <span class="fu">everything</span>(), </span>
+<span id="cb58-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-9" tabindex="-1"></a>      as.character</span>
+<span id="cb58-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-10" tabindex="-1"></a>    ),</span>
+<span id="cb58-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-11" tabindex="-1"></a>    <span class="at">sheet_row =</span> <span class="fu">row_number</span>() <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb58-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb58-12" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## ✔ Reading from
-##   &quot;HFCs Issues Log&quot;.</code></pre>
-<pre><code>## ✔ Range
-##   &#39;&#39;Malawi Household Survey&#39;&#39;.</code></pre>
+<pre><code>## ✔ Reading from &quot;HFCs Issues Log&quot;.</code></pre>
+<pre><code>## ✔ Range &#39;&#39;Malawi Household Survey&#39;&#39;.</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-1" tabindex="-1"></a>flags <span class="ot">&lt;-</span> </span>
-<span id="cb59-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb59-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-3" tabindex="-1"></a>    flags_ug, </span>
-<span id="cb59-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-4" tabindex="-1"></a>    flags_mw</span>
-<span id="cb59-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb59-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb59-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">data team comments</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_to_lower</span>(<span class="st">`</span><span class="at">data team comments</span><span class="st">`</span>)</span>
-<span id="cb59-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-8" tabindex="-1"></a>  )</span>
-<span id="cb59-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-9" tabindex="-1"></a></span>
-<span id="cb59-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-10" tabindex="-1"></a>low_quality_ids <span class="ot">&lt;-</span> </span>
-<span id="cb59-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-11" tabindex="-1"></a>  flags <span class="sc">%&gt;%</span></span>
-<span id="cb59-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb59-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-13" tabindex="-1"></a>    <span class="fu">str_detect</span>(</span>
-<span id="cb59-14"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-14" tabindex="-1"></a>      <span class="st">`</span><span class="at">data team comments</span><span class="st">`</span>, <span class="st">&quot;low-quality&quot;</span>) <span class="sc">|</span> </span>
-<span id="cb59-15"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-15" tabindex="-1"></a>      <span class="fu">str_detect</span>(<span class="st">`</span><span class="at">data team comments</span><span class="st">`</span>, <span class="st">&quot;low quality&quot;</span>)</span>
-<span id="cb59-16"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-16" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb59-17"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-17" tabindex="-1"></a>  <span class="fu">pull</span>(household_id)</span>
-<span id="cb59-18"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-18" tabindex="-1"></a></span>
-<span id="cb59-19"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-19" tabindex="-1"></a>hh <span class="ot">&lt;-</span> </span>
-<span id="cb59-20"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-20" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
-<span id="cb59-21"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-21" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb59-22"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-22" tabindex="-1"></a>    <span class="at">flag_low_quality =</span> <span class="sc">!</span><span class="fu">is.na</span>(household_id) <span class="sc">&amp;</span> (household_id <span class="sc">%in%</span> low_quality_ids)</span>
-<span id="cb59-23"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb59-23" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-1" tabindex="-1"></a>flags <span class="ot">&lt;-</span> </span>
+<span id="cb61-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb61-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-3" tabindex="-1"></a>    flags_ug, </span>
+<span id="cb61-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-4" tabindex="-1"></a>    flags_mw</span>
+<span id="cb61-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb61-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb61-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">data team comments</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_to_lower</span>(<span class="st">`</span><span class="at">data team comments</span><span class="st">`</span>)</span>
+<span id="cb61-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-8" tabindex="-1"></a>  )</span>
+<span id="cb61-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-9" tabindex="-1"></a></span>
+<span id="cb61-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-10" tabindex="-1"></a>low_quality_ids <span class="ot">&lt;-</span> </span>
+<span id="cb61-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-11" tabindex="-1"></a>  flags <span class="sc">%&gt;%</span></span>
+<span id="cb61-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb61-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-13" tabindex="-1"></a>    <span class="fu">str_detect</span>(</span>
+<span id="cb61-14"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-14" tabindex="-1"></a>      <span class="st">`</span><span class="at">data team comments</span><span class="st">`</span>, <span class="st">&quot;low-quality&quot;</span>) <span class="sc">|</span> </span>
+<span id="cb61-15"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-15" tabindex="-1"></a>      <span class="fu">str_detect</span>(<span class="st">`</span><span class="at">data team comments</span><span class="st">`</span>, <span class="st">&quot;low quality&quot;</span>)</span>
+<span id="cb61-16"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-16" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb61-17"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-17" tabindex="-1"></a>  <span class="fu">pull</span>(household_id)</span>
+<span id="cb61-18"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-18" tabindex="-1"></a></span>
+<span id="cb61-19"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-19" tabindex="-1"></a>hh <span class="ot">&lt;-</span> </span>
+<span id="cb61-20"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-20" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
+<span id="cb61-21"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-21" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb61-22"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-22" tabindex="-1"></a>    <span class="at">flag_low_quality =</span> <span class="sc">!</span><span class="fu">is.na</span>(household_id) <span class="sc">&amp;</span> (household_id <span class="sc">%in%</span> low_quality_ids)</span>
+<span id="cb61-23"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-23" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="flag-if-there-was-evidence-actionpromoter-interference" class="section level2 hasAnchor" number="6.3">
 <h2><span class="header-section-number">6.3</span> Flag if there was Evidence Action/promoter interference<a href="construct-data-quality-flags-construct-sensitivity-flags.html#flag-if-there-was-evidence-actionpromoter-interference" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-1" tabindex="-1"></a>interference_vil_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb60-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-2" tabindex="-1"></a>  <span class="do">### Uganda</span></span>
-<span id="cb60-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-3" tabindex="-1"></a>  <span class="st">&quot;1070401003&quot;</span>, <span class="co"># Buloke</span></span>
-<span id="cb60-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-4" tabindex="-1"></a>  <span class="st">&quot;1101109006&quot;</span>, <span class="co"># Saaka B</span></span>
-<span id="cb60-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-5" tabindex="-1"></a>  <span class="st">&quot;1101308001&quot;</span>, <span class="co"># Bukunya</span></span>
-<span id="cb60-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-6" tabindex="-1"></a>  <span class="st">&quot;1050103005&quot;</span>, <span class="co"># Buwenge Bunawale  </span></span>
-<span id="cb60-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-7" tabindex="-1"></a>  <span class="st">&quot;1050901001&quot;</span>, <span class="co"># Kaiti Kaiti</span></span>
-<span id="cb60-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-8" tabindex="-1"></a></span>
-<span id="cb60-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-9" tabindex="-1"></a>  <span class="do">### Malawi</span></span>
-<span id="cb60-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-10" tabindex="-1"></a>  <span class="st">&quot;2030309037&quot;</span>, <span class="co"># Mataka 2</span></span>
-<span id="cb60-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-11" tabindex="-1"></a>  <span class="st">&quot;2041608019&quot;</span>, <span class="co"># Saidi Mataka</span></span>
-<span id="cb60-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-12" tabindex="-1"></a>  <span class="st">&quot;2030901003&quot;</span>, <span class="co"># Likhomo</span></span>
-<span id="cb60-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-13" tabindex="-1"></a>  </span>
-<span id="cb60-14"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-14" tabindex="-1"></a>  <span class="do">### Household respondents reported being warned</span></span>
-<span id="cb60-15"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-15" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
-<span id="cb60-16"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-16" tabindex="-1"></a>  <span class="st">&quot;1101309001&quot;</span>,</span>
-<span id="cb60-17"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-17" tabindex="-1"></a>  <span class="st">&quot;1020306002&quot;</span>,</span>
-<span id="cb60-18"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-18" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
-<span id="cb60-19"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-19" tabindex="-1"></a>  <span class="st">&quot;1101309001&quot;</span>,</span>
-<span id="cb60-20"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-20" tabindex="-1"></a>  <span class="st">&quot;1160604001&quot;</span>,</span>
-<span id="cb60-21"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-21" tabindex="-1"></a>  <span class="st">&quot;1190401001&quot;</span>,</span>
-<span id="cb60-22"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-22" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
-<span id="cb60-23"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-23" tabindex="-1"></a>  <span class="st">&quot;1190401001&quot;</span>,</span>
-<span id="cb60-24"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-24" tabindex="-1"></a>  <span class="st">&quot;1090403006&quot;</span>,</span>
-<span id="cb60-25"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-25" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
-<span id="cb60-26"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-26" tabindex="-1"></a>  <span class="st">&quot;2020708036&quot;</span>,</span>
-<span id="cb60-27"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-27" tabindex="-1"></a>  <span class="st">&quot;2020317075&quot;</span>,</span>
-<span id="cb60-28"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-28" tabindex="-1"></a>  <span class="st">&quot;2030106036&quot;</span></span>
-<span id="cb60-29"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-29" tabindex="-1"></a></span>
-<span id="cb60-30"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-30" tabindex="-1"></a>  </span>
-<span id="cb60-31"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-31" tabindex="-1"></a>  </span>
-<span id="cb60-32"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-32" tabindex="-1"></a>)</span>
-<span id="cb60-33"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-33" tabindex="-1"></a></span>
-<span id="cb60-34"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-34" tabindex="-1"></a>hh <span class="ot">&lt;-</span> </span>
-<span id="cb60-35"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-35" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
-<span id="cb60-36"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-36" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb60-37"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-37" tabindex="-1"></a>    <span class="at">flag_interference =</span> <span class="sc">!</span><span class="fu">is.na</span>(village_id_pl) <span class="sc">&amp;</span> (village_id_pl <span class="sc">%in%</span> interference_vil_ids)</span>
-<span id="cb60-38"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb60-38" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-1" tabindex="-1"></a>interference_vil_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb62-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-2" tabindex="-1"></a>  <span class="do">### Uganda</span></span>
+<span id="cb62-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-3" tabindex="-1"></a>  <span class="st">&quot;1070401003&quot;</span>, <span class="co"># Buloke</span></span>
+<span id="cb62-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-4" tabindex="-1"></a>  <span class="st">&quot;1101109006&quot;</span>, <span class="co"># Saaka B</span></span>
+<span id="cb62-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-5" tabindex="-1"></a>  <span class="st">&quot;1101308001&quot;</span>, <span class="co"># Bukunya</span></span>
+<span id="cb62-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-6" tabindex="-1"></a>  <span class="st">&quot;1050103005&quot;</span>, <span class="co"># Buwenge Bunawale  </span></span>
+<span id="cb62-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-7" tabindex="-1"></a>  <span class="st">&quot;1050901001&quot;</span>, <span class="co"># Kaiti Kaiti</span></span>
+<span id="cb62-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-8" tabindex="-1"></a></span>
+<span id="cb62-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-9" tabindex="-1"></a>  <span class="do">### Malawi</span></span>
+<span id="cb62-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-10" tabindex="-1"></a>  <span class="st">&quot;2030309037&quot;</span>, <span class="co"># Mataka 2</span></span>
+<span id="cb62-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-11" tabindex="-1"></a>  <span class="st">&quot;2041608019&quot;</span>, <span class="co"># Saidi Mataka</span></span>
+<span id="cb62-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-12" tabindex="-1"></a>  <span class="st">&quot;2030901003&quot;</span>, <span class="co"># Likhomo</span></span>
+<span id="cb62-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-13" tabindex="-1"></a>  </span>
+<span id="cb62-14"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-14" tabindex="-1"></a>  <span class="do">### Household respondents reported being warned</span></span>
+<span id="cb62-15"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-15" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
+<span id="cb62-16"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-16" tabindex="-1"></a>  <span class="st">&quot;1101309001&quot;</span>,</span>
+<span id="cb62-17"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-17" tabindex="-1"></a>  <span class="st">&quot;1020306002&quot;</span>,</span>
+<span id="cb62-18"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-18" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
+<span id="cb62-19"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-19" tabindex="-1"></a>  <span class="st">&quot;1101309001&quot;</span>,</span>
+<span id="cb62-20"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-20" tabindex="-1"></a>  <span class="st">&quot;1160604001&quot;</span>,</span>
+<span id="cb62-21"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-21" tabindex="-1"></a>  <span class="st">&quot;1190401001&quot;</span>,</span>
+<span id="cb62-22"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-22" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
+<span id="cb62-23"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-23" tabindex="-1"></a>  <span class="st">&quot;1190401001&quot;</span>,</span>
+<span id="cb62-24"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-24" tabindex="-1"></a>  <span class="st">&quot;1090403006&quot;</span>,</span>
+<span id="cb62-25"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-25" tabindex="-1"></a>  <span class="st">&quot;1130904002&quot;</span>,</span>
+<span id="cb62-26"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-26" tabindex="-1"></a>  <span class="st">&quot;2020708036&quot;</span>,</span>
+<span id="cb62-27"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-27" tabindex="-1"></a>  <span class="st">&quot;2020317075&quot;</span>,</span>
+<span id="cb62-28"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-28" tabindex="-1"></a>  <span class="st">&quot;2030106036&quot;</span></span>
+<span id="cb62-29"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-29" tabindex="-1"></a></span>
+<span id="cb62-30"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-30" tabindex="-1"></a>  </span>
+<span id="cb62-31"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-31" tabindex="-1"></a>  </span>
+<span id="cb62-32"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-32" tabindex="-1"></a>)</span>
+<span id="cb62-33"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-33" tabindex="-1"></a></span>
+<span id="cb62-34"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-34" tabindex="-1"></a>hh <span class="ot">&lt;-</span> </span>
+<span id="cb62-35"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-35" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
+<span id="cb62-36"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-36" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb62-37"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-37" tabindex="-1"></a>    <span class="at">flag_interference =</span> <span class="sc">!</span><span class="fu">is.na</span>(village_id_pl) <span class="sc">&amp;</span> (village_id_pl <span class="sc">%in%</span> interference_vil_ids)</span>
+<span id="cb62-38"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-38" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="flag-if-the-village-had-a-low-proportion-of-water-come-from-the-primary-source" class="section level2 hasAnchor" number="6.4">
 <h2><span class="header-section-number">6.4</span> Flag if the village had a low proportion of water come from the primary source<a href="construct-data-quality-flags-construct-sensitivity-flags.html#flag-if-the-village-had-a-low-proportion-of-water-come-from-the-primary-source" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-1" tabindex="-1"></a>low_primary_collection_vil_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb61-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-2" tabindex="-1"></a>  <span class="st">&quot;&quot;</span></span>
-<span id="cb61-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-3" tabindex="-1"></a>)</span>
-<span id="cb61-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-4" tabindex="-1"></a></span>
-<span id="cb61-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-5" tabindex="-1"></a>hh <span class="ot">&lt;-</span> hh <span class="sc">%&gt;%</span></span>
-<span id="cb61-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb61-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-7" tabindex="-1"></a>    <span class="at">flag_low_primary_collection =</span> </span>
-<span id="cb61-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-8" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(village_id_pl) <span class="sc">&amp;</span> (village_id_pl <span class="sc">%in%</span> low_primary_collection_vil_ids)</span>
-<span id="cb61-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb61-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-10" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb61-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-11" tabindex="-1"></a>    household_id,</span>
-<span id="cb61-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-12" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>)</span>
-<span id="cb61-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb61-13" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-1" tabindex="-1"></a>low_primary_collection_vil_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb63-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-2" tabindex="-1"></a>  <span class="st">&quot;&quot;</span></span>
+<span id="cb63-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-3" tabindex="-1"></a>)</span>
+<span id="cb63-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-4" tabindex="-1"></a></span>
+<span id="cb63-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-5" tabindex="-1"></a>hh <span class="ot">&lt;-</span> hh <span class="sc">%&gt;%</span></span>
+<span id="cb63-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb63-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-7" tabindex="-1"></a>    <span class="at">flag_low_primary_collection =</span> </span>
+<span id="cb63-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-8" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(village_id_pl) <span class="sc">&amp;</span> (village_id_pl <span class="sc">%in%</span> low_primary_collection_vil_ids)</span>
+<span id="cb63-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb63-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-10" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb63-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-11" tabindex="-1"></a>    household_id,</span>
+<span id="cb63-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-12" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>)</span>
+<span id="cb63-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb63-13" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="export-data-2" class="section level2 hasAnchor" number="6.5">
 <h2><span class="header-section-number">6.5</span> Export data<a href="construct-data-quality-flags-construct-sensitivity-flags.html#export-data-2" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb62-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-2" tabindex="-1"></a>   <span class="fu">file.path</span>(</span>
-<span id="cb62-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb62-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb62-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb62-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb62-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-7" tabindex="-1"></a>    <span class="st">&quot;hh-survey-constructed&quot;</span></span>
-<span id="cb62-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-8" tabindex="-1"></a>  )</span>
-<span id="cb62-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-9" tabindex="-1"></a></span>
-<span id="cb62-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-10" tabindex="-1"></a><span class="fu">write_meta</span>(</span>
-<span id="cb62-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-11" tabindex="-1"></a>  hh,</span>
-<span id="cb62-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-12" tabindex="-1"></a>  <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb62-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-13" tabindex="-1"></a>  <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb62-14"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb62-14" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb64-2"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-2" tabindex="-1"></a>   <span class="fu">file.path</span>(</span>
+<span id="cb64-3"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb64-4"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
+<span id="cb64-5"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb64-6"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb64-7"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-7" tabindex="-1"></a>    <span class="st">&quot;hh-survey-constructed&quot;</span></span>
+<span id="cb64-8"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-8" tabindex="-1"></a>  )</span>
+<span id="cb64-9"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-9" tabindex="-1"></a></span>
+<span id="cb64-10"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-10" tabindex="-1"></a><span class="fu">write_meta</span>(</span>
+<span id="cb64-11"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-11" tabindex="-1"></a>  hh,</span>
+<span id="cb64-12"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-12" tabindex="-1"></a>  <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb64-13"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-13" tabindex="-1"></a>  <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb64-14"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#cb64-14" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <table>
-<caption><span id="tab:unnamed-chunk-37">Table 6.1: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-39">Table 6.1: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -2275,7 +2258,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">Number of rows</td>
-<td align="left">4806</td>
+<td align="left">4378</td>
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
@@ -2339,7 +2322,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">10</td>
 <td align="right">13</td>
 <td align="right">0</td>
-<td align="right">4778</td>
+<td align="right">4350</td>
 <td align="right">0</td>
 </tr>
 </tbody>
@@ -2367,22 +2350,22 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="left">flag_low_quality</td>
 <td align="right">0</td>
 <td align="right">1</td>
-<td align="right">0.01</td>
-<td align="left">FAL: 4740, TRU: 66</td>
+<td align="right">0.02</td>
+<td align="left">FAL: 4312, TRU: 66</td>
 </tr>
 <tr class="even">
 <td align="left">flag_interference</td>
 <td align="right">0</td>
 <td align="right">1</td>
-<td align="right">0.09</td>
-<td align="left">FAL: 4350, TRU: 456</td>
+<td align="right">0.10</td>
+<td align="left">FAL: 3922, TRU: 456</td>
 </tr>
 <tr class="odd">
 <td align="left">flag_low_primary_collection</td>
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.00</td>
-<td align="left">FAL: 4806</td>
+<td align="left">FAL: 4378</td>
 </tr>
 </tbody>
 </table>
@@ -2395,7 +2378,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
         </div>
       </div>
 <a href="construct-chlorine-testing-variables-construct-chlorine-tests.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="combine-with-water-point-data.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="create-final-household-survey-data.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script>/*! jQuery v3.6.0 | (c) OpenJS Foundation and other contributors | jquery.org/license */

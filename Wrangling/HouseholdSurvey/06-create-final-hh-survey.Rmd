@@ -54,10 +54,10 @@ tests <-
   ) %>%
   select(
     key,
-    disctcr_c, disctcr_color, disctcr_c_02,
-    discfcr_c, discfcr_color, discfcr_c_02,
-    metertcr_c, metertcr_color, metertcr_c_02, metertcr_c_01,
-    meterfcr_c, meterfcr_color, meterfcr_c_02, meterfcr_c_01,
+    disctcr_c, disctcr_c_02,
+    discfcr_c, discfcr_c_02,
+    metertcr_c, metertcr_c_02, metertcr_c_01,
+    meterfcr_c, meterfcr_c_02, meterfcr_c_01,
   )
 ```
 
@@ -77,25 +77,30 @@ gps <-
   )
 ```
 
-### Promoter census
+### Village-level data
 
 ```{r}
-pm_survey <- 
+villages <-
   read_rds(
     file.path(
       path_box,
       "Data",
-      "PromoterSurvey",
+      "Villages",
       "DataSets",
       "Final",
-      "pm-survey.rds"
-      )
-    ) %>%
-  select(wp_id) %>%
-  unique %>%
-  mutate(promoter_wp = TRUE)
+      "Villages.rds"
+    )
+  ) %>%
+  select(
+    country, village_id, district_id,
+    sample_group, sample, vil_replaced, pre_expansion,
+    ea_program_vil,
+    team
+  ) %>%
+  mutate(
+    team = team %>% factor %>% as.numeric
+  )
 ```
-
 
 ### Household census
 
@@ -112,29 +117,68 @@ hh_census <-
     )
   ) 
 
-villages <-
-  hh_census %>%
-  select( 
-    country,
-    district_id, district, 
-    village, village_id,
-    sample_group, sample,
-    ea_program_vil,
-    vil_rain, potential_interference,
-    ilc_cluster_id, vil_replaced
-  ) %>%
-  unique
-
 hh_census <- 
   hh_census %>%
   select(
     household_id, wp_id = wp_id_c,
     wp_sec_notworking:vil_ilc_selfreport,
-    hh_dsw:wp_disctcr_un_02,
-    hhh_educ, hhh_gender, hhh_age_hhc = hhh_age,
+    hhh_educ_hhc = hhh_educ, hhh_gender_hhc = hhh_gender, hhh_age_hhc = hhh_age,
     hh_hhsincompound, hh_members, hh_adults, hh_males, hh_females, hh_pregnant,
     hh_under5, hh_under2
   )
+```
+
+### Water point census
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box, 
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed.rds"
+    )
+  ) %>%
+  transmute(
+    wp_id = wp_id_c,
+    promoter_wp = promoter_surveyed,
+    dsw, ilc, ilc_wp, ilc_wcp,
+    wp_dsw, wp_ilc, wp_ilc_device,
+    wp_func,
+    wp_intervention = intervention,
+    wp_intervention_type = intervention_type,
+    wp_sourcetype = sourcetype,
+    wp_turbidity,
+    wp_pay,
+    wp_dsw_valve = jc_valve, 
+    wp_dsw_chlorine = jc_chlorine, 
+    wp_dsw_dose = jc_mldispensed,
+    wp_meterfcr = meterfcr,
+    wp_metertcr = metertcr,
+    wp_discfcr = discfcr,
+    wp_disctcr = disctcr,
+    wp_meterfcr_un = meterfcr_un,
+    wp_metertcr_un = metertcr_un,
+    wp_discfcr_un = discfcr_un,
+    wp_disctcr_un = disctcr_un,
+    wp_meterfcr_01 = meterfcr_c_01,
+    wp_metertcr_01 = metertcr_c_01,
+    wp_meterfcr_un_01 = meterfcr_un_c_01,
+    wp_metertcr_un_01 = metertcr_un_c_01,
+    wp_meterfcr_02 = meterfcr_c_02,
+    wp_metertcr_02 = metertcr_c_02,
+    wp_discfcr_02 = discfcr_c_02,
+    wp_disctcr_02 = disctcr_c_02,
+    wp_meterfcr_un_02 = meterfcr_un_c_02,
+    wp_metertcr_un_02 = metertcr_un_c_02,
+    wp_discfcr_un_02 = discfcr_un_c_02,
+    wp_disctcr_un_02 = disctcr_un_c_02
+  ) %>%
+  st_drop_geometry() %>%
+  unique
 ```
 
 ## Combine data
@@ -150,10 +194,16 @@ assert_that(
 
 hh_survey_joined <-
   hh_survey %>%
-  left_join(tests, relationship = "one-to-one")
+  left_join(
+    tests, 
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
 ```
 
 ### Household census
+
+Not all households in the household survey are in the household census. It's not clear why!!
 
 ```{r eval = FALSE}
 assert_that(
@@ -161,21 +211,47 @@ assert_that(
 )
 
 hh_survey %>% 
-  dplyr::filter(!(household_id %in% hh_census$household_id)) %>%
+  mutate(in_census = household_id %in% hh_census$household_id) %>%
   view
+```
+
+```{r}
+hh_survey_joined <-
+  hh_survey_joined %>%
+  mutate(in_census = household_id %in% hh_census$household_id) %>%
+  left_join(
+    hh_census
+  )
+```
+
+### Water point data
+
+```{r}
+hh_survey_joined <-
+  hh_survey_joined %>%
+  mutate(
+    wp_id = case_when(
+      !is.na(wp_id) ~ wp_id,
+      !is.na(wp_id_pl) ~ paste0(village_id, str_sub(wp_id_pl, str_length(wp_id_pl) - 2, str_length(wp_id_pl)))
+    )
+  ) %>%
+  rename(
+    hh_dsw = wp_dsw,
+    hh_ilc = wp_ilc
+  )
 ```
 
 
 ```{r}
 hh_survey_joined <-
   hh_survey_joined %>%
-  rename(
-    wp_dsw_selfreport = wp_dsw_c,
-    wp_ilc_selfreport = wp_ilc_c
-  ) %>%
-  select(-c(wp_dsw, wp_ilc)) %>%
-  inner_join(hh_census, relationship = "many-to-one")
+  left_join(
+    wp, 
+    by = "wp_id",
+    relationship = "many-to-one"
+  )
 ```
+
 
 ## Select final variables
 
@@ -200,7 +276,6 @@ meta <-
   transmute(
     key,
     date,
-    hhs = TRUE,
     survey = survey_type %>%
       fct_recode(
         "Household Survey" = "Household Survey (HH Census Respondents)",
@@ -216,41 +291,53 @@ household <-
   hh_survey_joined %>%
   rename(
     resp_age = age_resp,
-    resp_sex = sex,
     resp_hhh = relation
   ) %>%
   mutate(
-    hhh_gender = coalesce(hhh_gender_c, hhh_gender),
-    resp_educ = 
-      case_when(
-        # Uganda
-        educ %in% c("Never attended school / did not complete class", "Informal Training") ~ "None",
-        educ %in% c("Pre-primary", "P1", "P2", "P3", "P4", "P5", "P6") ~ "Pre-primary",
-        educ %in% c("P7", "PLE", "S1", "S2", "S3") ~ "Primary",
-        educ %in% c("S4", "O level", "S5", "S6", "A level", "Polytechnic") ~ "Secondary",
-        educ %in% c("College (non-University)", "University") ~ "Post-secondary",
-        # Malawi
-        educ_mw == "No formal education / Never attended school" ~ "None",
-        educ_mw == "Some Primary School (Did not complete Standard 8)" ~ "Pre-primary",
-        educ_mw %in% c("Primary School Leaving Certificate (PSLCE) (Completed Standard 8)", "Junior Certificate of Education (JCE) (Completed Form 2)") ~ "Primary",
-        educ_mw %in% c("Malawi School Certificate of Education (MSCE) (Completed Form 4)", "Vocational/Technical Training (e.g., TEVETA certification)") ~ "Secondary",
-        educ_mw %in% c("Diploma (e.g., teaching, nursing, other post-secondary diploma)", "Bachelor's Degree") ~ "Post-secondary"
+    resp_age = case_when(
+      !is.na(resp_age) ~ resp_age,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_age_hhc) ~ hhh_age_hhc,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_age) ~ hhh_age
+    ),
+    resp_sex = case_when(
+      !is.na(sex) ~ sex %>% as.character(),
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_gender_hhc) ~ hhh_gender_hhc %>% as.character(),
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_gender) ~ hhh_gender %>% as.character()
+    ) %>%
+      as.factor,
+    resp_educ = case_when(
+      !is.na(educ) ~ educ,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_educ_hhc) ~ hhh_educ_hhc,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_educ) ~ hhh_educ
+    ) %>%
+      as.factor,
+    hhh_age = coalesce(hhh_age, hhh_age_hhc),
+    hhh_sex = coalesce(hhh_gender, hhh_gender_hhc),
+    hhh_educ = coalesce(hhh_educ, hhh_educ_hhc),
+    hh_under2 = coalesce(hh_under2, hh_under2_pl %>% as.numeric),
+    hh_under5 = coalesce(hh_under5, hh_under5_pl %>% as.numeric),
+    across(
+      c(hh_under5, hh_under2),
+      ~ if_else(
+        hh_adults == hh_members,
+        0,
+        .
       )
-  ) %>%
-  select(
-    key,
-    starts_with("resp_"),
-    hhh_gender,
-    starts_with("hh_")
-  ) %>%
-  select(
-    -c(
-      resp_signature, 
-      contains("hh_idbck"),
-      contains("_pl"),
-      contains("rand")
+    ),
+    hh_pregnant = if_else(
+      hh_females > 0,
+      hh_pregnant,
+      0
     )
-  )
+  ) %>%
+  select(
+    key, date, in_census,
+    resp_age, resp_sex, resp_educ, resp_hhh,
+    hhh_age, hhh_sex, hhh_educ,
+    hh_females, hh_males,
+    hh_adults, hh_members, hh_pregnant,
+    hh_under5, hh_under2
+  ) 
 ```
 
 ### Water point characteristics
@@ -260,12 +347,7 @@ wp <-
   hh_survey_joined %>%
   select(
     key,
-    wpuse_yn = use_waterpoint_c,
-    wpuse_whynot = notuse,
-    wpuse_whynot_o = notuse_ot,
-    wp_more_c,
-    wp_count_pastmonth,
-    wp_intervention_type
+    all_of(names(wp))
   )
 ```
 
@@ -274,31 +356,106 @@ wp <-
 ```{r}
 water <-
   hh_survey_joined %>%
-  mutate(water_sample = coalesce(glass_water, give_water)) %>%
+  mutate(
+    water_sample = coalesce(glass_water, give_water),
+    storage = case_when(
+      storage != "Other" ~ storage %>% as.character,
+      str_detect(other_cont, "Dish") ~ "Dish/basin",
+      str_detect(other_plastic, "Dish") ~ "Dish/basin",
+      str_detect(other_plastic, "dish") ~ "Dish/basin",
+      str_detect(other_plastic, "basin") ~ "Dish/basin",
+      str_detect(other_plastic, "Basin") ~ "Dish/basin",
+      str_detect(other_cont, "drum") ~ "Drum",
+      str_detect(other_plastic, "drum") ~ "Drum",
+      str_detect(other_plastic, "Drum") ~ "Drum",
+      str_detect(other_cont, "Bottle") ~ "Bottle",
+      str_detect(other_plastic, "bottle") ~ "Bottle",
+      str_detect(other_cont, "Flank") ~ "Flank",
+      str_detect(other_cont, "flank") ~ "Flank",
+    ) %>% factor,
+    cover_storage = 
+      case_when(
+        cover_storage != "Other" ~ cover_storage %>% as.character,
+        str_detect(str_to_lower(cover_storage_ot), "plate") ~ "Plate/cup",
+        str_detect(str_to_lower(cover_storage_ot), "cup") ~ "Plate/cup",
+        cover_storage_ot == "Nothing" ~ "Open"
+      ) %>% factor,
+    who_collected =
+      case_when(
+        who_collected != "Other" ~ who_collected,
+        household_id %in% c(
+          "CHET47407MW2", "CHB321206MW2", "CHN158362MW2", "CH03173610MW2", "CHXH58325MW2",
+          "CHQN45243MW2", "CHKA54451MW2", "MATX35044MW2", "CHBP37315MW2", "CHBK54151MW2",
+          "SIEA58412321", "ZOLZ17001MW2"
+        ) ~ "A child under the age of 18 years",
+        household_id %in% c(
+          "CHAG18155MW2", "NEKI27026MW2", "MA3K42285887", "CHJK44344MW2", "CHCO58353MW2",
+          "CH7R23269MW2", "ZO4A03555MW2", "MA4G33312513", "MA8S07569211", "MAPU09515762",
+          "BUJG14185225", "ZOW540534MW2", "NA22486111", "BUZH14335143", "BLXE24195MW2",
+          "CH7U52314MW2", "CHGH092910MW2", "MAT458073762", "BUWY212610513", "KA0L48554892",
+          "ZOKD31562MW2", "CH5C22257MW2", "CHRK391210MW2", "BURV45545887", "BU3C21345887",
+          "CH5Z18377MW2", "KA58112892", "CH8Z15101MW2", "CHY119352MW2", "TOUA44262333", 
+          "CHIO53465MW2", "MAY522097MW2", "NA67440410391", "BLMX16575MW2", "MADR37079111", 
+          "MAAD25241111", "NEEJ04559MW2", "BUHC21219513"
+        ) ~ "Another relative 18 years old or older"
+      ) %>% factor,
+    age_child = case_when(
+      !is.na(age_child) ~ age_child,
+      household_id == "CHBP37315MW2" ~ 11,
+      household_id %in% c("CH03173610MW2", "CHBK54151MW2", "SIEA58412321") ~ 13,
+      household_id %in% c("CHET47407MW2", "CHN158362MW2") ~ 14,
+      household_id == "MATX35044MW2" ~ 15,
+      household_id %in% c("CHB321206MW2", "CHQN45243MW2", "CHKA54451MW2") ~ 16,
+      household_id == "CHXH58325MW2" ~ 17,
+    ),
+    prepare_water = if_else(
+      prep_different_0 & !prep_different_1,
+      FALSE,
+      prepare_water_c
+    ),
+    size = case_when(
+      size != "Other (specify)" ~ parse_number(size %>% as.character),
+      size == "Other (specify)" ~ size_ot %>% as.numeric
+    ),
+    notgivewater = case_when(
+      notgivewater != "Other" ~ notgivewater %>% as.character,
+      notgivewater == "Other" & household_id != "SIWK01128700" ~ "Drinking water is finished and the respondent is yet to fetch.",
+      household_id == "SIWK01128700" ~ "Other"
+    ) %>% factor
+  ) %>%
   select(
     key, wp_id,
-    prepare_water = prepare_water_c,
-    starts_with("prep_different_"),
+    prep_different_cl = prep_different_1,
+    prep_different_filter = prep_different_2,
+    prep_different_boil = prep_different_3,
+    prep_different_other = prep_different__666,
+    prep_different_specify = prep_different_ot,
     water_sample,
     notgivewater, notgivewater_ot,
-    storage, other_cont, other_plastic, 
-    access_contain, access_contain_ot, 
-    cover_storage, cover_storage_ot,
+    storage,
+    access_contain,
+    cover_storage,
     howlong_waterprep, 
     who_collected, who_collected_ot,
     age_child, size, size_ot,
     watertreat_any = do_anything_c,
-    starts_with("make_watersafe_"),
+    watertreat_boil = make_watersafe_1,
+    watertreat_dispcl = make_watersafe_2,
+    watertreat_othercl = make_watersafe_3,
+    watertreat_strain = make_watersafe_4,
+    watertreat_filter = make_watersafe_5,
+    watertreat_sand = make_watersafe_6,
+    watertreat_solar = make_watersafe_7,
+    watertreat_decant = make_watersafe_8,
+    watertreat_other = make_watersafe__666,
+    watertreat_dk = make_watersafe__999,
     mix = mix_c, 
     where_collect, where_collect_ot,
     collect, collect_oth,
     starts_with("int_")
   ) %>%
   select(
-    -c(int_promoter, int_warned),
-    -ends_with("pl"),
-    -matches("make_watersafe(*)_c"),
-    -matches("prep_different(*)_c")
+    -c(int_promoter, int_warned)
   )
 ```
 
@@ -307,9 +464,45 @@ water <-
 ```{r}
 water_treatment <-
   hh_survey_joined %>%
+  rename(
+    tmtever_none = everdo_0,
+    tmtever_pretreated = everdo_22,
+    tmtever_boil = everdo_1,
+    tmtever_dispcl = everdo_2,
+    tmtever_othercl = everdo_3,
+    tmtever_strain = everdo_4,
+    tmtever_filter = everdo_5,
+    tmtever_sand = everdo_6,
+    tmtever_decant = everdo_8,
+    tmtever_other = everdo__666,
+    tmtever_specify = everdo_ot,
+    tmtever_dk = everdo__999,
+    notchlorinate_smell = reason_notchlorinate_1,
+    notchlorinate_taste = reason_notchlorinate_2,
+    notchlorinate_forget = reason_notchlorinate_3,
+    notchlorinate_clean = reason_notchlorinate_4,
+    notchlorinate_hh = reason_notchlorinate_5,
+    notchlorinate_empty = reason_notchlorinate_6,
+    notchlorinate_sick = reason_notchlorinate_7,
+    notchlorinate_access = reason_notchlorinate_8,
+    notchlorinate_other = reason_notchlorinate__666,
+    notchlorinate_specify = reason_notchlorinate_ot
+  ) %>%
+  # Recode 'other' values
+  mutate(
+    tmtever_othercl = if_else(household_id == "TOES50136413", TRUE, tmtever_othercl),
+    tmtever_solar = if_else(!tmtever_none, household_id == "NA3544277536", NA),
+    tmtever_pretreated = if_else(household_id == "BLLW59407MW2", TRUE, tmtever_pretreated),
+    tmtever_none = if_else(
+      !if_any(c(tmtever_pretreated:tmtever_decant, tmtever_dk, tmtever_solar), ~ .x), 
+      TRUE, 
+      tmtever_none
+    )
+  ) %>%
   select(
-    key, contains("everdo_"), 
-    contains("reason_notchlorinate_"),
+    key, 
+    starts_with("tmtever"), 
+    starts_with("notchlorinate"),
     often_chlorinate
   )
 ```
@@ -338,10 +531,10 @@ final <-
   left_join(water) %>%
   left_join(water_treatment) %>%
   left_join(tests) %>%
-  left_join(pm_survey) %>%
   left_join(flags) %>%
   dplyr::filter(!vil_replaced) %>%
-  remove_empty()
+  remove_empty() %>%
+  remove_constant
 ```
 
 

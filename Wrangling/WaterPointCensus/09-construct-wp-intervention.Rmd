@@ -1,0 +1,125 @@
+# Construct treatment variables
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  )
+```
+
+## Make corrections
+
+Corrections from manually checking the maps and matches
+
+```{r}
+manual_treatment <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "ilc-dsw-corrections.csv"
+    )
+  ) %>%
+  rename(correction_comments = comments)
+
+assert_that(
+  manual_treatment %>% 
+    pull(wp_id) %>%
+    n_distinct
+  ==
+    nrow(manual_treatment)
+)
+```
+
+## Create indicators
+
+```{r}
+wp_tmt <-
+  wp %>%
+  left_join(manual_treatment) %>%
+  mutate(
+    dsw = coalesce(dsw, wp_dsw),
+    ilc_wp = coalesce(ilc_wp, wp_ilc_device),
+    ilc_wcp = coalesce(ilc_wcp, wp_ilc),
+    across(
+      c(dsw, ilc_wp, ilc_wcp),
+      ~ case_when(
+        wp_drink & wp_multicompound ~ tidyr::replace_na(., FALSE),
+        TRUE ~ NA
+      )
+    ),
+    ilc = ilc_wp | ilc_wcp,
+    intervention_type = case_when(
+      dsw ~ "DSW",
+      ilc_wp ~ "ILC water point",
+      ilc_wcp ~ "ILC water collection point",
+      !is.na(dsw) ~ "Non-program"
+    ) %>% 
+      as_factor,
+    intervention = case_when(
+      dsw ~ "DSW",
+      ilc ~ "ILC",
+      !is.na(dsw) ~ "Non-program"
+    ) %>% 
+      as_factor
+  ) %>%
+  select(
+    wp_id,
+    dsw, ilc, ilc_wp, ilc_wcp,
+    intervention, intervention_type
+  ) %>%
+  unique
+```
+
+```{r}
+assert_that(
+  nrow(wp_tmt) == n_distinct(wp_tmt$wp_id)
+)
+```
+
+```{r}
+wp_tmt %>%
+  group_by(wp_id) %>%
+  dplyr::filter()
+```
+
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-treatment"
+  )
+
+write_meta(
+  wp_tmt,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+

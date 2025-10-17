@@ -1,0 +1,3735 @@
+---
+title: "Process water point census"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+---
+
+# Introduction
+
+This document cleans and processes data from the water point census.
+
+<!--chapter:end:index.Rmd-->
+
+# Import water point census data 
+
+```{r 01-import-census}
+pacman::p_load(
+  tidyverse,
+  haven,
+  janitor
+)
+```
+
+## Load water point dataset
+
+```{r}
+wp_raw_ug <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "1_Water point Census",
+      "DIL Water Point Census_checked.dta"
+    )
+  )
+
+wp_raw_ug_ilc <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "1_Water point Census",
+      "ILC",
+      "2_dta",
+      "DIL Water Point Census_checked_V3.dta"
+    )
+  )
+
+wp_raw_mw <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "1_waterpoint_census",
+      "DIL_Waterpoint_Checked_Malawi.dta"
+      )
+    ) 
+```
+
+We want to conduct the wrangling and HFCs for both countries at the same time, so we combine them here.
+
+```{r}
+wp_raw <-
+  map(
+    list(
+      wp_raw_mw, 
+      wp_raw_ug
+      #, wp_raw_ug_ilc
+    ),
+    ~ .x %>%
+      remove_empty %>% 
+      mutate(
+        across(
+          c(
+            contains(c("duration", "timestamp"))
+          ), 
+          ~ as.numeric(.x)
+        )
+      )
+  ) %>%
+  bind_rows %>%
+  as_factor(levels = "labels")
+```
+
+## Save into R format
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Raw",
+    "wp-census"
+  )
+
+wp_raw %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+## De-identify
+
+```{r}
+wp_raw_deid <-
+  wp_raw %>%
+  dplyr::filter(month(submissiondate) < 9) %>%
+  select(
+    -c(
+      enumerator,
+      enumerator_name,
+      wp_name_1:cal_wp_name,
+      wp_landmarks
+    )
+  )
+
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Raw",
+    "wp-census-deid"
+  )
+  
+
+wp_raw_deid %>%
+  write_dta(
+    file.path(
+      path_box,
+      paste0(path, ".dta")
+    )
+  )
+
+wp_raw_deid %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+<!--chapter:end:01-import-census.Rmd-->
+
+# Clean Water Point Census 
+
+In this script, we tidy the water point census by fixing the naming of 
+observations and format variables.
+
+```{r clean-census}
+pacman::p_load(
+  tidyverse,
+  haven,
+  janitor,
+  assertthat
+)
+```
+
+```{r}
+wp_raw <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Raw",
+      "wp-census.rds"
+      )
+  )
+```
+
+
+## Create unique ID
+
+In Malawi and Uganda, enumerators will only go to villages in the sample, so we don't need to worry about filtering.
+
+We also check that `key` is unique.
+
+```{r}
+assert_that(
+  n_distinct(wp_raw$key) == nrow(wp_raw)
+)
+```
+
+## Corrections
+
+```{r}
+wp_corrected <-
+  wp_raw %>%
+  mutate(
+    across(
+      village_id_pl,
+      ~ case_when(
+        . == "1050304002" ~ "1050702004",
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+
+## Replace NAs
+
+Some of the "don't know" and "unsure" values in the survey are coded differently, so we standardize them to 9999. -666 corresponds to "other," but we deal with this later.
+
+```{r}
+wp_clean <- 
+  wp_corrected %>%
+  mutate(
+    across(
+      where(is.character),
+      ~ . %>%
+        na_if("[.]") %>%
+        na_if("")
+    ),
+    across(
+      where(is.numeric),
+      ~ . %>% 
+        na_if(-999) %>%
+        na_if(999) %>%
+        na_if(9999)
+    ),
+    across(
+      where(~ all(unique(.) %in% c(0, 1, NA))),
+      ~ as.logical(.)
+    ),
+    across(
+      where(is_dummy),
+      ~ (. == "Yes")
+    ),
+    across(
+      where(~ is.factor(.) & all(levels(.) %in% c("Don't know", "No", "Yes", NA))),
+      ~ case_when(
+        . == "Yes" ~ TRUE,
+        . == "No" ~ FALSE
+      ),
+      .names = "{.col}"
+    ),
+    across(
+      c(ilc_tabletstock, contains("timestamp")),
+      as.numeric
+    )
+  ) 
+```
+
+## Clean text variables
+
+```{r}
+wp_clean <- 
+  wp_clean %>%
+   mutate(
+    # first across: wp_name* and *_pl (minus 2 exceptions)
+    across(
+     where(is.character),
+     ~ ifelse(
+       grepl("photo|uuid", .x), 
+       .x, 
+       str_to_upper(.x)
+     )
+    ),
+    across(
+      c(disp_dsw_id),
+      ~ as.numeric(.)
+    )
+  )
+```
+
+## Clean date of survey
+
+We have submissiondate, starttime, endtime, and today as date variables from the survey.
+
+We will use "submissiondate" for the date.
+
+```{r}
+wp_clean <- 
+  wp_clean %>%
+  mutate(
+    date = as_date(ymd_hms(submissiondate))
+  ) %>%
+  dplyr::filter(date >= ymd("2025-06-17"))
+```
+
+## Rename variables indicating which sections where completed
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  dplyr::select(-c(key_pl, village, country, sections)) %>%
+  rename(
+    spotcheck = sections_1,
+    colorwheel = sections_2,
+    colorimeter = sections_3,
+    colorwheel_un = sections_4,
+    colorimeter_un = sections_5,
+    no_testing = sections_0
+    ) %>% 
+  rename_with(
+    ~ str_remove_all(.x, "_pl"),
+    ends_with("_pl")
+  )
+```
+
+## Clean location variables
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  mutate(
+    wp_id,
+    country = country %>% str_to_title %>% as_factor,
+    district_id = coalesce(districtmw, districtug),
+    district = district %>% str_to_title %>% as_factor,
+    village = village_name %>% str_to_title %>% as_factor
+  )
+```
+
+## Remove surveycto coding variables
+
+```{r}
+wp_clean <-
+  wp_clean %>% 
+  select(
+    where(~ !all(.x %in% c("Acknowledged. Please continue", NA))),
+    -contains(
+      c(
+        "_materials_",
+        "cr_confirm"
+      )
+    ),
+    -c(
+      ends_with("_label"),
+      lead_zero,
+      water_point_rpt_count,
+      contains("index"),
+      contains("crhr"),
+      wp_func_reason,
+      wp_func_reason_ilc,
+      wp_pay_purpose,
+      disp_dsw_id2,
+      disp_barcode2,
+      ilc_devicepic_na,
+      ilc_stock_whynot_1,
+      ilc_stock_whynot__666,
+      jc_mldispensed2,
+      jc_wait,
+      meterfcr_timestamp0_hfc:`_hfcokayvar`
+    )
+  ) %>%
+  remove_empty() %>%
+  remove_constant() 
+```
+
+## Clean photo paths
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  mutate(
+    across(
+      contains(c("photo", "pic", "metadata")),
+      ~ . %>% 
+        str_remove_all("https://dilsurvey.surveycto.com/view/submission-attachment/") %>%
+        str_replace("\\?.*", "") %>%
+        str_remove_all("MEDIA\\\\")
+    )
+  )
+```
+
+## Manual corrections
+
+```{r}
+wp_clean <-
+  wp_clean %>%
+  dplyr::filter(
+    !(village_id == 2050706034 & today == "2025-AUG-7")
+  )
+```
+
+## De-identify
+
+```{r}
+wp_raw_deid <-
+  wp_clean %>%
+  select(
+    -c(
+      enumerator,
+      enumerator_name,
+      wp_name_1:cal_wp_name,
+      wp_landmarks
+    )
+  )
+```
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Clean",
+    "wp-census-clean"
+  )
+
+wp_clean %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+<!--chapter:end:02-clean-census.Rmd-->
+
+# Construct water point characteristics
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Process variables
+
+### IDs and meta data
+
+```{r}
+ids <-
+  wp %>%
+  mutate(
+    # comments indicate that these are functional
+    wp_func_c = case_when(
+      wp_id %in% c("WP2101104017001", "WP2030409076001", "WP2070301001045") ~ TRUE,
+      TRUE ~ wp_func
+    ),
+    wp_use_howmuch = if_else(
+      !wp_use,
+      "None",
+      as.character(wp_use_howmuch)
+    ),
+    dsw_use_howmuch = if_else(
+      !dsw_use,
+      "None",
+      as.character(dsw_use_howmuch)
+    ), 
+  ) %>%
+  select(
+    key, wp_id, date,
+    country, district_id, village_id, 
+    enumerator_id, submissiondate,
+    wp_name = wp_name_1,
+    wp_photo,
+    # inclusion criteria
+    wp_drink, wp_multicompound, 
+    wp_func, wp_func_c,
+    wp_use_howmuch, dsw_use_howmuch,
+    wp_promoter,
+    enum_comment
+  )
+```
+
+
+### Type of water source
+
+We create a simplified version of source type that groups similar source types 
+together. We will use this column to check for duplicates.
+
+We also will also replace missing values in source type to "Other". 
+
+```{r}
+sourcetype <-
+  wp %>% 
+  rename(sourcetype = wp_type) %>% 
+  transmute(
+    key, wp_id,
+    sourcetype,
+    sourcetype_o = wp_type_o,
+    sourcetype_simp = case_when(
+      str_detect(sourcetype, "Borehole") ~ "Borehole",
+      str_detect(sourcetype, "well") ~ "Dug well",
+      str_detect(sourcetype, "spring") ~ "Spring",
+      sourcetype %in% c("Municipal water supply", "Rainwater collection") ~ sourcetype,
+      str_detect(sourcetype, "water source") ~ "Surface water",
+      !is.na(sourcetype) ~ "Other"
+    )
+  )
+```
+
+### Intervention
+
+```{r}
+intervention <-
+  wp %>%
+  select(
+    key, wp_id,
+    wp_dsw, wp_ilc_device, wp_ilc
+  )
+```
+
+## Combine all
+
+```{r}
+wp_chars <-
+  ids %>%
+  inner_join(
+    sourcetype,
+    unmatched = "error"
+  ) %>%
+  inner_join(
+    intervention,
+    unmatched = "error"
+  )
+```
+
+## Check data
+
+We should have on average five observations for each water point, one per enumerator
+
+```{r}
+wp_chars %>%
+  group_by(wp_id) %>%
+  summarise(n()) %>%
+  tabyl(`n()`)
+```
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-id"
+  )
+
+write_meta(
+  wp_chars,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:03-construct-wp-characteristics.Rmd-->
+
+# Construct spotcheck variables
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Water point spotcheck
+
+```{r}
+spotcheck <-
+  wp %>%
+  dplyr::filter(spotcheck) %>%
+  remove_empty() %>%
+  transmute(
+    key, wp_id, submissiondate,
+    spotcheck,
+    spotcheck_enum = enumerator_id,
+    wp_func_last,
+    wp_turbidity,
+    # These are multiple choice questions and we're clarifying the options chosen
+    wp_notfunc_dry = wp_func_reason_1, 
+    wp_notfunc_pump = wp_func_reason_2,
+    wp_notfunc_ilc_dry = wp_func_reason_ilc_1,
+    wp_notfunc_ilc_pump = wp_func_reason_ilc_2,
+    wp_notfunc_ilc_pipe = wp_func_reason_ilc_3,
+    wp_notfunc_ilc_tank = wp_func_reason_ilc_4,
+    wp_notfunc_ilc_closed = wp_func_reason_ilc_5,
+    wp_notfunc_ilc_power = wp_func_reason_ilc_7,
+    wp_notfunc_ilc_panel = wp_func_reason_ilc_8,
+    # The comments indicate this water point is not paid for
+    wp_pay,
+    wp_pay_c = if_else(
+      wp_id != "WP2010503012013", wp_pay, FALSE
+    ),
+    wp_pay_userfees = if_else(
+      wp_id != "WP2010503012013", wp_pay_purpose_1, NA
+    ),
+    wp_pay_maintenance = if_else(
+      wp_id != "WP2010503012013", wp_pay_purpose_2, NA
+    ),
+    wp_cost, wp_cost_period
+  ) %>%
+  # Comments indicate that these are functional
+  mutate(
+    across(
+      contains("wp_notfunc"),
+      ~ case_when(
+         !(wp_id %in% c("WP2101104017001", "WP2030409076001", "WP2070301001045")) ~ .
+      )
+    )
+  )
+```
+
+## ILC spotcheck
+
+```{r}
+ilc <-
+  wp %>%
+  dplyr::filter(spotcheck) %>%
+  remove_empty() %>%
+  select(
+    key, wp_id, submissiondate,
+    starts_with("ilc"),
+    -c(ilc_stock_whynot, ilc_stock_whynot_o)
+  ) %>%
+  dplyr::filter(!if_all(starts_with("ilc"), is.na))
+```
+
+```{r eval = FALSE}
+assert_that(
+  nrow(ilc) == n_distinct(ilc$wp_id)
+)
+
+ilc %>%
+  select(-c(key, submissiondate, ilc_devicepic)) %>%
+  unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  select(wp_id) %>%
+  unique %>%
+  left_join(ilc) %>%
+  view
+```
+
+When there are duplicate entries, we select the cases with the most information
+
+```{r}
+drop_keys <-
+  c(
+    "uuid:943da487-2f36-480d-8735-cc21a3bcf369",
+    "uuid:f4cd117d-044a-412a-9f00-b0e48ba726be",
+    "uuid:25668b37-c830-479d-9518-0c35ce1dbabe",
+    "uuid:b268b55c-21dc-4238-a73b-f10b76650709",
+    "uuid:369493b7-fc52-4db4-a60e-86cee305b707"
+  )
+
+ilc <-
+  ilc %>%
+  dplyr::filter(!(key %in% drop_keys))
+```
+
+## DSW spotchecks 
+
+```{r}
+dsw <-
+  wp %>%
+  dplyr::filter(spotcheck) %>%
+  select(
+    key, wp_id, submissiondate,
+    contains("disp"),
+    -c(
+      disp_dsw_id_yn,
+      disp_barcode_yn,
+      disp_dsw_date_yn,
+      no_disp_dsw_datephoto,
+      jc_mldispensed
+    )
+  ) %>%
+  dplyr::filter(!if_all(starts_with("disp"), is.na))
+```
+
+There are some duplicates because of different dispeser installation dates. We cannot tell which ones are correct.
+
+```{r eval = FALSE}
+assert_that(
+  nrow(dsw) == n_distinct(dsw$wp_id)
+)
+
+dsw %>%
+  select(-c(key, ends_with("photo"), submissiondate)) %>%
+  unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  select(wp_id) %>%
+  unique %>%
+  left_join(dsw) %>%
+  view
+```
+## Combine all
+
+```{r}
+spotcheck <-
+  spotcheck %>%
+  left_join(ilc, unmatched = "error") %>%
+  left_join(dsw, unmatched = "error") %>%
+  rename(
+    spotcheck_key = key,
+    spotcheck_time = submissiondate
+  )
+```
+
+
+## Check data
+
+There should be only one observation per WP, but there are `r spotcheck %>% group_by(wp_id) %>% summarise(n = n()) %>% dplyr::filter(n > 1) %>% nrow` cases of duplicate observations. 
+
+If all the information is the same and there are just two observations, we will choose the observation randomly.
+
+```{r}
+spotcheck_no_conflicts <-
+  spotcheck %>%
+  group_by(
+    across(
+      -c(
+        spotcheck_key, spotcheck_time,
+        contains(c("photo", "pic", "enum"))
+      )
+    )
+  ) %>%
+  mutate(count = n_distinct(spotcheck_key)) %>%
+  group_by(wp_id) %>%
+  dplyr::filter(
+    count == n(),
+    spotcheck_key == max(spotcheck_key)
+  ) 
+```
+
+
+```{r}
+spotcheck_conflicts <-
+  spotcheck %>%
+  group_by(
+    across(
+      -c(
+        spotcheck_key, spotcheck_time,
+        contains(c("photo", "pic", "enum"))
+      )
+    )
+  ) %>%
+  mutate(count = n_distinct(spotcheck_key)) %>%
+  group_by(wp_id) %>%
+  dplyr::filter(
+    count != n()
+  )
+```
+
+In `r spotcheck_conflicts %>% pull(wp_id) %>% n_distinct` water points, there is some conflicting information. These are water points that were revisited. We will keep only the last observation in these cases
+
+```{r}
+spotcheck <-
+  spotcheck_conflicts %>%
+  group_by(wp_id) %>%
+  dplyr::filter(spotcheck_time == max(spotcheck_time)) %>% 
+  mutate(flag_wpcensus_conflict = TRUE) %>%
+  bind_rows(spotcheck_no_conflicts) %>%
+  arrange(wp_id) %>%
+  ungroup
+```
+
+Check that there are no more duplicates
+
+```{r}
+assert_that(
+  spotcheck %>%
+    pull(wp_id) %>%
+    n_distinct() ==
+  nrow(spotcheck)
+)
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-spotcheck"
+  )
+
+write_meta(
+  spotcheck,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:04-construct-wp-spotcheck.Rmd-->
+
+# Construct chlorine test sections
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Select relevant variables and observations
+
+### Dispenser fill check
+
+```{r}
+jc <-
+  wp %>%
+  dplyr::filter(!is.na(jc_valve)) %>%
+  transmute(
+    wp_id,
+    jc_key = key,
+    jc_enum = enumerator_id,
+    jc_time = submissiondate,
+    jc_wait = as.numeric(jc_wait_diff) %>% abs,
+    jc_comments = enum_comment,
+    disp_func = jc_valve,
+    disp_filled = jc_chlorine,
+    disp_dose = 
+      case_when(
+        jc_mldispensed > 3 ~ "More than 3 mL",
+        jc_mldispensed == 3 ~ "3 mL",
+        jc_mldispensed > 2.5 & jc_mllost ~ "3 mL",
+        jc_mldispensed > 2.5 & !jc_mllost ~ "Less than 3 mL",
+        jc_mldispensed < 2.5 ~ "Less than 3 mL",  
+      ) %>%
+      factor(
+        levels = c("Less than 3 mL", "3 mL", "More than 3 mL"),
+        ordered = TRUE
+      )
+  ) %>%
+  dplyr::filter(
+    !if_all(-c(jc_key, jc_enum, jc_time), is.na),
+    # There are still two identical observations
+    jc_key != "uuid:b92929ea-efc8-4ff9-8247-e0f37d3db788"
+  )
+```
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+jc_unique <-
+  jc %>%
+  group_by(wp_id) %>%
+  dplyr::filter(jc_time == max(jc_time))
+```
+
+### Select only color wheel tests
+
+```{r}
+cw <-
+  wp %>%
+  dplyr::filter(
+    !key %in% c(
+      "uuid:9c596760-afc9-45b3-90e7-5af700e858ef",
+      "uuid:6e628649-b8a2-4e07-9f5e-d571f776aa33"
+    ),
+    colorwheel
+  ) %>%
+  select(
+    wp_id,
+    colorwheel,
+    cw_key = key,
+    cw_enum = enumerator_id,
+    cw_time = submissiondate,
+    contains("tubeid"),
+    contains("disc"),
+    -contains("nocl"),
+    -contains("un"),
+    starts_with("jc_"),
+    -contains(c("materials", "insert", "rinse", "_nt", "_read")),
+    -ends_with(c("check", "confirm"))
+  )  %>%
+  dplyr::filter(!if_all(-c(cw_key, cw_enum, cw_time), is.na))
+```
+
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+cw_unique <-
+  cw %>%
+  group_by(wp_id) %>%
+  dplyr::filter(cw_time == max(cw_time))
+```
+
+```{r}
+assert_that(
+  cw_unique %>%
+    pull(wp_id) %>%
+    n_distinct == 
+  nrow(cw_unique)
+)  
+```
+
+
+### Select only colorimeter tests
+
+```{r}
+meter <-
+  wp %>%
+  dplyr::filter(
+    colorimeter,
+    !(key %in% c(
+      "uuid:988c326e-3e50-4ee4-ad24-3700cacf5051"
+    ))
+  ) %>%
+  select(
+    wp_id,
+    colorimeter,
+    meter_key = key, 
+    meter_enum = enumerator_id,
+    meter_time = submissiondate,
+    contains("vialid"),
+    contains("meter"),
+    -contains("nocl"),
+    -contains("un"),
+    meter_comments = enum_comment,
+    -contains(c("materials", "insert", "rinse", "_read", "intro")),
+    -ends_with(c("check", "confirm", "_nt"))
+  ) %>%
+  dplyr::filter(!if_all(-c(meter_key, meter_enum, meter_time), is.na))
+```
+
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+meter_unique <-
+  meter %>%
+  group_by(wp_id) %>%
+  dplyr::filter(meter_time == max(meter_time))
+```
+
+
+```{r}
+assert_that(
+  meter_unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  nrow 
+  == 0
+)  
+```
+
+### Select only untreated color wheel tests
+
+```{r}
+cw_nocl <-
+  wp %>%
+  dplyr::filter(colorwheel_un) %>%
+  select(
+    wp_id,
+    colorwheel_un,
+    cw_nocl_key = key, 
+    cw_nocl_enum = enumerator_id,
+    cw_nocl_time = submissiondate,
+    discid_nocl:disctcr_nocl_comments,
+    -contains(c("materials", "insert", "rinse", "_nt", "_read")),
+    -ends_with(c("check", "confirm"))
+  ) %>%
+  dplyr::filter(!if_all(-c(cw_nocl_key, cw_nocl_enum, cw_nocl_time), is.na))
+```
+
+```{r eval = FALSE}
+cw_nocl %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  arrange(wp_id, cw_nocl_time) %>%
+  view
+```
+
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+cw_nocl_unique <-
+  cw_nocl %>%
+  group_by(wp_id) %>%
+  dplyr::filter(cw_nocl_time == max(cw_nocl_time))
+```
+
+```{r}
+assert_that(
+  cw_nocl_unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  nrow 
+  == 0
+)  
+```
+
+### Select only untreated colorimeter tests
+
+```{r}
+meter_nocl <-
+  wp %>%
+  dplyr::filter(colorimeter_un) %>%
+  select(
+    wp_id,
+    colorimeter_un,
+    meter_nocl_key = key, 
+    meter_nocl_enum = enumerator_id,
+    meter_nocl_time = submissiondate,
+    meterid_un:metertcr_nocl_timestamp6,
+    -contains(c("materials", "insert", "rinse", "_read", "intro")),
+    -ends_with(c("check", "confirm", "_nt"))
+  ) %>%
+  group_by(wp_id) %>%
+  dplyr::filter(!if_all(-c(meter_nocl_key, meter_nocl_enum, meter_nocl_time), is.na)) %>%
+  dplyr::filter(meter_nocl_time == max(meter_nocl_time))
+```
+
+```{r eval = FALSE}
+assert_that(
+  meter_nocl %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  nrow 
+  == 0
+)  
+```
+
+## Combine all
+
+```{r}
+tests <-
+  jc_unique %>%
+  full_join(cw_nocl_unique, relationship = "one-to-one") %>%
+  full_join(meter_nocl, relationship = "one-to-one") %>%
+  full_join(cw_unique, relationship = "one-to-one") %>%
+  full_join(meter_unique, relationship = "one-to-one") %>%
+  ungroup
+```
+```{r}
+assert_that(
+  nrow(tests) == n_distinct(tests$wp_id)
+)
+
+assert_that(
+  tests %>%
+    group_by(wp_id) %>%
+    dplyr::filter(n() > 1) %>%
+    nrow ==
+    0
+)
+```
+
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-constructed-tests"
+  ) 
+
+tests %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+<!--chapter:end:05-construct-wp-tests.Rmd-->
+
+# Construct water point location
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "sf",
+    "skimr",
+    "janitor",
+    "haven"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+
+```{r}
+wp <-
+  read_rds(
+    here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-characteristics.rds"
+    )
+  )
+```
+
+## Create spatial version of the data set
+
+We choose to project the coordinates to the [EPSG code](https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf) `4326`, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. 
+
+```{r}
+wp_sf <- 
+  wp %>%
+  st_as_sf(
+    coords = c("wp_gpslongitude", "wp_gpslatitude"), 
+    crs = 4326
+  ) 
+```
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-gps-clean"
+  ) 
+
+wp_sf %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+<!--chapter:end:06-construct-wp-location.Rmd-->
+
+# Construct distances between water points
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "sf",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r}
+sources_clean_sf <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-clean.rds"
+    )
+  )
+```
+
+Separate data frame into district-level data frames to reduce run time.
+
+```{r}
+sources_district <-
+  sources_clean_sf %>%
+  group_by(district) %>%
+  group_split
+```
+
+Calculate distances between all water points in the same district
+
+```{r}
+sources_dist <-
+  sources_district %>%
+  map(
+    ~ st_distance_df(
+      ., "key",
+      ., "key"
+    )
+  ) %>%
+  bind_rows() %>% 
+  dplyr::filter(
+    key.x != key.y
+  )
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "water-point-distances"
+  )
+
+write_meta(
+  sources_dist,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:07-construct-wp-distances.Rmd-->
+
+# Collapse census
+
+For the water point census, each water point will be visited by a group of enumerators.
+All enumerators will complete up to section 2, and the other sections will be completed by a subset of the enumerators
+The purpose of this script is to collapse these observations into 1 by checking if they match on key variables.
+We will flag observations as matches and flag non-matches to print in the HFCs.
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "viridis",
+    "skimr",
+    "janitor",
+    "assertthat",
+    "scales",
+    "leaflet",
+    "sf",
+    "stringdist"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+```{r}
+test_obs <-
+  c(
+    "uuid:2d779cb5-c7e7-4207-8a52-f77aa96d7326",
+    "uuid:2f5dbf50-a0de-49e5-a4ae-2a0edd530062",
+    "uuid:7273e785-af52-4269-a884-0cbd82f53d79",
+    "uuid:045484a0-b3eb-4fa8-bbda-9260601c089d",
+    "uuid:adc1d56c-ccd7-467a-8c1b-051b13fc15b5",
+    "uuid:c771d79c-3c10-45be-bf94-3483a5c1bb54",
+    "uuid:f6b6a654-a356-4884-8e02-743e2a6a472e",
+    "uuid:8bf1e4e9-e376-4897-8ff6-507f36376d5f",
+    "uuid:87a21ef1-1f91-4ea8-8744-98a03560c6e8"
+  )
+```
+
+These are cases where one enumerator entered one field incorrectly. In these cases, we will take the mode of the response for each variable.
+
+```{r}
+mismatches_checked <-
+  c(
+    "2030602007012",
+    "2030602007011",
+    "2050908035007",
+    "2100501004006",
+    "2030409076002",
+    "2030602007013",
+    "2011515073002",
+    "2101447374004",
+    "2030409076001",
+    "2030602007019",
+    "2030602007015",
+    "2041805024002",
+    "2030602007018",
+    "2050906028002",
+    "2052104020009",
+    "2030602007004",
+    "2011507019001",
+    "2011515073008",
+    "2011507019003",
+    "2101416144002",
+    "2030602007016",
+    "2101412111015",
+    "2100718156004",
+    "2030602007017",
+    "2011507019002",
+    "1170404009007",
+    "1110504004011",
+    "1040705006006",
+    "1160903004001",
+    "1151005002002",
+    "1120905002001",
+    "2101433260019",
+    "2101433260001",
+    "2041408045025",
+    "2041408045020",
+    "2041408045002",
+    "2041408045013",
+    "2041408045021",
+    "2050903013001",
+    "2070301001012",
+    "1222002006005",
+    "1021602004005",
+    "1181807006008",
+    "2101447374006",
+    "1180406003005",
+    "1181204003002",
+    "2041810063001",
+    "2030602007014",
+    "2041404018003",
+    "2041404018004",
+    "2041404018005",
+    "1180903005001",
+    "2041408045019",
+    "2011707039017"
+  )
+```
+
+These observations have fewer valid entries than other entries for the same WP in the ID vars, and will not be considered for the ID variables section.
+
+```{r}
+missing_id_vars <-
+  c(
+    "uuid:03e4f216-487a-411d-a64f-52b3d58aeb87",
+    "uuid:4cddfe3f-3084-4efe-b5a4-656dd12ace1d",
+    "uuid:4f7b9a95-18d2-4f77-9023-1f704c992d3e",
+    "uuid:97468e5b-9508-4c36-90fc-5d160bbf3454",
+    
+    ## Temporary, fix once Aziz updates the data
+    "uuid:4efec896-33a4-4f88-afc4-69e5ce2c0c9a",
+    "uuid:3ab447dc-3798-4a74-bf6b-e9e6077eb8a4",
+    "uuid:c1fabcfc-d27c-41ec-87bf-b73604f8b76d"
+  )
+```
+
+
+
+### Distance to other water points
+
+```{r}
+distances <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "water-point-distances.rds"
+    )
+  )
+```
+
+### Water point characteristics
+
+```{r}
+wp <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-id.rds"
+    )
+  ) %>%
+  mutate(
+    wp_id_c = paste0(village_id, str_sub(wp_id, str_length(wp_id) - 2, str_length(wp_id)))
+  ) %>% 
+  arrange(wp_id_c)
+
+assert_that(
+  any(test_obs %in% wp$key) == FALSE
+)
+```
+
+### GPS coordinates
+
+```{r}
+wp_sf <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-clean.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    !(key %in% test_obs)
+  ) %>%
+  select(key, wp_id)
+```
+
+## Check observations + unique enumerators by wp_id
+
+We expect that for each `wp_id`, there are n observations corresponding to n unique enumerators, where n > 2.
+
+We use these values in the high frequency check flagging code.
+
+```{r}
+wp <-
+  wp %>% 
+  group_by(wp_id_c) %>% 
+  mutate(
+    n_obs = n(),
+    n_enum = n_distinct(enumerator_id)
+  ) %>% 
+  ungroup()
+```
+
+```{r}
+wp %>% 
+  tabyl(n_obs) %>% 
+  adorn_pct_formatting()
+```
+
+### Check distances between observations
+
+Among water points that are very close, we check that the `wp_id` is the same.
+
+```{r}
+dist_check <- 
+  wp %>% 
+  transmute(
+    key.x = key,
+    wp_id.x = wp_id_c
+  ) %>% 
+  inner_join(
+    distances,
+    by = "key.x"
+  ) %>% 
+  inner_join(
+    wp %>% 
+      transmute(
+        key.y = key,
+        wp_id.y = wp_id_c
+      ),
+    by = "key.y"
+  )  %>% 
+  mutate(
+    id_match = (wp_id.x == wp_id.y)
+  )
+
+nearest_wp <-
+  dist_check %>% 
+  group_by(key.x) %>%
+  dplyr::filter(distance == min(distance)) %>% 
+  ungroup() %>% 
+  dplyr::select(
+    key = key.x,
+    wp_id.y,
+    distance
+  ) 
+```
+
+We plot the frequency of a `id_match` by distance.
+
+```{r}
+dist_check %>% 
+  mutate(
+    dist_bins =
+      case_when(
+        distance <= 2 ~ 1,
+        distance <= 5 ~ 2,
+        distance <= 10 ~ 3,
+        distance <= 15 ~ 4,
+        distance <= 20 ~ 5,
+        distance <= 25 ~ 6,
+        distance <= 30 ~ 7,
+        distance <= 35 ~ 8,
+        distance <= 40 ~ 9,
+        distance <= 50 ~ 10,
+        TRUE ~ 11
+      ) %>% 
+      factor(
+        levels = 1:11,
+        labels = 
+          c(
+            "<2m",
+            "<5m",
+            "<10m",
+            "<15m",
+            "<20m",
+            "<25m",
+            "<30m",
+            "<35m",
+            "<40m",
+            "<50m",
+            ">50m"
+          ),
+        ordered = T
+      )
+  ) %>% 
+  group_by(dist_bins) %>% 
+  summarise(
+    pct_match = sum(id_match)/n()
+  ) %>% 
+  ungroup() %>% 
+  ggplot(
+    aes(
+      x = dist_bins,
+      y = pct_match
+      )
+  ) +
+  geom_col(fill = viridis(1)) +
+  theme +
+  labs(
+    x = "Distance to water source (m)",
+    y = "Percentage of sources with matching ID"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent,
+    breaks = breaks_width(.2)
+  )
+```
+
+
+### Establish criteria for a distance match + water point ID match
+
+Here we establish if sources are close to one another (within 50m) or were manually noted to have a bad gps reading.
+
+```{r}
+bad_gps <- c(
+  # start of enumerator MW27379 in Gravel -- their device was off the entire day
+  "uuid:4ae0ce01-2e2b-4bef-93ac-c06e8e2c4954",
+  "uuid:a6ebdc51-7a52-4489-adc3-c6ab226803ba",
+  "uuid:2748c433-d465-4763-bc78-f912693703cc",
+  "uuid:3a9d8479-2849-4984-b1d6-1c9dd63dbaef",
+  "uuid:0721e6e4-a599-4334-9485-0bb7580a0e7a",
+  "uuid:893c29cf-7620-4b6e-baee-5f1b7617610c",
+  "uuid:807cda1b-38a5-4b92-aff1-db510f7551c9",
+  "uuid:e6ef709f-f2a6-422f-b830-a9ea74a47d20",
+  # end of enumerator MW27379 in Gravel
+  
+  # start of enumerator MW22121 in Malunga -- their device was off the entire day
+  "uuid:6c1da34e-5d8c-4103-bb35-0c822bebf22c",
+  "uuid:c97fce87-4309-469f-a4a0-1d689f2d5fed",
+  "uuid:fe2c810a-0e56-4bcc-a21f-d907973ef1e3",
+  "uuid:848ecc75-2a60-4163-b045-93685dd17703",
+  "uuid:53cea14e-7a8a-4810-87e8-207b829e3586",
+  "uuid:db14a48c-12d3-45af-8709-8d76a9f3ef76",
+  # end of enumerator MW22121 in Malunga
+  
+  # MW20384 in Nkalo, WP2030602007006
+  "uuid:6f7c22ba-708a-440d-951b-e39be34fb91a",
+  
+  # MW22659 in Mtambo, WP2100718156003
+  "uuid:dd7925f2-d396-443b-be52-f16e64c30bd2",
+  # MW22659 in Mtambo, WP2100718156004
+  "uuid:860f71e9-2c2a-47ed-99ed-545d09556e3b",
+  
+  # MW26198 in Malowa
+  "uuid:052db89b-a570-4f24-a560-8ebe366c8e7b",
+  "uuid:2e7970d5-75b8-4d7b-9eac-9c2b8152b8ed",
+  "uuid:45b95abd-319e-4c64-89e3-c5109523588d",
+  "uuid:e13aa959-6bb0-4ef8-b9e2-f450f8c00970",
+  "uuid:d1d627eb-7b93-4624-abf0-cb8d465892ee",
+  "uuid:a8c28013-9251-4b36-a8d0-21849ed3558d",
+  "uuid:d9361f17-0608-4029-990e-2ebbc9d4ee2c",
+  "uuid:33951c56-3e1c-4584-a523-b8f536344bfc",
+  "uuid:750f4011-9c7d-4bf2-b22c-8b5fe817b19e",
+  
+  # MW26198 in Chipengule
+   "uuid:b33d52d0-c1fe-447f-9526-09d16a401dbe",
+  
+  # MW22483 in Ojesi
+  "uuid:9994e29c-29d4-490b-b8e9-9ca61f579367",
+  
+  # 225517 in Kasozi, WP7016008
+  "uuid:ce9e87aa-bc36-4157-8060-91a2718f5dcb",
+  
+  # 313765 in Buyondo, WP6002015
+  "uuid:291bfa86-74bf-45c4-8168-57af53ff9964",
+  
+  # 118182 in Amon Gogonyo, WP3002001
+  "uuid:9f410ddf-c7bb-42e5-a3ab-56ff058c4af4",
+  
+  # MW21532 in Jameskanono, WP2030413107004
+  "uuid:6086fce5-e1e9-456f-82f5-87db766253fd",
+  
+  # MW25398 in Wilson, WP2020314063002
+  "uuid:5879557a-a58f-4f4b-939e-fdd336564256",
+  
+  # The program information on this entry is wrong
+  "uuid:bfb40401-a5cb-4e9e-8644-6ca56d4f7fa8"
+)
+
+```
+
+```{r}
+dist_check <-
+  dist_check %>% 
+  mutate(
+    close = (distance <= 25),
+    close_id = id_match & close
+  )
+```
+
+
+```{r}
+dist_check %>% 
+  tabyl(close_id) %>% 
+  adorn_pct_formatting()
+```
+
+## Check variables match by wp_id
+
+Among sources that are within 25 meters of each other + have the same wp_id, 
+we check that they agree on the following variables:
+  - Location:
+      - country
+      - district_id
+      - village_id 
+  - Water source characteristics:
+      - wp_drink
+      - wp_multicompound
+      - wp_name
+      - sourcetype
+      - sourcetype_simp
+      - wp_dsw
+      - wp_ilc
+      - wp_ilc_device
+      - wp_func 
+
+*TODO: this should change if new variables are added to sections 2*
+We compute the percentage of variables that they agree on.
+
+For `wp_name`, enumerators can input a string, so we compute the average string
+distance between water sources. We consider a `wp_name` to be a match if
+the average string distance is <= 0.3. I decided on this threshold by trying
+to compute the string distance between strings with small mispellings.
+
+```{r}
+comparison_vars <-
+  c(
+    "country",
+    "district_id",
+    "village_id",
+    "wp_name",
+    "wp_drink",
+    "wp_multicompound",
+    "sourcetype",
+    "sourcetype_simp",
+    "wp_dsw",
+    "wp_ilc",
+    "wp_ilc_device",
+    "wp_func"
+  )
+```
+
+```{r}
+compare_wps <-
+  dist_check %>% 
+  # select sources within 25m + id match
+  dplyr::filter(close_id) %>% 
+  transmute(
+    key = key.x,
+    wp_id_c = wp_id.x
+  ) %>% 
+  distinct() %>% 
+  # Join information from each enumerator
+  group_by(wp_id_c) %>% 
+  mutate(mch_id = cur_group_id()) %>% 
+  ungroup() %>% 
+  inner_join(
+    wp,
+    by = c("key", "wp_id_c")
+  ) %>% 
+  group_by(mch_id) %>% 
+   mutate(
+     # For categorical variables, we can do a binary check
+    across(
+      all_of(comparison_vars[-c(1)]),
+      ~ n_distinct(.) == 1,
+      .names = "match_{.col}"
+    ),
+    # For water source name, we calculate the average string distance
+    avg_st_dist = {
+      names <- wp_name
+        dists <- stringdistmatrix(names, names, method = "jw")
+        upper_tri <- dists[upper.tri(dists)]
+        mean(upper_tri, na.rm = T)
+    },
+    match_wp_name = ifelse(is.na(avg_st_dist), F, (avg_st_dist <= 0.3))
+  ) %>%
+  rowwise() %>% 
+  mutate(
+    pct_match = (sum(
+      c_across(
+        starts_with("match_")
+      ),
+      na.rm = TRUE
+    )/length(comparison_vars)) * 100
+  ) %>%
+  ungroup
+```
+
+Check if most water points have consistent information
+
+```{r}
+compare_wps %>% 
+  ggplot() +
+  geom_histogram(
+    aes(
+      x = pct_match
+    ),
+    fill = viridis(1)
+  ) +
+  theme + 
+  labs(
+    x = "Percentage of matched variables \nwithin a cluster of water points",
+    y = "Number of observations",
+    caption = 
+      paste0(
+        "Note: this only includes water points that are within 25m of other",
+        " water points with the same water point ID." 
+      ) %>% str_wrap(100)
+  )
+```
+
+There are 5 enumerators per team, if only one has a different answer, we will consider it to be the same water point. That means 80% or more of matched variables. 
+
+```{r}
+matched <- 
+  compare_wps %>% 
+  dplyr::filter(pct_match >= 80) %>% 
+  pull(key) %>% 
+  unique()
+```
+
+Cases with less than 80% matches are individually inspected:
+
+```{r}
+compare_wps %>%
+  dplyr::filter(pct_match < 80) %>%
+  tabyl(date)
+```
+
+```{r eval = FALSE}
+compare_wps %>%
+  dplyr::filter(
+    !(key %in% matched),
+    !(wp_id_c %in% mismatches_checked)
+  ) %>%
+  arrange(date, wp_id) %>%
+  select(key, pct_match, date, country, wp_id, wp_id_c, village_id, enumerator_id, all_of(comparison_vars), wp_photo, comments) %>%
+  view
+```
+
+```{r}
+good_keys <- 
+  compare_wps %>%
+  dplyr::filter(
+    (key %in% matched) | wp_id_c %in% mismatches_checked
+  ) %>%
+  pull(key) %>% 
+  unique()
+```
+
+### Check variables that don't match
+
+For these variables, we check the percentage of observations that don't match --- finding where enumerators tend to make mistakes.
+
+```{r}
+compare_wps %>% 
+  select(key, starts_with("match_")) %>% 
+  summarise(
+    across(
+      starts_with("match"),
+      ~ sum(!.x)/n() %>% na_if(0)
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "variable",
+    values_to = "pct",
+    names_prefix = "match_"
+  ) %>%
+  dplyr::filter(pct > 0) %>%
+  ggplot(
+    aes(
+      x = reorder(variable, pct),
+      y = pct
+    )
+  ) +
+  geom_col(fill = viridis(1)) +
+  #theme + 
+  labs(
+    x = NULL,
+    y = "Percentage of observations with mismatched values",
+    caption = 
+      paste0(
+        "Note: this only includes water points that are within 25m of each other",
+        " water points with the same water point ID." 
+      ) %>% str_wrap(80)
+  ) +
+  scale_y_continuous(labels = scales::percent) +
+  coord_flip()
+```
+
+### Water point identification variables
+
+For these variables, we assume the most commonly entered value across all five enumerators who completed the survey is the correct response.
+
+```{r}
+wp_chars <- 
+  wp %>% 
+  # Drop observations we know are problematic
+  dplyr::filter(key %in% good_keys) %>%
+  # Count how many observations have each combination of variables
+  group_by(
+    wp_id_c, 
+    across(all_of(comparison_vars))
+  ) %>%
+  mutate(n = n()) %>%
+  # Coalesce variables that may be missing but can be filled with values from other obs
+  group_by(wp_id_c) %>%
+  mutate(
+    district_id = max(district_id, na.rm = TRUE)
+  ) %>%
+  # Keep only the most common values
+  dplyr::filter(n == max(n)) %>%
+  group_by(
+    country, district_id, village_id,
+    wp_id,
+    n_obs, 
+    n_enum,
+    wp_drink, wp_multicompound, 
+    wp_func,
+    sourcetype, sourcetype_o, sourcetype_simp,
+    wp_dsw, wp_ilc_device, wp_ilc
+  ) %>%
+  # If all five observations have the same values, select on "randomly" 
+  dplyr::filter(key == max(key)) %>%
+  ungroup %>%
+  # These observations have more missing values than others for the same WP, but no conflicting information otherwise 
+  dplyr::filter(
+    !(key %in% missing_id_vars),
+    !(wp_id_c == 2070302012011 & wp_id == "WP2070301002011")
+  )
+```
+
+```{r}
+assert_that(
+  nrow(wp_chars) == n_distinct(wp_chars$wp_id_c)
+)
+``` 
+
+```{r eval = FALSE}
+wp_chars %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>% 
+  view
+```
+
+## Combine with sections submitted by a single enumerator
+
+### Spotchecks
+
+```{r}
+spotcheck <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-spotcheck.rds"
+    )
+  ) %>%
+  # There is only one observation for this water point, since the field team went back to collect information based on the GPS from EvAc
+  dplyr::filter(wp_id != "WP2011707039017")
+```
+
+```{r}
+wp_collapsed <-
+  wp_chars %>%
+  left_join(
+    spotcheck,
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
+```
+
+### Water testing
+
+```{r}
+tests <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed-tests.rds"
+    )
+  )
+```
+
+```{r}
+wp_collapsed <-
+  wp_collapsed %>%
+  left_join(
+    tests,
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
+```
+
+```{r}
+assert_that(
+  nrow(wp_collapsed) == n_distinct(wp_collapsed$wp_id_c)
+)
+
+```
+
+### Flag entries that cannot be collapsed
+
+We define the following flags.
+
+- `dist_flag` ~ sources within 50m but do not match on wp_id
+- `wp_id_flag` ~ sources >= 50m but *do* match on wp_id
+- `collapse_flag` ~  1 = sources that cannot be collapsed + should be excluded from HFCs
+
+If each water source is an ID + distance match with at least 1 water source, this doesn't work.
+
+```{r, warning = FALSE, message = FALSE}
+flag <-
+  dist_check %>% 
+  group_by(key.x) %>% 
+  dplyr::filter(max(close_id) == 0) %>% 
+  mutate(
+    dist_flag = as.numeric(close & !id_match),
+    wp_id_flag = as.numeric(!close & id_match),
+  ) %>% 
+  dplyr::select(
+    key = key.x,
+    wp_id = wp_id.x,  
+    ends_with("flag")
+  ) %>% 
+  group_by(key, wp_id) %>% 
+  summarise(
+    across(
+      everything(),
+      ~ max(.x, na.rm = T)
+    )
+  ) %>% 
+  ungroup() %>% 
+  mutate(collapse_flag = 1) %>%
+  rename(problem_key = key) 
+
+wp_flags <-
+  flag %>%
+  group_by(wp_id) %>% 
+  summarise(
+    dist_flag = max(dist_flag),
+    wp_id_flag = max(wp_id_flag),
+    collapse_flag = max(collapse_flag),
+    .groups="drop"
+  )
+```
+
+Check that the flag data is at entry_level of observation.
+
+```{r}
+assert_that(
+  nrow(flag) == n_distinct(flag$problem_key)
+)
+```
+
+```{r}
+wp_collapsed <-
+  wp_collapsed %>% 
+  # merge with collapsed ids
+  left_join(wp_flags, by = c("wp_id")) %>%
+  # turn missing flags into zeros
+  mutate(
+    across(
+      ends_with("_flag"),
+      ~ tidyr::replace_na(.x, 0)
+    )
+  )
+```
+
+### Add geospatial data
+
+```{r}
+wp_gps <-
+  wp_sf %>%
+  left_join(wp_collapsed) %>%
+  # Remove obs that have incorrect distances
+  dplyr::filter(!(key %in% (flag %>% dplyr::filter(dist_flag == 1) %>% pull(problem_key)))) %>%
+  # Calculate centroid of different coordinates for the same WP
+  group_by(wp_id_c) %>%
+  summarise(geometry = st_union(geometry)) %>%
+  st_centroid() %>%
+  # Join tabular data
+  inner_join(wp_collapsed)
+```
+
+## Save
+
+### Tabular data
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-collapsed"
+  )
+
+wp_collapsed %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+### Spatial data
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-gps-collapsed"
+  )
+
+wp_gps %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+<!--chapter:end:08-collapse-wp-census.Rmd-->
+
+# Construct treatment variables
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  )
+```
+
+## Make corrections
+
+Corrections from manually checking the maps and matches
+
+```{r}
+manual_treatment <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "ilc-dsw-corrections.csv"
+    )
+  ) %>%
+  rename(correction_comments = comments)
+
+assert_that(
+  manual_treatment %>% 
+    pull(wp_id) %>%
+    n_distinct
+  ==
+    nrow(manual_treatment)
+)
+```
+
+## Create indicators
+
+```{r}
+wp_tmt <-
+  wp %>%
+  left_join(manual_treatment) %>%
+  mutate(
+    dsw = coalesce(dsw, wp_dsw),
+    ilc_wp = coalesce(ilc_wp, wp_ilc_device),
+    ilc_wcp = coalesce(ilc_wcp, wp_ilc),
+    across(
+      c(dsw, ilc_wp, ilc_wcp),
+      ~ case_when(
+        wp_drink & wp_multicompound ~ tidyr::replace_na(., FALSE),
+        TRUE ~ NA
+      )
+    ),
+    ilc = ilc_wp | ilc_wcp,
+    intervention_type = case_when(
+      dsw ~ "DSW",
+      ilc_wp ~ "ILC water point",
+      ilc_wcp ~ "ILC water collection point",
+      !is.na(dsw) ~ "Non-program"
+    ) %>% 
+      as_factor,
+    intervention = case_when(
+      dsw ~ "DSW",
+      ilc ~ "ILC",
+      !is.na(dsw) ~ "Non-program"
+    ) %>% 
+      as_factor
+  ) %>%
+  select(
+    wp_id,
+    dsw, ilc, ilc_wp, ilc_wcp,
+    intervention, intervention_type
+  ) %>%
+  unique
+```
+
+```{r}
+assert_that(
+  nrow(wp_tmt) == n_distinct(wp_tmt$wp_id)
+)
+```
+
+```{r}
+wp_tmt %>%
+  group_by(wp_id) %>%
+  dplyr::filter()
+```
+
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-treatment"
+  )
+
+write_meta(
+  wp_tmt,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+
+<!--chapter:end:09-construct-wp-intervention.Rmd-->
+
+# Match EA and Census water points
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "here",
+    "sf",
+    "janitor",
+    "units",
+    "leaflet",
+    "viridis",
+    "googlesheets4",
+    "tictoc",
+    "assertthat"
+    )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+### Corrections
+
+After comparing the maps from Evidence Action water points and the Water Point Census, we have identified some matches of census water points and Evidence Action water points that would not be identified through an algorithm. We also inspected the images from the water point census to determine whether ILC devices and DSW dispensers were present. These corrections were manually entered into CSV files
+
+```{r}
+manual_matches <- 
+  read_csv( 
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "manual-match-to-ea-wp.csv"
+    )
+  )
+```
+
+```{r eval = FALSE}
+# This is commented out because there are WPs mapped to two different villages
+
+assert_that(
+  manual_matches %>% 
+    select(wp_id, ea_id) %>%
+    unique %>%
+    nrow
+  ==
+    nrow(manual_matches)
+)
+```
+
+```{r}
+manual_unmatched <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "ea-wpt-unmatched.csv"
+    )
+  )
+
+assert_that(
+  manual_unmatched %>% 
+    pull(ea_id) %>%
+    n_distinct
+  ==
+    nrow(manual_unmatched)
+)
+```
+```{r}
+wp_tmt <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-treatment.rds"
+    )
+  )
+```
+
+
+### IPA
+
+```{r}
+wp_tabular <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  ) %>%
+  inner_join(
+    wp_tmt,
+    unmatched = "error"
+  )
+
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-collapsed.rds"
+    )
+  ) %>%
+  left_join(
+    wp_tmt,
+    unmatched = "error"
+  )
+```
+
+```{r}
+ipa_uganda <-
+  wp %>%
+  dplyr::filter(
+    country == "Uganda"
+  )
+```
+
+```{r}
+ipa_malawi <-
+  wp %>%
+  dplyr::filter(
+    country == "Malawi"
+  )
+```
+
+### Evidence Action
+
+```{r}
+ea_malawi_wpt <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-malawi-wp-sf.rds"
+      )
+  )
+
+ea_malawi_wcp <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-malawi-wcp-sf.rds"
+      )
+  ) %>%
+  transmute(
+    wpt_id = wcp_id,
+    villageid = as.character(wcp_villageid)
+  )
+
+ea_malawi <-
+  bind_rows(
+    ea_malawi_wpt,
+    ea_malawi_wcp
+  ) %>%
+  mutate(
+     program = program %>% 
+      as.character %>% 
+      str_replace_all("ILC", "ILC water point") %>%
+      tidyr::replace_na("ILC water collection point")
+  )
+```
+
+```{r}
+ea_uganda_wpt <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-uganda-wp-sf.rds"
+    )
+  )
+
+ea_uganda_wcp <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-uganda-wcp-sf.rds"
+    )
+  ) %>%
+  select(
+    wpt_id = wcp_id,
+    villageid = wcp_villageid
+  )
+
+ea_uganda <-
+  bind_rows(
+    ea_uganda_wpt,
+    ea_uganda_wcp
+  ) %>%
+  mutate(
+    program = program %>% 
+      as.character %>% 
+      str_replace_all("ILC", "ILC water point") %>%
+      tidyr::replace_na("ILC water collection point")
+  )
+```
+
+Combine both countries
+
+```{r}
+ea <-
+  bind_rows(
+    ea_malawi,
+    ea_uganda
+  ) %>%
+  mutate(
+    sourcetype = str_to_sentence(sourcetype),
+    sourcetype_simp = case_when(
+      str_detect(sourcetype, "Borehole") ~ "Borehole",
+      str_detect(sourcetype, "Municipal") ~ "Municipal water supply",
+      str_detect(sourcetype, "well") ~ "Dug well",
+      str_detect(sourcetype, "spring") ~ "Spring",
+      str_detect(sourcetype, "Dam") ~ "Surface water",
+      str_detect(sourcetype, "water source") ~ "Surface water"
+    ),
+    wpt_id = as.numeric(wpt_id)
+  )
+
+ea_tabular <- 
+  ea %>%
+  st_drop_geometry()
+```
+
+## Combine EA and IPA data
+
+### Calculate distances
+
+```{r}
+tic()
+
+wp_uganda <-
+  st_distance_df(
+    ipa_uganda, "wp_id_c",
+    ea_uganda, "wpt_id"
+  )
+
+toc()
+```
+
+```{r}
+tic()
+
+wp_malawi <-
+  st_distance_df(
+    ipa_malawi, "wp_id_c",
+    ea_malawi, "wpt_id"
+  ) 
+
+toc()
+```
+
+```{r}
+wps <-
+  bind_rows(
+    wp_uganda,
+    wp_malawi
+  ) %>%
+  left_join(wp %>% select(wp_id, wp_id_c)) %>%
+  mutate(wpt_id = as.numeric(wpt_id))
+```
+
+## Match IPA water points to EA water points
+
+### Manual matches
+
+Manual matches take precedence over any algorithmic matching. We will not try to match water points that were already matched (including if they were marked as unmatched).
+
+```{r}
+matched_manual <- 
+  manual_matches %>%
+  bind_rows(manual_unmatched) %>%
+  select(wp_id, ea_id, ilc_cluster_wp, match_comments = comments) %>%
+  mutate(match = "Manual")
+```
+
+```{r}
+assert_that(
+  matched_manual %>%
+    select(ea_id, wp_id) %>%
+    unique %>%
+    nrow()
+  ==
+    nrow(matched_manual)
+)
+```
+
+### By DSW ID and distance
+
+```{r}
+matched_id <-
+  wp_tabular %>%
+  select(wp_id_c, wpt_id = disp_dsw_id) %>%
+  inner_join(ea_tabular) %>%
+  left_join(wps) %>%
+  dplyr::filter(distance < 50) %>%
+  select(ea_id = wpt_id, wp_id) %>%
+  mutate(match = "DSW ID")
+```
+
+```{r}
+assert_that(
+  n_distinct(matched_id$wp_id) == nrow(matched_id)
+)
+```
+
+```{r}
+matched_manual_id <-
+  matched_manual %>%
+  bind_rows(matched_id) 
+```
+
+
+### By distance and source type
+
+We will only try to match water points that have not yet been matched.
+
+```{r}
+nearby_wps <-
+  wps %>%
+  # We consider that two water points further than 100m from one another cannot be the same
+  dplyr::filter(
+    distance <= 100
+  ) %>%
+  dplyr::filter(
+    !(wp_id %in% matched_manual_id$wp_id),
+    !(wpt_id %in% matched_manual_id$ea_id)
+  )
+```
+
+We will use simplified source type to determine a match between the IPA points and the EA points. We also create other identifiers to export to the spreadsheet shared with Evidence Action.
+
+```{r}
+ea_wps <-
+  nearby_wps %>% 
+  left_join(
+    wp %>% 
+      select(
+        country, wp_id_c, wp_id, wp_name,
+        sourcetype_simp_ipa = sourcetype_simp, 
+        sourcetype_ipa = sourcetype, 
+        disp_dsw_id, disp_barcode,
+        dsw, ilc
+      ) %>%
+      st_drop_geometry(),
+    by = c("wp_id_c", "wp_id")
+  ) %>% 
+  left_join(
+    ea %>% 
+      select(
+        wpt_id, 
+        sourcetype_simp_ea = sourcetype_simp, 
+        sourcetype_ea = sourcetype, 
+        program
+      ) %>% 
+      st_drop_geometry(),
+    by = "wpt_id"
+  ) %>% 
+  mutate(
+    type_match = case_when(
+      program != "ILC water collection point" ~ (sourcetype_simp_ea == sourcetype_simp_ipa),
+      program == "ILC water collection point" ~ is.na(sourcetype_simp_ipa),
+    ),
+    program_match = (dsw & program == "DSW") | (ilc & str_detect(program, "ILC")),
+    missing_disp = (!dsw & program == "DSW"),
+    missing_ilc = (!ilc & program == "ILC"),
+    program_mismatch = case_when(
+      (dsw & program == "ILC") | (ilc & program == "DSW") ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    matched = (type_match & program_match)
+  )
+```
+
+```{r}
+matched_dist <-
+  ea_wps %>%
+  dplyr::filter(matched | missing_disp | missing_ilc) %>%
+  select(
+    ea_id = wpt_id,
+    wp_id,
+    distance
+  ) %>%
+  mutate(match = "Algorithm")
+```
+
+
+#### Check how many water points are matched this way
+
+```{r}
+ea_wps <-
+  ea_wps %>%
+  unique %>%
+  group_by(wpt_id) %>%
+  mutate(ea_matches = sum(matched, na.rm = TRUE)) %>%
+  group_by(wp_id_c) %>%
+  mutate(ipa_matches = sum(matched, na.rm = TRUE)) %>%
+  ungroup 
+```
+
+
+```{r}
+ea_wps %>%
+  tabyl(ea_matches)
+```
+
+```{r}
+ea_wps %>%
+  tabyl(ipa_matches, dsw)
+```
+
+```{r}
+ea_wps %>%
+  tabyl(ipa_matches)
+```
+
+#### Check cases with multiple matches
+
+The following water points were mapped in two different villages. We will leave them as is because we need this information in both villages:
+- `wpt_id` 70220610 was mapped in 1151005002 and 1151005003
+- `wpt_id` 70060146 was mapped in 1051401001 and 1051001007
+- `wpt_id` 70070419 was mapped in 1191301002 and 1191301007
+- `wpt_id` 7030631  was mapped in 1140202002 and 1140202012
+- `wpt_id` 70220610 was mapped in 1151005002 and 1151005003
+
+```{r}
+assert_that(
+  ea_wps %>%
+    dplyr::filter(
+      ea_matches > 1,
+      !(wpt_id %in% c(70070419, 70060146, 7030631, 7020280, 7020281, 70220610))
+    ) %>%
+    nrow ==
+    0
+)
+```
+
+```{r eval = FALSE}
+ea_wps %>%
+  dplyr::filter(ea_matches > 1) %>%
+  select(country, wpt_id, wp_id, disp_dsw_id, disp_barcode, wp_id_c, sourcetype_ipa, sourcetype_ea, distance, dsw, ilc_wcp, ilc_wp) %>%
+  view
+```
+
+```{r}
+assert_that(
+  ea_wps %>%
+    dplyr::filter(ipa_matches > 1) %>%
+    nrow ==
+    0
+)
+```
+
+```{r eval = FALSE}
+ea_wps %>%
+  dplyr::filter(ipa_matches > 1) %>%
+  select(country, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) %>%
+  view
+```
+
+```{r, eval = FALSE}
+assert_that(
+  nrow(ea_wps) == n_distinct(ea_wps$wp_id_c)
+)
+```
+
+```{r eval = FALSE}
+ea_wps %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>%
+  select(country, wp_id, wp_name, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) %>%
+  view
+```
+
+
+### Combine all
+
+
+```{r}
+assert_that(
+  !(matched_dist$ea_id %in% matched_manual_id$ea_id) %>%
+    all
+)
+
+assert_that(
+  !(matched_dist$wp_id %in% matched_manual_id$wp_id) %>%
+    all
+)
+```
+
+```{r}
+matched_all <-
+  matched_manual_id %>%
+  bind_rows(matched_dist) %>%
+  st_drop_geometry()
+```
+
+```{r}
+assert_that(
+  matched_all %>%
+    select(ea_id, wp_id) %>%
+    nrow 
+  ==
+    nrow(matched_all)
+)
+```
+
+```{r}
+matched_all <-
+  wp %>%
+  st_drop_geometry() %>%
+  right_join(matched_all) %>%
+  left_join(
+    ea %>%
+      transmute(
+        ea_id = wpt_id, 
+        ea_village_id = villageid, 
+        ea_sourcetype = sourcetype, 
+        ea_program = program %>% as.factor, 
+        date_installation
+      ) %>%
+      st_drop_geometry()
+  )
+```
+
+```{r}
+unmatched_ea <-
+  ea %>%
+  dplyr::filter(
+    villageid %in% wp$village_id,
+    !(wpt_id %in% matched_all$ea_id)
+  ) %>%
+  select(
+    ea_id = wpt_id, 
+    village_id = villageid, 
+    ea_sourcetype = sourcetype, 
+    ea_program = program, date_installation,
+    country = countryid
+  )
+```
+
+```{r}
+unmatched_ipa <-
+  wp %>%
+  st_drop_geometry() %>%
+  dplyr::filter(
+    intervention_type != "Non-program",
+    !(wp_id_c %in% matched_all$wp_id_c)
+  ) 
+```
+
+Identify water point serving water collection points:
+
+```{r}
+all_wps <-
+  matched_all %>%
+  bind_rows(unmatched_ea) %>%
+  bind_rows(unmatched_ipa) %>%
+  mutate(
+    ea_ilc_wpt = case_when(
+      !is.na(ilc_cluster_wp) ~ ilc_cluster_wp %>% as.character,
+      !is.na(ea_id) & str_detect(intervention_type, "ILC") ~ str_sub(ea_id, 1, 8)
+    )
+  )
+```
+
+
+```{r}
+all_wps <-
+  all_wps %>%
+  select(
+    country, district_id, village_id,
+    wp_id_c, ea_id, ea_ilc_wpt,
+    ipa_program = intervention_type,
+    ea_program,
+    match, match_comments, 
+    ipa_visit = date,
+    ipa_sourcetype = sourcetype, 
+    ea_sourcetype,
+    date_installation
+  ) %>%
+  arrange(ea_id, wp_id_c) 
+```
+
+
+## Save water-point level data
+
+
+```{r}
+matched_final <-
+  all_wps %>%
+  dplyr::filter(
+    !is.na(wp_id_c),
+    !(is.na(ea_id) & is.na(ea_ilc_wpt))
+  ) %>%
+  select(
+    -c(country, district_id, village_id)
+  ) %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(
+    !(n() > 1 & match == "Manual")
+  )
+```
+
+
+```{r}
+assert_that(
+  nrow(matched_final) == n_distinct(matched_final$wp_id_c)
+)
+```
+
+```{r eval = FALSE}
+matched_final %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>%
+  view
+```
+
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-ea-matched"
+  )
+
+matched_final %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+## Share matches with EA
+
+```{r}
+forea <-
+  matched_final %>%
+  bind_rows(unmatched_ea)
+```
+
+
+We want to make a spreadsheet of the water point IDs and relevant DSW and EA information.
+
+```{r}
+map(
+  c("Uganda", "Malawi"), 
+  ~ all_wps %>%
+    dplyr::filter(country == .x) %>%
+    write_sheet(
+      ss = "1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4",
+      sheet = paste(.x, today())
+    )
+)
+```
+
+```{r}
+all_wps %>%
+  dplyr::filter(country == "Uganda", ipa_visit > "2025-08-19") %>%
+  write_sheet(
+    ss = "1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4",
+    sheet = paste("Uganda ILC", today())
+  )
+```
+
+<!--chapter:end:10-match-ea.Rmd-->
+
+# Construct chlorine testing variables
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "janitor",
+    "sf"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+```{r}
+collapsed <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  ) %>%
+  st_drop_geometry()
+```
+
+## Colorimeter
+
+```{r}
+meter <-
+  collapsed %>%
+  dplyr::filter(colorimeter) %>%
+  select(
+    wp_id, wp_id_c,
+    country, district_id, village_id,
+    sourcetype,
+    wp_turbidity,
+    jc_mldispensed, jc_mllost,
+    meter_enum,
+    meterid,
+    meterfcr_vialid,
+    meterfcr,
+    matches("^meterfcr_error"),
+    matches("^meterfcr_color"),
+    matches("^meterfcr(.*)timestamp"),
+    matches("^meterfcr(.*)photo"),
+    metertcr_vialid,
+    metertcr,
+    matches("^metertcr_error"),
+    matches("^metertcr_color"),
+    matches("^metertcr(.*)timestamp"),
+    matches("^metertcr(.*)photo")
+  ) %>%
+  select(-contains("nocl"))
+
+meter_un <-
+  collapsed %>%
+  dplyr::filter(colorimeter_un == 1) %>%
+  select(
+    wp_id, wp_id_c,
+    meter_nocl_enum,
+    meterid_un,
+    meterfcr_nocl_vialid,
+    meterfcr_un,
+    matches("meterfcr_nocl_error"),
+    matches("meterfcr_nocl_color"),
+    matches("meterfcr_nocl(.*)timestamp"),
+    matches("meterfcr_nocl(.*)photo"),
+    metertcr_nocl_vialid,
+    metertcr_un,
+    matches("metertcr_nocl_error"),
+    matches("metertcr_nocl_color"),
+    matches("metertcr_nocl(.*)timestamp"),
+    matches("^metertcr_nocl(.*)photo")
+  )
+```
+
+### Calculate readings differences
+
+### Calculate durations
+
+```{r}
+meter_constructed <-
+  meter %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    meterfcr_dur_zero = meterfcr_timestamp1 - meterfcr_timestamp0,
+    meterfcr_dur_reagent = meterfcr_timestamp3 - meterfcr_timestamp1,
+    meterfcr_dur_wait = meterfcr_timestamp4 - meterfcr_timestamp3,
+    meterfcr_dur_color = meterfcr_timestamp5 - meterfcr_timestamp4,
+    meterfcr_dur_clean = meterfcr_timestamp6 - meterfcr_timestamp5,
+    metertcr_dur_zero = metertcr_timestamp1 - metertcr_timestamp0,
+    metertcr_dur_reagent = metertcr_timestamp3 - metertcr_timestamp1,
+    metertcr_dur_wait = metertcr_timestamp4 - metertcr_timestamp3,
+    metertcr_dur_color = metertcr_timestamp5 - metertcr_timestamp4,
+    metertcr_dur_clean = metertcr_timestamp6 - metertcr_timestamp5
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    country, district_id, village_id,
+    sourcetype,
+    wp_turbidity,
+    meter_enum,
+    meterid,
+    contains("jc"),
+    contains("fcr"),
+    contains("tcr"),
+    -contains("timestamp")
+  )
+
+meter_un_constructed <-
+  meter_un %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    meterfcr_nocl_dur_zero = meterfcr_nocl_timestamp1 - meterfcr_nocl_timestamp0,
+    meterfcr_nocl_dur_reagent = meterfcr_nocl_timestamp3 - meterfcr_nocl_timestamp1,
+    meterfcr_nocl_dur_wait = meterfcr_nocl_timestamp4 - meterfcr_nocl_timestamp3,
+    meterfcr_nocl_dur_color = meterfcr_nocl_timestamp5 - meterfcr_nocl_timestamp4,
+    meterfcr_nocl_dur_clean = meterfcr_nocl_timestamp6 - meterfcr_nocl_timestamp5,
+    metertcr_nocl_dur_zero = metertcr_nocl_timestamp1 - metertcr_nocl_timestamp0,
+    metertcr_nocl_dur_reagent = metertcr_nocl_timestamp3 - metertcr_nocl_timestamp1,
+    metertcr_nocl_dur_wait = metertcr_nocl_timestamp4 - metertcr_nocl_timestamp3,
+    metertcr_nocl_dur_color = metertcr_nocl_timestamp5 - metertcr_nocl_timestamp4,
+    metertcr_nocl_dur_clean = metertcr_nocl_timestamp6 - metertcr_nocl_timestamp5
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    meter_nocl_enum,
+    meterid_un,
+    contains("jc"),
+    contains("fcr"),
+    contains("tcr"),
+    -contains("timestamp")
+  )
+```
+
+### Manual corrections
+
+Observations with E-15, very dark pink color, and high color wheel test result: chlorine residual is too high for the colorimeter to read. We're assigning a high value of 2.4 -- which is not the exact level. Water points may also be in here if a high-range test was conducted (since they should not be).
+
+```{r}
+error15_fcr <-
+  c("WP3008002", # high-range test done and gave reading of above 4
+    "WP3008005", # high-range test done and gave reading of above 4
+    "WP2100501004018", # error 15, disc reading above 3
+    "WP9006001", # high-range tests done and gave reading of 2.4
+    "WP4001001", # high-range tests done and gave reading of 3.4
+    "WP4001002", # high-range tests done and gave reading of 3.4
+    "WP2005003" # high-range/out-of-range error; between e04 and the bright pink color, the measure is likely actually above 2.2 and an out-of-range error
+  )
+error15_tcr <-
+  c("WP3008002",
+    "WP3008005",
+    "WP2100501004018", # error 15, disc reading above 3
+    "WP9006001", # high-range tests done and gave reading of 2.43
+    "WP4001001", # high-range tests done and gave reading of 3.3
+    "WP4001002" # high-range tests done and gave reading of 3.4
+    )
+
+error15_fcr_un <-
+  c("")
+error15_tcr_un <-
+  c("")
+```
+
+### Final readings
+
+```{r}
+meter_final <-
+  meter_constructed %>%
+  rename(
+    meterfcr_r = meterfcr,
+    metertcr_r = metertcr
+  ) %>%
+  mutate(
+    meterfcr_c = 
+      case_when(
+        wp_id %in% error15_fcr ~ 2.4,
+        TRUE ~ meterfcr_r
+      ),
+    metertcr_c = 
+      case_when(
+        wp_id %in% error15_tcr ~ 2.4,
+        TRUE ~ metertcr_r
+      ),
+    meter_diff_c = metertcr_c - meterfcr_c
+  )
+
+meter_un_final <-
+  meter_un_constructed %>%
+  rename(
+    meterfcr_un_r = meterfcr_un,
+    metertcr_un_r = metertcr_un
+  ) %>%
+  mutate(
+    meterfcr_un_c = 
+      case_when(
+        wp_id %in% error15_fcr_un ~ 2.4,
+        TRUE ~ meterfcr_un_r
+      ),
+    metertcr_un_c = 
+      case_when(
+        wp_id %in% error15_tcr_un ~ 2.4,
+        TRUE ~ metertcr_un_r
+      )
+  )
+```
+
+## Color wheel
+
+```{r}
+disc <-
+  collapsed %>%
+  dplyr::filter(colorwheel) %>%
+  select(
+    wp_id, wp_id_c,
+    discid,
+    tubeid,
+    tubeid_testtube,
+    matches("disc(.*)wait"),
+    matches("disc(.*)cr$"),
+    matches("disc(.*)color"),
+    matches("^disc(.*)photo"),
+    matches("disc(.*)timestamp")
+  ) %>%
+  select(-contains("nocl"))
+
+disc_un <-
+  collapsed %>%
+  dplyr::filter(colorwheel_un) %>%
+  select(
+    wp_id, wp_id_c,
+    discid_nocl,
+    tubeid_nocl,
+    tubeid_testtube_nocl,
+    starts_with("discfcr_nocl"),
+    starts_with("no_discfcr_nocl"),
+    starts_with("discfcr_un"),
+    starts_with("disctcr_nocl"),
+    starts_with("no_disctcr_nocl"),
+    starts_with("disctcr_un")
+  )
+```
+
+### Calculate durations
+
+```{r}
+disc_constructed <-
+  disc %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    discfcr_dur_prep = discfcr_timestamp1 - discfcr_timestamp0,
+    discfcr_dur_wait = discfcr_timestamp2 - discfcr_timestamp1,
+    disctcr_dur_prep = disctcr_timestamp1 - disctcr_timestamp0,
+    disctcr_dur_wait = disctcr_timestamp2 - disctcr_timestamp1,
+    disc_diff_c = disctcr - discfcr
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    contains("id"),
+    matches("fcr(.*)wait"),
+    contains("fcr"),
+    matches("tcr(.*)wait"),
+    contains("tcr"),
+    -contains("timestamp"),
+    disc_diff_c
+  )
+
+disc_un_constructed <-
+  disc_un %>%
+  mutate(
+    across(
+      contains("timestamp"),
+      ~ as.numeric(.)
+    ),
+    #discfcr_dur_prep = discfcr_timestamp1 - discfcr_timestamp0,
+    discfcr_nocl_dur_wait = discfcr_nocl_timestamp2 - discfcr_nocl_timestamp1,
+    #disctcr_dur_prep = disctcr_timestamp1 - disctcr_timestamp0,
+    disctcr_nocl_dur_wait = disctcr_nocl_timestamp2 - disctcr_nocl_timestamp1
+  ) %>%
+  select(
+    wp_id, wp_id_c,
+    matches("fcr(.*)wait"),
+    contains("fcr"),
+    matches("tcr(.*)wait"),
+    contains("tcr"),
+    -contains("timestamp")
+  )
+```
+
+### Final readings
+
+```{r}
+disc_final <-
+  disc_constructed %>%
+  mutate(
+    discfcr_c = discfcr,
+    disctcr_c = disctcr
+  ) %>%
+  rename(
+    discfcr_r = discfcr,
+    disctcr_r = disctcr
+  )
+
+disc_un_final <-
+  disc_un_constructed %>%
+  mutate(
+    discfcr_un_c = discfcr_un,
+    disctcr_un_c = disctcr_un
+  ) %>%
+  rename(
+    discfcr_un_r = discfcr_un,
+    disctcr_un_r = disctcr_un
+  )
+```
+
+
+## Merge 
+
+```{r}
+test <-
+  meter_final %>%
+  full_join(disc_final, by = c("wp_id_c", "wp_id")) %>%
+  full_join(meter_un_final, by = c("wp_id_c", "wp_id")) %>%
+  full_join(disc_un_final, by = c("wp_id_c", "wp_id")) %>%
+  select(
+    wp_id, wp_id_c,
+    country, district_id, village_id,
+    meterfcr_c,
+    metertcr_c,
+    discfcr_c,
+    disctcr_c,
+    meterfcr_un_c,
+    metertcr_un_c,
+    discfcr_un_c,
+    disctcr_un_c,
+    everything()
+  ) %>%
+  mutate(
+    across(
+      c(meterfcr_c:disctcr_un_c),
+      ~ . >= 0.1,
+      .names = "{.col}_01"
+    ),
+    across(
+      c(meterfcr_c:disctcr_un_c),
+      ~ . >= 0.2,
+      .names = "{.col}_02"
+    )
+  ) 
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-chlorine"
+  )
+
+write_meta(
+  test,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:11-construct-chlorine-tests.Rmd-->
+
+# Create final water point census data
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "here",
+    "sf",
+    "janitor",
+    "units",
+    "leaflet",
+    "viridis",
+    "assertthat"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+### Evidence Action
+
+```{r}
+villages <-
+   read_rds(
+   here(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  ) %>%
+  rename(
+    ea_dsw = dsw,
+    ea_n_dsw_vil = dsw_wpt,
+    ea_ilc = ilc,
+    ea_n_ilc_wp_vil = ilc_wpt,
+    ea_n_ilc_wcp_vil = ilc_wcp
+  ) %>%
+  mutate(
+    team = team %>% factor %>% as.numeric
+  )
+```
+
+### GPS
+
+```{r}
+wp_gps <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-collapsed.rds"
+    )
+  ) %>%
+  select(wp_id_c)
+```
+
+### Census
+
+```{r}
+collapsed <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  ) %>%
+  select(
+    -c(district_id, country)
+  )
+```
+
+### Promoter survey
+
+```{r}
+promoter <-
+  read_rds(
+   here(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Final",
+      "pm-survey.rds"
+    )
+  )
+```
+
+### Evidence Action water point ID
+
+```{r}
+matches <-
+  read_rds(
+    here(
+        path_box,
+        "Data",
+        "WaterPointCensus",
+        "DataSets",
+        "Constructed",
+        "wp-ea-matched.rds"
+      )
+  )
+```
+
+### Chlorine testing
+
+```{r}
+tests <-
+  read_rds(
+    here(
+        path_box,
+        "Data",
+        "WaterPointCensus",
+        "DataSets",
+        "Constructed",
+        "wp-chlorine.rds"
+      )
+  ) %>%
+  select(
+    wp_id_c, 
+    ends_with("r_c"),
+    ends_with("un_c"),
+    ends_with("01"),
+    ends_with("02")
+  )
+```
+
+### Treatment
+
+```{r}
+wp_tmt <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-treatment.rds"
+    )
+  )
+```
+
+## Merge 
+
+```{r}
+wp <-
+  collapsed %>% 
+  inner_join(
+    wp_tmt,
+    by = c("wp_id"),
+    relationship = "one-to-one",
+    unmatched = "error"
+  ) %>%
+  left_join(
+    matches,
+    by = c("wp_id_c"),
+    relationship = "one-to-one",
+    unmatched = "error"
+  ) %>% 
+  left_join(
+    tests,
+    by = c("wp_id_c"),
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
+
+assert_that(
+  all(wp$village_id %in% villages$village_id)
+)
+
+wp <-
+  wp %>%
+  left_join(
+    villages,
+    relationship = "many-to-one"
+  ) %>%
+  mutate(
+    promoter_surveyed = wp_id_c %in% promoter$wp_id
+  )
+```
+
+```{r}
+wp_gps <-
+  left_join(wp_gps, wp)
+```
+
+```{r}
+assert_that(
+  nrow(wp) == n_distinct(wp$wp_id_c)
+)
+```
+
+```{r eval = FALSE}
+wp %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>%
+  view
+```
+
+## Check data
+
+### Clean comments
+
+```{r}
+wp <-
+  wp %>%
+  mutate(
+    across(
+      contains("comments"),
+      ~ if_else(
+        . %in% c("NONE", "SUCESSFULLY DONE", "NO COMMENT .", "DONE"),
+        NA,
+        .
+      )
+    )
+  )
+```
+
+### DSW water points
+
+```{r}
+dsw <-
+  wp %>%
+  mutate(matched = !is.na(ea_id)) %>%
+  dplyr::filter(dsw)
+```
+
+```{r}
+dsw %>%
+  tabyl(matched)
+```
+
+
+```{r}
+dsw %>%
+  tabyl(ea_program_vil, matched)
+```
+```{r}
+wp %>% tabyl(ilc_wp, ilc_wcp)
+```
+
+```{r}
+wp %>% 
+  dplyr::filter(ilc_wp, !ilc_wcp, !vil_replaced) %>%
+  select(wp_id_c)
+```
+
+
+## Export constructed data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-constructed"
+  ) 
+
+wp %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-gps-constructed"
+  ) 
+
+wp_gps %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+## Order analysis variables
+
+```{r}
+wp <-
+  wp %>%
+  mutate(
+    analysis = wp_drink & wp_multicompound,
+  ) %>%
+  select(
+    -c(
+      wp_pay,
+      wp_id
+    )
+  ) %>%
+  select(
+    # IDS
+    wp_id_c,
+    country,
+    village_id, ilc_cluster_id,
+    district_id,
+    country,
+    sample_group, sample, pre_expansion,
+    vil_replaced,
+    promoter_surveyed,
+    # Metadata
+    date, 
+    team,
+    ends_with("enum"),
+    # Eligibility
+    wp_multicompound, wp_drink,
+    analysis, wp_promoter,
+    # Evidence Action programs
+    wp_dsw, wp_ilc_device, wp_ilc,
+    dsw, ilc, ilc_wp, ilc_wcp,
+    intervention_type, intervention,
+    ea_id, ea_program, ea_ilc_wpt, ea_program_vil,
+    # Water point characteristics
+    sourcetype, wp_photo,
+    wp_func, 
+    # WP spotcheck
+    contains("wp_notfunc"),
+    wp_func_last,
+    wp_turbidity,
+    # Dispenser spotcheck
+    starts_with("disp_"), 
+    jc_mllost,  jc_mldispensed,
+    # Chlorine testing
+    discid, contains("tubeid"),
+    meterid, contains("vialid"),
+    ends_with("cr_c"),
+    ends_with("un_c"),
+    ends_with("01"),
+    ends_with("02"),
+    # Costs
+    wp_pay = wp_pay_c,
+    wp_pay_userfees, wp_pay_maintenance,
+    wp_cost,
+    wp_cost_period,
+    # Data quality flags
+    contains("flag"),
+    contains("comments")
+  ) 
+```
+
+
+## Export final data
+
+```{r}
+final <-
+  wp %>%
+  dplyr::filter(!vil_replaced) %>%
+  select(-vil_replaced) %>%
+  rename(wp_id = wp_id_c) %>%
+  set_names(
+    names(.) %>% 
+      str_replace_all("cr_c$", "cr") %>%
+      str_replace_all("c_0", "0") %>%
+      str_replace_all("un_c", "un"),
+  ) %>%
+  remove_empty() %>%
+  remove_constant()
+```
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Final",
+    "wp-census"
+  ) 
+
+final %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+
+final %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  write_dta(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.dta"
+    ) 
+  )
+```
+
+<!--chapter:end:12-combine-datasets.Rmd-->
+

@@ -110,8 +110,9 @@ hh_raw_mw <-
 
 hh_raw <- 
   hh_raw_mw %>%
-  bind_rows(hh_raw_ug) %>%
-  bind_rows(hh_raw_ug_ilc)
+  bind_rows(hh_raw_ug) 
+# %>%
+#   bind_rows(hh_raw_ug_ilc)
 ```
 
 ## Save into R format
@@ -130,5 +131,47 @@ hh_raw %>%
   write_meta(
     path_data = file.path(path_box, path),
     path_meta = file.path(path_git, path)
+  )
+```
+
+
+```{r}
+hh_raw_deid <-
+  hh_raw %>%
+  select(
+    -c(
+      visit_landmarks_pl,
+      contains("name"),
+      enumerator,
+      contains("gps"),
+      contains("mobile"),
+      contains("phone")
+    )
+  )
+
+path <-
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Raw",
+    "hh-survey-deid"
+  )
+
+hh_raw_deid %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+
+hh_raw_deid %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  write_dta(
+    file.path(path_box, paste0(path, ".dta"))
   )
 ```

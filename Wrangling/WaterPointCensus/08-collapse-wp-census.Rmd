@@ -1,0 +1,837 @@
+# Collapse census
+
+For the water point census, each water point will be visited by a group of enumerators.
+All enumerators will complete up to section 2, and the other sections will be completed by a subset of the enumerators
+The purpose of this script is to collapse these observations into 1 by checking if they match on key variables.
+We will flag observations as matches and flag non-matches to print in the HFCs.
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "viridis",
+    "skimr",
+    "janitor",
+    "assertthat",
+    "scales",
+    "leaflet",
+    "sf",
+    "stringdist"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+```{r}
+test_obs <-
+  c(
+    "uuid:2d779cb5-c7e7-4207-8a52-f77aa96d7326",
+    "uuid:2f5dbf50-a0de-49e5-a4ae-2a0edd530062",
+    "uuid:7273e785-af52-4269-a884-0cbd82f53d79",
+    "uuid:045484a0-b3eb-4fa8-bbda-9260601c089d",
+    "uuid:adc1d56c-ccd7-467a-8c1b-051b13fc15b5",
+    "uuid:c771d79c-3c10-45be-bf94-3483a5c1bb54",
+    "uuid:f6b6a654-a356-4884-8e02-743e2a6a472e",
+    "uuid:8bf1e4e9-e376-4897-8ff6-507f36376d5f",
+    "uuid:87a21ef1-1f91-4ea8-8744-98a03560c6e8"
+  )
+```
+
+These are cases where one enumerator entered one field incorrectly. In these cases, we will take the mode of the response for each variable.
+
+```{r}
+mismatches_checked <-
+  c(
+    "2030602007012",
+    "2030602007011",
+    "2050908035007",
+    "2100501004006",
+    "2030409076002",
+    "2030602007013",
+    "2011515073002",
+    "2101447374004",
+    "2030409076001",
+    "2030602007019",
+    "2030602007015",
+    "2041805024002",
+    "2030602007018",
+    "2050906028002",
+    "2052104020009",
+    "2030602007004",
+    "2011507019001",
+    "2011515073008",
+    "2011507019003",
+    "2101416144002",
+    "2030602007016",
+    "2101412111015",
+    "2100718156004",
+    "2030602007017",
+    "2011507019002",
+    "1170404009007",
+    "1110504004011",
+    "1040705006006",
+    "1160903004001",
+    "1151005002002",
+    "1120905002001",
+    "2101433260019",
+    "2101433260001",
+    "2041408045025",
+    "2041408045020",
+    "2041408045002",
+    "2041408045013",
+    "2041408045021",
+    "2050903013001",
+    "2070301001012",
+    "1222002006005",
+    "1021602004005",
+    "1181807006008",
+    "2101447374006",
+    "1180406003005",
+    "1181204003002",
+    "2041810063001",
+    "2030602007014",
+    "2041404018003",
+    "2041404018004",
+    "2041404018005",
+    "1180903005001",
+    "2041408045019",
+    "2011707039017"
+  )
+```
+
+These observations have fewer valid entries than other entries for the same WP in the ID vars, and will not be considered for the ID variables section.
+
+```{r}
+missing_id_vars <-
+  c(
+    "uuid:03e4f216-487a-411d-a64f-52b3d58aeb87",
+    "uuid:4cddfe3f-3084-4efe-b5a4-656dd12ace1d",
+    "uuid:4f7b9a95-18d2-4f77-9023-1f704c992d3e",
+    "uuid:97468e5b-9508-4c36-90fc-5d160bbf3454",
+    
+    ## Temporary, fix once Aziz updates the data
+    "uuid:4efec896-33a4-4f88-afc4-69e5ce2c0c9a",
+    "uuid:3ab447dc-3798-4a74-bf6b-e9e6077eb8a4",
+    "uuid:c1fabcfc-d27c-41ec-87bf-b73604f8b76d"
+  )
+```
+
+
+
+### Distance to other water points
+
+```{r}
+distances <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "water-point-distances.rds"
+    )
+  )
+```
+
+### Water point characteristics
+
+```{r}
+wp <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-id.rds"
+    )
+  ) %>%
+  mutate(
+    wp_id_c = paste0(village_id, str_sub(wp_id, str_length(wp_id) - 2, str_length(wp_id)))
+  ) %>% 
+  arrange(wp_id_c)
+
+assert_that(
+  any(test_obs %in% wp$key) == FALSE
+)
+```
+
+### GPS coordinates
+
+```{r}
+wp_sf <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-clean.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    !(key %in% test_obs)
+  ) %>%
+  select(key, wp_id)
+```
+
+## Check observations + unique enumerators by wp_id
+
+We expect that for each `wp_id`, there are n observations corresponding to n unique enumerators, where n > 2.
+
+We use these values in the high frequency check flagging code.
+
+```{r}
+wp <-
+  wp %>% 
+  group_by(wp_id_c) %>% 
+  mutate(
+    n_obs = n(),
+    n_enum = n_distinct(enumerator_id)
+  ) %>% 
+  ungroup()
+```
+
+```{r}
+wp %>% 
+  tabyl(n_obs) %>% 
+  adorn_pct_formatting()
+```
+
+### Check distances between observations
+
+Among water points that are very close, we check that the `wp_id` is the same.
+
+```{r}
+dist_check <- 
+  wp %>% 
+  transmute(
+    key.x = key,
+    wp_id.x = wp_id_c
+  ) %>% 
+  inner_join(
+    distances,
+    by = "key.x"
+  ) %>% 
+  inner_join(
+    wp %>% 
+      transmute(
+        key.y = key,
+        wp_id.y = wp_id_c
+      ),
+    by = "key.y"
+  )  %>% 
+  mutate(
+    id_match = (wp_id.x == wp_id.y)
+  )
+
+nearest_wp <-
+  dist_check %>% 
+  group_by(key.x) %>%
+  dplyr::filter(distance == min(distance)) %>% 
+  ungroup() %>% 
+  dplyr::select(
+    key = key.x,
+    wp_id.y,
+    distance
+  ) 
+```
+
+We plot the frequency of a `id_match` by distance.
+
+```{r}
+dist_check %>% 
+  mutate(
+    dist_bins =
+      case_when(
+        distance <= 2 ~ 1,
+        distance <= 5 ~ 2,
+        distance <= 10 ~ 3,
+        distance <= 15 ~ 4,
+        distance <= 20 ~ 5,
+        distance <= 25 ~ 6,
+        distance <= 30 ~ 7,
+        distance <= 35 ~ 8,
+        distance <= 40 ~ 9,
+        distance <= 50 ~ 10,
+        TRUE ~ 11
+      ) %>% 
+      factor(
+        levels = 1:11,
+        labels = 
+          c(
+            "<2m",
+            "<5m",
+            "<10m",
+            "<15m",
+            "<20m",
+            "<25m",
+            "<30m",
+            "<35m",
+            "<40m",
+            "<50m",
+            ">50m"
+          ),
+        ordered = T
+      )
+  ) %>% 
+  group_by(dist_bins) %>% 
+  summarise(
+    pct_match = sum(id_match)/n()
+  ) %>% 
+  ungroup() %>% 
+  ggplot(
+    aes(
+      x = dist_bins,
+      y = pct_match
+      )
+  ) +
+  geom_col(fill = viridis(1)) +
+  theme +
+  labs(
+    x = "Distance to water source (m)",
+    y = "Percentage of sources with matching ID"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent,
+    breaks = breaks_width(.2)
+  )
+```
+
+
+### Establish criteria for a distance match + water point ID match
+
+Here we establish if sources are close to one another (within 50m) or were manually noted to have a bad gps reading.
+
+```{r}
+bad_gps <- c(
+  # start of enumerator MW27379 in Gravel -- their device was off the entire day
+  "uuid:4ae0ce01-2e2b-4bef-93ac-c06e8e2c4954",
+  "uuid:a6ebdc51-7a52-4489-adc3-c6ab226803ba",
+  "uuid:2748c433-d465-4763-bc78-f912693703cc",
+  "uuid:3a9d8479-2849-4984-b1d6-1c9dd63dbaef",
+  "uuid:0721e6e4-a599-4334-9485-0bb7580a0e7a",
+  "uuid:893c29cf-7620-4b6e-baee-5f1b7617610c",
+  "uuid:807cda1b-38a5-4b92-aff1-db510f7551c9",
+  "uuid:e6ef709f-f2a6-422f-b830-a9ea74a47d20",
+  # end of enumerator MW27379 in Gravel
+  
+  # start of enumerator MW22121 in Malunga -- their device was off the entire day
+  "uuid:6c1da34e-5d8c-4103-bb35-0c822bebf22c",
+  "uuid:c97fce87-4309-469f-a4a0-1d689f2d5fed",
+  "uuid:fe2c810a-0e56-4bcc-a21f-d907973ef1e3",
+  "uuid:848ecc75-2a60-4163-b045-93685dd17703",
+  "uuid:53cea14e-7a8a-4810-87e8-207b829e3586",
+  "uuid:db14a48c-12d3-45af-8709-8d76a9f3ef76",
+  # end of enumerator MW22121 in Malunga
+  
+  # MW20384 in Nkalo, WP2030602007006
+  "uuid:6f7c22ba-708a-440d-951b-e39be34fb91a",
+  
+  # MW22659 in Mtambo, WP2100718156003
+  "uuid:dd7925f2-d396-443b-be52-f16e64c30bd2",
+  # MW22659 in Mtambo, WP2100718156004
+  "uuid:860f71e9-2c2a-47ed-99ed-545d09556e3b",
+  
+  # MW26198 in Malowa
+  "uuid:052db89b-a570-4f24-a560-8ebe366c8e7b",
+  "uuid:2e7970d5-75b8-4d7b-9eac-9c2b8152b8ed",
+  "uuid:45b95abd-319e-4c64-89e3-c5109523588d",
+  "uuid:e13aa959-6bb0-4ef8-b9e2-f450f8c00970",
+  "uuid:d1d627eb-7b93-4624-abf0-cb8d465892ee",
+  "uuid:a8c28013-9251-4b36-a8d0-21849ed3558d",
+  "uuid:d9361f17-0608-4029-990e-2ebbc9d4ee2c",
+  "uuid:33951c56-3e1c-4584-a523-b8f536344bfc",
+  "uuid:750f4011-9c7d-4bf2-b22c-8b5fe817b19e",
+  
+  # MW26198 in Chipengule
+   "uuid:b33d52d0-c1fe-447f-9526-09d16a401dbe",
+  
+  # MW22483 in Ojesi
+  "uuid:9994e29c-29d4-490b-b8e9-9ca61f579367",
+  
+  # 225517 in Kasozi, WP7016008
+  "uuid:ce9e87aa-bc36-4157-8060-91a2718f5dcb",
+  
+  # 313765 in Buyondo, WP6002015
+  "uuid:291bfa86-74bf-45c4-8168-57af53ff9964",
+  
+  # 118182 in Amon Gogonyo, WP3002001
+  "uuid:9f410ddf-c7bb-42e5-a3ab-56ff058c4af4",
+  
+  # MW21532 in Jameskanono, WP2030413107004
+  "uuid:6086fce5-e1e9-456f-82f5-87db766253fd",
+  
+  # MW25398 in Wilson, WP2020314063002
+  "uuid:5879557a-a58f-4f4b-939e-fdd336564256",
+  
+  # The program information on this entry is wrong
+  "uuid:bfb40401-a5cb-4e9e-8644-6ca56d4f7fa8"
+)
+
+```
+
+```{r}
+dist_check <-
+  dist_check %>% 
+  mutate(
+    close = (distance <= 25),
+    close_id = id_match & close
+  )
+```
+
+
+```{r}
+dist_check %>% 
+  tabyl(close_id) %>% 
+  adorn_pct_formatting()
+```
+
+## Check variables match by wp_id
+
+Among sources that are within 25 meters of each other + have the same wp_id, 
+we check that they agree on the following variables:
+  - Location:
+      - country
+      - district_id
+      - village_id 
+  - Water source characteristics:
+      - wp_drink
+      - wp_multicompound
+      - wp_name
+      - sourcetype
+      - sourcetype_simp
+      - wp_dsw
+      - wp_ilc
+      - wp_ilc_device
+      - wp_func 
+
+*TODO: this should change if new variables are added to sections 2*
+We compute the percentage of variables that they agree on.
+
+For `wp_name`, enumerators can input a string, so we compute the average string
+distance between water sources. We consider a `wp_name` to be a match if
+the average string distance is <= 0.3. I decided on this threshold by trying
+to compute the string distance between strings with small mispellings.
+
+```{r}
+comparison_vars <-
+  c(
+    "country",
+    "district_id",
+    "village_id",
+    "wp_name",
+    "wp_drink",
+    "wp_multicompound",
+    "sourcetype",
+    "sourcetype_simp",
+    "wp_dsw",
+    "wp_ilc",
+    "wp_ilc_device",
+    "wp_func"
+  )
+```
+
+```{r}
+compare_wps <-
+  dist_check %>% 
+  # select sources within 25m + id match
+  dplyr::filter(close_id) %>% 
+  transmute(
+    key = key.x,
+    wp_id_c = wp_id.x
+  ) %>% 
+  distinct() %>% 
+  # Join information from each enumerator
+  group_by(wp_id_c) %>% 
+  mutate(mch_id = cur_group_id()) %>% 
+  ungroup() %>% 
+  inner_join(
+    wp,
+    by = c("key", "wp_id_c")
+  ) %>% 
+  group_by(mch_id) %>% 
+   mutate(
+     # For categorical variables, we can do a binary check
+    across(
+      all_of(comparison_vars[-c(1)]),
+      ~ n_distinct(.) == 1,
+      .names = "match_{.col}"
+    ),
+    # For water source name, we calculate the average string distance
+    avg_st_dist = {
+      names <- wp_name
+        dists <- stringdistmatrix(names, names, method = "jw")
+        upper_tri <- dists[upper.tri(dists)]
+        mean(upper_tri, na.rm = T)
+    },
+    match_wp_name = ifelse(is.na(avg_st_dist), F, (avg_st_dist <= 0.3))
+  ) %>%
+  rowwise() %>% 
+  mutate(
+    pct_match = (sum(
+      c_across(
+        starts_with("match_")
+      ),
+      na.rm = TRUE
+    )/length(comparison_vars)) * 100
+  ) %>%
+  ungroup
+```
+
+Check if most water points have consistent information
+
+```{r}
+compare_wps %>% 
+  ggplot() +
+  geom_histogram(
+    aes(
+      x = pct_match
+    ),
+    fill = viridis(1)
+  ) +
+  theme + 
+  labs(
+    x = "Percentage of matched variables \nwithin a cluster of water points",
+    y = "Number of observations",
+    caption = 
+      paste0(
+        "Note: this only includes water points that are within 25m of other",
+        " water points with the same water point ID." 
+      ) %>% str_wrap(100)
+  )
+```
+
+There are 5 enumerators per team, if only one has a different answer, we will consider it to be the same water point. That means 80% or more of matched variables. 
+
+```{r}
+matched <- 
+  compare_wps %>% 
+  dplyr::filter(pct_match >= 80) %>% 
+  pull(key) %>% 
+  unique()
+```
+
+Cases with less than 80% matches are individually inspected:
+
+```{r}
+compare_wps %>%
+  dplyr::filter(pct_match < 80) %>%
+  tabyl(date)
+```
+
+```{r eval = FALSE}
+compare_wps %>%
+  dplyr::filter(
+    !(key %in% matched),
+    !(wp_id_c %in% mismatches_checked)
+  ) %>%
+  arrange(date, wp_id) %>%
+  select(key, pct_match, date, country, wp_id, wp_id_c, village_id, enumerator_id, all_of(comparison_vars), wp_photo, comments) %>%
+  view
+```
+
+```{r}
+good_keys <- 
+  compare_wps %>%
+  dplyr::filter(
+    (key %in% matched) | wp_id_c %in% mismatches_checked
+  ) %>%
+  pull(key) %>% 
+  unique()
+```
+
+### Check variables that don't match
+
+For these variables, we check the percentage of observations that don't match --- finding where enumerators tend to make mistakes.
+
+```{r}
+compare_wps %>% 
+  select(key, starts_with("match_")) %>% 
+  summarise(
+    across(
+      starts_with("match"),
+      ~ sum(!.x)/n() %>% na_if(0)
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "variable",
+    values_to = "pct",
+    names_prefix = "match_"
+  ) %>%
+  dplyr::filter(pct > 0) %>%
+  ggplot(
+    aes(
+      x = reorder(variable, pct),
+      y = pct
+    )
+  ) +
+  geom_col(fill = viridis(1)) +
+  #theme + 
+  labs(
+    x = NULL,
+    y = "Percentage of observations with mismatched values",
+    caption = 
+      paste0(
+        "Note: this only includes water points that are within 25m of each other",
+        " water points with the same water point ID." 
+      ) %>% str_wrap(80)
+  ) +
+  scale_y_continuous(labels = scales::percent) +
+  coord_flip()
+```
+
+### Water point identification variables
+
+For these variables, we assume the most commonly entered value across all five enumerators who completed the survey is the correct response.
+
+```{r}
+wp_chars <- 
+  wp %>% 
+  # Drop observations we know are problematic
+  dplyr::filter(key %in% good_keys) %>%
+  # Count how many observations have each combination of variables
+  group_by(
+    wp_id_c, 
+    across(all_of(comparison_vars))
+  ) %>%
+  mutate(n = n()) %>%
+  # Coalesce variables that may be missing but can be filled with values from other obs
+  group_by(wp_id_c) %>%
+  mutate(
+    district_id = max(district_id, na.rm = TRUE)
+  ) %>%
+  # Keep only the most common values
+  dplyr::filter(n == max(n)) %>%
+  group_by(
+    country, district_id, village_id,
+    wp_id,
+    n_obs, 
+    n_enum,
+    wp_drink, wp_multicompound, 
+    wp_func,
+    sourcetype, sourcetype_o, sourcetype_simp,
+    wp_dsw, wp_ilc_device, wp_ilc
+  ) %>%
+  # If all five observations have the same values, select on "randomly" 
+  dplyr::filter(key == max(key)) %>%
+  ungroup %>%
+  # These observations have more missing values than others for the same WP, but no conflicting information otherwise 
+  dplyr::filter(
+    !(key %in% missing_id_vars),
+    !(wp_id_c == 2070302012011 & wp_id == "WP2070301002011")
+  )
+```
+
+```{r}
+assert_that(
+  nrow(wp_chars) == n_distinct(wp_chars$wp_id_c)
+)
+``` 
+
+```{r eval = FALSE}
+wp_chars %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>% 
+  view
+```
+
+## Combine with sections submitted by a single enumerator
+
+### Spotchecks
+
+```{r}
+spotcheck <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-spotcheck.rds"
+    )
+  ) %>%
+  # There is only one observation for this water point, since the field team went back to collect information based on the GPS from EvAc
+  dplyr::filter(wp_id != "WP2011707039017")
+```
+
+```{r}
+wp_collapsed <-
+  wp_chars %>%
+  left_join(
+    spotcheck,
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
+```
+
+### Water testing
+
+```{r}
+tests <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed-tests.rds"
+    )
+  )
+```
+
+```{r}
+wp_collapsed <-
+  wp_collapsed %>%
+  left_join(
+    tests,
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
+```
+
+```{r}
+assert_that(
+  nrow(wp_collapsed) == n_distinct(wp_collapsed$wp_id_c)
+)
+
+```
+
+### Flag entries that cannot be collapsed
+
+We define the following flags.
+
+- `dist_flag` ~ sources within 50m but do not match on wp_id
+- `wp_id_flag` ~ sources >= 50m but *do* match on wp_id
+- `collapse_flag` ~  1 = sources that cannot be collapsed + should be excluded from HFCs
+
+If each water source is an ID + distance match with at least 1 water source, this doesn't work.
+
+```{r, warning = FALSE, message = FALSE}
+flag <-
+  dist_check %>% 
+  group_by(key.x) %>% 
+  dplyr::filter(max(close_id) == 0) %>% 
+  mutate(
+    dist_flag = as.numeric(close & !id_match),
+    wp_id_flag = as.numeric(!close & id_match),
+  ) %>% 
+  dplyr::select(
+    key = key.x,
+    wp_id = wp_id.x,  
+    ends_with("flag")
+  ) %>% 
+  group_by(key, wp_id) %>% 
+  summarise(
+    across(
+      everything(),
+      ~ max(.x, na.rm = T)
+    )
+  ) %>% 
+  ungroup() %>% 
+  mutate(collapse_flag = 1) %>%
+  rename(problem_key = key) 
+
+wp_flags <-
+  flag %>%
+  group_by(wp_id) %>% 
+  summarise(
+    dist_flag = max(dist_flag),
+    wp_id_flag = max(wp_id_flag),
+    collapse_flag = max(collapse_flag),
+    .groups="drop"
+  )
+```
+
+Check that the flag data is at entry_level of observation.
+
+```{r}
+assert_that(
+  nrow(flag) == n_distinct(flag$problem_key)
+)
+```
+
+```{r}
+wp_collapsed <-
+  wp_collapsed %>% 
+  # merge with collapsed ids
+  left_join(wp_flags, by = c("wp_id")) %>%
+  # turn missing flags into zeros
+  mutate(
+    across(
+      ends_with("_flag"),
+      ~ tidyr::replace_na(.x, 0)
+    )
+  )
+```
+
+### Add geospatial data
+
+```{r}
+wp_gps <-
+  wp_sf %>%
+  left_join(wp_collapsed) %>%
+  # Remove obs that have incorrect distances
+  dplyr::filter(!(key %in% (flag %>% dplyr::filter(dist_flag == 1) %>% pull(problem_key)))) %>%
+  # Calculate centroid of different coordinates for the same WP
+  group_by(wp_id_c) %>%
+  summarise(geometry = st_union(geometry)) %>%
+  st_centroid() %>%
+  # Join tabular data
+  inner_join(wp_collapsed)
+```
+
+## Save
+
+### Tabular data
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-collapsed"
+  )
+
+wp_collapsed %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+### Spatial data
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Spatial",
+    "wp-gps-collapsed"
+  )
+
+wp_gps %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

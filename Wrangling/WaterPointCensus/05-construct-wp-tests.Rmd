@@ -1,0 +1,287 @@
+# Construct chlorine test sections
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Select relevant variables and observations
+
+### Dispenser fill check
+
+```{r}
+jc <-
+  wp %>%
+  dplyr::filter(!is.na(jc_valve)) %>%
+  transmute(
+    wp_id,
+    jc_key = key,
+    jc_enum = enumerator_id,
+    jc_time = submissiondate,
+    jc_wait = as.numeric(jc_wait_diff) %>% abs,
+    jc_comments = enum_comment,
+    disp_func = jc_valve,
+    disp_filled = jc_chlorine,
+    disp_dose = 
+      case_when(
+        jc_mldispensed > 3 ~ "More than 3 mL",
+        jc_mldispensed == 3 ~ "3 mL",
+        jc_mldispensed > 2.5 & jc_mllost ~ "3 mL",
+        jc_mldispensed > 2.5 & !jc_mllost ~ "Less than 3 mL",
+        jc_mldispensed < 2.5 ~ "Less than 3 mL",  
+      ) %>%
+      factor(
+        levels = c("Less than 3 mL", "3 mL", "More than 3 mL"),
+        ordered = TRUE
+      )
+  ) %>%
+  dplyr::filter(
+    !if_all(-c(jc_key, jc_enum, jc_time), is.na),
+    # There are still two identical observations
+    jc_key != "uuid:b92929ea-efc8-4ff9-8247-e0f37d3db788"
+  )
+```
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+jc_unique <-
+  jc %>%
+  group_by(wp_id) %>%
+  dplyr::filter(jc_time == max(jc_time))
+```
+
+### Select only color wheel tests
+
+```{r}
+cw <-
+  wp %>%
+  dplyr::filter(
+    !key %in% c(
+      "uuid:9c596760-afc9-45b3-90e7-5af700e858ef",
+      "uuid:6e628649-b8a2-4e07-9f5e-d571f776aa33"
+    ),
+    colorwheel
+  ) %>%
+  select(
+    wp_id,
+    colorwheel,
+    cw_key = key,
+    cw_enum = enumerator_id,
+    cw_time = submissiondate,
+    contains("tubeid"),
+    contains("disc"),
+    -contains("nocl"),
+    -contains("un"),
+    starts_with("jc_"),
+    -contains(c("materials", "insert", "rinse", "_nt", "_read")),
+    -ends_with(c("check", "confirm"))
+  )  %>%
+  dplyr::filter(!if_all(-c(cw_key, cw_enum, cw_time), is.na))
+```
+
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+cw_unique <-
+  cw %>%
+  group_by(wp_id) %>%
+  dplyr::filter(cw_time == max(cw_time))
+```
+
+```{r}
+assert_that(
+  cw_unique %>%
+    pull(wp_id) %>%
+    n_distinct == 
+  nrow(cw_unique)
+)  
+```
+
+
+### Select only colorimeter tests
+
+```{r}
+meter <-
+  wp %>%
+  dplyr::filter(
+    colorimeter,
+    !(key %in% c(
+      "uuid:988c326e-3e50-4ee4-ad24-3700cacf5051"
+    ))
+  ) %>%
+  select(
+    wp_id,
+    colorimeter,
+    meter_key = key, 
+    meter_enum = enumerator_id,
+    meter_time = submissiondate,
+    contains("vialid"),
+    contains("meter"),
+    -contains("nocl"),
+    -contains("un"),
+    meter_comments = enum_comment,
+    -contains(c("materials", "insert", "rinse", "_read", "intro")),
+    -ends_with(c("check", "confirm", "_nt"))
+  ) %>%
+  dplyr::filter(!if_all(-c(meter_key, meter_enum, meter_time), is.na))
+```
+
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+meter_unique <-
+  meter %>%
+  group_by(wp_id) %>%
+  dplyr::filter(meter_time == max(meter_time))
+```
+
+
+```{r}
+assert_that(
+  meter_unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  nrow 
+  == 0
+)  
+```
+
+### Select only untreated color wheel tests
+
+```{r}
+cw_nocl <-
+  wp %>%
+  dplyr::filter(colorwheel_un) %>%
+  select(
+    wp_id,
+    colorwheel_un,
+    cw_nocl_key = key, 
+    cw_nocl_enum = enumerator_id,
+    cw_nocl_time = submissiondate,
+    discid_nocl:disctcr_nocl_comments,
+    -contains(c("materials", "insert", "rinse", "_nt", "_read")),
+    -ends_with(c("check", "confirm"))
+  ) %>%
+  dplyr::filter(!if_all(-c(cw_nocl_key, cw_nocl_enum, cw_nocl_time), is.na))
+```
+
+```{r eval = FALSE}
+cw_nocl %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  arrange(wp_id, cw_nocl_time) %>%
+  view
+```
+
+Some water points had to be restested. When there are duplicate entries, we keep only the last observation.
+
+```{r}
+cw_nocl_unique <-
+  cw_nocl %>%
+  group_by(wp_id) %>%
+  dplyr::filter(cw_nocl_time == max(cw_nocl_time))
+```
+
+```{r}
+assert_that(
+  cw_nocl_unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  nrow 
+  == 0
+)  
+```
+
+### Select only untreated colorimeter tests
+
+```{r}
+meter_nocl <-
+  wp %>%
+  dplyr::filter(colorimeter_un) %>%
+  select(
+    wp_id,
+    colorimeter_un,
+    meter_nocl_key = key, 
+    meter_nocl_enum = enumerator_id,
+    meter_nocl_time = submissiondate,
+    meterid_un:metertcr_nocl_timestamp6,
+    -contains(c("materials", "insert", "rinse", "_read", "intro")),
+    -ends_with(c("check", "confirm", "_nt"))
+  ) %>%
+  group_by(wp_id) %>%
+  dplyr::filter(!if_all(-c(meter_nocl_key, meter_nocl_enum, meter_nocl_time), is.na)) %>%
+  dplyr::filter(meter_nocl_time == max(meter_nocl_time))
+```
+
+```{r eval = FALSE}
+assert_that(
+  meter_nocl %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  nrow 
+  == 0
+)  
+```
+
+## Combine all
+
+```{r}
+tests <-
+  jc_unique %>%
+  full_join(cw_nocl_unique, relationship = "one-to-one") %>%
+  full_join(meter_nocl, relationship = "one-to-one") %>%
+  full_join(cw_unique, relationship = "one-to-one") %>%
+  full_join(meter_unique, relationship = "one-to-one") %>%
+  ungroup
+```
+```{r}
+assert_that(
+  nrow(tests) == n_distinct(tests$wp_id)
+)
+
+assert_that(
+  tests %>%
+    group_by(wp_id) %>%
+    dplyr::filter(n() > 1) %>%
+    nrow ==
+    0
+)
+```
+
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-constructed-tests"
+  ) 
+
+tests %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

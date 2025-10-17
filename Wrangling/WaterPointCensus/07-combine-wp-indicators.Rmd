@@ -1,0 +1,108 @@
+# Combine indicators
+
+```{r}
+pacman::p_load(
+  tidyverse
+)
+```
+
+## Load data
+
+```{r}
+wp_chars <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-spotcheck.rds"
+    )
+  ) 
+```
+
+```{r}
+wp_intervention <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-treatment.rds"
+    )
+  ) 
+```
+
+```{r}
+wp_dsw <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed-dsw.rds"
+    )
+  ) 
+```
+
+```{r}
+wp_ilc <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed-ilc.rds"
+    )
+  ) 
+```
+
+## Combine datasets
+
+```{r}
+wp <-
+  wp_chars %>%
+  left_join(
+    wp_dsw,
+    relationship = "one-to-one",
+    unmatched = "error"
+  ) %>%
+  inner_join(
+    wp_intervention,
+    relationship = "one-to-one",
+    unmatched = "error"
+  ) %>% 
+  left_join(
+    wp_ilc,
+    relationship = "one-to-one",
+    unmatched = "error"
+  ) 
+```
+
+
+## Save
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-indicators"
+  )
+
+wp %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```

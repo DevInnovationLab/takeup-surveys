@@ -1,0 +1,259 @@
+# Construct spotcheck variables
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  assertthat
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Water point spotcheck
+
+```{r}
+spotcheck <-
+  wp %>%
+  dplyr::filter(spotcheck) %>%
+  remove_empty() %>%
+  transmute(
+    key, wp_id, submissiondate,
+    spotcheck,
+    spotcheck_enum = enumerator_id,
+    wp_func_last,
+    wp_turbidity,
+    # These are multiple choice questions and we're clarifying the options chosen
+    wp_notfunc_dry = wp_func_reason_1, 
+    wp_notfunc_pump = wp_func_reason_2,
+    wp_notfunc_ilc_dry = wp_func_reason_ilc_1,
+    wp_notfunc_ilc_pump = wp_func_reason_ilc_2,
+    wp_notfunc_ilc_pipe = wp_func_reason_ilc_3,
+    wp_notfunc_ilc_tank = wp_func_reason_ilc_4,
+    wp_notfunc_ilc_closed = wp_func_reason_ilc_5,
+    wp_notfunc_ilc_power = wp_func_reason_ilc_7,
+    wp_notfunc_ilc_panel = wp_func_reason_ilc_8,
+    # The comments indicate this water point is not paid for
+    wp_pay,
+    wp_pay_c = if_else(
+      wp_id != "WP2010503012013", wp_pay, FALSE
+    ),
+    wp_pay_userfees = if_else(
+      wp_id != "WP2010503012013", wp_pay_purpose_1, NA
+    ),
+    wp_pay_maintenance = if_else(
+      wp_id != "WP2010503012013", wp_pay_purpose_2, NA
+    ),
+    wp_cost, wp_cost_period
+  ) %>%
+  # Comments indicate that these are functional
+  mutate(
+    across(
+      contains("wp_notfunc"),
+      ~ case_when(
+         !(wp_id %in% c("WP2101104017001", "WP2030409076001", "WP2070301001045")) ~ .
+      )
+    )
+  )
+```
+
+## ILC spotcheck
+
+```{r}
+ilc <-
+  wp %>%
+  dplyr::filter(spotcheck) %>%
+  remove_empty() %>%
+  select(
+    key, wp_id, submissiondate,
+    starts_with("ilc"),
+    -c(ilc_stock_whynot, ilc_stock_whynot_o)
+  ) %>%
+  dplyr::filter(!if_all(starts_with("ilc"), is.na))
+```
+
+```{r eval = FALSE}
+assert_that(
+  nrow(ilc) == n_distinct(ilc$wp_id)
+)
+
+ilc %>%
+  select(-c(key, submissiondate, ilc_devicepic)) %>%
+  unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  select(wp_id) %>%
+  unique %>%
+  left_join(ilc) %>%
+  view
+```
+
+When there are duplicate entries, we select the cases with the most information
+
+```{r}
+drop_keys <-
+  c(
+    "uuid:943da487-2f36-480d-8735-cc21a3bcf369",
+    "uuid:f4cd117d-044a-412a-9f00-b0e48ba726be",
+    "uuid:25668b37-c830-479d-9518-0c35ce1dbabe",
+    "uuid:b268b55c-21dc-4238-a73b-f10b76650709",
+    "uuid:369493b7-fc52-4db4-a60e-86cee305b707"
+  )
+
+ilc <-
+  ilc %>%
+  dplyr::filter(!(key %in% drop_keys))
+```
+
+## DSW spotchecks 
+
+```{r}
+dsw <-
+  wp %>%
+  dplyr::filter(spotcheck) %>%
+  select(
+    key, wp_id, submissiondate,
+    contains("disp"),
+    -c(
+      disp_dsw_id_yn,
+      disp_barcode_yn,
+      disp_dsw_date_yn,
+      no_disp_dsw_datephoto,
+      jc_mldispensed
+    )
+  ) %>%
+  dplyr::filter(!if_all(starts_with("disp"), is.na))
+```
+
+There are some duplicates because of different dispeser installation dates. We cannot tell which ones are correct.
+
+```{r eval = FALSE}
+assert_that(
+  nrow(dsw) == n_distinct(dsw$wp_id)
+)
+
+dsw %>%
+  select(-c(key, ends_with("photo"), submissiondate)) %>%
+  unique %>%
+  group_by(wp_id) %>%
+  dplyr::filter(n() > 1) %>%
+  select(wp_id) %>%
+  unique %>%
+  left_join(dsw) %>%
+  view
+```
+## Combine all
+
+```{r}
+spotcheck <-
+  spotcheck %>%
+  left_join(ilc, unmatched = "error") %>%
+  left_join(dsw, unmatched = "error") %>%
+  rename(
+    spotcheck_key = key,
+    spotcheck_time = submissiondate
+  )
+```
+
+
+## Check data
+
+There should be only one observation per WP, but there are `r spotcheck %>% group_by(wp_id) %>% summarise(n = n()) %>% dplyr::filter(n > 1) %>% nrow` cases of duplicate observations. 
+
+If all the information is the same and there are just two observations, we will choose the observation randomly.
+
+```{r}
+spotcheck_no_conflicts <-
+  spotcheck %>%
+  group_by(
+    across(
+      -c(
+        spotcheck_key, spotcheck_time,
+        contains(c("photo", "pic", "enum"))
+      )
+    )
+  ) %>%
+  mutate(count = n_distinct(spotcheck_key)) %>%
+  group_by(wp_id) %>%
+  dplyr::filter(
+    count == n(),
+    spotcheck_key == max(spotcheck_key)
+  ) 
+```
+
+
+```{r}
+spotcheck_conflicts <-
+  spotcheck %>%
+  group_by(
+    across(
+      -c(
+        spotcheck_key, spotcheck_time,
+        contains(c("photo", "pic", "enum"))
+      )
+    )
+  ) %>%
+  mutate(count = n_distinct(spotcheck_key)) %>%
+  group_by(wp_id) %>%
+  dplyr::filter(
+    count != n()
+  )
+```
+
+In `r spotcheck_conflicts %>% pull(wp_id) %>% n_distinct` water points, there is some conflicting information. These are water points that were revisited. We will keep only the last observation in these cases
+
+```{r}
+spotcheck <-
+  spotcheck_conflicts %>%
+  group_by(wp_id) %>%
+  dplyr::filter(spotcheck_time == max(spotcheck_time)) %>% 
+  mutate(flag_wpcensus_conflict = TRUE) %>%
+  bind_rows(spotcheck_no_conflicts) %>%
+  arrange(wp_id) %>%
+  ungroup
+```
+
+Check that there are no more duplicates
+
+```{r}
+assert_that(
+  spotcheck %>%
+    pull(wp_id) %>%
+    n_distinct() ==
+  nrow(spotcheck)
+)
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-spotcheck"
+  )
+
+write_meta(
+  spotcheck,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

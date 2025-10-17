@@ -7,7 +7,8 @@ observations and format variables.
 pacman::p_load(
   tidyverse,
   haven,
-  janitor
+  janitor,
+  assertthat
 )
 ```
 
@@ -235,7 +236,7 @@ wp_clean <-
 ## De-identify
 
 ```{r}
-wp_deid <-
+wp_raw_deid <-
   wp_clean %>%
   select(
     -c(
@@ -261,23 +262,6 @@ path <-
   )
 
 wp_clean %>% 
-  write_meta(
-    path_data = file.path(path_box, path),
-    path_meta = file.path(path_git, path)
-  )
-```
-
-```{r}
-path <-
-  file.path(
-    "Data",
-    "WaterPointCensus",
-    "DataSets",
-    "Clean",
-    "wp-census-clean-deid"
-  )
-
-wp_deid %>% 
   write_meta(
     path_data = file.path(path_box, path),
     path_meta = file.path(path_git, path)

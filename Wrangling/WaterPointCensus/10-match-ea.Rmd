@@ -1,0 +1,689 @@
+# Match EA and Census water points
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "here",
+    "sf",
+    "janitor",
+    "units",
+    "leaflet",
+    "viridis",
+    "googlesheets4",
+    "tictoc",
+    "assertthat"
+    )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+### Corrections
+
+After comparing the maps from Evidence Action water points and the Water Point Census, we have identified some matches of census water points and Evidence Action water points that would not be identified through an algorithm. We also inspected the images from the water point census to determine whether ILC devices and DSW dispensers were present. These corrections were manually entered into CSV files
+
+```{r}
+manual_matches <- 
+  read_csv( 
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "manual-match-to-ea-wp.csv"
+    )
+  )
+```
+
+```{r eval = FALSE}
+# This is commented out because there are WPs mapped to two different villages
+
+assert_that(
+  manual_matches %>% 
+    select(wp_id, ea_id) %>%
+    unique %>%
+    nrow
+  ==
+    nrow(manual_matches)
+)
+```
+
+```{r}
+manual_unmatched <-
+  read_csv(
+    file.path(
+      path_git,
+      "documentation",
+      "WaterPointCensus",
+      "ea-wpt-unmatched.csv"
+    )
+  )
+
+assert_that(
+  manual_unmatched %>% 
+    pull(ea_id) %>%
+    n_distinct
+  ==
+    nrow(manual_unmatched)
+)
+```
+```{r}
+wp_tmt <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-census-treatment.rds"
+    )
+  )
+```
+
+
+### IPA
+
+```{r}
+wp_tabular <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-collapsed.rds"
+    )
+  ) %>%
+  inner_join(
+    wp_tmt,
+    unmatched = "error"
+  )
+
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Spatial",
+      "wp-gps-collapsed.rds"
+    )
+  ) %>%
+  left_join(
+    wp_tmt,
+    unmatched = "error"
+  )
+```
+
+```{r}
+ipa_uganda <-
+  wp %>%
+  dplyr::filter(
+    country == "Uganda"
+  )
+```
+
+```{r}
+ipa_malawi <-
+  wp %>%
+  dplyr::filter(
+    country == "Malawi"
+  )
+```
+
+### Evidence Action
+
+```{r}
+ea_malawi_wpt <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-malawi-wp-sf.rds"
+      )
+  )
+
+ea_malawi_wcp <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-malawi-wcp-sf.rds"
+      )
+  ) %>%
+  transmute(
+    wpt_id = wcp_id,
+    villageid = as.character(wcp_villageid)
+  )
+
+ea_malawi <-
+  bind_rows(
+    ea_malawi_wpt,
+    ea_malawi_wcp
+  ) %>%
+  mutate(
+     program = program %>% 
+      as.character %>% 
+      str_replace_all("ILC", "ILC water point") %>%
+      tidyr::replace_na("ILC water collection point")
+  )
+```
+
+```{r}
+ea_uganda_wpt <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-uganda-wp-sf.rds"
+    )
+  )
+
+ea_uganda_wcp <- 
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "EvidenceAction",
+      "Spatial",
+      "ea-uganda-wcp-sf.rds"
+    )
+  ) %>%
+  select(
+    wpt_id = wcp_id,
+    villageid = wcp_villageid
+  )
+
+ea_uganda <-
+  bind_rows(
+    ea_uganda_wpt,
+    ea_uganda_wcp
+  ) %>%
+  mutate(
+    program = program %>% 
+      as.character %>% 
+      str_replace_all("ILC", "ILC water point") %>%
+      tidyr::replace_na("ILC water collection point")
+  )
+```
+
+Combine both countries
+
+```{r}
+ea <-
+  bind_rows(
+    ea_malawi,
+    ea_uganda
+  ) %>%
+  mutate(
+    sourcetype = str_to_sentence(sourcetype),
+    sourcetype_simp = case_when(
+      str_detect(sourcetype, "Borehole") ~ "Borehole",
+      str_detect(sourcetype, "Municipal") ~ "Municipal water supply",
+      str_detect(sourcetype, "well") ~ "Dug well",
+      str_detect(sourcetype, "spring") ~ "Spring",
+      str_detect(sourcetype, "Dam") ~ "Surface water",
+      str_detect(sourcetype, "water source") ~ "Surface water"
+    ),
+    wpt_id = as.numeric(wpt_id)
+  )
+
+ea_tabular <- 
+  ea %>%
+  st_drop_geometry()
+```
+
+## Combine EA and IPA data
+
+### Calculate distances
+
+```{r}
+tic()
+
+wp_uganda <-
+  st_distance_df(
+    ipa_uganda, "wp_id_c",
+    ea_uganda, "wpt_id"
+  )
+
+toc()
+```
+
+```{r}
+tic()
+
+wp_malawi <-
+  st_distance_df(
+    ipa_malawi, "wp_id_c",
+    ea_malawi, "wpt_id"
+  ) 
+
+toc()
+```
+
+```{r}
+wps <-
+  bind_rows(
+    wp_uganda,
+    wp_malawi
+  ) %>%
+  left_join(wp %>% select(wp_id, wp_id_c)) %>%
+  mutate(wpt_id = as.numeric(wpt_id))
+```
+
+## Match IPA water points to EA water points
+
+### Manual matches
+
+Manual matches take precedence over any algorithmic matching. We will not try to match water points that were already matched (including if they were marked as unmatched).
+
+```{r}
+matched_manual <- 
+  manual_matches %>%
+  bind_rows(manual_unmatched) %>%
+  select(wp_id, ea_id, ilc_cluster_wp, match_comments = comments) %>%
+  mutate(match = "Manual")
+```
+
+```{r}
+assert_that(
+  matched_manual %>%
+    select(ea_id, wp_id) %>%
+    unique %>%
+    nrow()
+  ==
+    nrow(matched_manual)
+)
+```
+
+### By DSW ID and distance
+
+```{r}
+matched_id <-
+  wp_tabular %>%
+  select(wp_id_c, wpt_id = disp_dsw_id) %>%
+  inner_join(ea_tabular) %>%
+  left_join(wps) %>%
+  dplyr::filter(distance < 50) %>%
+  select(ea_id = wpt_id, wp_id) %>%
+  mutate(match = "DSW ID")
+```
+
+```{r}
+assert_that(
+  n_distinct(matched_id$wp_id) == nrow(matched_id)
+)
+```
+
+```{r}
+matched_manual_id <-
+  matched_manual %>%
+  bind_rows(matched_id) 
+```
+
+
+### By distance and source type
+
+We will only try to match water points that have not yet been matched.
+
+```{r}
+nearby_wps <-
+  wps %>%
+  # We consider that two water points further than 100m from one another cannot be the same
+  dplyr::filter(
+    distance <= 100
+  ) %>%
+  dplyr::filter(
+    !(wp_id %in% matched_manual_id$wp_id),
+    !(wpt_id %in% matched_manual_id$ea_id)
+  )
+```
+
+We will use simplified source type to determine a match between the IPA points and the EA points. We also create other identifiers to export to the spreadsheet shared with Evidence Action.
+
+```{r}
+ea_wps <-
+  nearby_wps %>% 
+  left_join(
+    wp %>% 
+      select(
+        country, wp_id_c, wp_id, wp_name,
+        sourcetype_simp_ipa = sourcetype_simp, 
+        sourcetype_ipa = sourcetype, 
+        disp_dsw_id, disp_barcode,
+        dsw, ilc
+      ) %>%
+      st_drop_geometry(),
+    by = c("wp_id_c", "wp_id")
+  ) %>% 
+  left_join(
+    ea %>% 
+      select(
+        wpt_id, 
+        sourcetype_simp_ea = sourcetype_simp, 
+        sourcetype_ea = sourcetype, 
+        program
+      ) %>% 
+      st_drop_geometry(),
+    by = "wpt_id"
+  ) %>% 
+  mutate(
+    type_match = case_when(
+      program != "ILC water collection point" ~ (sourcetype_simp_ea == sourcetype_simp_ipa),
+      program == "ILC water collection point" ~ is.na(sourcetype_simp_ipa),
+    ),
+    program_match = (dsw & program == "DSW") | (ilc & str_detect(program, "ILC")),
+    missing_disp = (!dsw & program == "DSW"),
+    missing_ilc = (!ilc & program == "ILC"),
+    program_mismatch = case_when(
+      (dsw & program == "ILC") | (ilc & program == "DSW") ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    matched = (type_match & program_match)
+  )
+```
+
+```{r}
+matched_dist <-
+  ea_wps %>%
+  dplyr::filter(matched | missing_disp | missing_ilc) %>%
+  select(
+    ea_id = wpt_id,
+    wp_id,
+    distance
+  ) %>%
+  mutate(match = "Algorithm")
+```
+
+
+#### Check how many water points are matched this way
+
+```{r}
+ea_wps <-
+  ea_wps %>%
+  unique %>%
+  group_by(wpt_id) %>%
+  mutate(ea_matches = sum(matched, na.rm = TRUE)) %>%
+  group_by(wp_id_c) %>%
+  mutate(ipa_matches = sum(matched, na.rm = TRUE)) %>%
+  ungroup 
+```
+
+
+```{r}
+ea_wps %>%
+  tabyl(ea_matches)
+```
+
+```{r}
+ea_wps %>%
+  tabyl(ipa_matches, dsw)
+```
+
+```{r}
+ea_wps %>%
+  tabyl(ipa_matches)
+```
+
+#### Check cases with multiple matches
+
+The following water points were mapped in two different villages. We will leave them as is because we need this information in both villages:
+- `wpt_id` 70220610 was mapped in 1151005002 and 1151005003
+- `wpt_id` 70060146 was mapped in 1051401001 and 1051001007
+- `wpt_id` 70070419 was mapped in 1191301002 and 1191301007
+- `wpt_id` 7030631  was mapped in 1140202002 and 1140202012
+- `wpt_id` 70220610 was mapped in 1151005002 and 1151005003
+
+```{r}
+assert_that(
+  ea_wps %>%
+    dplyr::filter(
+      ea_matches > 1,
+      !(wpt_id %in% c(70070419, 70060146, 7030631, 7020280, 7020281, 70220610))
+    ) %>%
+    nrow ==
+    0
+)
+```
+
+```{r eval = FALSE}
+ea_wps %>%
+  dplyr::filter(ea_matches > 1) %>%
+  select(country, wpt_id, wp_id, disp_dsw_id, disp_barcode, wp_id_c, sourcetype_ipa, sourcetype_ea, distance, dsw, ilc_wcp, ilc_wp) %>%
+  view
+```
+
+```{r}
+assert_that(
+  ea_wps %>%
+    dplyr::filter(ipa_matches > 1) %>%
+    nrow ==
+    0
+)
+```
+
+```{r eval = FALSE}
+ea_wps %>%
+  dplyr::filter(ipa_matches > 1) %>%
+  select(country, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) %>%
+  view
+```
+
+```{r, eval = FALSE}
+assert_that(
+  nrow(ea_wps) == n_distinct(ea_wps$wp_id_c)
+)
+```
+
+```{r eval = FALSE}
+ea_wps %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>%
+  select(country, wp_id, wp_name, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) %>%
+  view
+```
+
+
+### Combine all
+
+
+```{r}
+assert_that(
+  !(matched_dist$ea_id %in% matched_manual_id$ea_id) %>%
+    all
+)
+
+assert_that(
+  !(matched_dist$wp_id %in% matched_manual_id$wp_id) %>%
+    all
+)
+```
+
+```{r}
+matched_all <-
+  matched_manual_id %>%
+  bind_rows(matched_dist) %>%
+  st_drop_geometry()
+```
+
+```{r}
+assert_that(
+  matched_all %>%
+    select(ea_id, wp_id) %>%
+    nrow 
+  ==
+    nrow(matched_all)
+)
+```
+
+```{r}
+matched_all <-
+  wp %>%
+  st_drop_geometry() %>%
+  right_join(matched_all) %>%
+  left_join(
+    ea %>%
+      transmute(
+        ea_id = wpt_id, 
+        ea_village_id = villageid, 
+        ea_sourcetype = sourcetype, 
+        ea_program = program %>% as.factor, 
+        date_installation
+      ) %>%
+      st_drop_geometry()
+  )
+```
+
+```{r}
+unmatched_ea <-
+  ea %>%
+  dplyr::filter(
+    villageid %in% wp$village_id,
+    !(wpt_id %in% matched_all$ea_id)
+  ) %>%
+  select(
+    ea_id = wpt_id, 
+    village_id = villageid, 
+    ea_sourcetype = sourcetype, 
+    ea_program = program, date_installation,
+    country = countryid
+  )
+```
+
+```{r}
+unmatched_ipa <-
+  wp %>%
+  st_drop_geometry() %>%
+  dplyr::filter(
+    intervention_type != "Non-program",
+    !(wp_id_c %in% matched_all$wp_id_c)
+  ) 
+```
+
+Identify water point serving water collection points:
+
+```{r}
+all_wps <-
+  matched_all %>%
+  bind_rows(unmatched_ea) %>%
+  bind_rows(unmatched_ipa) %>%
+  mutate(
+    ea_ilc_wpt = case_when(
+      !is.na(ilc_cluster_wp) ~ ilc_cluster_wp %>% as.character,
+      !is.na(ea_id) & str_detect(intervention_type, "ILC") ~ str_sub(ea_id, 1, 8)
+    )
+  )
+```
+
+
+```{r}
+all_wps <-
+  all_wps %>%
+  select(
+    country, district_id, village_id,
+    wp_id_c, ea_id, ea_ilc_wpt,
+    ipa_program = intervention_type,
+    ea_program,
+    match, match_comments, 
+    ipa_visit = date,
+    ipa_sourcetype = sourcetype, 
+    ea_sourcetype,
+    date_installation
+  ) %>%
+  arrange(ea_id, wp_id_c) 
+```
+
+
+## Save water-point level data
+
+
+```{r}
+matched_final <-
+  all_wps %>%
+  dplyr::filter(
+    !is.na(wp_id_c),
+    !(is.na(ea_id) & is.na(ea_ilc_wpt))
+  ) %>%
+  select(
+    -c(country, district_id, village_id)
+  ) %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(
+    !(n() > 1 & match == "Manual")
+  )
+```
+
+
+```{r}
+assert_that(
+  nrow(matched_final) == n_distinct(matched_final$wp_id_c)
+)
+```
+
+```{r eval = FALSE}
+matched_final %>%
+  group_by(wp_id_c) %>%
+  dplyr::filter(n() > 1) %>%
+  view
+```
+
+
+```{r}
+path <-  
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-ea-matched"
+  )
+
+matched_final %>% 
+  ungroup %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+## Share matches with EA
+
+```{r}
+forea <-
+  matched_final %>%
+  bind_rows(unmatched_ea)
+```
+
+
+We want to make a spreadsheet of the water point IDs and relevant DSW and EA information.
+
+```{r}
+map(
+  c("Uganda", "Malawi"), 
+  ~ all_wps %>%
+    dplyr::filter(country == .x) %>%
+    write_sheet(
+      ss = "1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4",
+      sheet = paste(.x, today())
+    )
+)
+```
+
+```{r}
+all_wps %>%
+  dplyr::filter(country == "Uganda", ipa_visit > "2025-08-19") %>%
+  write_sheet(
+    ss = "1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4",
+    sheet = paste("Uganda ILC", today())
+  )
+```

@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-07" />
+<meta name="date" content="2025-10-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1965,7 +1965,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">Wrangle Water Point Census</a></li>
+<li><a href="./">Wrangle Household Survey</a></li>
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
@@ -1983,7 +1983,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="3.5" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#clean-text-variables"><i class="fa fa-check"></i><b>3.5</b> Clean text variables</a></li>
 <li class="chapter" data-level="3.6" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#clean-date-of-survey"><i class="fa fa-check"></i><b>3.6</b> Clean date of survey</a></li>
 <li class="chapter" data-level="3.7" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#turn-dummy-vairables-into-logical"><i class="fa fa-check"></i><b>3.7</b> Turn dummy vairables into logical</a></li>
-<li class="chapter" data-level="3.8" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#merge-variables"><i class="fa fa-check"></i><b>3.8</b> Merge variables</a></li>
+<li class="chapter" data-level="3.8" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#merge-variables"><i class="fa fa-check"></i><b>3.8</b> Merge variables</a>
+<ul>
+<li class="chapter" data-level="3.8.1" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#education"><i class="fa fa-check"></i><b>3.8.1</b> Education</a></li>
+<li class="chapter" data-level="3.8.2" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#household-head-characteristics"><i class="fa fa-check"></i><b>3.8.2</b> Household head characteristics</a></li>
+</ul></li>
 <li class="chapter" data-level="3.9" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#drop-surveycto-coding-variables"><i class="fa fa-check"></i><b>3.9</b> Drop surveycto coding variables</a></li>
 <li class="chapter" data-level="3.10" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#combine-household_id-and-household_id_pl"><i class="fa fa-check"></i><b>3.10</b> Combine household_id and household_id_pl</a></li>
 <li class="chapter" data-level="3.11" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#export-data"><i class="fa fa-check"></i><b>3.11</b> Export data</a></li>
@@ -2010,48 +2014,40 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="6.4" data-path="construct-data-quality-flags-construct-sensitivity-flags.html"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#flag-if-the-village-had-a-low-proportion-of-water-come-from-the-primary-source"><i class="fa fa-check"></i><b>6.4</b> Flag if the village had a low proportion of water come from the primary source</a></li>
 <li class="chapter" data-level="6.5" data-path="construct-data-quality-flags-construct-sensitivity-flags.html"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#export-data-2"><i class="fa fa-check"></i><b>6.5</b> Export data</a></li>
 </ul></li>
-<li class="chapter" data-level="7" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html"><i class="fa fa-check"></i><b>7</b> Combine with water point data</a>
+<li class="chapter" data-level="7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html"><i class="fa fa-check"></i><b>7</b> Create final household survey data</a>
 <ul>
-<li class="chapter" data-level="7.1" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html#load-data-2"><i class="fa fa-check"></i><b>7.1</b> Load data</a></li>
-<li class="chapter" data-level="7.2" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html#check-water-point-id-presence"><i class="fa fa-check"></i><b>7.2</b> Check water point ID presence</a></li>
+<li class="chapter" data-level="7.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#load-data-2"><i class="fa fa-check"></i><b>7.1</b> Load data</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-survey"><i class="fa fa-check"></i><b>7.1.1</b> Household survey</a></li>
+<li class="chapter" data-level="7.1.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-testing"><i class="fa fa-check"></i><b>7.1.2</b> Chlorine testing</a></li>
+<li class="chapter" data-level="7.1.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#gps"><i class="fa fa-check"></i><b>7.1.3</b> GPS</a></li>
+<li class="chapter" data-level="7.1.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#village-level-data"><i class="fa fa-check"></i><b>7.1.4</b> Village-level data</a></li>
+<li class="chapter" data-level="7.1.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census"><i class="fa fa-check"></i><b>7.1.5</b> Household census</a></li>
+<li class="chapter" data-level="7.1.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-census"><i class="fa fa-check"></i><b>7.1.6</b> Water point census</a></li>
 </ul></li>
-<li class="chapter" data-level="8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html"><i class="fa fa-check"></i><b>8</b> Create final household survey data</a>
+<li class="chapter" data-level="7.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-data"><i class="fa fa-check"></i><b>7.2</b> Combine data</a>
 <ul>
-<li class="chapter" data-level="8.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#load-data-3"><i class="fa fa-check"></i><b>8.1</b> Load data</a>
-<ul>
-<li class="chapter" data-level="8.1.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-survey"><i class="fa fa-check"></i><b>8.1.1</b> Household survey</a></li>
-<li class="chapter" data-level="8.1.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-testing"><i class="fa fa-check"></i><b>8.1.2</b> Chlorine testing</a></li>
-<li class="chapter" data-level="8.1.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#gps"><i class="fa fa-check"></i><b>8.1.3</b> GPS</a></li>
-<li class="chapter" data-level="8.1.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#promoter-census"><i class="fa fa-check"></i><b>8.1.4</b> Promoter census</a></li>
-<li class="chapter" data-level="8.1.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census"><i class="fa fa-check"></i><b>8.1.5</b> Household census</a></li>
+<li class="chapter" data-level="7.2.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-tests"><i class="fa fa-check"></i><b>7.2.1</b> Chlorine tests</a></li>
+<li class="chapter" data-level="7.2.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census-1"><i class="fa fa-check"></i><b>7.2.2</b> Household census</a></li>
+<li class="chapter" data-level="7.2.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-data"><i class="fa fa-check"></i><b>7.2.3</b> Water point data</a></li>
 </ul></li>
-<li class="chapter" data-level="8.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-data"><i class="fa fa-check"></i><b>8.2</b> Combine data</a>
+<li class="chapter" data-level="7.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#select-final-variables"><i class="fa fa-check"></i><b>7.3</b> Select final variables</a>
 <ul>
-<li class="chapter" data-level="8.2.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-tests"><i class="fa fa-check"></i><b>8.2.1</b> Chlorine tests</a></li>
-<li class="chapter" data-level="8.2.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census-1"><i class="fa fa-check"></i><b>8.2.2</b> Household census</a></li>
+<li class="chapter" data-level="7.3.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#id-variables"><i class="fa fa-check"></i><b>7.3.1</b> ID variables</a></li>
+<li class="chapter" data-level="7.3.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#meta-data"><i class="fa fa-check"></i><b>7.3.2</b> Meta data</a></li>
+<li class="chapter" data-level="7.3.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-characteristics"><i class="fa fa-check"></i><b>7.3.3</b> Household characteristics</a></li>
+<li class="chapter" data-level="7.3.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-characteristics"><i class="fa fa-check"></i><b>7.3.4</b> Water point characteristics</a></li>
+<li class="chapter" data-level="7.3.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-sample"><i class="fa fa-check"></i><b>7.3.5</b> Water sample</a></li>
+<li class="chapter" data-level="7.3.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-treatment"><i class="fa fa-check"></i><b>7.3.6</b> Water treatment</a></li>
+<li class="chapter" data-level="7.3.7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#data-quality-flags"><i class="fa fa-check"></i><b>7.3.7</b> Data quality flags</a></li>
+<li class="chapter" data-level="7.3.8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-all"><i class="fa fa-check"></i><b>7.3.8</b> Combine all</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#select-final-variables"><i class="fa fa-check"></i><b>8.3</b> Select final variables</a>
+<li class="chapter" data-level="7.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#export-data-3"><i class="fa fa-check"></i><b>7.4</b> Export data</a>
 <ul>
-<li class="chapter" data-level="8.3.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#id-variables"><i class="fa fa-check"></i><b>8.3.1</b> ID variables</a></li>
-<li class="chapter" data-level="8.3.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#meta-data"><i class="fa fa-check"></i><b>8.3.2</b> Meta data</a></li>
-<li class="chapter" data-level="8.3.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-characteristics"><i class="fa fa-check"></i><b>8.3.3</b> Household characteristics</a></li>
-<li class="chapter" data-level="8.3.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-characteristics"><i class="fa fa-check"></i><b>8.3.4</b> Water point characteristics</a></li>
-<li class="chapter" data-level="8.3.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-sample"><i class="fa fa-check"></i><b>8.3.5</b> Water sample</a></li>
-<li class="chapter" data-level="8.3.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-treatment"><i class="fa fa-check"></i><b>8.3.6</b> Water treatment</a></li>
-<li class="chapter" data-level="8.3.7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#data-quality-flags"><i class="fa fa-check"></i><b>8.3.7</b> Data quality flags</a></li>
-<li class="chapter" data-level="8.3.8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-all"><i class="fa fa-check"></i><b>8.3.8</b> Combine all</a></li>
+<li class="chapter" data-level="7.4.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-constructed-data"><i class="fa fa-check"></i><b>7.4.1</b> Save constructed data</a></li>
+<li class="chapter" data-level="7.4.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-spatial-data"><i class="fa fa-check"></i><b>7.4.2</b> Save spatial data</a></li>
+<li class="chapter" data-level="7.4.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-analysis-data"><i class="fa fa-check"></i><b>7.4.3</b> Save analysis data</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#export-data-3"><i class="fa fa-check"></i><b>8.4</b> Export data</a>
-<ul>
-<li class="chapter" data-level="8.4.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-constructed-data"><i class="fa fa-check"></i><b>8.4.1</b> Save constructed data</a></li>
-<li class="chapter" data-level="8.4.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-spatial-data"><i class="fa fa-check"></i><b>8.4.2</b> Save spatial data</a></li>
-<li class="chapter" data-level="8.4.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-analysis-data"><i class="fa fa-check"></i><b>8.4.3</b> Save analysis data</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html"><i class="fa fa-check"></i><b>9</b> Create final household survey data</a>
-<ul>
-<li class="chapter" data-level="9.1" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html#load-data-4"><i class="fa fa-check"></i><b>9.1</b> Load data</a></li>
-<li class="chapter" data-level="9.2" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html#change-format"><i class="fa fa-check"></i><b>9.2</b> Change format</a></li>
 </ul></li>
 </ul>
 
@@ -2073,110 +2069,110 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="construct-chlorine-testing-variables-construct-chlorine-tests" class="section level1 hasAnchor" number="5">
 <h1><span class="header-section-number">5</span> Construct chlorine testing variables (construct-chlorine-tests)<a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#construct-chlorine-testing-variables-construct-chlorine-tests" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
-<span id="cb39-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb39-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-3" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>, </span>
-<span id="cb39-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-4" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
-<span id="cb39-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-5" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span></span>
-<span id="cb39-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-6" tabindex="-1"></a>  )</span>
-<span id="cb39-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-7" tabindex="-1"></a></span>
-<span id="cb39-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb39-8" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(packages, <span class="at">character.only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
+<span id="cb42-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb42-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-3" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>, </span>
+<span id="cb42-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-4" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
+<span id="cb42-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-5" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span></span>
+<span id="cb42-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-6" tabindex="-1"></a>  )</span>
+<span id="cb42-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-7" tabindex="-1"></a></span>
+<span id="cb42-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-8" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(packages, <span class="at">character.only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </details>
 <div id="load-data" class="section level2 hasAnchor" number="5.1">
 <h2><span class="header-section-number">5.1</span> Load data<a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#load-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-1" tabindex="-1"></a>hh <span class="ot">&lt;-</span></span>
-<span id="cb40-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb40-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb40-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb40-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb40-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb40-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb40-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-8" tabindex="-1"></a>      <span class="st">&quot;Clean&quot;</span>,</span>
-<span id="cb40-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-9" tabindex="-1"></a>      <span class="st">&quot;hh-survey-clean.rds&quot;</span></span>
-<span id="cb40-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-10" tabindex="-1"></a>      )</span>
-<span id="cb40-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb40-11" tabindex="-1"></a>    )</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-1" tabindex="-1"></a>hh <span class="ot">&lt;-</span></span>
+<span id="cb43-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb43-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb43-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb43-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb43-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
+<span id="cb43-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb43-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-8" tabindex="-1"></a>      <span class="st">&quot;Clean&quot;</span>,</span>
+<span id="cb43-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-9" tabindex="-1"></a>      <span class="st">&quot;hh-survey-clean.rds&quot;</span></span>
+<span id="cb43-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-10" tabindex="-1"></a>      )</span>
+<span id="cb43-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-11" tabindex="-1"></a>    )</span></code></pre></div>
 </details>
 <div id="manual-corrections" class="section level3 hasAnchor" number="5.1.1">
 <h3><span class="header-section-number">5.1.1</span> Manual corrections<a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#manual-corrections" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Observations with E-15 and very dark pink color: chlorine residual is too high for the colorimeter to read. We’re assigning a high-value, which doesn’t mean that’s the exact reading.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-1" tabindex="-1"></a>error15_fcr <span class="ot">&lt;-</span></span>
-<span id="cb41-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb41-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-3" tabindex="-1"></a>    <span class="st">&quot;uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb&quot;</span>,</span>
-<span id="cb41-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-4" tabindex="-1"></a>    <span class="st">&quot;uuid:8bd53cc5-7bd7-4682-834d-2999b6d27da4&quot;</span></span>
-<span id="cb41-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-5" tabindex="-1"></a>  )</span>
-<span id="cb41-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-6" tabindex="-1"></a>error15_tcr <span class="ot">&lt;-</span></span>
-<span id="cb41-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-7" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb41-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-8" tabindex="-1"></a>    <span class="st">&quot;uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb&quot;</span>,</span>
-<span id="cb41-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-9" tabindex="-1"></a>    <span class="st">&quot;uuid:4be915eb-a15d-48a0-bbfb-73fb65349e21&quot;</span></span>
-<span id="cb41-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-10" tabindex="-1"></a>  )</span>
-<span id="cb41-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-11" tabindex="-1"></a></span>
-<span id="cb41-12"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-12" tabindex="-1"></a>hh <span class="ot">&lt;-</span></span>
-<span id="cb41-13"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-13" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
-<span id="cb41-14"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-14" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb41-15"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-15" tabindex="-1"></a>    <span class="at">meterfcr_c =</span> </span>
-<span id="cb41-16"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-16" tabindex="-1"></a>      <span class="fu">case_when</span>(</span>
-<span id="cb41-17"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-17" tabindex="-1"></a>        key <span class="sc">%in%</span> error15_fcr <span class="sc">~</span> <span class="fl">2.4</span>,</span>
-<span id="cb41-18"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-18" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> meterfcr</span>
-<span id="cb41-19"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-19" tabindex="-1"></a>      ),</span>
-<span id="cb41-20"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-20" tabindex="-1"></a>    <span class="at">metertcr_c =</span> </span>
-<span id="cb41-21"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-21" tabindex="-1"></a>      <span class="fu">case_when</span>(</span>
-<span id="cb41-22"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-22" tabindex="-1"></a>        key <span class="sc">%in%</span> error15_tcr <span class="sc">~</span> <span class="fl">2.4</span>,</span>
-<span id="cb41-23"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-23" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> metertcr</span>
-<span id="cb41-24"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-24" tabindex="-1"></a>      )</span>
-<span id="cb41-25"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb41-25" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-1" tabindex="-1"></a>error15_fcr <span class="ot">&lt;-</span></span>
+<span id="cb44-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb44-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-3" tabindex="-1"></a>    <span class="st">&quot;uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb&quot;</span>,</span>
+<span id="cb44-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-4" tabindex="-1"></a>    <span class="st">&quot;uuid:8bd53cc5-7bd7-4682-834d-2999b6d27da4&quot;</span></span>
+<span id="cb44-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-5" tabindex="-1"></a>  )</span>
+<span id="cb44-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-6" tabindex="-1"></a>error15_tcr <span class="ot">&lt;-</span></span>
+<span id="cb44-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-7" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb44-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-8" tabindex="-1"></a>    <span class="st">&quot;uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb&quot;</span>,</span>
+<span id="cb44-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-9" tabindex="-1"></a>    <span class="st">&quot;uuid:4be915eb-a15d-48a0-bbfb-73fb65349e21&quot;</span></span>
+<span id="cb44-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-10" tabindex="-1"></a>  )</span>
+<span id="cb44-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-11" tabindex="-1"></a></span>
+<span id="cb44-12"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-12" tabindex="-1"></a>hh <span class="ot">&lt;-</span></span>
+<span id="cb44-13"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-13" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
+<span id="cb44-14"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-14" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb44-15"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-15" tabindex="-1"></a>    <span class="at">meterfcr_c =</span> </span>
+<span id="cb44-16"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-16" tabindex="-1"></a>      <span class="fu">case_when</span>(</span>
+<span id="cb44-17"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-17" tabindex="-1"></a>        key <span class="sc">%in%</span> error15_fcr <span class="sc">~</span> <span class="fl">2.4</span>,</span>
+<span id="cb44-18"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-18" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> meterfcr</span>
+<span id="cb44-19"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-19" tabindex="-1"></a>      ),</span>
+<span id="cb44-20"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-20" tabindex="-1"></a>    <span class="at">metertcr_c =</span> </span>
+<span id="cb44-21"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-21" tabindex="-1"></a>      <span class="fu">case_when</span>(</span>
+<span id="cb44-22"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-22" tabindex="-1"></a>        key <span class="sc">%in%</span> error15_tcr <span class="sc">~</span> <span class="fl">2.4</span>,</span>
+<span id="cb44-23"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-23" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> metertcr</span>
+<span id="cb44-24"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-24" tabindex="-1"></a>      )</span>
+<span id="cb44-25"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb44-25" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 </div>
 <div id="create-final-chlorine-variables" class="section level2 hasAnchor" number="5.2">
 <h2><span class="header-section-number">5.2</span> Create final chlorine variables<a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#create-final-chlorine-variables" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-1" tabindex="-1"></a>hh <span class="ot">&lt;-</span> </span>
-<span id="cb42-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-2" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
-<span id="cb42-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb42-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-4" tabindex="-1"></a>    <span class="at">discfcr_c =</span> discfcr,</span>
-<span id="cb42-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-5" tabindex="-1"></a>    <span class="at">disctcr_c =</span> disctcr</span>
-<span id="cb42-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-7" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb42-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-8" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb42-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-9" tabindex="-1"></a>      <span class="fu">ends_with</span>(<span class="st">&quot;cr_c&quot;</span>),</span>
-<span id="cb42-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-10" tabindex="-1"></a>      <span class="sc">~</span> . <span class="sc">&gt;=</span> <span class="fl">0.1</span>,</span>
-<span id="cb42-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-11" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">&quot;{.col}_01&quot;</span></span>
-<span id="cb42-12"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-12" tabindex="-1"></a>    ),</span>
-<span id="cb42-13"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-13" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb42-14"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-14" tabindex="-1"></a>      <span class="fu">ends_with</span>(<span class="st">&quot;cr_c&quot;</span>),</span>
-<span id="cb42-15"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-15" tabindex="-1"></a>      <span class="sc">~</span> . <span class="sc">&gt;=</span> <span class="fl">0.2</span>,</span>
-<span id="cb42-16"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-16" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">&quot;{.col}_02&quot;</span></span>
-<span id="cb42-17"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-17" tabindex="-1"></a>    )</span>
-<span id="cb42-18"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-19"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-19" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb42-20"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-20" tabindex="-1"></a>    key, household_id,</span>
-<span id="cb42-21"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-21" tabindex="-1"></a>    <span class="fu">matches</span>(<span class="st">&quot;tcr&quot;</span>), <span class="fu">matches</span>(<span class="st">&quot;fcr&quot;</span>),</span>
-<span id="cb42-22"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-22" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">where</span>(<span class="sc">~</span>(<span class="fu">levels</span>(.) <span class="sc">%&gt;%</span> <span class="fu">n_distinct</span>()) <span class="sc">==</span> <span class="dv">1</span>)</span>
-<span id="cb42-23"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb42-23" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-1" tabindex="-1"></a>hh <span class="ot">&lt;-</span> </span>
+<span id="cb45-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-2" tabindex="-1"></a>  hh <span class="sc">%&gt;%</span></span>
+<span id="cb45-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb45-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-4" tabindex="-1"></a>    <span class="at">discfcr_c =</span> discfcr,</span>
+<span id="cb45-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-5" tabindex="-1"></a>    <span class="at">disctcr_c =</span> disctcr</span>
+<span id="cb45-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb45-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-7" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb45-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-8" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb45-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-9" tabindex="-1"></a>      <span class="fu">ends_with</span>(<span class="st">&quot;cr_c&quot;</span>),</span>
+<span id="cb45-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-10" tabindex="-1"></a>      <span class="sc">~</span> . <span class="sc">&gt;=</span> <span class="fl">0.1</span>,</span>
+<span id="cb45-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-11" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">&quot;{.col}_01&quot;</span></span>
+<span id="cb45-12"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-12" tabindex="-1"></a>    ),</span>
+<span id="cb45-13"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-13" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb45-14"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-14" tabindex="-1"></a>      <span class="fu">ends_with</span>(<span class="st">&quot;cr_c&quot;</span>),</span>
+<span id="cb45-15"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-15" tabindex="-1"></a>      <span class="sc">~</span> . <span class="sc">&gt;=</span> <span class="fl">0.2</span>,</span>
+<span id="cb45-16"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-16" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">&quot;{.col}_02&quot;</span></span>
+<span id="cb45-17"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-17" tabindex="-1"></a>    )</span>
+<span id="cb45-18"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb45-19"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-19" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb45-20"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-20" tabindex="-1"></a>    key, household_id,</span>
+<span id="cb45-21"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-21" tabindex="-1"></a>    <span class="fu">matches</span>(<span class="st">&quot;tcr&quot;</span>), <span class="fu">matches</span>(<span class="st">&quot;fcr&quot;</span>),</span>
+<span id="cb45-22"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-22" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">where</span>(<span class="sc">~</span>(<span class="fu">levels</span>(.) <span class="sc">%&gt;%</span> <span class="fu">n_distinct</span>()) <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb45-23"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb45-23" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="export-data-1" class="section level2 hasAnchor" number="5.3">
 <h2><span class="header-section-number">5.3</span> Export data<a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#export-data-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb43-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-2" tabindex="-1"></a>   <span class="fu">file.path</span>(</span>
-<span id="cb43-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb43-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb43-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb43-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb43-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-7" tabindex="-1"></a>    <span class="st">&quot;hh-survey-chlorine&quot;</span></span>
-<span id="cb43-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-8" tabindex="-1"></a>  ) </span>
-<span id="cb43-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-9" tabindex="-1"></a></span>
-<span id="cb43-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-10" tabindex="-1"></a><span class="fu">write_meta</span>(</span>
-<span id="cb43-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-11" tabindex="-1"></a>  hh,</span>
-<span id="cb43-12"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-12" tabindex="-1"></a>  <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb43-13"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-13" tabindex="-1"></a>  <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb43-14"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb43-14" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb46-2"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-2" tabindex="-1"></a>   <span class="fu">file.path</span>(</span>
+<span id="cb46-3"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb46-4"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
+<span id="cb46-5"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb46-6"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb46-7"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-7" tabindex="-1"></a>    <span class="st">&quot;hh-survey-chlorine&quot;</span></span>
+<span id="cb46-8"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-8" tabindex="-1"></a>  ) </span>
+<span id="cb46-9"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-9" tabindex="-1"></a></span>
+<span id="cb46-10"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-10" tabindex="-1"></a><span class="fu">write_meta</span>(</span>
+<span id="cb46-11"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-11" tabindex="-1"></a>  hh,</span>
+<span id="cb46-12"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-12" tabindex="-1"></a>  <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb46-13"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-13" tabindex="-1"></a>  <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb46-14"><a href="construct-chlorine-testing-variables-construct-chlorine-tests.html#cb46-14" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <table>
-<caption><span id="tab:unnamed-chunk-31">Table 5.1: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-33">Table 5.1: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -2184,7 +2180,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">Number of rows</td>
-<td align="left">4806</td>
+<td align="left">4378</td>
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
@@ -2256,7 +2252,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">41</td>
 <td align="right">41</td>
 <td align="right">0</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
@@ -2266,22 +2262,22 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">10</td>
 <td align="right">13</td>
 <td align="right">0</td>
-<td align="right">4778</td>
+<td align="right">4350</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">disctcr_dpd_photo</td>
-<td align="right">287</td>
+<td align="right">279</td>
 <td align="right">0.94</td>
-<td align="right">22</td>
+<td align="right">164</td>
 <td align="right">166</td>
 <td align="right">0</td>
-<td align="right">4519</td>
+<td align="right">4099</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">no_disctcr_dpd_photo</td>
-<td align="right">4662</td>
+<td align="right">4234</td>
 <td align="right">0.03</td>
 <td align="right">1</td>
 <td align="right">36</td>
@@ -2291,7 +2287,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">disctcr_wait</td>
-<td align="right">286</td>
+<td align="right">278</td>
 <td align="right">0.94</td>
 <td align="right">1</td>
 <td align="right">11</td>
@@ -2301,17 +2297,17 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">disctcr_vial_photo</td>
-<td align="right">300</td>
-<td align="right">0.94</td>
-<td align="right">22</td>
+<td align="right">292</td>
+<td align="right">0.93</td>
+<td align="right">165</td>
 <td align="right">167</td>
 <td align="right">0</td>
-<td align="right">4506</td>
+<td align="right">4086</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">no_disctcr_vial_photo</td>
-<td align="right">4792</td>
+<td align="right">4364</td>
 <td align="right">0.00</td>
 <td align="right">4</td>
 <td align="right">114</td>
@@ -2321,38 +2317,38 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">disctcr_color_o</td>
-<td align="right">4788</td>
+<td align="right">4362</td>
 <td align="right">0.00</td>
 <td align="right">3</td>
 <td align="right">32</td>
 <td align="right">0</td>
-<td align="right">10</td>
+<td align="right">9</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">disctcr_comments</td>
-<td align="right">1895</td>
-<td align="right">0.61</td>
+<td align="right">1614</td>
+<td align="right">0.63</td>
 <td align="right">1</td>
 <td align="right">221</td>
 <td align="right">0</td>
-<td align="right">323</td>
+<td align="right">317</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_dpd_photo</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">22</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">167</td>
 <td align="right">169</td>
 <td align="right">0</td>
-<td align="right">1898</td>
+<td align="right">1573</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">no_metertcr_dpd_photo</td>
-<td align="right">4364</td>
-<td align="right">0.09</td>
+<td align="right">3936</td>
+<td align="right">0.10</td>
 <td align="right">3</td>
 <td align="right">66</td>
 <td align="right">0</td>
@@ -2361,8 +2357,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">metertcr_wait</td>
-<td align="right">2934</td>
-<td align="right">0.39</td>
+<td align="right">2830</td>
+<td align="right">0.35</td>
 <td align="right">1</td>
 <td align="right">6</td>
 <td align="right">0</td>
@@ -2371,28 +2367,28 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">metertcr_error</td>
-<td align="right">4231</td>
-<td align="right">0.12</td>
+<td align="right">3816</td>
+<td align="right">0.13</td>
 <td align="right">1</td>
 <td align="right">165</td>
 <td align="right">0</td>
-<td align="right">69</td>
+<td align="right">68</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_vial_photo</td>
-<td align="right">2913</td>
-<td align="right">0.39</td>
-<td align="right">22</td>
+<td align="right">2808</td>
+<td align="right">0.36</td>
+<td align="right">168</td>
 <td align="right">170</td>
 <td align="right">0</td>
-<td align="right">1893</td>
+<td align="right">1570</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">no_metertcr_vial_photo</td>
-<td align="right">4244</td>
-<td align="right">0.12</td>
+<td align="right">3816</td>
+<td align="right">0.13</td>
 <td align="right">1</td>
 <td align="right">45</td>
 <td align="right">0</td>
@@ -2401,37 +2397,37 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">metertcr_color_o</td>
-<td align="right">4147</td>
-<td align="right">0.14</td>
-<td align="right">2</td>
-<td align="right">44</td>
+<td align="right">4031</td>
+<td align="right">0.08</td>
+<td align="right">3</td>
+<td align="right">43</td>
 <td align="right">0</td>
-<td align="right">102</td>
+<td align="right">77</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_comments</td>
-<td align="right">3560</td>
-<td align="right">0.26</td>
+<td align="right">3267</td>
+<td align="right">0.25</td>
 <td align="right">2</td>
 <td align="right">195</td>
 <td align="right">0</td>
-<td align="right">165</td>
+<td align="right">150</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_dpd_photo</td>
-<td align="right">286</td>
+<td align="right">278</td>
 <td align="right">0.94</td>
-<td align="right">22</td>
+<td align="right">164</td>
 <td align="right">166</td>
 <td align="right">0</td>
-<td align="right">4520</td>
+<td align="right">4100</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">no_discfcr_dpd_photo</td>
-<td align="right">4662</td>
+<td align="right">4234</td>
 <td align="right">0.03</td>
 <td align="right">1</td>
 <td align="right">14</td>
@@ -2441,7 +2437,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">discfcr_wait</td>
-<td align="right">287</td>
+<td align="right">279</td>
 <td align="right">0.94</td>
 <td align="right">1</td>
 <td align="right">10</td>
@@ -2451,17 +2447,17 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">discfcr_vial_photo</td>
-<td align="right">301</td>
-<td align="right">0.94</td>
-<td align="right">22</td>
+<td align="right">293</td>
+<td align="right">0.93</td>
+<td align="right">165</td>
 <td align="right">167</td>
 <td align="right">0</td>
-<td align="right">4505</td>
+<td align="right">4085</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">no_discfcr_vial_photo</td>
-<td align="right">4791</td>
+<td align="right">4363</td>
 <td align="right">0.00</td>
 <td align="right">5</td>
 <td align="right">111</td>
@@ -2471,38 +2467,38 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">discfcr_color_o</td>
-<td align="right">4797</td>
+<td align="right">4370</td>
 <td align="right">0.00</td>
 <td align="right">3</td>
-<td align="right">17</td>
+<td align="right">14</td>
 <td align="right">0</td>
-<td align="right">6</td>
+<td align="right">5</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_comments</td>
-<td align="right">1882</td>
-<td align="right">0.61</td>
+<td align="right">1602</td>
+<td align="right">0.63</td>
 <td align="right">1</td>
 <td align="right">233</td>
 <td align="right">0</td>
-<td align="right">291</td>
+<td align="right">288</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_dpd_photo</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">22</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">167</td>
 <td align="right">169</td>
 <td align="right">0</td>
-<td align="right">1898</td>
+<td align="right">1573</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_wait</td>
-<td align="right">3008</td>
-<td align="right">0.37</td>
+<td align="right">2903</td>
+<td align="right">0.34</td>
 <td align="right">1</td>
 <td align="right">10</td>
 <td align="right">0</td>
@@ -2511,27 +2507,27 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_error</td>
-<td align="right">4757</td>
+<td align="right">4331</td>
 <td align="right">0.01</td>
 <td align="right">1</td>
 <td align="right">36</td>
 <td align="right">0</td>
-<td align="right">11</td>
+<td align="right">10</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_vial_photo</td>
-<td align="right">2910</td>
-<td align="right">0.39</td>
-<td align="right">22</td>
+<td align="right">2807</td>
+<td align="right">0.36</td>
+<td align="right">168</td>
 <td align="right">170</td>
 <td align="right">0</td>
-<td align="right">1896</td>
+<td align="right">1571</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">no_meterfcr_vial_photo</td>
-<td align="right">4779</td>
+<td align="right">4351</td>
 <td align="right">0.01</td>
 <td align="right">1</td>
 <td align="right">29</td>
@@ -2541,22 +2537,22 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">meterfcr_color_o</td>
-<td align="right">4774</td>
+<td align="right">4347</td>
 <td align="right">0.01</td>
 <td align="right">1</td>
 <td align="right">33</td>
 <td align="right">0</td>
-<td align="right">10</td>
+<td align="right">9</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_comments</td>
-<td align="right">3579</td>
-<td align="right">0.26</td>
+<td align="right">3275</td>
+<td align="right">0.25</td>
 <td align="right">1</td>
 <td align="right">195</td>
 <td align="right">0</td>
-<td align="right">132</td>
+<td align="right">129</td>
 <td align="right">0</td>
 </tr>
 </tbody>
@@ -2584,35 +2580,35 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <tbody>
 <tr class="odd">
 <td align="left">disctcr_color</td>
-<td align="right">288</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
 <td align="left">FALSE</td>
 <td align="right">5</td>
-<td align="left">1 -: 3163, 2 -: 812, 3 -: 297, 4 -: 228</td>
+<td align="left">1 -: 2836, 2 -: 735, 3 -: 291, 4 -: 220</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_color</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
 <td align="left">FALSE</td>
 <td align="right">5</td>
-<td align="left">1 -: 1271, 2 -: 378, 4 -: 128, 3 -: 112</td>
+<td align="left">1 -: 1024, 2 -: 315, 4 -: 119, 3 -: 107</td>
 </tr>
 <tr class="odd">
 <td align="left">discfcr_color</td>
-<td align="right">287</td>
+<td align="right">279</td>
 <td align="right">0.94</td>
 <td align="left">FALSE</td>
 <td align="right">5</td>
-<td align="left">1 -: 3559, 2 -: 510, 3 -: 279, 4 -: 162</td>
+<td align="left">1 -: 3191, 2 -: 468, 3 -: 275, 4 -: 157</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_color</td>
-<td align="right">2909</td>
-<td align="right">0.39</td>
+<td align="right">2806</td>
+<td align="right">0.36</td>
 <td align="left">FALSE</td>
 <td align="right">5</td>
-<td align="left">1 -: 1431, 2 -: 254, 3 -: 112, 4 -: 95</td>
+<td align="left">1 -: 1147, 2 -: 225, 3 -: 108, 4 -: 88</td>
 </tr>
 </tbody>
 </table>
@@ -2637,311 +2633,311 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <tbody>
 <tr class="odd">
 <td align="left">metertcr_zero</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
 <td align="right">1.00</td>
-<td align="left">TRU: 1898</td>
+<td align="left">TRU: 1573</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_zero2</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
 <td align="right">1.00</td>
-<td align="left">TRU: 1898</td>
+<td align="left">TRU: 1573</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_error04</td>
-<td align="right">2912</td>
-<td align="right">0.39</td>
-<td align="right">0.11</td>
-<td align="left">FAL: 1685, TRU: 209</td>
+<td align="right">2809</td>
+<td align="right">0.36</td>
+<td align="right">0.12</td>
+<td align="left">FAL: 1373, TRU: 196</td>
 </tr>
 <tr class="even">
 <td align="left">disctcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">no_disctcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">disctcr_wait_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">disctcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">no_disctcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">disctcr_color_o_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">disctcr_comments_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">no_metertcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_wait_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_error_c</td>
-<td align="right">4786</td>
+<td align="right">4358</td>
 <td align="right">0.00</td>
 <td align="right">0.05</td>
 <td align="left">FAL: 19, TRU: 1</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">no_metertcr_vial_photo_c</td>
-<td align="right">4805</td>
+<td align="right">4377</td>
 <td align="right">0.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 1</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_color_o_c</td>
-<td align="right">4803</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
-<td align="right">0.00</td>
-<td align="left">FAL: 3</td>
+<td align="right">NaN</td>
+<td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_comments_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_c_01</td>
-<td align="right">2927</td>
-<td align="right">0.39</td>
-<td align="right">0.42</td>
-<td align="left">FAL: 1099, TRU: 780</td>
+<td align="right">2821</td>
+<td align="right">0.36</td>
+<td align="right">0.40</td>
+<td align="left">FAL: 929, TRU: 628</td>
 </tr>
 <tr class="even">
 <td align="left">disctcr_c_01</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.27</td>
-<td align="left">FAL: 3284, TRU: 1233</td>
+<td align="right">0.28</td>
+<td align="left">FAL: 2934, TRU: 1164</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_c_02</td>
-<td align="right">2927</td>
-<td align="right">0.39</td>
-<td align="right">0.28</td>
-<td align="left">FAL: 1360, TRU: 519</td>
+<td align="right">2821</td>
+<td align="right">0.36</td>
+<td align="right">0.27</td>
+<td align="left">FAL: 1131, TRU: 426</td>
 </tr>
 <tr class="even">
 <td align="left">disctcr_c_02</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.27</td>
-<td align="left">FAL: 3296, TRU: 1221</td>
+<td align="right">0.28</td>
+<td align="left">FAL: 2946, TRU: 1152</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_zero</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
 <td align="right">1.00</td>
-<td align="left">TRU: 1897, FAL: 1</td>
+<td align="left">TRU: 1572, FAL: 1</td>
 </tr>
 <tr class="even">
 <td align="left">no_meterfcr_dpd_photo</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_error04</td>
-<td align="right">4684</td>
+<td align="right">4262</td>
 <td align="right">0.03</td>
-<td align="right">0.38</td>
-<td align="left">FAL: 76, TRU: 46</td>
+<td align="right">0.35</td>
+<td align="left">FAL: 75, TRU: 41</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_zero2</td>
-<td align="right">4805</td>
+<td align="right">4377</td>
 <td align="right">0.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 1</td>
 </tr>
 <tr class="odd">
 <td align="left">discfcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">no_discfcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">discfcr_wait_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">no_discfcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_color_o_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">discfcr_comments_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_dpd_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_wait_c</td>
-<td align="right">4805</td>
+<td align="right">4377</td>
 <td align="right">0.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 1</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_error_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">no_meterfcr_vial_photo_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_color_o_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_comments_c</td>
-<td align="right">4806</td>
+<td align="right">4378</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_c_01</td>
-<td align="right">2932</td>
-<td align="right">0.39</td>
-<td align="right">0.30</td>
-<td align="left">FAL: 1316, TRU: 558</td>
+<td align="right">2827</td>
+<td align="right">0.35</td>
+<td align="right">0.28</td>
+<td align="left">FAL: 1109, TRU: 442</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_c_01</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.19</td>
-<td align="left">FAL: 3661, TRU: 856</td>
+<td align="right">0.20</td>
+<td align="left">FAL: 3267, TRU: 831</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_c_02</td>
-<td align="right">2932</td>
-<td align="right">0.39</td>
+<td align="right">2827</td>
+<td align="right">0.35</td>
 <td align="right">0.22</td>
-<td align="left">FAL: 1459, TRU: 415</td>
+<td align="left">FAL: 1210, TRU: 341</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_c_02</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.19</td>
-<td align="left">FAL: 3677, TRU: 840</td>
+<td align="right">0.20</td>
+<td align="left">FAL: 3282, TRU: 816</td>
 </tr>
 </tbody>
 </table>
@@ -2978,36 +2974,36 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <tbody>
 <tr class="odd">
 <td align="left">disctcr_timestamp1</td>
-<td align="right">286</td>
+<td align="right">278</td>
 <td align="right">0.94</td>
-<td align="right">1413.45</td>
-<td align="right">605.25</td>
+<td align="right">1391.40</td>
+<td align="right">607.70</td>
 <td align="right">152</td>
-<td align="right">984.75</td>
-<td align="right">1319.00</td>
-<td align="right">1717.25</td>
+<td align="right">961.00</td>
+<td align="right">1292.00</td>
+<td align="right">1697.00</td>
 <td align="right">7687.0</td>
 <td align="left">▇▃▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">disctcr_timestamp2</td>
-<td align="right">286</td>
+<td align="right">278</td>
 <td align="right">0.94</td>
-<td align="right">1650.51</td>
-<td align="right">617.71</td>
+<td align="right">1628.71</td>
+<td align="right">622.13</td>
 <td align="right">154</td>
-<td align="right">1221.00</td>
-<td align="right">1561.50</td>
-<td align="right">1967.00</td>
+<td align="right">1192.00</td>
+<td align="right">1530.00</td>
+<td align="right">1948.00</td>
 <td align="right">8013.0</td>
 <td align="left">▇▅▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">disctcr</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.24</td>
-<td align="right">0.65</td>
+<td align="right">0.25</td>
+<td align="right">0.67</td>
 <td align="right">0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -3017,10 +3013,10 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">disctcr_confirm</td>
-<td align="right">290</td>
+<td align="right">281</td>
 <td align="right">0.94</td>
-<td align="right">0.24</td>
-<td align="right">0.65</td>
+<td align="right">0.25</td>
+<td align="right">0.67</td>
 <td align="right">0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -3030,88 +3026,88 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">metertcr_vialid</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">188.47</td>
-<td align="right">39.31</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">197.81</td>
+<td align="right">35.68</td>
 <td align="right">0</td>
-<td align="right">154.00</td>
-<td align="right">208.00</td>
-<td align="right">217.00</td>
+<td align="right">202.00</td>
+<td align="right">211.00</td>
+<td align="right">219.00</td>
 <td align="right">323.0</td>
-<td align="left">▁▁▃▇▁</td>
+<td align="left">▁▁▂▇▁</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_timestamp1</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">2187.12</td>
-<td align="right">832.70</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">2132.64</td>
+<td align="right">856.56</td>
 <td align="right">446</td>
-<td align="right">1634.25</td>
-<td align="right">2061.50</td>
-<td align="right">2583.50</td>
+<td align="right">1575.00</td>
+<td align="right">1974.00</td>
+<td align="right">2514.00</td>
 <td align="right">11603.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_timestamp2</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">2204.65</td>
-<td align="right">837.83</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">2150.13</td>
+<td align="right">862.31</td>
 <td align="right">453</td>
-<td align="right">1647.00</td>
-<td align="right">2084.50</td>
-<td align="right">2607.00</td>
+<td align="right">1585.00</td>
+<td align="right">1988.00</td>
+<td align="right">2536.00</td>
 <td align="right">11618.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_timestamp3</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">2264.55</td>
-<td align="right">854.60</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">2209.22</td>
+<td align="right">879.22</td>
 <td align="right">457</td>
-<td align="right">1691.25</td>
-<td align="right">2138.50</td>
-<td align="right">2678.00</td>
+<td align="right">1623.00</td>
+<td align="right">2054.00</td>
+<td align="right">2611.00</td>
 <td align="right">11798.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_timestamp4</td>
-<td align="right">2909</td>
-<td align="right">0.39</td>
-<td align="right">2524.15</td>
-<td align="right">889.86</td>
+<td align="right">2806</td>
+<td align="right">0.36</td>
+<td align="right">2463.81</td>
+<td align="right">908.51</td>
 <td align="right">459</td>
-<td align="right">1922.00</td>
-<td align="right">2408.00</td>
-<td align="right">2953.00</td>
+<td align="right">1866.00</td>
+<td align="right">2314.50</td>
+<td align="right">2896.00</td>
 <td align="right">11987.0</td>
 <td align="left">▇▃▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr</td>
-<td align="right">2928</td>
-<td align="right">0.39</td>
-<td align="right">0.26</td>
-<td align="right">0.65</td>
+<td align="right">2822</td>
+<td align="right">0.36</td>
+<td align="right">0.28</td>
+<td align="right">0.70</td>
 <td align="right">0</td>
 <td align="right">0.03</td>
-<td align="right">0.07</td>
+<td align="right">0.06</td>
 <td align="right">0.22</td>
 <td align="right">15.0</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_confirm</td>
-<td align="right">2928</td>
-<td align="right">0.39</td>
-<td align="right">0.27</td>
-<td align="right">0.65</td>
+<td align="right">2822</td>
+<td align="right">0.36</td>
+<td align="right">0.28</td>
+<td align="right">0.70</td>
 <td align="right">0</td>
 <td align="right">0.03</td>
 <td align="right">0.07</td>
@@ -3121,49 +3117,49 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">metertcr_timestamp5</td>
-<td align="right">2909</td>
-<td align="right">0.39</td>
-<td align="right">2657.48</td>
-<td align="right">947.26</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">2599.03</td>
+<td align="right">968.68</td>
 <td align="right">468</td>
-<td align="right">2029.00</td>
-<td align="right">2515.00</td>
-<td align="right">3118.00</td>
+<td align="right">1959.00</td>
+<td align="right">2430.00</td>
+<td align="right">3041.00</td>
 <td align="right">12060.0</td>
-<td align="left">▇▅▁▁▁</td>
+<td align="left">▇▃▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">metertcr_timestamp6</td>
-<td align="right">2910</td>
-<td align="right">0.39</td>
-<td align="right">2671.55</td>
-<td align="right">956.06</td>
+<td align="right">2807</td>
+<td align="right">0.36</td>
+<td align="right">2611.40</td>
+<td align="right">977.25</td>
 <td align="right">470</td>
-<td align="right">2037.75</td>
-<td align="right">2527.00</td>
-<td align="right">3143.25</td>
+<td align="right">1964.00</td>
+<td align="right">2443.00</td>
+<td align="right">3062.50</td>
 <td align="right">12062.0</td>
 <td align="left">▇▅▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">metertcr_c</td>
-<td align="right">2927</td>
-<td align="right">0.39</td>
-<td align="right">0.26</td>
-<td align="right">0.66</td>
+<td align="right">2821</td>
+<td align="right">0.36</td>
+<td align="right">0.28</td>
+<td align="right">0.71</td>
 <td align="right">0</td>
 <td align="right">0.03</td>
-<td align="right">0.07</td>
+<td align="right">0.06</td>
 <td align="right">0.22</td>
 <td align="right">15.0</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">disctcr_c</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.24</td>
-<td align="right">0.65</td>
+<td align="right">0.25</td>
+<td align="right">0.67</td>
 <td align="right">0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -3173,36 +3169,36 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">discfcr_timestamp1</td>
-<td align="right">286</td>
+<td align="right">278</td>
 <td align="right">0.94</td>
-<td align="right">1101.85</td>
-<td align="right">544.15</td>
+<td align="right">1079.08</td>
+<td align="right">541.68</td>
 <td align="right">133</td>
-<td align="right">720.00</td>
-<td align="right">1009.00</td>
-<td align="right">1370.25</td>
+<td align="right">702.00</td>
+<td align="right">983.00</td>
+<td align="right">1348.00</td>
 <td align="right">7387.0</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">discfcr_timestamp2</td>
-<td align="right">286</td>
+<td align="right">278</td>
 <td align="right">0.94</td>
-<td align="right">1202.69</td>
-<td align="right">546.83</td>
+<td align="right">1181.29</td>
+<td align="right">546.10</td>
 <td align="right">135</td>
-<td align="right">825.00</td>
-<td align="right">1110.00</td>
-<td align="right">1469.00</td>
+<td align="right">807.00</td>
+<td align="right">1082.50</td>
+<td align="right">1445.25</td>
 <td align="right">7607.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.18</td>
-<td align="right">0.57</td>
+<td align="right">0.20</td>
+<td align="right">0.58</td>
 <td align="right">0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -3212,10 +3208,10 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">discfcr_confirm</td>
-<td align="right">288</td>
+<td align="right">279</td>
 <td align="right">0.94</td>
-<td align="right">0.18</td>
-<td align="right">0.57</td>
+<td align="right">0.20</td>
+<td align="right">0.58</td>
 <td align="right">0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -3225,33 +3221,33 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">meterfcr_vialid</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">189.74</td>
-<td align="right">60.71</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">199.36</td>
+<td align="right">61.84</td>
 <td align="right">-133</td>
-<td align="right">154.00</td>
-<td align="right">208.00</td>
-<td align="right">217.00</td>
+<td align="right">202.00</td>
+<td align="right">211.00</td>
+<td align="right">219.00</td>
 <td align="right">2211.0</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_timestamp1</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">1836.44</td>
-<td align="right">750.39</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">1779.11</td>
+<td align="right">768.30</td>
 <td align="right">296</td>
-<td align="right">1352.00</td>
-<td align="right">1717.50</td>
-<td align="right">2189.50</td>
+<td align="right">1287.00</td>
+<td align="right">1649.00</td>
+<td align="right">2113.00</td>
 <td align="right">11042.0</td>
-<td align="left">▇▂▁▁▁</td>
+<td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_timestamp2</td>
-<td align="right">4805</td>
+<td align="right">4377</td>
 <td align="right">0.00</td>
 <td align="right">1730.00</td>
 <td align="right">NA</td>
@@ -3264,101 +3260,101 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_timestamp3</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">1920.08</td>
-<td align="right">765.36</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">1862.95</td>
+<td align="right">783.81</td>
 <td align="right">326</td>
-<td align="right">1428.00</td>
-<td align="right">1808.00</td>
-<td align="right">2286.75</td>
+<td align="right">1355.00</td>
+<td align="right">1718.00</td>
+<td align="right">2223.00</td>
 <td align="right">11070.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_timestamp4</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">2020.27</td>
-<td align="right">773.46</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">1963.72</td>
+<td align="right">793.07</td>
 <td align="right">378</td>
-<td align="right">1528.50</td>
-<td align="right">1905.50</td>
-<td align="right">2388.75</td>
+<td align="right">1463.00</td>
+<td align="right">1831.00</td>
+<td align="right">2311.00</td>
 <td align="right">11223.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr</td>
-<td align="right">2933</td>
-<td align="right">0.39</td>
-<td align="right">0.21</td>
-<td align="right">0.55</td>
+<td align="right">2828</td>
+<td align="right">0.35</td>
+<td align="right">0.22</td>
+<td align="right">0.58</td>
 <td align="right">0</td>
-<td align="right">0.02</td>
+<td align="right">0.01</td>
 <td align="right">0.04</td>
-<td align="right">0.16</td>
+<td align="right">0.14</td>
 <td align="right">8.8</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_confirm</td>
-<td align="right">2932</td>
-<td align="right">0.39</td>
-<td align="right">0.21</td>
-<td align="right">0.55</td>
+<td align="right">2827</td>
+<td align="right">0.35</td>
+<td align="right">0.23</td>
+<td align="right">0.58</td>
 <td align="right">0</td>
 <td align="right">0.02</td>
 <td align="right">0.04</td>
-<td align="right">0.17</td>
+<td align="right">0.15</td>
 <td align="right">8.8</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_timestamp5</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">2094.75</td>
-<td align="right">797.24</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">2040.74</td>
+<td align="right">820.48</td>
 <td align="right">439</td>
-<td align="right">1580.25</td>
-<td align="right">1976.50</td>
-<td align="right">2462.75</td>
+<td align="right">1515.00</td>
+<td align="right">1896.00</td>
+<td align="right">2398.00</td>
 <td align="right">11364.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">meterfcr_timestamp6</td>
-<td align="right">2908</td>
-<td align="right">0.39</td>
-<td align="right">2113.93</td>
-<td align="right">808.11</td>
+<td align="right">2805</td>
+<td align="right">0.36</td>
+<td align="right">2058.37</td>
+<td align="right">830.26</td>
 <td align="right">440</td>
-<td align="right">1586.00</td>
-<td align="right">1991.50</td>
-<td align="right">2484.00</td>
+<td align="right">1521.00</td>
+<td align="right">1902.00</td>
+<td align="right">2415.00</td>
 <td align="right">11369.0</td>
 <td align="left">▇▂▁▁▁</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_c</td>
-<td align="right">2932</td>
-<td align="right">0.39</td>
-<td align="right">0.21</td>
-<td align="right">0.55</td>
+<td align="right">2827</td>
+<td align="right">0.35</td>
+<td align="right">0.23</td>
+<td align="right">0.58</td>
 <td align="right">0</td>
-<td align="right">0.02</td>
+<td align="right">0.01</td>
 <td align="right">0.04</td>
-<td align="right">0.16</td>
+<td align="right">0.14</td>
 <td align="right">8.8</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">discfcr_c</td>
-<td align="right">289</td>
+<td align="right">280</td>
 <td align="right">0.94</td>
-<td align="right">0.18</td>
-<td align="right">0.57</td>
+<td align="right">0.20</td>
+<td align="right">0.58</td>
 <td align="right">0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>

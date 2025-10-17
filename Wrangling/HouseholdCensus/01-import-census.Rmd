@@ -78,8 +78,8 @@ We want to conduct the wrangling and HFCs for both countries at the same time, s
 ```{r}
 hhc_raw <-
   hh_raw_mw %>%
-  bind_rows(hh_raw_ug) %>%
-  bind_rows(hh_raw_ug_ilc)
+  bind_rows(hh_raw_ug) 
+ #%>%  bind_rows(hh_raw_ug_ilc)
 ```
 
 ## Adjust variable formats
@@ -117,3 +117,43 @@ hhc_raw %>%
     path_meta = file.path(path_git, path),
 )
 ```
+
+```{r}
+hhc_deid <-
+  hhc_raw %>%
+  select(
+    -c(
+      enumerator, enumerator_name,
+      visit_landmarks,
+      starts_with("gps"),
+      resp_first_name:full_names,
+      hhh_first_name:household_name,
+      wp_name, wp_name_o, wp_other_desc, wp_name_coa,
+      wp_landmarks_pl
+    )
+  )
+
+path <-
+  file.path(
+    "Data",
+    "HouseholdCensus",
+    "DataSets",
+    "Raw",
+    "hh-census-deid"
+  )
+
+hhc_deid %>% 
+  write_dta(
+    file.path(
+      path_box,
+      paste0(path, ".dta")
+    )
+  )
+
+hhc_deid %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path),
+)
+```
+

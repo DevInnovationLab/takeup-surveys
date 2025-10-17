@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-02" />
+<meta name="date" content="2025-10-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,7 +30,7 @@
   
   
 <link rel="prev" href="clean-household-census.html"/>
-<link rel="next" href="construct-household-distance.html"/>
+<link rel="next" href="construct-primary-water-point.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -163,45 +163,40 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="4.2" data-path="construct-household-location.html"><a href="construct-household-location.html#create-spatial-version-of-the-data-set"><i class="fa fa-check"></i><b>4.2</b> Create spatial version of the data set</a></li>
 <li class="chapter" data-level="4.3" data-path="construct-household-location.html"><a href="construct-household-location.html#save-data"><i class="fa fa-check"></i><b>4.3</b> Save data</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="construct-household-distance.html"><a href="construct-household-distance.html"><i class="fa fa-check"></i><b>5</b> Construct household distance</a>
+<li class="chapter" data-level="5" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html"><i class="fa fa-check"></i><b>5</b> Construct primary water point</a>
 <ul>
-<li class="chapter" data-level="5.1" data-path="construct-household-distance.html"><a href="construct-household-distance.html#load-data-1"><i class="fa fa-check"></i><b>5.1</b> Load data</a></li>
-<li class="chapter" data-level="5.2" data-path="construct-household-distance.html"><a href="construct-household-distance.html#compute-distances"><i class="fa fa-check"></i><b>5.2</b> Compute distances</a></li>
-<li class="chapter" data-level="5.3" data-path="construct-household-distance.html"><a href="construct-household-distance.html#export-data-1"><i class="fa fa-check"></i><b>5.3</b> Export data</a></li>
+<li class="chapter" data-level="5.1" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#load-data-1"><i class="fa fa-check"></i><b>5.1</b> Load data</a></li>
+<li class="chapter" data-level="5.2" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#primary-water-point"><i class="fa fa-check"></i><b>5.2</b> Primary water point</a></li>
+<li class="chapter" data-level="5.3" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#check-missing-patterns"><i class="fa fa-check"></i><b>5.3</b> Check missing patterns</a></li>
+<li class="chapter" data-level="5.4" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#water-points-that-should-have-been-matched"><i class="fa fa-check"></i><b>5.4</b> Water points that should have been matched</a></li>
+<li class="chapter" data-level="5.5" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#water-points-that-should-have-been-mapped"><i class="fa fa-check"></i><b>5.5</b> Water points that should have been mapped</a></li>
+<li class="chapter" data-level="5.6" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#export-data-1"><i class="fa fa-check"></i><b>5.6</b> Export data</a></li>
 </ul></li>
-<li class="chapter" data-level="6" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html"><i class="fa fa-check"></i><b>6</b> Construct primary water point</a>
+<li class="chapter" data-level="6" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html"><i class="fa fa-check"></i><b>6</b> Create final household census data</a>
 <ul>
-<li class="chapter" data-level="6.1" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#load-data-2"><i class="fa fa-check"></i><b>6.1</b> Load data</a></li>
-<li class="chapter" data-level="6.2" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#primary-water-point"><i class="fa fa-check"></i><b>6.2</b> Primary water point</a></li>
-<li class="chapter" data-level="6.3" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#water-points-that-should-have-been-matched"><i class="fa fa-check"></i><b>6.3</b> Water points that should have been matched</a></li>
-<li class="chapter" data-level="6.4" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#water-points-that-should-have-been-mapped"><i class="fa fa-check"></i><b>6.4</b> Water points that should have been mapped</a></li>
-<li class="chapter" data-level="6.5" data-path="construct-primary-water-point.html"><a href="construct-primary-water-point.html#export-data-2"><i class="fa fa-check"></i><b>6.5</b> Export data</a></li>
+<li class="chapter" data-level="6.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#load-data-2"><i class="fa fa-check"></i><b>6.1</b> Load data</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-census"><i class="fa fa-check"></i><b>6.1.1</b> Household census</a></li>
+<li class="chapter" data-level="6.1.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-census"><i class="fa fa-check"></i><b>6.1.2</b> Water point census</a></li>
+<li class="chapter" data-level="6.1.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#villages"><i class="fa fa-check"></i><b>6.1.3</b> Villages</a></li>
 </ul></li>
-<li class="chapter" data-level="7" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html"><i class="fa fa-check"></i><b>7</b> Create final household census data</a>
+<li class="chapter" data-level="6.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#construct-final-indicators"><i class="fa fa-check"></i><b>6.2</b> Construct final indicators</a>
 <ul>
-<li class="chapter" data-level="7.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#load-data-3"><i class="fa fa-check"></i><b>7.1</b> Load data</a>
-<ul>
-<li class="chapter" data-level="7.1.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-census"><i class="fa fa-check"></i><b>7.1.1</b> Household census</a></li>
-<li class="chapter" data-level="7.1.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-census"><i class="fa fa-check"></i><b>7.1.2</b> Water point census</a></li>
-<li class="chapter" data-level="7.1.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#villages"><i class="fa fa-check"></i><b>7.1.3</b> Villages</a></li>
+<li class="chapter" data-level="6.2.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-responses"><i class="fa fa-check"></i><b>6.2.1</b> Non-responses</a></li>
+<li class="chapter" data-level="6.2.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#id-variables"><i class="fa fa-check"></i><b>6.2.2</b> ID variables</a></li>
+<li class="chapter" data-level="6.2.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-head-characteristics"><i class="fa fa-check"></i><b>6.2.3</b> Household head characteristics</a></li>
+<li class="chapter" data-level="6.2.4" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-composition"><i class="fa fa-check"></i><b>6.2.4</b> Household composition</a></li>
+<li class="chapter" data-level="6.2.5" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-use"><i class="fa fa-check"></i><b>6.2.5</b> Water point use</a></li>
+<li class="chapter" data-level="6.2.6" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#primary-water-points"><i class="fa fa-check"></i><b>6.2.6</b> Primary water points</a></li>
+<li class="chapter" data-level="6.2.7" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-users-knowledge"><i class="fa fa-check"></i><b>6.2.7</b> Non-users knowledge</a></li>
+<li class="chapter" data-level="6.2.8" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#meta-data"><i class="fa fa-check"></i><b>6.2.8</b> Meta data</a></li>
+<li class="chapter" data-level="6.2.9" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#flags"><i class="fa fa-check"></i><b>6.2.9</b> Flags</a></li>
 </ul></li>
-<li class="chapter" data-level="7.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#construct-final-indicators"><i class="fa fa-check"></i><b>7.2</b> Construct final indicators</a>
+<li class="chapter" data-level="6.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#combine-and-save-data"><i class="fa fa-check"></i><b>6.3</b> Combine and save data</a>
 <ul>
-<li class="chapter" data-level="7.2.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-responses"><i class="fa fa-check"></i><b>7.2.1</b> Non-responses</a></li>
-<li class="chapter" data-level="7.2.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#id-variables"><i class="fa fa-check"></i><b>7.2.2</b> ID variables</a></li>
-<li class="chapter" data-level="7.2.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-head-characteristics"><i class="fa fa-check"></i><b>7.2.3</b> Household head characteristics</a></li>
-<li class="chapter" data-level="7.2.4" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-composition"><i class="fa fa-check"></i><b>7.2.4</b> Household composition</a></li>
-<li class="chapter" data-level="7.2.5" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-use"><i class="fa fa-check"></i><b>7.2.5</b> Water point use</a></li>
-<li class="chapter" data-level="7.2.6" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#primary-water-points"><i class="fa fa-check"></i><b>7.2.6</b> Primary water points</a></li>
-<li class="chapter" data-level="7.2.7" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-users-knowledge"><i class="fa fa-check"></i><b>7.2.7</b> Non-users knowledge</a></li>
-<li class="chapter" data-level="7.2.8" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#meta-data"><i class="fa fa-check"></i><b>7.2.8</b> Meta data</a></li>
-<li class="chapter" data-level="7.2.9" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#flags"><i class="fa fa-check"></i><b>7.2.9</b> Flags</a></li>
-</ul></li>
-<li class="chapter" data-level="7.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#combine-and-save-data"><i class="fa fa-check"></i><b>7.3</b> Combine and save data</a>
-<ul>
-<li class="chapter" data-level="7.3.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#only-final-indicators"><i class="fa fa-check"></i><b>7.3.1</b> Only final indicators</a></li>
-<li class="chapter" data-level="7.3.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#analysis-data"><i class="fa fa-check"></i><b>7.3.2</b> Analysis data</a></li>
-<li class="chapter" data-level="7.3.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#all-data"><i class="fa fa-check"></i><b>7.3.3</b> All data</a></li>
+<li class="chapter" data-level="6.3.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#only-final-indicators"><i class="fa fa-check"></i><b>6.3.1</b> Only final indicators</a></li>
+<li class="chapter" data-level="6.3.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#analysis-data"><i class="fa fa-check"></i><b>6.3.2</b> Analysis data</a></li>
+<li class="chapter" data-level="6.3.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#all-data"><i class="fa fa-check"></i><b>6.3.3</b> All data</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -223,13 +218,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="construct-household-location" class="section level1 hasAnchor" number="4">
 <h1><span class="header-section-number">4</span> Construct household location<a href="construct-household-location.html#construct-household-location" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="construct-household-location.html#cb23-1" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
-<span id="cb23-2"><a href="construct-household-location.html#cb23-2" tabindex="-1"></a>  tidyverse,</span>
-<span id="cb23-3"><a href="construct-household-location.html#cb23-3" tabindex="-1"></a>  sf,</span>
-<span id="cb23-4"><a href="construct-household-location.html#cb23-4" tabindex="-1"></a>  skimr,</span>
-<span id="cb23-5"><a href="construct-household-location.html#cb23-5" tabindex="-1"></a>  janitor,</span>
-<span id="cb23-6"><a href="construct-household-location.html#cb23-6" tabindex="-1"></a>  asserthat</span>
-<span id="cb23-7"><a href="construct-household-location.html#cb23-7" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="construct-household-location.html#cb24-1" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
+<span id="cb24-2"><a href="construct-household-location.html#cb24-2" tabindex="-1"></a>  tidyverse,</span>
+<span id="cb24-3"><a href="construct-household-location.html#cb24-3" tabindex="-1"></a>  sf,</span>
+<span id="cb24-4"><a href="construct-household-location.html#cb24-4" tabindex="-1"></a>  skimr,</span>
+<span id="cb24-5"><a href="construct-household-location.html#cb24-5" tabindex="-1"></a>  janitor,</span>
+<span id="cb24-6"><a href="construct-household-location.html#cb24-6" tabindex="-1"></a>  asserthat</span>
+<span id="cb24-7"><a href="construct-household-location.html#cb24-7" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>## Installing package into &#39;C:/Users/luizaandrade/AppData/Local/R/win-library/4.4&#39;
 ## (as &#39;lib&#39; is unspecified)</code></pre>
 <pre><code>## Warning: package &#39;asserthat&#39; is not available for this version of R
@@ -247,28 +242,28 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## logical.return = TRUE, : there is no package called &#39;asserthat&#39;</code></pre>
 <pre><code>## Warning in pacman::p_load(tidyverse, sf, skimr, janitor, asserthat): Failed to install/load:
 ## asserthat</code></pre>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="construct-household-location.html#cb31-1" tabindex="-1"></a>hhc_clean <span class="ot">&lt;-</span></span>
-<span id="cb31-2"><a href="construct-household-location.html#cb31-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb31-3"><a href="construct-household-location.html#cb31-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
-<span id="cb31-4"><a href="construct-household-location.html#cb31-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb31-5"><a href="construct-household-location.html#cb31-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb31-6"><a href="construct-household-location.html#cb31-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb31-7"><a href="construct-household-location.html#cb31-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb31-8"><a href="construct-household-location.html#cb31-8" tabindex="-1"></a>      <span class="st">&quot;Clean&quot;</span>,</span>
-<span id="cb31-9"><a href="construct-household-location.html#cb31-9" tabindex="-1"></a>      <span class="st">&quot;hh-census-clean.rds&quot;</span></span>
-<span id="cb31-10"><a href="construct-household-location.html#cb31-10" tabindex="-1"></a>    )</span>
-<span id="cb31-11"><a href="construct-household-location.html#cb31-11" tabindex="-1"></a>  )</span></code></pre></div>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="construct-household-location.html#cb32-1" tabindex="-1"></a>hhc_gps_corrections <span class="ot">&lt;-</span></span>
-<span id="cb32-2"><a href="construct-household-location.html#cb32-2" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
-<span id="cb32-3"><a href="construct-household-location.html#cb32-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb32-4"><a href="construct-household-location.html#cb32-4" tabindex="-1"></a>      path_git,</span>
-<span id="cb32-5"><a href="construct-household-location.html#cb32-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="construct-household-location.html#cb32-1" tabindex="-1"></a>hhc_clean <span class="ot">&lt;-</span></span>
+<span id="cb32-2"><a href="construct-household-location.html#cb32-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb32-3"><a href="construct-household-location.html#cb32-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
+<span id="cb32-4"><a href="construct-household-location.html#cb32-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb32-5"><a href="construct-household-location.html#cb32-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
 <span id="cb32-6"><a href="construct-household-location.html#cb32-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb32-7"><a href="construct-household-location.html#cb32-7" tabindex="-1"></a>      <span class="st">&quot;manual-bad-hh-gps.csv&quot;</span></span>
-<span id="cb32-8"><a href="construct-household-location.html#cb32-8" tabindex="-1"></a>    )</span>
-<span id="cb32-9"><a href="construct-household-location.html#cb32-9" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb32-7"><a href="construct-household-location.html#cb32-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb32-8"><a href="construct-household-location.html#cb32-8" tabindex="-1"></a>      <span class="st">&quot;Clean&quot;</span>,</span>
+<span id="cb32-9"><a href="construct-household-location.html#cb32-9" tabindex="-1"></a>      <span class="st">&quot;hh-census-clean.rds&quot;</span></span>
+<span id="cb32-10"><a href="construct-household-location.html#cb32-10" tabindex="-1"></a>    )</span>
+<span id="cb32-11"><a href="construct-household-location.html#cb32-11" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="construct-household-location.html#cb33-1" tabindex="-1"></a>hhc_gps_corrections <span class="ot">&lt;-</span></span>
+<span id="cb33-2"><a href="construct-household-location.html#cb33-2" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
+<span id="cb33-3"><a href="construct-household-location.html#cb33-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb33-4"><a href="construct-household-location.html#cb33-4" tabindex="-1"></a>      path_git,</span>
+<span id="cb33-5"><a href="construct-household-location.html#cb33-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
+<span id="cb33-6"><a href="construct-household-location.html#cb33-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb33-7"><a href="construct-household-location.html#cb33-7" tabindex="-1"></a>      <span class="st">&quot;manual-bad-hh-gps.csv&quot;</span></span>
+<span id="cb33-8"><a href="construct-household-location.html#cb33-8" tabindex="-1"></a>    )</span>
+<span id="cb33-9"><a href="construct-household-location.html#cb33-9" tabindex="-1"></a>  )</span></code></pre></div>
 <pre><code>## Rows: 12 Columns: 4
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (4): household_id, comment, date, initials
 ## 
@@ -276,42 +271,42 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <div id="check-missing-values" class="section level2 hasAnchor" number="4.1">
 <h2><span class="header-section-number">4.1</span> Check missing values<a href="construct-household-location.html#check-missing-values" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="construct-household-location.html#cb34-1" tabindex="-1"></a>hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb34-2"><a href="construct-household-location.html#cb34-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(consent_gps) <span class="sc">%&gt;%</span></span>
-<span id="cb34-3"><a href="construct-household-location.html#cb34-3" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="construct-household-location.html#cb35-1" tabindex="-1"></a>hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb35-2"><a href="construct-household-location.html#cb35-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(consent_gps) <span class="sc">%&gt;%</span></span>
+<span id="cb35-3"><a href="construct-household-location.html#cb35-3" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
 <pre><code>##  consent_gps     n percent valid_percent
-##        FALSE   122    0.5%          0.5%
-##         TRUE 22196   92.5%         99.5%
-##           NA  1684    7.0%             -</code></pre>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="construct-household-location.html#cb36-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb36-2"><a href="construct-household-location.html#cb36-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb36-3"><a href="construct-household-location.html#cb36-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb36-4"><a href="construct-household-location.html#cb36-4" tabindex="-1"></a>    <span class="fu">is.na</span>(consent_gps),</span>
-<span id="cb36-5"><a href="construct-household-location.html#cb36-5" tabindex="-1"></a>    consent,</span>
-<span id="cb36-6"><a href="construct-household-location.html#cb36-6" tabindex="-1"></a>    visit_found</span>
-<span id="cb36-7"><a href="construct-household-location.html#cb36-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb36-8"><a href="construct-household-location.html#cb36-8" tabindex="-1"></a>    <span class="fu">nrow</span>() <span class="sc">==</span> <span class="dv">0</span></span>
-<span id="cb36-9"><a href="construct-household-location.html#cb36-9" tabindex="-1"></a>)</span></code></pre></div>
+##        FALSE   122    0.6%          0.6%
+##         TRUE 20074   92.7%         99.4%
+##           NA  1467    6.8%             -</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="construct-household-location.html#cb37-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb37-2"><a href="construct-household-location.html#cb37-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="construct-household-location.html#cb37-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb37-4"><a href="construct-household-location.html#cb37-4" tabindex="-1"></a>    <span class="fu">is.na</span>(consent_gps),</span>
+<span id="cb37-5"><a href="construct-household-location.html#cb37-5" tabindex="-1"></a>    consent,</span>
+<span id="cb37-6"><a href="construct-household-location.html#cb37-6" tabindex="-1"></a>    visit_found</span>
+<span id="cb37-7"><a href="construct-household-location.html#cb37-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb37-8"><a href="construct-household-location.html#cb37-8" tabindex="-1"></a>    <span class="fu">nrow</span>() <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb37-9"><a href="construct-household-location.html#cb37-9" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="construct-household-location.html#cb38-1" tabindex="-1"></a>hhc_gps <span class="ot">&lt;-</span></span>
-<span id="cb38-2"><a href="construct-household-location.html#cb38-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb38-3"><a href="construct-household-location.html#cb38-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb38-4"><a href="construct-household-location.html#cb38-4" tabindex="-1"></a>    consent_gps,</span>
-<span id="cb38-5"><a href="construct-household-location.html#cb38-5" tabindex="-1"></a>    <span class="sc">!</span>(household_id <span class="sc">%in%</span> hhc_gps_corrections<span class="sc">$</span>household_id)</span>
-<span id="cb38-6"><a href="construct-household-location.html#cb38-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb38-7"><a href="construct-household-location.html#cb38-7" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb38-8"><a href="construct-household-location.html#cb38-8" tabindex="-1"></a>    key,</span>
-<span id="cb38-9"><a href="construct-household-location.html#cb38-9" tabindex="-1"></a>    district_id, country,</span>
-<span id="cb38-10"><a href="construct-household-location.html#cb38-10" tabindex="-1"></a>    date,</span>
-<span id="cb38-11"><a href="construct-household-location.html#cb38-11" tabindex="-1"></a>    longitude_c,</span>
-<span id="cb38-12"><a href="construct-household-location.html#cb38-12" tabindex="-1"></a>    latitude_c,</span>
-<span id="cb38-13"><a href="construct-household-location.html#cb38-13" tabindex="-1"></a>    altitude_c,</span>
-<span id="cb38-14"><a href="construct-household-location.html#cb38-14" tabindex="-1"></a>    accuracy_c,</span>
-<span id="cb38-15"><a href="construct-household-location.html#cb38-15" tabindex="-1"></a>    missing_gps</span>
-<span id="cb38-16"><a href="construct-household-location.html#cb38-16" tabindex="-1"></a>  )</span></code></pre></div>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="construct-household-location.html#cb39-1" tabindex="-1"></a>hhc_gps <span class="sc">%&gt;%</span></span>
-<span id="cb39-2"><a href="construct-household-location.html#cb39-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(missing_gps) <span class="sc">%&gt;%</span></span>
-<span id="cb39-3"><a href="construct-household-location.html#cb39-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(date, country)</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="construct-household-location.html#cb39-1" tabindex="-1"></a>hhc_gps <span class="ot">&lt;-</span></span>
+<span id="cb39-2"><a href="construct-household-location.html#cb39-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb39-3"><a href="construct-household-location.html#cb39-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb39-4"><a href="construct-household-location.html#cb39-4" tabindex="-1"></a>    consent_gps,</span>
+<span id="cb39-5"><a href="construct-household-location.html#cb39-5" tabindex="-1"></a>    <span class="sc">!</span>(household_id <span class="sc">%in%</span> hhc_gps_corrections<span class="sc">$</span>household_id)</span>
+<span id="cb39-6"><a href="construct-household-location.html#cb39-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb39-7"><a href="construct-household-location.html#cb39-7" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb39-8"><a href="construct-household-location.html#cb39-8" tabindex="-1"></a>    key,</span>
+<span id="cb39-9"><a href="construct-household-location.html#cb39-9" tabindex="-1"></a>    district_id, country,</span>
+<span id="cb39-10"><a href="construct-household-location.html#cb39-10" tabindex="-1"></a>    date,</span>
+<span id="cb39-11"><a href="construct-household-location.html#cb39-11" tabindex="-1"></a>    longitude_c,</span>
+<span id="cb39-12"><a href="construct-household-location.html#cb39-12" tabindex="-1"></a>    latitude_c,</span>
+<span id="cb39-13"><a href="construct-household-location.html#cb39-13" tabindex="-1"></a>    altitude_c,</span>
+<span id="cb39-14"><a href="construct-household-location.html#cb39-14" tabindex="-1"></a>    accuracy_c,</span>
+<span id="cb39-15"><a href="construct-household-location.html#cb39-15" tabindex="-1"></a>    missing_gps</span>
+<span id="cb39-16"><a href="construct-household-location.html#cb39-16" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="construct-household-location.html#cb40-1" tabindex="-1"></a>hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb40-2"><a href="construct-household-location.html#cb40-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(missing_gps) <span class="sc">%&gt;%</span></span>
+<span id="cb40-3"><a href="construct-household-location.html#cb40-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(date, country)</span></code></pre></div>
 <pre><code>##        date Malawi Uganda
 ##  2025-07-08      0      4
 ##  2025-07-09      0     26
@@ -329,10 +324,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="create-spatial-version-of-the-data-set" class="section level2 hasAnchor" number="4.2">
 <h2><span class="header-section-number">4.2</span> Create spatial version of the data set<a href="construct-household-location.html#create-spatial-version-of-the-data-set" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>We choose to project the coordinates to the <a href="https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf">EPSG code</a> <code>4326</code>, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. The spatial version of the dataset only includes households that gave consent for their GPS coordinates to be recorded.</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="construct-household-location.html#cb41-1" tabindex="-1"></a>hhc_gps <span class="sc">%&gt;%</span></span>
-<span id="cb41-2"><a href="construct-household-location.html#cb41-2" tabindex="-1"></a>  skim</span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="construct-household-location.html#cb42-1" tabindex="-1"></a>hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb42-2"><a href="construct-household-location.html#cb42-2" tabindex="-1"></a>  skim</span></code></pre></div>
 <table>
-<caption><span id="tab:unnamed-chunk-27">Table 4.1: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-28">Table 4.1: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -340,7 +335,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="even">
 <td align="left">Number of rows</td>
-<td align="left">22185</td>
+<td align="left">20063</td>
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
@@ -416,7 +411,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">41</td>
 <td align="right">41</td>
 <td align="right">0</td>
-<td align="right">22185</td>
+<td align="right">20063</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
@@ -426,7 +421,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">3</td>
 <td align="right">3</td>
 <td align="right">0</td>
-<td align="right">29</td>
+<td align="right">28</td>
 <td align="right">0</td>
 </tr>
 </tbody>
@@ -459,21 +454,21 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="left">2025-07-02</td>
-<td align="left">2025-09-30</td>
-<td align="left">2025-08-01</td>
-<td align="right">60</td>
+<td align="left">2025-08-25</td>
+<td align="left">2025-07-30</td>
+<td align="right">47</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Variable type: factor</strong></p>
 <table>
 <colgroup>
-<col width="17%" />
+<col width="18%" />
 <col width="12%" />
-<col width="17%" />
+<col width="18%" />
 <col width="10%" />
 <col width="11%" />
-<col width="29%" />
+<col width="28%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -492,7 +487,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">1</td>
 <td align="left">FALSE</td>
 <td align="right">2</td>
-<td align="left">Mal: 11469, Uga: 10716</td>
+<td align="left">Mal: 11469, Uga: 8594</td>
 </tr>
 </tbody>
 </table>
@@ -513,21 +508,21 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.02</td>
-<td align="left">FAL: 21800, TRU: 385</td>
+<td align="left">FAL: 19678, TRU: 385</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Variable type: numeric</strong></p>
-<table>
+<table style="width:100%;">
 <colgroup>
 <col width="14%" />
 <col width="10%" />
 <col width="14%" />
 <col width="7%" />
 <col width="7%" />
-<col width="8%" />
 <col width="7%" />
-<col width="8%" />
+<col width="7%" />
+<col width="7%" />
 <col width="8%" />
 <col width="8%" />
 <col width="6%" />
@@ -552,87 +547,87 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="left">longitude_c</td>
 <td align="right">385</td>
 <td align="right">0.98</td>
-<td align="right">34.53</td>
-<td align="right">0.83</td>
+<td align="right">34.61</td>
+<td align="right">0.82</td>
 <td align="right">32.89</td>
-<td align="right">33.83</td>
-<td align="right">34.62</td>
-<td align="right">35.31</td>
+<td align="right">33.96</td>
+<td align="right">34.98</td>
+<td align="right">35.32</td>
 <td align="right">35.65</td>
-<td align="left">▂▅▃▂▇</td>
+<td align="left">▂▃▂▂▇</td>
 </tr>
 <tr class="even">
 <td align="left">latitude_c</td>
 <td align="right">385</td>
 <td align="right">0.98</td>
-<td align="right">-7.62</td>
-<td align="right">7.99</td>
+<td align="right">-8.53</td>
+<td align="right">7.89</td>
 <td align="right">-15.98</td>
-<td align="right">-15.37</td>
-<td align="right">-14.29</td>
-<td align="right">0.81</td>
+<td align="right">-15.39</td>
+<td align="right">-14.45</td>
+<td align="right">0.71</td>
 <td align="right">1.39</td>
-<td align="left">▇▁▁▁▇</td>
+<td align="left">▇▁▁▁▆</td>
 </tr>
 <tr class="odd">
 <td align="left">altitude_c</td>
 <td align="right">387</td>
 <td align="right">0.98</td>
-<td align="right">904.13</td>
-<td align="right">288.43</td>
-<td align="right">-245.90</td>
-<td align="right">637.50</td>
-<td align="right">1020.25</td>
-<td align="right">1116.70</td>
+<td align="right">880.01</td>
+<td align="right">292.68</td>
+<td align="right">0.00</td>
+<td align="right">629.50</td>
+<td align="right">905.75</td>
+<td align="right">1105.33</td>
 <td align="right">1918.50</td>
-<td align="left">▁▃▇▇▁</td>
+<td align="left">▁▇▇▃▁</td>
 </tr>
 <tr class="even">
 <td align="left">accuracy_c</td>
 <td align="right">385</td>
 <td align="right">0.98</td>
-<td align="right">7.47</td>
-<td align="right">107.97</td>
+<td align="right">7.68</td>
+<td align="right">113.31</td>
 <td align="right">0.70</td>
 <td align="right">4.30</td>
-<td align="right">4.70</td>
+<td align="right">4.60</td>
 <td align="right">4.90</td>
 <td align="right">9625.30</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="construct-household-location.html#cb42-1" tabindex="-1"></a>hh_sf <span class="ot">&lt;-</span> </span>
-<span id="cb42-2"><a href="construct-household-location.html#cb42-2" tabindex="-1"></a>  hhc_gps <span class="sc">%&gt;%</span></span>
-<span id="cb42-3"><a href="construct-household-location.html#cb42-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>missing_gps) <span class="sc">%&gt;%</span></span>
-<span id="cb42-4"><a href="construct-household-location.html#cb42-4" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(</span>
-<span id="cb42-5"><a href="construct-household-location.html#cb42-5" tabindex="-1"></a>    <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">&quot;longitude_c&quot;</span>, <span class="st">&quot;latitude_c&quot;</span>), </span>
-<span id="cb42-6"><a href="construct-household-location.html#cb42-6" tabindex="-1"></a>    <span class="at">crs =</span> <span class="dv">4326</span></span>
-<span id="cb42-7"><a href="construct-household-location.html#cb42-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-8"><a href="construct-household-location.html#cb42-8" tabindex="-1"></a>  <span class="fu">select</span>(key, country, district_id, <span class="fu">ends_with</span>(<span class="st">&quot;_c&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="construct-household-location.html#cb43-1" tabindex="-1"></a>hh_sf <span class="ot">&lt;-</span> </span>
+<span id="cb43-2"><a href="construct-household-location.html#cb43-2" tabindex="-1"></a>  hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb43-3"><a href="construct-household-location.html#cb43-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>missing_gps) <span class="sc">%&gt;%</span></span>
+<span id="cb43-4"><a href="construct-household-location.html#cb43-4" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(</span>
+<span id="cb43-5"><a href="construct-household-location.html#cb43-5" tabindex="-1"></a>    <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">&quot;longitude_c&quot;</span>, <span class="st">&quot;latitude_c&quot;</span>), </span>
+<span id="cb43-6"><a href="construct-household-location.html#cb43-6" tabindex="-1"></a>    <span class="at">crs =</span> <span class="dv">4326</span></span>
+<span id="cb43-7"><a href="construct-household-location.html#cb43-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb43-8"><a href="construct-household-location.html#cb43-8" tabindex="-1"></a>  <span class="fu">select</span>(key, country, district_id, <span class="fu">ends_with</span>(<span class="st">&quot;_c&quot;</span>))</span></code></pre></div>
 </div>
 <div id="save-data" class="section level2 hasAnchor" number="4.3">
 <h2><span class="header-section-number">4.3</span> Save data<a href="construct-household-location.html#save-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="construct-household-location.html#cb43-1" tabindex="-1"></a>path <span class="ot">&lt;-</span></span>
-<span id="cb43-2"><a href="construct-household-location.html#cb43-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb43-3"><a href="construct-household-location.html#cb43-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb43-4"><a href="construct-household-location.html#cb43-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb43-5"><a href="construct-household-location.html#cb43-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb43-6"><a href="construct-household-location.html#cb43-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb43-7"><a href="construct-household-location.html#cb43-7" tabindex="-1"></a>    <span class="st">&quot;hh-gps&quot;</span></span>
-<span id="cb43-8"><a href="construct-household-location.html#cb43-8" tabindex="-1"></a>  )</span>
-<span id="cb43-9"><a href="construct-household-location.html#cb43-9" tabindex="-1"></a></span>
-<span id="cb43-10"><a href="construct-household-location.html#cb43-10" tabindex="-1"></a>hh_sf <span class="sc">%&gt;%</span> </span>
-<span id="cb43-11"><a href="construct-household-location.html#cb43-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb43-12"><a href="construct-household-location.html#cb43-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb43-13"><a href="construct-household-location.html#cb43-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb43-14"><a href="construct-household-location.html#cb43-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="construct-household-location.html#cb44-1" tabindex="-1"></a>path <span class="ot">&lt;-</span></span>
+<span id="cb44-2"><a href="construct-household-location.html#cb44-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb44-3"><a href="construct-household-location.html#cb44-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb44-4"><a href="construct-household-location.html#cb44-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb44-5"><a href="construct-household-location.html#cb44-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb44-6"><a href="construct-household-location.html#cb44-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb44-7"><a href="construct-household-location.html#cb44-7" tabindex="-1"></a>    <span class="st">&quot;hh-gps&quot;</span></span>
+<span id="cb44-8"><a href="construct-household-location.html#cb44-8" tabindex="-1"></a>  )</span>
+<span id="cb44-9"><a href="construct-household-location.html#cb44-9" tabindex="-1"></a></span>
+<span id="cb44-10"><a href="construct-household-location.html#cb44-10" tabindex="-1"></a>hh_sf <span class="sc">%&gt;%</span> </span>
+<span id="cb44-11"><a href="construct-household-location.html#cb44-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb44-12"><a href="construct-household-location.html#cb44-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb44-13"><a href="construct-household-location.html#cb44-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb44-14"><a href="construct-household-location.html#cb44-14" tabindex="-1"></a>  )</span></code></pre></div>
 <pre><code>## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
 ## `sfl` provided. Falling back to `character`.
 ## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
 ## `sfl` provided. Falling back to `character`.</code></pre>
 <table>
-<caption><span id="tab:unnamed-chunk-29">Table 4.2: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-30">Table 4.2: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -640,7 +635,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="even">
 <td align="left">Number of rows</td>
-<td align="left">21800</td>
+<td align="left">19678</td>
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
@@ -708,7 +703,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">41</td>
 <td align="right">41</td>
 <td align="right">0</td>
-<td align="right">21800</td>
+<td align="right">19678</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
@@ -718,7 +713,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">3</td>
 <td align="right">3</td>
 <td align="right">0</td>
-<td align="right">29</td>
+<td align="right">28</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
@@ -728,7 +723,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">29</td>
 <td align="right">38</td>
 <td align="right">0</td>
-<td align="right">21794</td>
+<td align="right">19672</td>
 <td align="right">0</td>
 </tr>
 </tbody>
@@ -736,12 +731,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><strong>Variable type: factor</strong></p>
 <table>
 <colgroup>
-<col width="17%" />
+<col width="18%" />
 <col width="12%" />
-<col width="17%" />
+<col width="18%" />
 <col width="10%" />
 <col width="11%" />
-<col width="29%" />
+<col width="28%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -760,22 +755,22 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="right">1</td>
 <td align="left">FALSE</td>
 <td align="right">2</td>
-<td align="left">Mal: 11468, Uga: 10332</td>
+<td align="left">Mal: 11468, Uga: 8210</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Variable type: numeric</strong></p>
-<table style="width:100%;">
+<table>
 <colgroup>
 <col width="15%" />
-<col width="10%" />
+<col width="11%" />
 <col width="15%" />
 <col width="7%" />
 <col width="7%" />
-<col width="7%" />
+<col width="4%" />
 <col width="6%" />
-<col width="8%" />
 <col width="7%" />
+<col width="8%" />
 <col width="7%" />
 <col width="6%" />
 </colgroup>
@@ -799,25 +794,25 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="left">altitude_c</td>
 <td align="right">2</td>
 <td align="right">1</td>
-<td align="right">904.13</td>
-<td align="right">288.43</td>
-<td align="right">-245.9</td>
-<td align="right">637.5</td>
-<td align="right">1020.25</td>
-<td align="right">1116.7</td>
+<td align="right">880.01</td>
+<td align="right">292.68</td>
+<td align="right">0.0</td>
+<td align="right">629.5</td>
+<td align="right">905.75</td>
+<td align="right">1105.33</td>
 <td align="right">1918.5</td>
-<td align="left">▁▃▇▇▁</td>
+<td align="left">▁▇▇▃▁</td>
 </tr>
 <tr class="even">
 <td align="left">accuracy_c</td>
 <td align="right">0</td>
 <td align="right">1</td>
-<td align="right">7.47</td>
-<td align="right">107.97</td>
+<td align="right">7.68</td>
+<td align="right">113.31</td>
 <td align="right">0.7</td>
 <td align="right">4.3</td>
-<td align="right">4.70</td>
-<td align="right">4.9</td>
+<td align="right">4.60</td>
+<td align="right">4.90</td>
 <td align="right">9625.3</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
@@ -832,7 +827,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
         </div>
       </div>
 <a href="clean-household-census.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="construct-household-distance.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="construct-primary-water-point.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

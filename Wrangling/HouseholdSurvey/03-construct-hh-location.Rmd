@@ -25,8 +25,8 @@ hh_clean <-
       "Data",
       "HouseholdSurvey",
       "DataSets",
-      "Clean",
-      "hh-survey-clean.rds"
+      "Raw",
+      "hh-survey.rds"
     )
   )
 ```

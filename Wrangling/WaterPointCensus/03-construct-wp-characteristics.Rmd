@@ -1,0 +1,148 @@
+# Construct water point characteristics
+
+This script creates variables pertaining to water point characteristics.
+
+```{r}
+pacman::p_load(
+  tidyverse
+)
+```
+
+## Load data 
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Clean",
+      "wp-census-clean.rds"
+    )
+  )
+```
+
+## Process variables
+
+### IDs and meta data
+
+```{r}
+ids <-
+  wp %>%
+  mutate(
+    # comments indicate that these are functional
+    wp_func_c = case_when(
+      wp_id %in% c("WP2101104017001", "WP2030409076001", "WP2070301001045") ~ TRUE,
+      TRUE ~ wp_func
+    ),
+    wp_use_howmuch = if_else(
+      !wp_use,
+      "None",
+      as.character(wp_use_howmuch)
+    ),
+    dsw_use_howmuch = if_else(
+      !dsw_use,
+      "None",
+      as.character(dsw_use_howmuch)
+    ), 
+  ) %>%
+  select(
+    key, wp_id, date,
+    country, district_id, village_id, 
+    enumerator_id, submissiondate,
+    wp_name = wp_name_1,
+    wp_photo,
+    # inclusion criteria
+    wp_drink, wp_multicompound, 
+    wp_func, wp_func_c,
+    wp_use_howmuch, dsw_use_howmuch,
+    wp_promoter,
+    enum_comment
+  )
+```
+
+
+### Type of water source
+
+We create a simplified version of source type that groups similar source types 
+together. We will use this column to check for duplicates.
+
+We also will also replace missing values in source type to "Other". 
+
+```{r}
+sourcetype <-
+  wp %>% 
+  rename(sourcetype = wp_type) %>% 
+  transmute(
+    key, wp_id,
+    sourcetype,
+    sourcetype_o = wp_type_o,
+    sourcetype_simp = case_when(
+      str_detect(sourcetype, "Borehole") ~ "Borehole",
+      str_detect(sourcetype, "well") ~ "Dug well",
+      str_detect(sourcetype, "spring") ~ "Spring",
+      sourcetype %in% c("Municipal water supply", "Rainwater collection") ~ sourcetype,
+      str_detect(sourcetype, "water source") ~ "Surface water",
+      !is.na(sourcetype) ~ "Other"
+    )
+  )
+```
+
+### Intervention
+
+```{r}
+intervention <-
+  wp %>%
+  select(
+    key, wp_id,
+    wp_dsw, wp_ilc_device, wp_ilc
+  )
+```
+
+## Combine all
+
+```{r}
+wp_chars <-
+  ids %>%
+  inner_join(
+    sourcetype,
+    unmatched = "error"
+  ) %>%
+  inner_join(
+    intervention,
+    unmatched = "error"
+  )
+```
+
+## Check data
+
+We should have on average five observations for each water point, one per enumerator
+
+```{r}
+wp_chars %>%
+  group_by(wp_id) %>%
+  summarise(n()) %>%
+  tabyl(`n()`)
+```
+
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "WaterPointCensus",
+    "DataSets",
+    "Constructed",
+    "wp-census-id"
+  )
+
+write_meta(
+  wp_chars,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```

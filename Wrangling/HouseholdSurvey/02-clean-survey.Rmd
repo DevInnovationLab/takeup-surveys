@@ -27,7 +27,7 @@ hh_raw <-
       "HouseholdSurvey",
       "DataSets",
       "Raw",
-      "hh-survey.rds"
+      "hh-survey-deid.rds"
       )
   )
 ```
@@ -239,29 +239,60 @@ hh_clean <-
 
 ## Merge variables
 
+### Education
+
+Options were different between countries
+
+```{r}
+hh_clean <-
+  hh_clean %>%
+  mutate(
+    # Uganda
+    across(
+      c(educ, hh_educ),
+      ~ case_when(
+        . %in% c("Never attended school / did not complete class", "Informal Training") ~ "None",
+        . %in% c("Pre-primary", "P1", "P2", "P3", "P4", "P5", "P6") ~ "Pre-primary",
+        . %in% c("P7", "PLE", "S1", "S2", "S3") ~ "Primary",
+        . %in% c("S4", "O level", "S5", "S6", "A level", "Polytechnic") ~ "Secondary",
+        . %in% c("College (non-University)", "University") ~ "Post-secondary"
+      )
+    ),
+    # Malawi
+    across(
+      c(educ_mw),
+      ~ case_when(
+        . == "No formal education / Never attended school" ~ "None",
+        . == "Some Primary School (Did not complete Standard 8)" ~ "Pre-primary",
+        . %in% c("Primary School Leaving Certificate (PSLCE) (Completed Standard 8)", "Junior Certificate of Education (JCE) (Completed Form 2)", "Some Secondary School (Did not complete Form 4 / MSCE)") ~ "Primary",
+        . %in% c("Malawi School Certificate of Education (MSCE) (Completed Form 4)", "Vocational/Technical Training (e.g., TEVETA certification)") ~ "Secondary",
+        . %in% c("Diploma (e.g., teaching, nursing, other post-secondary diploma)", "Bachelor's Degree") ~ "Post-secondary"
+      )
+    ),
+    # Combine both
+    resp_educ = coalesce(educ, educ_mw)
+  )
+```
+
+### Household head characteristics
+
 The questions related to characteristics of the household head were not asked if the respondent herself was the household head.
 
 ```{r}
 hh_clean <- 
   hh_clean %>%
   mutate(
-    hhh_educ_ug_c = if_else(relation == "Me/respondent is the HoH", educ, hh_educ),
-    hhh_educ_mw_c = if_else(relation == "Me/respondent is the HoH", educ_mw, hh_educ),
-    hhh_gender_c = if_else(relation == "Me/respondent is the HoH", sex, gender_hhh),
-    hhh_age_c = if_else(relation == "Me/respondent is the HoH", age_resp, hhh_age),
-    educ = case_when(
-      # Uganda
-      educ %in% c("Never attended school / did not complete class", "Informal Training") ~ "None",
-      educ %in% c("Pre-primary", "P1", "P2", "P3", "P4", "P5", "P6") ~ "Pre-primary",
-      educ %in% c("P7", "PLE", "S1", "S2", "S3") ~ "Primary",
-      educ %in% c("S4", "O level", "S5", "S6", "A level", "Polytechnic") ~ "Secondary",
-      educ %in% c("College (non-University)", "University") ~ "Post-secondary",
-      # Malawi
-      educ_mw == "No formal education / Never attended school" ~ "None",
-      educ_mw == "Some Primary School (Did not complete Standard 8)" ~ "Pre-primary",
-      educ_mw %in% c("Primary School Leaving Certificate (PSLCE) (Completed Standard 8)", "Junior Certificate of Education (JCE) (Completed Form 2)") ~ "Primary",
-      educ_mw %in% c("Malawi School Certificate of Education (MSCE) (Completed Form 4)", "Vocational/Technical Training (e.g., TEVETA certification)") ~ "Secondary",
-      educ_mw %in% c("Diploma (e.g., teaching, nursing, other post-secondary diploma)", "Bachelor's Degree") ~ "Post-secondary"
+    hhh_educ = case_when(
+      !is.na(hh_educ) ~ hh_educ,
+      relation == "Me/respondent is the HoH" & !is.na(resp_educ) ~ resp_educ
+    ),
+    hhh_gender = case_when(
+      !is.na(gender_hhh) ~ gender_hhh,
+      relation == "Me/respondent is the HoH" & !is.na(sex) ~ sex
+    ),
+    hhh_age = case_when(
+      !is.na(hhh_age) ~ hhh_age,
+      relation == "Me/respondent is the HoH" & !is.na(age_resp) ~ age_resp
     )
   )
 ```
@@ -290,7 +321,8 @@ hh_clean <-
   mutate(
     household_id = coalesce(household_id, household_id_pl)
   ) %>%
-  select(-household_id_pl)
+  select(-household_id_pl) %>%
+  ungroup
 ```
 
 ## Export data

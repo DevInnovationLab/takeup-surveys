@@ -4,6 +4,6 @@ bookdown::gitbook:
     toc:
       collapse: section
       before: |
-        <li><a href="./">Wrangle Water Point Census</a></li>
+        <li><a href="./">Wrangle Household Survey</a></li>
   code_folding: show
   self_contained: true

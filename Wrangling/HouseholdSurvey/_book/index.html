@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-07" />
+<meta name="date" content="2025-10-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1965,7 +1965,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">Wrangle Water Point Census</a></li>
+<li><a href="./">Wrangle Household Survey</a></li>
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
@@ -1983,7 +1983,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="3.5" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#clean-text-variables"><i class="fa fa-check"></i><b>3.5</b> Clean text variables</a></li>
 <li class="chapter" data-level="3.6" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#clean-date-of-survey"><i class="fa fa-check"></i><b>3.6</b> Clean date of survey</a></li>
 <li class="chapter" data-level="3.7" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#turn-dummy-vairables-into-logical"><i class="fa fa-check"></i><b>3.7</b> Turn dummy vairables into logical</a></li>
-<li class="chapter" data-level="3.8" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#merge-variables"><i class="fa fa-check"></i><b>3.8</b> Merge variables</a></li>
+<li class="chapter" data-level="3.8" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#merge-variables"><i class="fa fa-check"></i><b>3.8</b> Merge variables</a>
+<ul>
+<li class="chapter" data-level="3.8.1" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#education"><i class="fa fa-check"></i><b>3.8.1</b> Education</a></li>
+<li class="chapter" data-level="3.8.2" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#household-head-characteristics"><i class="fa fa-check"></i><b>3.8.2</b> Household head characteristics</a></li>
+</ul></li>
 <li class="chapter" data-level="3.9" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#drop-surveycto-coding-variables"><i class="fa fa-check"></i><b>3.9</b> Drop surveycto coding variables</a></li>
 <li class="chapter" data-level="3.10" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#combine-household_id-and-household_id_pl"><i class="fa fa-check"></i><b>3.10</b> Combine household_id and household_id_pl</a></li>
 <li class="chapter" data-level="3.11" data-path="clean-household-survey-clean-survey.html"><a href="clean-household-survey-clean-survey.html#export-data"><i class="fa fa-check"></i><b>3.11</b> Export data</a></li>
@@ -2010,48 +2014,40 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="6.4" data-path="construct-data-quality-flags-construct-sensitivity-flags.html"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#flag-if-the-village-had-a-low-proportion-of-water-come-from-the-primary-source"><i class="fa fa-check"></i><b>6.4</b> Flag if the village had a low proportion of water come from the primary source</a></li>
 <li class="chapter" data-level="6.5" data-path="construct-data-quality-flags-construct-sensitivity-flags.html"><a href="construct-data-quality-flags-construct-sensitivity-flags.html#export-data-2"><i class="fa fa-check"></i><b>6.5</b> Export data</a></li>
 </ul></li>
-<li class="chapter" data-level="7" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html"><i class="fa fa-check"></i><b>7</b> Combine with water point data</a>
+<li class="chapter" data-level="7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html"><i class="fa fa-check"></i><b>7</b> Create final household survey data</a>
 <ul>
-<li class="chapter" data-level="7.1" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html#load-data-2"><i class="fa fa-check"></i><b>7.1</b> Load data</a></li>
-<li class="chapter" data-level="7.2" data-path="combine-with-water-point-data.html"><a href="combine-with-water-point-data.html#check-water-point-id-presence"><i class="fa fa-check"></i><b>7.2</b> Check water point ID presence</a></li>
+<li class="chapter" data-level="7.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#load-data-2"><i class="fa fa-check"></i><b>7.1</b> Load data</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-survey"><i class="fa fa-check"></i><b>7.1.1</b> Household survey</a></li>
+<li class="chapter" data-level="7.1.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-testing"><i class="fa fa-check"></i><b>7.1.2</b> Chlorine testing</a></li>
+<li class="chapter" data-level="7.1.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#gps"><i class="fa fa-check"></i><b>7.1.3</b> GPS</a></li>
+<li class="chapter" data-level="7.1.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#village-level-data"><i class="fa fa-check"></i><b>7.1.4</b> Village-level data</a></li>
+<li class="chapter" data-level="7.1.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census"><i class="fa fa-check"></i><b>7.1.5</b> Household census</a></li>
+<li class="chapter" data-level="7.1.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-census"><i class="fa fa-check"></i><b>7.1.6</b> Water point census</a></li>
 </ul></li>
-<li class="chapter" data-level="8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html"><i class="fa fa-check"></i><b>8</b> Create final household survey data</a>
+<li class="chapter" data-level="7.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-data"><i class="fa fa-check"></i><b>7.2</b> Combine data</a>
 <ul>
-<li class="chapter" data-level="8.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#load-data-3"><i class="fa fa-check"></i><b>8.1</b> Load data</a>
-<ul>
-<li class="chapter" data-level="8.1.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-survey"><i class="fa fa-check"></i><b>8.1.1</b> Household survey</a></li>
-<li class="chapter" data-level="8.1.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-testing"><i class="fa fa-check"></i><b>8.1.2</b> Chlorine testing</a></li>
-<li class="chapter" data-level="8.1.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#gps"><i class="fa fa-check"></i><b>8.1.3</b> GPS</a></li>
-<li class="chapter" data-level="8.1.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#promoter-census"><i class="fa fa-check"></i><b>8.1.4</b> Promoter census</a></li>
-<li class="chapter" data-level="8.1.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census"><i class="fa fa-check"></i><b>8.1.5</b> Household census</a></li>
+<li class="chapter" data-level="7.2.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-tests"><i class="fa fa-check"></i><b>7.2.1</b> Chlorine tests</a></li>
+<li class="chapter" data-level="7.2.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census-1"><i class="fa fa-check"></i><b>7.2.2</b> Household census</a></li>
+<li class="chapter" data-level="7.2.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-data"><i class="fa fa-check"></i><b>7.2.3</b> Water point data</a></li>
 </ul></li>
-<li class="chapter" data-level="8.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-data"><i class="fa fa-check"></i><b>8.2</b> Combine data</a>
+<li class="chapter" data-level="7.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#select-final-variables"><i class="fa fa-check"></i><b>7.3</b> Select final variables</a>
 <ul>
-<li class="chapter" data-level="8.2.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#chlorine-tests"><i class="fa fa-check"></i><b>8.2.1</b> Chlorine tests</a></li>
-<li class="chapter" data-level="8.2.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-census-1"><i class="fa fa-check"></i><b>8.2.2</b> Household census</a></li>
+<li class="chapter" data-level="7.3.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#id-variables"><i class="fa fa-check"></i><b>7.3.1</b> ID variables</a></li>
+<li class="chapter" data-level="7.3.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#meta-data"><i class="fa fa-check"></i><b>7.3.2</b> Meta data</a></li>
+<li class="chapter" data-level="7.3.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-characteristics"><i class="fa fa-check"></i><b>7.3.3</b> Household characteristics</a></li>
+<li class="chapter" data-level="7.3.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-characteristics"><i class="fa fa-check"></i><b>7.3.4</b> Water point characteristics</a></li>
+<li class="chapter" data-level="7.3.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-sample"><i class="fa fa-check"></i><b>7.3.5</b> Water sample</a></li>
+<li class="chapter" data-level="7.3.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-treatment"><i class="fa fa-check"></i><b>7.3.6</b> Water treatment</a></li>
+<li class="chapter" data-level="7.3.7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#data-quality-flags"><i class="fa fa-check"></i><b>7.3.7</b> Data quality flags</a></li>
+<li class="chapter" data-level="7.3.8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-all"><i class="fa fa-check"></i><b>7.3.8</b> Combine all</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#select-final-variables"><i class="fa fa-check"></i><b>8.3</b> Select final variables</a>
+<li class="chapter" data-level="7.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#export-data-3"><i class="fa fa-check"></i><b>7.4</b> Export data</a>
 <ul>
-<li class="chapter" data-level="8.3.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#id-variables"><i class="fa fa-check"></i><b>8.3.1</b> ID variables</a></li>
-<li class="chapter" data-level="8.3.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#meta-data"><i class="fa fa-check"></i><b>8.3.2</b> Meta data</a></li>
-<li class="chapter" data-level="8.3.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#household-characteristics"><i class="fa fa-check"></i><b>8.3.3</b> Household characteristics</a></li>
-<li class="chapter" data-level="8.3.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-point-characteristics"><i class="fa fa-check"></i><b>8.3.4</b> Water point characteristics</a></li>
-<li class="chapter" data-level="8.3.5" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-sample"><i class="fa fa-check"></i><b>8.3.5</b> Water sample</a></li>
-<li class="chapter" data-level="8.3.6" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#water-treatment"><i class="fa fa-check"></i><b>8.3.6</b> Water treatment</a></li>
-<li class="chapter" data-level="8.3.7" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#data-quality-flags"><i class="fa fa-check"></i><b>8.3.7</b> Data quality flags</a></li>
-<li class="chapter" data-level="8.3.8" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#combine-all"><i class="fa fa-check"></i><b>8.3.8</b> Combine all</a></li>
+<li class="chapter" data-level="7.4.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-constructed-data"><i class="fa fa-check"></i><b>7.4.1</b> Save constructed data</a></li>
+<li class="chapter" data-level="7.4.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-spatial-data"><i class="fa fa-check"></i><b>7.4.2</b> Save spatial data</a></li>
+<li class="chapter" data-level="7.4.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-analysis-data"><i class="fa fa-check"></i><b>7.4.3</b> Save analysis data</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#export-data-3"><i class="fa fa-check"></i><b>8.4</b> Export data</a>
-<ul>
-<li class="chapter" data-level="8.4.1" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-constructed-data"><i class="fa fa-check"></i><b>8.4.1</b> Save constructed data</a></li>
-<li class="chapter" data-level="8.4.2" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-spatial-data"><i class="fa fa-check"></i><b>8.4.2</b> Save spatial data</a></li>
-<li class="chapter" data-level="8.4.3" data-path="create-final-household-survey-data.html"><a href="create-final-household-survey-data.html#save-analysis-data"><i class="fa fa-check"></i><b>8.4.3</b> Save analysis data</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html"><i class="fa fa-check"></i><b>9</b> Create final household survey data</a>
-<ul>
-<li class="chapter" data-level="9.1" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html#load-data-4"><i class="fa fa-check"></i><b>9.1</b> Load data</a></li>
-<li class="chapter" data-level="9.2" data-path="create-final-household-survey-data-1.html"><a href="create-final-household-survey-data-1.html#change-format"><i class="fa fa-check"></i><b>9.2</b> Change format</a></li>
 </ul></li>
 </ul>
 
@@ -2072,7 +2068,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
             <section class="normal" id="section-">
 <div id="header">
 <h1 class="title">Wrangle Household Survey</h1>
-<p class="date"><em>2025-10-07</em></p>
+<p class="date"><em>2025-10-17</em></p>
 </div>
 <div id="introduction" class="section level1 hasAnchor" number="1">
 <h1><span class="header-section-number">1</span> Introduction<a href="index.html#introduction" class="anchor-section" aria-label="Anchor link to header"></a></h1>
