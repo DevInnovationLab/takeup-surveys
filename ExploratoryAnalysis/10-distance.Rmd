@@ -171,7 +171,7 @@ hh_with_primary <- hh_with_primary %>%
     )
   )
 
-# distance to nearest WP
+# distance to nearest EA WP
 ea_water_points <- wp_census_geom %>%
   dplyr::filter(intervention_type != "Non-program") %>%
   select(wp_id, ea_wp_lon = wp_lon, ea_wp_lat = wp_lat)
@@ -187,7 +187,10 @@ hh_with_primary <- hh_with_primary %>%
       na.rm = TRUE
     )
   ) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(dist_to_nearest_ea_m = ifelse(is.infinite(dist_to_nearest_ea_m), 
+                                        NA_real_, 
+                                        dist_to_nearest_ea_m))
 ```
 
 # regressions
@@ -205,9 +208,17 @@ hh_with_primary <- hh_with_primary %>%
 
 ```{r}
 table <- hh_with_primary %>%
+  mutate(
+    dist_to_primary_km = dist_to_primary_m / 1000,
+    dist_to_nearest_ea_km = dist_to_nearest_ea_m / 1000,
+    ea_minus_nearest_km = dist_to_nearest_ea_km - dist_to_primary_km
+  ) %>%
   group_by(disc_tcr_detected) %>%
+  dplyr::filter(!is.na(dist_to_primary_m)) %>%
   summarize(
-    mean_dist = mean(dist_to_primary_m, na.rm = TRUE),
+    mean_dist_primary = mean(dist_to_primary_m, na.rm = TRUE),
+    mean_dist_ea = mean(dist_to_nearest_ea_m, na.rm = TRUE),
+    mean_diff_km = mean(ea_minus_nearest_km, na.rm = TRUE),
     n = n()
   )
 
@@ -215,22 +226,28 @@ print(table)
 ```
 
 ```{r}
+hh_with_primary_reg <- hh_with_primary %>%
+  dplyr::filter(!is.na(dist_to_primary_m)) %>%
+  mutate(
+    dist_to_primary_km = dist_to_primary_m * 1000,
+    dist_to_nearest_ea_km = dist_to_nearest_ea_m * 1000,
+    ea_minus_nearest_km = dist_to_nearest_ea_km - dist_to_primary_km
+  )
 
-model <- lm_robust(disctcr ~ dist_to_primary_m + dist_to_nearest_ea_m, 
-                   data = hh_with_primary,
+model <- lm_robust(disc_tcr_detected ~ ea_minus_nearest_km, 
+                   data = hh_with_primary_reg,
                    clusters = village_id,
                    se_type = "stata")
 
 clustered_se <- model$std.error
 
-model_lm <- lm(disctcr ~ dist_to_primary_m + dist_to_nearest_ea_m, data = hh_with_primary)
+# model_lm <- lm(disctcr ~ dist_to_primary_m + dist_to_nearest_ea_m, data = hh_with_primary_reg)
+
+model_lm <- lm(disc_tcr_detected ~ ea_minus_nearest_km, data = hh_with_primary_reg)
 
 stargazer(model_lm,  
           type = "text",
-          title = "Effect of Distance to Primary Water Point on TCR Detection",
-          dep.var.labels = "TCR Detected",
-          covariate.labels = c("Distance to Primary WP (m)"),
-          se = list(clustered_se),  # But use the clustered SEs from lm_robust
+          se = list(clustered_se),  #  use the clustered SEs from lm_robust
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = "Clustered standard errors (by village) in parentheses",
