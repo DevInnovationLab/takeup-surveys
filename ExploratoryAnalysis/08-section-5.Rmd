@@ -196,7 +196,7 @@ malawi_villages <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/
   mutate(
     villageid = as.character(villageid)
   )
-uganda_wp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-points (luizaandrade@uchicago.edu).dta") %>%
+uganda_wp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-points.dta") %>%
   mutate(
     villageid = as.character(villageid)
   )
@@ -207,6 +207,7 @@ uganda_villages <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/
 malawi_wcp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-water-collection-points.dta")
 uganda_wcp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-collection-points.dta")
 ```
+
 
 # country totals
 ```{r}
@@ -281,7 +282,6 @@ pm_survey <- pm_survey %>%
       TRUE ~ wp_id  # Keep original wp_id for all other cases
     )
   )
-# only remaining is MPOPI WAKWA LIWAYA/ MPOPI WAKWA DICKSON - in Liwaya, a village that was replaced - it is a DSW water point, so I add 1 to Malawi DSW
 
 # merge intervention_type from wp census for the corrected water points
 pm_survey <- pm_survey %>%
@@ -371,6 +371,14 @@ ea_promoters_uganda <- pm_list_ug %>%
   select(-any_of(c("country", "sample_group", "intervention_type", "wp_category", "ea_id"))) %>%
   mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
   left_join(wp_lookup_ea_id, by = c("i102_wpt_id" = "ea_id"))
+```
+
+
+# moving from wp_category to sample_group and intervention_type
+```{r}
+table(wp_census$intervention_type, wp_census$sample_group)
+
+table(wp_census$wp_category)
 ```
 
 # corrections: pm_survey_households
@@ -560,6 +568,7 @@ country_totals_table8 <- table8 %>%
 
 country_totals_table8
 ```
+
 # test for difference between table 1 and 8
 ```{r}
 # UGANDA
@@ -1483,22 +1492,15 @@ country_totals_table14
 
 ## table 15 
 Balance tables: Uganda DSW Footprint.
-significant difference in jc_chlorine
+significant difference in disp_filled
 ```{r}
 wp_census %>%
-  mutate(
-    promoter_survey = if_else(
-      wp_id %in% pm_survey$wp_id,  
-      "YES",                       
-      "NO"                          
-    )
-  ) %>%
   dplyr::filter(country == "UGANDA", wp_category == "DSW Footprint") %>%
   sumtable(
     vars = c("wp_func", "disp_tank_present", "jc_chlorine", 
              "disctcr_02", "meterfcr_02", "meterfcr_01", 
              "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "promoter_survey",
+    group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
 ```
@@ -1507,38 +1509,37 @@ wp_census %>%
 Balance tables: Uganda DSW Footprint but between EA list and not EA list water points
 ```{r}
 wp_census %>%
-  # dplyr::filter(wp_category != "Non-program") %>%
-  mutate(
-    in_promoter_list = if_else(
-      ea_id %in% ea_promoters_uganda$i102_wpt_id,  
-      "YES",                       
-      "NO"                          
-    )
-  ) %>%
+  dplyr::filter(wp_category != "Non-program") %>%
   dplyr::filter(country == "UGANDA", wp_category == "DSW Footprint") %>%
   sumtable(
     vars = c("wp_func", "disp_tank_present", "jc_chlorine", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "in_promoter_list",
+    group = "ea_list",
     group.test = TRUE,
     out = "return") 
 ```
 
 ## table 17 
 Balance tables: Uganda DSW Expansion.
-difference in jc_chlorine not significant. difference in disp_tank_present is significant, but since it does not translate to significant difference in chlorine presence, I don't think this is important
+difference in disp_filled not significant. difference in disp_tank_present is significant, but since it does not translate to significant difference in chlorine presence, I don't think this is important
 ```{r}
 wp_census %>%
-  mutate(
-    promoter_survey = if_else(
-      wp_id %in% pm_survey$wp_id,  
-      "YES",                       
-      "NO"                          
-    )
-  ) %>%
   dplyr::filter(country == "UGANDA", wp_category == "DSW Expansion") %>%
   sumtable(
     vars = c("wp_func", "disp_tank_present", "jc_chlorine", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "promoter_survey",
+    group = "promoter_surveyed",
+    group.test = TRUE,
+    out = "return") 
+```
+
+# table 17a
+compare EA list with promoter survey
+
+```{r}
+wp_census %>%
+  dplyr::filter(country == "UGANDA", wp_category == "DSW Expansion") %>%
+  sumtable(
+    vars = c("wp_func", "disp_tank_present", "jc_chlorine", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
+    group = "ea_list",
     group.test = TRUE,
     out = "return") 
 ```
@@ -1548,17 +1549,10 @@ Balance tables: Malawi DSW Footprint.
 significant difference in meterfcr_02, but because there are just 3 water points in wp_census that the test was conducted for, I don't think this is very important
 ```{r}
 wp_census %>%
-  mutate(
-    promoter_survey = if_else(
-      wp_id %in% pm_survey$wp_id,  
-      "YES",                       
-      "NO"                          
-    )
-  ) %>%
   dplyr::filter(country == "MALAWI", wp_category == "DSW Footprint") %>%
   sumtable(
     vars = c("wp_func", "disp_tank_present", "jc_chlorine", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "promoter_survey",
+    group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
 ```
@@ -1568,17 +1562,10 @@ Balance tables: Malawi DSW Expansion.
 no significant differences
 ```{r}
 wp_census %>%
-  mutate(
-    promoter_survey = if_else(
-      wp_id %in% pm_survey$wp_id,  
-      "YES",                       
-      "NO"                          
-    )
-  ) %>%
   dplyr::filter(country == "MALAWI", wp_category == "DSW Expansion") %>%
   sumtable(
     vars = c("wp_func", "disp_tank_present", "jc_chlorine", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "promoter_survey",
+    group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
 ```
@@ -1588,17 +1575,10 @@ Balance tables: Malawi DSW in ILC vill.
 no significant differences
 ```{r}
 wp_census %>%
-  mutate(
-    promoter_survey = if_else(
-      wp_id %in% pm_survey$wp_id,  
-      "YES",                       
-      "NO"                          
-    )
-  ) %>%
   dplyr::filter(country == "MALAWI", wp_category == "DSW in ILC village") %>%
   sumtable(
     vars = c("wp_func", "disp_tank_present", "jc_chlorine", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "promoter_survey",
+    group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
 ```
@@ -1608,17 +1588,10 @@ Balance tables: Malawi ILC.
 no significant differences
 ```{r}
 wp_census %>%
-  mutate(
-    promoter_survey = if_else(
-      wp_id %in% pm_survey$wp_id,  
-      "YES",                        
-      "NO"                         
-    )
-  ) %>%
   dplyr::filter(country == "MALAWI", wp_category == "ILC") %>%
   sumtable(
     vars = c("wp_func", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
-    group = "promoter_survey",
+    group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
 ```
