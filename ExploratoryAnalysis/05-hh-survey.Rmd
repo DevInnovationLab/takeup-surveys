@@ -652,52 +652,56 @@ cat("FCR difference test:\n")
 cat("  p-value:", round(fcr_test_uganda$p.value, 4), "\n")
 ```
 
-### REMAINING TO DO (lower priority)
-"comment" to see if there's anything interesting
-
-for hh survey:
-- (low priority) hhs_section_1 to hhs_section_10
-
-for hh census (low priority):
-- hhc_section_1
-- hhc_section_2
-- hhc_section_4
-- hhc_section_3
-
-for promoter survey (low priority): 
-- prom_section_1
-- prom_section_2
-- prom_section_3
-- prom_section_4
-- prom_section_5
-- prom_section_6
-- prom_section_7
-- prom_section_8
-
 ## analyzing backchecks - compare to hh survey
-currently - not much important to compare, because we don't have chlorine tests
 
-1) confirmation of correct WP
-<b>1.9 Is ${wp_name_pl} the primary water source that your household uses for collecting drinking water?: only 1 case of no (across both countries) - good sign
-
-# REMAINING TO DO (lower priority):
-check consistency between hh survey and back check of:
-- other water treatment methods (make_watersafe ...)
-- hh_members
-- wp_dsw and wp_ilc - checks of awareness of dispenser
 ### merging
 ```{r}
 hh_survey_backcheck_uganda <- hh_survey %>%
   dplyr::filter(country == "UGANDA") %>%
   left_join(
-    backcheck_uganda %>% select(hh_id, )
+    backcheck_uganda %>% select(hh_id, use_waterpoint),
     by = c("household_id" = "hh_id")
   )
 
-hh_survey_backcheck_uganda <- hh_survey %>%
-  dplyr::filter(country == "UGANDA") %>%
+hh_survey_backcheck_malawi <- hh_survey %>%
+  dplyr::filter(country == "MALAWI") %>%
   left_join(
-    backcheck_uganda %>% select(hh_id, )
+    backcheck_malawi %>% select(hh_id, use_waterpoint),
     by = c("household_id" = "hh_id")
   )
 ```
+
+### confirmation of correct WP
+<b>1.9 Is ${wp_name_pl} the primary water source that your household uses for collecting drinking water? YES in >99% of cases
+```{r}
+use_wp_table_uganda <- backcheck_uganda %>%
+  summarize(
+    use_waterpoint_mean = mean(use_waterpoint, na.rm = TRUE)
+  )
+
+use_wp_table_uganda
+
+use_wp_table_malawi <- backcheck_malawi %>%
+  summarize(
+    use_waterpoint_mean = mean(use_waterpoint, na.rm = TRUE)
+  )
+
+use_wp_table_malawi
+```
+### checking consistency
+```{r}
+consistency_checks_malawi <- hh_survey_backcheck_malawi %>%
+  summarize(
+    wp_dsw_diff = mean()
+  )
+
+consistency_checks_uganda <- hh_survey_backcheck_uganda %>%
+    
+```
+
+
+# REMAINING TO DO (lower priority):
+check consistency between hh survey and back check of:
+- other water treatment methods (make_watersafe ...)
+- wp_dsw and wp_ilc - checks of awareness of dispenser
+- if they report using more than 1
