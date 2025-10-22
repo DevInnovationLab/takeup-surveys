@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-17" />
+<meta name="date" content="2025-10-21" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2133,8 +2133,12 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="13.3.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#dsw-water-points"><i class="fa fa-check"></i><b>13.3.2</b> DSW water points</a></li>
 </ul></li>
 <li class="chapter" data-level="13.4" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-constructed-data"><i class="fa fa-check"></i><b>13.4</b> Export constructed data</a></li>
-<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5</b> Order analysis variables</a></li>
-<li class="chapter" data-level="13.6" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.6</b> Export final data</a></li>
+<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.5</b> Export final data</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5.1</b> Order analysis variables</a></li>
+<li class="chapter" data-level="13.5.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#select-relevant-observations"><i class="fa fa-check"></i><b>13.5.2</b> Select relevant observations</a></li>
+<li class="chapter" data-level="13.5.3" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#save-data-2"><i class="fa fa-check"></i><b>13.5.3</b> Save data</a></li>
+</ul></li>
 </ul></li>
 </ul>
 
@@ -2189,7 +2193,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb156-9"><a href="match-ea-and-census-water-points.html#cb156-9" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <pre><code>## Rows: 289 Columns: 6
-## ── Column specification ──────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (4): wp_id, date, intials, comments
 ## dbl (2): ea_id, ilc_cluster_wp
@@ -2220,7 +2224,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb159-9"><a href="match-ea-and-census-water-points.html#cb159-9" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <pre><code>## Rows: 14 Columns: 3
-## ── Column specification ──────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (2): initials, comments
 ## dbl (1): ea_id
@@ -2270,8 +2274,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb164-14"><a href="match-ea-and-census-water-points.html#cb164-14" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
 <span id="cb164-15"><a href="match-ea-and-census-water-points.html#cb164-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wp_id)`</code></pre>
+<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb166"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb166-1"><a href="match-ea-and-census-water-points.html#cb166-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
 <span id="cb166-2"><a href="match-ea-and-census-water-points.html#cb166-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
@@ -2289,8 +2292,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb166-14"><a href="match-ea-and-census-water-points.html#cb166-14" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
 <span id="cb166-15"><a href="match-ea-and-census-water-points.html#cb166-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wp_id)`</code></pre>
+<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb168-1"><a href="match-ea-and-census-water-points.html#cb168-1" tabindex="-1"></a>ipa_uganda <span class="ot">&lt;-</span></span>
 <span id="cb168-2"><a href="match-ea-and-census-water-points.html#cb168-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
@@ -2427,7 +2429,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb173-8"><a href="match-ea-and-census-water-points.html#cb173-8" tabindex="-1"></a></span>
 <span id="cb173-9"><a href="match-ea-and-census-water-points.html#cb173-9" tabindex="-1"></a><span class="fu">toc</span>()</span></code></pre></div>
 </details>
-<pre><code>## 49.54 sec elapsed</code></pre>
+<pre><code>## 44.37 sec elapsed</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb175"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb175-1"><a href="match-ea-and-census-water-points.html#cb175-1" tabindex="-1"></a><span class="fu">tic</span>()</span>
 <span id="cb175-2"><a href="match-ea-and-census-water-points.html#cb175-2" tabindex="-1"></a></span>
@@ -2439,7 +2441,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb175-8"><a href="match-ea-and-census-water-points.html#cb175-8" tabindex="-1"></a></span>
 <span id="cb175-9"><a href="match-ea-and-census-water-points.html#cb175-9" tabindex="-1"></a><span class="fu">toc</span>()</span></code></pre></div>
 </details>
-<pre><code>## 47.39 sec elapsed</code></pre>
+<pre><code>## 44.98 sec elapsed</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb177"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb177-1"><a href="match-ea-and-census-water-points.html#cb177-1" tabindex="-1"></a>wps <span class="ot">&lt;-</span></span>
 <span id="cb177-2"><a href="match-ea-and-census-water-points.html#cb177-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
@@ -2449,8 +2451,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb177-6"><a href="match-ea-and-census-water-points.html#cb177-6" tabindex="-1"></a>  <span class="fu">left_join</span>(wp <span class="sc">%&gt;%</span> <span class="fu">select</span>(wp_id, wp_id_c)) <span class="sc">%&gt;%</span></span>
 <span id="cb177-7"><a href="match-ea-and-census-water-points.html#cb177-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">wpt_id =</span> <span class="fu">as.numeric</span>(wpt_id))</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wp_id_c)`</code></pre>
+<pre><code>## Joining with `by = join_by(wp_id_c)`</code></pre>
 </div>
 </div>
 <div id="match-ipa-water-points-to-ea-water-points" class="section level2 hasAnchor" number="11.3">
@@ -2489,10 +2490,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb182-7"><a href="match-ea-and-census-water-points.html#cb182-7" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">ea_id =</span> wpt_id, wp_id) <span class="sc">%&gt;%</span></span>
 <span id="cb182-8"><a href="match-ea-and-census-water-points.html#cb182-8" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;DSW ID&quot;</span>)</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wpt_id)`
-## Joining with `by =
-## join_by(wp_id_c, wpt_id)`</code></pre>
+<pre><code>## Joining with `by = join_by(wpt_id)`
+## Joining with `by = join_by(wp_id_c, wpt_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb184-1"><a href="match-ea-and-census-water-points.html#cb184-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
 <span id="cb184-2"><a href="match-ea-and-census-water-points.html#cb184-2" tabindex="-1"></a>  <span class="fu">n_distinct</span>(matched_id<span class="sc">$</span>wp_id) <span class="sc">==</span> <span class="fu">nrow</span>(matched_id)</span>
@@ -2596,9 +2595,9 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div class="sourceCode" id="cb193"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb193-1"><a href="match-ea-and-census-water-points.html#cb193-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
 <span id="cb193-2"><a href="match-ea-and-census-water-points.html#cb193-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ipa_matches, dsw)</span></code></pre></div>
 </details>
-<pre><code>##  ipa_matches FALSE TRUE NA_
-##            0    13    0   9
-##            1     0  156   0</code></pre>
+<pre><code>##  ipa_matches FALSE TRUE
+##            0    22    0
+##            1     0  156</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb195"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb195-1"><a href="match-ea-and-census-water-points.html#cb195-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
 <span id="cb195-2"><a href="match-ea-and-census-water-points.html#cb195-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ipa_matches)</span></code></pre></div>
@@ -2711,10 +2710,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb212-14"><a href="match-ea-and-census-water-points.html#cb212-14" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>()</span>
 <span id="cb212-15"><a href="match-ea-and-census-water-points.html#cb212-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wp_id)`
-## Joining with `by =
-## join_by(ea_id)`</code></pre>
+<pre><code>## Joining with `by = join_by(wp_id)`
+## Joining with `by = join_by(ea_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="match-ea-and-census-water-points.html#cb214-1" tabindex="-1"></a>unmatched_ea <span class="ot">&lt;-</span></span>
 <span id="cb214-2"><a href="match-ea-and-census-water-points.html#cb214-2" tabindex="-1"></a>  ea <span class="sc">%&gt;%</span></span>
@@ -2816,44 +2813,26 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb222-14"><a href="match-ea-and-census-water-points.html#cb222-14" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
 <span id="cb222-15"><a href="match-ea-and-census-water-points.html#cb222-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Warning: There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+<pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.
-## There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.
+## There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <table>
 <caption><span id="tab:unnamed-chunk-154">Table 11.1: </span>Data summary</caption>
 <tbody>
@@ -2863,7 +2842,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">Number of rows</td>
-<td align="left">574</td>
+<td align="left">577</td>
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
@@ -2935,17 +2914,17 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">13</td>
 <td align="right">13</td>
 <td align="right">0</td>
-<td align="right">574</td>
+<td align="right">577</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">ea_ilc_wpt</td>
-<td align="right">406</td>
-<td align="right">0.29</td>
+<td align="right">390</td>
+<td align="right">0.32</td>
 <td align="right">8</td>
 <td align="right">8</td>
 <td align="right">0</td>
-<td align="right">36</td>
+<td align="right">43</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
@@ -2970,7 +2949,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">match_comments</td>
-<td align="right">351</td>
+<td align="right">354</td>
 <td align="right">0.39</td>
 <td align="right">3</td>
 <td align="right">423</td>
@@ -3060,15 +3039,15 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">DSW: 369, ILC: 131, Non: 51, ILC: 23</td>
+<td align="left">DSW: 371, ILC: 158, ILC: 29, Non: 19</td>
 </tr>
 <tr class="even">
 <td align="left">ipa_sourcetype</td>
-<td align="right">16</td>
+<td align="right">17</td>
 <td align="right">0.97</td>
 <td align="left">FALSE</td>
 <td align="right">11</td>
-<td align="left">Bor: 290, Mun: 165, Pro: 45, Pro: 21</td>
+<td align="left">Bor: 290, Mun: 167, Pro: 45, Pro: 21</td>
 </tr>
 </tbody>
 </table>
@@ -3107,12 +3086,12 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="left">ea_id</td>
 <td align="right">39</td>
 <td align="right">0.93</td>
-<td align="right">22262272389</td>
-<td align="right">37000822559</td>
+<td align="right">22138443864</td>
+<td align="right">36934429180</td>
 <td align="right">7020106</td>
-<td align="right">70190746</td>
-<td align="right">82040010</td>
-<td align="right">75230915510</td>
+<td align="right">70190745</td>
+<td align="right">81062449</td>
+<td align="right">70378294505</td>
 <td align="right">87070805001</td>
 <td align="left">▇▁▁▁▃</td>
 </tr>
@@ -3138,119 +3117,14 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb225-8"><a href="match-ea-and-census-water-points.html#cb225-8" tabindex="-1"></a>    )</span>
 <span id="cb225-9"><a href="match-ea-and-census-water-points.html#cb225-9" tabindex="-1"></a>)</span></code></pre></div>
 </details>
-<pre><code>## ! Using an auto-discovered,
-##   cached token.</code></pre>
-<pre><code>##   To suppress this message,
-##   modify your code or options
-##   to clearly consent to the
-##   use of a cached token.</code></pre>
-<pre><code>##   See gargle&#39;s
-##   &quot;Non-interactive auth&quot;
-##   vignette for more details:</code></pre>
-<pre><code>##   &lt;https://gargle.r-lib.org/articles/non-interactive-auth.html&gt;</code></pre>
-<pre><code>## ℹ The googlesheets4 package
-##   is using a cached token for
-##   &#39;luizaandrade@uchicago.edu&#39;.</code></pre>
-<pre><code>## Auto-refreshing stale OAuth token.</code></pre>
-<pre><code>## ✔ Writing to
-##   &quot;Matching ID Sets&quot;.</code></pre>
-<pre><code>## ✔ Writing to sheet
-##   &#39;Uganda 2025-10-17&#39;.</code></pre>
-<pre><code>## ✔ Writing to
-##   &quot;Matching ID Sets&quot;.</code></pre>
-<pre><code>## ✔ Writing to sheet
-##   &#39;Malawi 2025-10-17&#39;.</code></pre>
-<pre><code>## [[1]]
-## 
-## ── &lt;googlesheets4_spreadsheet&gt;
-## Spreadsheet name: &quot;Matching ID Sets&quot;                          
-##               ID: 1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4
-##           Locale: en_US                                       
-##        Time zone: America/Chicago                             
-##      # of sheets: 28                                          
-## 
-## ── &lt;sheets&gt; ──────────────────
-##                (Sheet name): (Nominal extent in rows x columns)
-##         &#39;Uganda 2025-08-29&#39;: 243 x 19
-##         &#39;Malawi 2025-08-29&#39;: 477 x 19
-## &#39;Matching ID Sets - Malawi&#39;: 644 x 32
-##      &#39;All DSW/ILC - Malawi&#39;: 1000 x 29
-## &#39;Matching ID Sets - Uganda&#39;: 636 x 33
-##         &#39;Uganda 2025-09-05&#39;: 243 x 19
-##         &#39;Malawi 2025-09-05&#39;: 478 x 19
-##      &#39;All DSW/ILC - Uganda&#39;: 1000 x 29
-##          &#39;Uganda DSW check&#39;: 418 x 15
-##     &#39;Uganda ILC 2025-10-01&#39;: 179 x 15
-##         &#39;Uganda 2025-10-02&#39;: 418 x 15
-##         &#39;Malawi 2025-10-02&#39;: 484 x 15
-##     &#39;Uganda ILC 2025-10-02&#39;: 179 x 15
-##         &#39;Uganda 2025-10-10&#39;: 418 x 15
-##         &#39;Malawi 2025-10-10&#39;: 484 x 15
-##     &#39;Uganda ILC 2025-10-10&#39;: 179 x 15
-##         &#39;Uganda 2025-10-13&#39;: 252 x 14
-##         &#39;Malawi 2025-10-13&#39;: 496 x 14
-##     &#39;Uganda ILC 2025-10-13&#39;: 2 x 14
-##         &#39;Uganda 2025-10-14&#39;: 236 x 14
-##         &#39;Malawi 2025-10-14&#39;: 484 x 14
-##     &#39;Uganda ILC 2025-10-14&#39;: 2 x 14
-##         &#39;Uganda 2025-10-15&#39;: 236 x 14
-##         &#39;Malawi 2025-10-15&#39;: 483 x 14
-##     &#39;Uganda ILC 2025-10-15&#39;: 2 x 14
-##         &#39;Uganda 2025-10-17&#39;: 235 x 14
-##         &#39;Malawi 2025-10-17&#39;: 483 x 14
-##     &#39;Uganda ILC 2025-10-17&#39;: 2 x 14
-## 
-## [[2]]
-## 
-## ── &lt;googlesheets4_spreadsheet&gt;
-## Spreadsheet name: &quot;Matching ID Sets&quot;                          
-##               ID: 1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4
-##           Locale: en_US                                       
-##        Time zone: America/Chicago                             
-##      # of sheets: 28                                          
-## 
-## ── &lt;sheets&gt; ──────────────────
-##                (Sheet name): (Nominal extent in rows x columns)
-##         &#39;Uganda 2025-08-29&#39;: 243 x 19
-##         &#39;Malawi 2025-08-29&#39;: 477 x 19
-## &#39;Matching ID Sets - Malawi&#39;: 644 x 32
-##      &#39;All DSW/ILC - Malawi&#39;: 1000 x 29
-## &#39;Matching ID Sets - Uganda&#39;: 636 x 33
-##         &#39;Uganda 2025-09-05&#39;: 243 x 19
-##         &#39;Malawi 2025-09-05&#39;: 478 x 19
-##      &#39;All DSW/ILC - Uganda&#39;: 1000 x 29
-##          &#39;Uganda DSW check&#39;: 418 x 15
-##     &#39;Uganda ILC 2025-10-01&#39;: 179 x 15
-##         &#39;Uganda 2025-10-02&#39;: 418 x 15
-##         &#39;Malawi 2025-10-02&#39;: 484 x 15
-##     &#39;Uganda ILC 2025-10-02&#39;: 179 x 15
-##         &#39;Uganda 2025-10-10&#39;: 418 x 15
-##         &#39;Malawi 2025-10-10&#39;: 484 x 15
-##     &#39;Uganda ILC 2025-10-10&#39;: 179 x 15
-##         &#39;Uganda 2025-10-13&#39;: 252 x 14
-##         &#39;Malawi 2025-10-13&#39;: 496 x 14
-##     &#39;Uganda ILC 2025-10-13&#39;: 2 x 14
-##         &#39;Uganda 2025-10-14&#39;: 236 x 14
-##         &#39;Malawi 2025-10-14&#39;: 484 x 14
-##     &#39;Uganda ILC 2025-10-14&#39;: 2 x 14
-##         &#39;Uganda 2025-10-15&#39;: 236 x 14
-##         &#39;Malawi 2025-10-15&#39;: 483 x 14
-##     &#39;Uganda ILC 2025-10-15&#39;: 2 x 14
-##         &#39;Uganda 2025-10-17&#39;: 235 x 14
-##         &#39;Malawi 2025-10-17&#39;: 483 x 14
-##     &#39;Uganda ILC 2025-10-17&#39;: 2 x 14</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb237"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb237-1"><a href="match-ea-and-census-water-points.html#cb237-1" tabindex="-1"></a>all_wps <span class="sc">%&gt;%</span></span>
-<span id="cb237-2"><a href="match-ea-and-census-water-points.html#cb237-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, ipa_visit <span class="sc">&gt;</span> <span class="st">&quot;2025-08-19&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb237-3"><a href="match-ea-and-census-water-points.html#cb237-3" tabindex="-1"></a>  <span class="fu">write_sheet</span>(</span>
-<span id="cb237-4"><a href="match-ea-and-census-water-points.html#cb237-4" tabindex="-1"></a>    <span class="at">ss =</span> <span class="st">&quot;1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4&quot;</span>,</span>
-<span id="cb237-5"><a href="match-ea-and-census-water-points.html#cb237-5" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="fu">paste</span>(<span class="st">&quot;Uganda ILC&quot;</span>, <span class="fu">today</span>())</span>
-<span id="cb237-6"><a href="match-ea-and-census-water-points.html#cb237-6" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb226"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb226-1"><a href="match-ea-and-census-water-points.html#cb226-1" tabindex="-1"></a>all_wps <span class="sc">%&gt;%</span></span>
+<span id="cb226-2"><a href="match-ea-and-census-water-points.html#cb226-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, ipa_visit <span class="sc">&gt;</span> <span class="st">&quot;2025-08-19&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb226-3"><a href="match-ea-and-census-water-points.html#cb226-3" tabindex="-1"></a>  <span class="fu">write_sheet</span>(</span>
+<span id="cb226-4"><a href="match-ea-and-census-water-points.html#cb226-4" tabindex="-1"></a>    <span class="at">ss =</span> <span class="st">&quot;1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4&quot;</span>,</span>
+<span id="cb226-5"><a href="match-ea-and-census-water-points.html#cb226-5" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="fu">paste</span>(<span class="st">&quot;Uganda ILC&quot;</span>, <span class="fu">today</span>())</span>
+<span id="cb226-6"><a href="match-ea-and-census-water-points.html#cb226-6" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## ✔ Writing to
-##   &quot;Matching ID Sets&quot;.</code></pre>
-<pre><code>## ✔ Writing to sheet
-##   &#39;Uganda ILC 2025-10-17&#39;.</code></pre>
 
 </div>
 </div>

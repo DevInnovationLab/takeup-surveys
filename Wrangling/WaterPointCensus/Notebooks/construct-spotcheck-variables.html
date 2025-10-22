@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-17" />
+<meta name="date" content="2025-10-21" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2133,8 +2133,12 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="13.3.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#dsw-water-points"><i class="fa fa-check"></i><b>13.3.2</b> DSW water points</a></li>
 </ul></li>
 <li class="chapter" data-level="13.4" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-constructed-data"><i class="fa fa-check"></i><b>13.4</b> Export constructed data</a></li>
-<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5</b> Order analysis variables</a></li>
-<li class="chapter" data-level="13.6" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.6</b> Export final data</a></li>
+<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.5</b> Export final data</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5.1</b> Order analysis variables</a></li>
+<li class="chapter" data-level="13.5.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#select-relevant-observations"><i class="fa fa-check"></i><b>13.5.2</b> Select relevant observations</a></li>
+<li class="chapter" data-level="13.5.3" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#save-data-2"><i class="fa fa-check"></i><b>13.5.3</b> Save data</a></li>
+</ul></li>
 </ul></li>
 </ul>
 
@@ -2320,12 +2324,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb44-7"><a href="construct-spotcheck-variables.html#cb44-7" tabindex="-1"></a>    <span class="at">spotcheck_time =</span> submissiondate</span>
 <span id="cb44-8"><a href="construct-spotcheck-variables.html#cb44-8" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(key, wp_id,
-## submissiondate)`
-## Joining with `by =
-## join_by(key, wp_id,
-## submissiondate)`</code></pre>
+<pre><code>## Joining with `by = join_by(key, wp_id, submissiondate)`
+## Joining with `by = join_by(key, wp_id, submissiondate)`</code></pre>
 </div>
 <div id="check-data-1" class="section level2 hasAnchor" number="5.6">
 <h2><span class="header-section-number">5.6</span> Check data<a href="construct-spotcheck-variables.html#check-data-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>

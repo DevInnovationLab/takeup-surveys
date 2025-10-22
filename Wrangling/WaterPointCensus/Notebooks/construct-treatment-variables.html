@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-17" />
+<meta name="date" content="2025-10-21" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2133,8 +2133,12 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="13.3.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#dsw-water-points"><i class="fa fa-check"></i><b>13.3.2</b> DSW water points</a></li>
 </ul></li>
 <li class="chapter" data-level="13.4" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-constructed-data"><i class="fa fa-check"></i><b>13.4</b> Export constructed data</a></li>
-<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5</b> Order analysis variables</a></li>
-<li class="chapter" data-level="13.6" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.6</b> Export final data</a></li>
+<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.5</b> Export final data</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5.1</b> Order analysis variables</a></li>
+<li class="chapter" data-level="13.5.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#select-relevant-observations"><i class="fa fa-check"></i><b>13.5.2</b> Select relevant observations</a></li>
+<li class="chapter" data-level="13.5.3" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#save-data-2"><i class="fa fa-check"></i><b>13.5.3</b> Save data</a></li>
+</ul></li>
 </ul></li>
 </ul>
 
@@ -2194,7 +2198,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb144-10"><a href="construct-treatment-variables.html#cb144-10" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">correction_comments =</span> comments)</span></code></pre></div>
 </details>
 <pre><code>## Rows: 206 Columns: 6
-## ── Column specification ──────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (3): wp_id, initials, comments
 ## lgl (3): dsw, ilc_wp, ilc_wcp
@@ -2224,7 +2228,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb148-7"><a href="construct-treatment-variables.html#cb148-7" tabindex="-1"></a>    <span class="at">ilc_wcp =</span> <span class="fu">coalesce</span>(ilc_wcp, wp_ilc),</span>
 <span id="cb148-8"><a href="construct-treatment-variables.html#cb148-8" tabindex="-1"></a>    <span class="fu">across</span>(</span>
 <span id="cb148-9"><a href="construct-treatment-variables.html#cb148-9" tabindex="-1"></a>      <span class="fu">c</span>(dsw, ilc_wp, ilc_wcp),</span>
-<span id="cb148-10"><a href="construct-treatment-variables.html#cb148-10" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">case_when</span>(wp_drink <span class="sc">&amp;</span> wp_multicompound <span class="sc">~</span> tidyr<span class="sc">::</span><span class="fu">replace_na</span>(., <span class="cn">FALSE</span>))</span>
+<span id="cb148-10"><a href="construct-treatment-variables.html#cb148-10" tabindex="-1"></a>      <span class="sc">~</span> tidyr<span class="sc">::</span><span class="fu">replace_na</span>(., <span class="cn">FALSE</span>)</span>
 <span id="cb148-11"><a href="construct-treatment-variables.html#cb148-11" tabindex="-1"></a>    ),</span>
 <span id="cb148-12"><a href="construct-treatment-variables.html#cb148-12" tabindex="-1"></a>    <span class="at">ilc =</span> ilc_wp <span class="sc">|</span> ilc_wcp,</span>
 <span id="cb148-13"><a href="construct-treatment-variables.html#cb148-13" tabindex="-1"></a>    <span class="at">intervention_type =</span> <span class="fu">case_when</span>(</span>
@@ -2248,8 +2252,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb148-31"><a href="construct-treatment-variables.html#cb148-31" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
 <span id="cb148-32"><a href="construct-treatment-variables.html#cb148-32" tabindex="-1"></a>  unique</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wp_id)`</code></pre>
+<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb150"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb150-1"><a href="construct-treatment-variables.html#cb150-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
 <span id="cb150-2"><a href="construct-treatment-variables.html#cb150-2" tabindex="-1"></a>  <span class="fu">nrow</span>(wp_tmt) <span class="sc">==</span> <span class="fu">n_distinct</span>(wp_tmt<span class="sc">$</span>wp_id)</span>
@@ -2272,8 +2275,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ##  5 WP6012005 TRUE  FALSE FALSE  FALSE   DSW          DSW              
 ##  6 WP6012006 FALSE FALSE FALSE  FALSE   Non-program  Non-program      
 ##  7 WP6012007 FALSE FALSE FALSE  FALSE   Non-program  Non-program      
-##  8 WP6012008 NA    NA    NA     NA      Non-program  Non-program      
-##  9 WP6012009 NA    NA    NA     NA      Non-program  Non-program      
+##  8 WP6012008 FALSE FALSE FALSE  FALSE   Non-program  Non-program      
+##  9 WP6012009 FALSE FALSE FALSE  FALSE   Non-program  Non-program      
 ## 10 WP6012010 FALSE FALSE FALSE  FALSE   Non-program  Non-program      
 ## # ℹ 1,207 more rows</code></pre>
 </div>
@@ -2404,7 +2407,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1</td>
 <td align="left">FALSE</td>
 <td align="right">3</td>
-<td align="left">Non: 660, DSW: 389, ILC: 168</td>
+<td align="left">Non: 625, DSW: 391, ILC: 201</td>
 </tr>
 <tr class="even">
 <td align="left">intervention_type</td>
@@ -2412,7 +2415,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">Non: 660, DSW: 389, ILC: 133, ILC: 35</td>
+<td align="left">Non: 625, DSW: 391, ILC: 160, ILC: 41</td>
 </tr>
 </tbody>
 </table>
@@ -2430,31 +2433,31 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <tbody>
 <tr class="odd">
 <td align="left">dsw</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.36</td>
-<td align="left">FAL: 692, TRU: 389</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0.32</td>
+<td align="left">FAL: 826, TRU: 391</td>
 </tr>
 <tr class="even">
 <td align="left">ilc</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.16</td>
-<td align="left">FAL: 913, TRU: 168</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0.17</td>
+<td align="left">FAL: 1016, TRU: 201</td>
 </tr>
 <tr class="odd">
 <td align="left">ilc_wp</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
+<td align="right">0</td>
+<td align="right">1</td>
 <td align="right">0.03</td>
-<td align="left">FAL: 1046, TRU: 35</td>
+<td align="left">FAL: 1176, TRU: 41</td>
 </tr>
 <tr class="even">
 <td align="left">ilc_wcp</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.14</td>
-<td align="left">FAL: 927, TRU: 154</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0.15</td>
+<td align="left">FAL: 1030, TRU: 187</td>
 </tr>
 </tbody>
 </table>

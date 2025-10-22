@@ -98,7 +98,8 @@ wp <-
     wp_meterfcr_un_02 = meterfcr_un_c_02,
     wp_metertcr_un_02 = metertcr_un_c_02,
     wp_discfcr_un_02 = discfcr_un_c_02,
-    wp_disctcr_un_02 = disctcr_un_c_02
+    wp_disctcr_un_02 = disctcr_un_c_02,
+    promoter_surveyed, pm_ea_list
   ) %>%
   st_drop_geometry() %>%
   unique
@@ -126,6 +127,21 @@ villages <-
   ) %>%
   mutate(
     team = team %>% factor %>% as.numeric
+  )
+```
+
+### Promoter households lists
+```{r}
+pm_survey_households <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Constructed",
+      "pm-survey-households.rds"
+    )
   )
 ```
 
@@ -365,6 +381,15 @@ hhc_flags <-
   )
 ```
 
+### Promoter list indicator
+```{r}
+hhc_promoter <-
+  hhc_clean %>%
+  transmute(
+    household_id,
+    promoter_list = household_id %in% pm_survey_households$household_id
+  )
+```
 
 ## Combine and save data
 
@@ -381,6 +406,7 @@ indexes <-
   left_join(hhc_noevac, relationship = "one-to-one") %>%
   left_join(hhc_meta, relationship = "one-to-one") %>%
   left_join(hhc_flags, relationship = "one-to-one") %>%
+  left_join(hhc_promoter, relationship = "one-to-one") %>%
   left_join(hhc_primarywp, relationship = "one-to-one") %>%
   left_join(wp, relationship = "many-to-one") %>%
   remove_constant %>%

@@ -94,6 +94,18 @@ promoter <-
       "pm-survey.rds"
     )
   )
+
+promoter_hhs <-
+  promoter %>%
+  select(
+    wp_id, promoter_id,
+    pm_ea_list = ea_list,
+    users, users_named, users_census, users_notlisted, users_outside
+  ) %>%
+  rename_with(
+    ~ paste0("pm_", .),
+    starts_with("users")
+  )
 ```
 
 ### Evidence Action water point ID
@@ -187,6 +199,11 @@ wp <-
   ) %>%
   mutate(
     promoter_surveyed = wp_id_c %in% promoter$wp_id
+  ) %>%
+  left_join(                                          
+    promoter_hhs,                                      
+    by = c("wp_id_c" = "wp_id"),                      
+    relationship = "one-to-one"
   )
 ```
 
@@ -293,7 +310,9 @@ wp_gps %>%
   )
 ```
 
-## Order analysis variables
+## Export final data
+
+### Order analysis variables
 
 ```{r}
 wp <-
@@ -312,11 +331,10 @@ wp <-
     wp_id_c,
     country,
     village_id, ilc_cluster_id,
-    district_id,
+    district_id, 
     country,
     sample_group, sample, pre_expansion,
-    vil_replaced,
-    promoter_surveyed,
+    vil_replaced, analysis,
     # Metadata
     date, 
     team,
@@ -353,12 +371,14 @@ wp <-
     wp_cost_period,
     # Data quality flags
     contains("flag"),
-    contains("comments")
-  ) 
+    contains("comments"),
+    # Promoter survey
+    promoter_surveyed, promoter_id,
+    starts_with("pm_")
+  )
 ```
 
-
-## Export final data
+### Select relevant observations
 
 ```{r}
 final <-
@@ -375,6 +395,8 @@ final <-
   remove_empty() %>%
   remove_constant()
 ```
+
+### Save data
 
 ```{r}
 path <- 
