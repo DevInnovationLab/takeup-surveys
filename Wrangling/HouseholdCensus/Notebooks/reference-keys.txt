@@ -4,9 +4,9 @@ tab:unnamed-chunk-20
 tab:unnamed-chunk-28
 tab:unnamed-chunk-30
 tab:unnamed-chunk-41
-tab:unnamed-chunk-61
-tab:unnamed-chunk-64
+tab:unnamed-chunk-63
 tab:unnamed-chunk-66
+tab:unnamed-chunk-68
 introduction
 import-household-census-data
 load-data
@@ -40,6 +40,7 @@ load-data-2
 household-census
 water-point-census
 villages
+promoter-households-lists
 construct-final-indicators
 non-responses
 id-variables
@@ -50,6 +51,7 @@ primary-water-points
 non-users-knowledge
 meta-data
 flags
+promoter-list-indicator
 combine-and-save-data
 only-final-indicators
 analysis-data

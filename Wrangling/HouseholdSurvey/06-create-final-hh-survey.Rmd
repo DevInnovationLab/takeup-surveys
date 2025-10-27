@@ -35,7 +35,11 @@ hh_survey <-
       "hh-survey-clean.rds"
       )
     ) %>%
-  mutate(village_id = village_id_pl)
+  mutate(village_id = village_id_pl) %>%
+  rename(
+    hh_dsw = wp_dsw,
+    hh_ilc = wp_ilc
+  )
 ```
 
 ### Chlorine testing
@@ -121,6 +125,7 @@ hh_census <-
   hh_census %>%
   select(
     household_id, wp_id = wp_id_c,
+    promoter_list,
     wp_sec_notworking:vil_ilc_selfreport,
     hhh_educ_hhc = hhh_educ, hhh_gender_hhc = hhh_gender, hhh_age_hhc = hhh_age,
     hh_hhsincompound, hh_members, hh_adults, hh_males, hh_females, hh_pregnant,
@@ -144,7 +149,8 @@ wp <-
   ) %>%
   transmute(
     wp_id = wp_id_c,
-    promoter_wp = promoter_surveyed,
+    promoter_surveyed,
+    pm_ea_list,
     dsw, ilc, ilc_wp, ilc_wcp,
     wp_dsw, wp_ilc, wp_ilc_device,
     wp_func,
@@ -155,7 +161,7 @@ wp <-
     wp_pay,
     wp_dsw_valve = jc_valve, 
     wp_dsw_chlorine = jc_chlorine, 
-    wp_dsw_dose = jc_mldispensed,
+    wp_dsw_dose = disp_dose,
     wp_meterfcr = meterfcr,
     wp_metertcr = metertcr,
     wp_discfcr = discfcr,
@@ -234,10 +240,6 @@ hh_survey_joined <-
       !is.na(wp_id) ~ wp_id,
       !is.na(wp_id_pl) ~ paste0(village_id, str_sub(wp_id_pl, str_length(wp_id_pl) - 2, str_length(wp_id_pl)))
     )
-  ) %>%
-  rename(
-    hh_dsw = wp_dsw,
-    hh_ilc = wp_ilc
   )
 ```
 
@@ -313,7 +315,7 @@ household <-
       as.factor,
     hhh_age = coalesce(hhh_age, hhh_age_hhc),
     hhh_sex = coalesce(hhh_gender, hhh_gender_hhc),
-    hhh_educ = coalesce(hhh_educ, hhh_educ_hhc),
+    hhh_educ = coalesce(hhh_educ, hhh_educ_hhc) %>% factor,
     hh_under2 = coalesce(hh_under2, hh_under2_pl %>% as.numeric),
     hh_under5 = coalesce(hh_under5, hh_under5_pl %>% as.numeric),
     across(
@@ -336,7 +338,8 @@ household <-
     hhh_age, hhh_sex, hhh_educ,
     hh_females, hh_males,
     hh_adults, hh_members, hh_pregnant,
-    hh_under5, hh_under2
+    hh_under5, hh_under2,
+    promoter_household, promoter_list
   ) 
 ```
 
@@ -345,9 +348,16 @@ household <-
 ```{r}
 wp <-
   hh_survey_joined %>%
+  mutate(
+    across(
+      c(hh_dsw, hh_ilc),
+      ~ . == "Yes"
+    )
+  ) %>%
   select(
     key,
-    all_of(names(wp))
+    all_of(names(wp)),
+    hh_dsw, hh_ilc
   )
 ```
 
@@ -408,7 +418,7 @@ water <-
       household_id %in% c("CHB321206MW2", "CHQN45243MW2", "CHKA54451MW2") ~ 16,
       household_id == "CHXH58325MW2" ~ 17,
     ),
-    prepare_water = if_else(
+    prep_different = if_else(
       prep_different_0 & !prep_different_1,
       FALSE,
       prepare_water_c
@@ -421,23 +431,28 @@ water <-
       notgivewater != "Other" ~ notgivewater %>% as.character,
       notgivewater == "Other" & household_id != "SIWK01128700" ~ "Drinking water is finished and the respondent is yet to fetch.",
       household_id == "SIWK01128700" ~ "Other"
-    ) %>% factor
+    ) %>% factor,
+    across(
+      c(int_warned_who, int_promoter_last),
+      ~ as.factor(.)
+    )
   ) %>%
   select(
     key, wp_id,
+    prep_different,
     prep_different_cl = prep_different_1,
     prep_different_filter = prep_different_2,
     prep_different_boil = prep_different_3,
     prep_different_other = prep_different__666,
     prep_different_specify = prep_different_ot,
     water_sample,
-    notgivewater, notgivewater_ot,
+    notgivewater,
     storage,
     access_contain,
     cover_storage,
     howlong_waterprep, 
-    who_collected, who_collected_ot,
-    age_child, size, size_ot,
+    who_collected,
+    age_child, size,
     watertreat_any = do_anything_c,
     watertreat_boil = make_watersafe_1,
     watertreat_dispcl = make_watersafe_2,
@@ -450,8 +465,8 @@ water <-
     watertreat_other = make_watersafe__666,
     watertreat_dk = make_watersafe__999,
     mix = mix_c, 
-    where_collect, where_collect_ot,
-    collect, collect_oth,
+    where_collect, 
+    #where_collect_ot, collect, collect_oth,
     starts_with("int_")
   ) %>%
   select(
@@ -464,8 +479,10 @@ water <-
 ```{r}
 water_treatment <-
   hh_survey_joined %>%
+  mutate(
+    tmtever_none = !everdo_0,
+  ) %>%
   rename(
-    tmtever_none = everdo_0,
     tmtever_pretreated = everdo_22,
     tmtever_boil = everdo_1,
     tmtever_dispcl = everdo_2,
@@ -502,6 +519,7 @@ water_treatment <-
   select(
     key, 
     starts_with("tmtever"), 
+    -c(tmtever_other, tmtever_specify),
     starts_with("notchlorinate"),
     often_chlorinate
   )

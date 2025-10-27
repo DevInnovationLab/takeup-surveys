@@ -667,7 +667,7 @@ forea <-
 
 We want to make a spreadsheet of the water point IDs and relevant DSW and EA information.
 
-```{r}
+```{r eval = FALSE}
 map(
   c("Uganda", "Malawi"), 
   ~ all_wps %>%
@@ -679,7 +679,7 @@ map(
 )
 ```
 
-```{r}
+```{r eval = FALSE}
 all_wps %>%
   dplyr::filter(country == "Uganda", ipa_visit > "2025-08-19") %>%
   write_sheet(

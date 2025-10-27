@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-17" />
+<meta name="date" content="2025-10-22" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -179,6 +179,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="6.1.1" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#household-census"><i class="fa fa-check"></i><b>6.1.1</b> Household census</a></li>
 <li class="chapter" data-level="6.1.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#water-point-census"><i class="fa fa-check"></i><b>6.1.2</b> Water point census</a></li>
 <li class="chapter" data-level="6.1.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#villages"><i class="fa fa-check"></i><b>6.1.3</b> Villages</a></li>
+<li class="chapter" data-level="6.1.4" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#promoter-households-lists"><i class="fa fa-check"></i><b>6.1.4</b> Promoter households lists</a></li>
 </ul></li>
 <li class="chapter" data-level="6.2" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#construct-final-indicators"><i class="fa fa-check"></i><b>6.2</b> Construct final indicators</a>
 <ul>
@@ -191,6 +192,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="6.2.7" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#non-users-knowledge"><i class="fa fa-check"></i><b>6.2.7</b> Non-users knowledge</a></li>
 <li class="chapter" data-level="6.2.8" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#meta-data"><i class="fa fa-check"></i><b>6.2.8</b> Meta data</a></li>
 <li class="chapter" data-level="6.2.9" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#flags"><i class="fa fa-check"></i><b>6.2.9</b> Flags</a></li>
+<li class="chapter" data-level="6.2.10" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#promoter-list-indicator"><i class="fa fa-check"></i><b>6.2.10</b> Promoter list indicator</a></li>
 </ul></li>
 <li class="chapter" data-level="6.3" data-path="create-final-household-census-data.html"><a href="create-final-household-census-data.html#combine-and-save-data"><i class="fa fa-check"></i><b>6.3</b> Combine and save data</a>
 <ul>
@@ -307,10 +309,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb65-41"><a href="create-final-household-census-data.html#cb65-41" tabindex="-1"></a>    <span class="at">wp_meterfcr_un_02 =</span> meterfcr_un_c_02,</span>
 <span id="cb65-42"><a href="create-final-household-census-data.html#cb65-42" tabindex="-1"></a>    <span class="at">wp_metertcr_un_02 =</span> metertcr_un_c_02,</span>
 <span id="cb65-43"><a href="create-final-household-census-data.html#cb65-43" tabindex="-1"></a>    <span class="at">wp_discfcr_un_02 =</span> discfcr_un_c_02,</span>
-<span id="cb65-44"><a href="create-final-household-census-data.html#cb65-44" tabindex="-1"></a>    <span class="at">wp_disctcr_un_02 =</span> disctcr_un_c_02</span>
-<span id="cb65-45"><a href="create-final-household-census-data.html#cb65-45" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb65-46"><a href="create-final-household-census-data.html#cb65-46" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb65-47"><a href="create-final-household-census-data.html#cb65-47" tabindex="-1"></a>  unique</span></code></pre></div>
+<span id="cb65-44"><a href="create-final-household-census-data.html#cb65-44" tabindex="-1"></a>    <span class="at">wp_disctcr_un_02 =</span> disctcr_un_c_02,</span>
+<span id="cb65-45"><a href="create-final-household-census-data.html#cb65-45" tabindex="-1"></a>    promoter_surveyed, pm_ea_list</span>
+<span id="cb65-46"><a href="create-final-household-census-data.html#cb65-46" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb65-47"><a href="create-final-household-census-data.html#cb65-47" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb65-48"><a href="create-final-household-census-data.html#cb65-48" tabindex="-1"></a>  unique</span></code></pre></div>
 </div>
 <div id="villages" class="section level3 hasAnchor" number="6.1.3">
 <h3><span class="header-section-number">6.1.3</span> Villages<a href="create-final-household-census-data.html#villages" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -335,93 +338,107 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb66-19"><a href="create-final-household-census-data.html#cb66-19" tabindex="-1"></a>    <span class="at">team =</span> team <span class="sc">%&gt;%</span> factor <span class="sc">%&gt;%</span> as.numeric</span>
 <span id="cb66-20"><a href="create-final-household-census-data.html#cb66-20" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
+<div id="promoter-households-lists" class="section level3 hasAnchor" number="6.1.4">
+<h3><span class="header-section-number">6.1.4</span> Promoter households lists<a href="create-final-household-census-data.html#promoter-households-lists" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="create-final-household-census-data.html#cb67-1" tabindex="-1"></a>pm_survey_households <span class="ot">&lt;-</span></span>
+<span id="cb67-2"><a href="create-final-household-census-data.html#cb67-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb67-3"><a href="create-final-household-census-data.html#cb67-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb67-4"><a href="create-final-household-census-data.html#cb67-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb67-5"><a href="create-final-household-census-data.html#cb67-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb67-6"><a href="create-final-household-census-data.html#cb67-6" tabindex="-1"></a>      <span class="st">&quot;PromoterSurvey&quot;</span>,</span>
+<span id="cb67-7"><a href="create-final-household-census-data.html#cb67-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb67-8"><a href="create-final-household-census-data.html#cb67-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb67-9"><a href="create-final-household-census-data.html#cb67-9" tabindex="-1"></a>      <span class="st">&quot;pm-survey-households.rds&quot;</span></span>
+<span id="cb67-10"><a href="create-final-household-census-data.html#cb67-10" tabindex="-1"></a>    )</span>
+<span id="cb67-11"><a href="create-final-household-census-data.html#cb67-11" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
 </div>
 <div id="construct-final-indicators" class="section level2 hasAnchor" number="6.2">
 <h2><span class="header-section-number">6.2</span> Construct final indicators<a href="create-final-household-census-data.html#construct-final-indicators" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <div id="non-responses" class="section level3 hasAnchor" number="6.2.1">
 <h3><span class="header-section-number">6.2.1</span> Non-responses<a href="create-final-household-census-data.html#non-responses" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="create-final-household-census-data.html#cb67-1" tabindex="-1"></a> hhc_visit <span class="ot">&lt;-</span></span>
-<span id="cb67-2"><a href="create-final-household-census-data.html#cb67-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb67-3"><a href="create-final-household-census-data.html#cb67-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">is.na</span>(visit_reschedule) <span class="sc">|</span> visit_reschedule <span class="sc">!=</span> <span class="st">&quot;Yes, I will schedule a revisit&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb67-4"><a href="create-final-household-census-data.html#cb67-4" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb67-5"><a href="create-final-household-census-data.html#cb67-5" tabindex="-1"></a>    household_id,</span>
-<span id="cb67-6"><a href="create-final-household-census-data.html#cb67-6" tabindex="-1"></a>    <span class="at">visit_outcome =</span> <span class="fu">case_when</span>(</span>
-<span id="cb67-7"><a href="create-final-household-census-data.html#cb67-7" tabindex="-1"></a>      consent <span class="sc">~</span> <span class="st">&quot;Surveyed&quot;</span>,</span>
-<span id="cb67-8"><a href="create-final-household-census-data.html#cb67-8" tabindex="-1"></a>      visit_notfound <span class="sc">==</span> <span class="st">&quot;No revisit: There is no eligible respondent in the household&quot;</span> <span class="sc">~</span> <span class="st">&quot;No eligible respondent&quot;</span>,</span>
-<span id="cb67-9"><a href="create-final-household-census-data.html#cb67-9" tabindex="-1"></a>      <span class="fu">str_detect</span>(visit_notfound, <span class="st">&quot;inaccessible&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Household not accessible&quot;</span>,</span>
-<span id="cb67-10"><a href="create-final-household-census-data.html#cb67-10" tabindex="-1"></a>      <span class="sc">!</span>consent <span class="sc">|</span> listing_status <span class="sc">==</span> <span class="st">&quot;Respondent Declined&quot;</span> <span class="sc">~</span> <span class="st">&quot;Declined&quot;</span>,</span>
-<span id="cb67-11"><a href="create-final-household-census-data.html#cb67-11" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Respondent not available&quot;</span></span>
-<span id="cb67-12"><a href="create-final-household-census-data.html#cb67-12" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb67-13"><a href="create-final-household-census-data.html#cb67-13" tabindex="-1"></a>      factor,</span>
-<span id="cb67-14"><a href="create-final-household-census-data.html#cb67-14" tabindex="-1"></a>    <span class="at">response =</span> visit_outcome <span class="sc">==</span> <span class="st">&quot;Surveyed&quot;</span>, </span>
-<span id="cb67-15"><a href="create-final-household-census-data.html#cb67-15" tabindex="-1"></a>    <span class="at">inclusion =</span> visit_reason</span>
-<span id="cb67-16"><a href="create-final-household-census-data.html#cb67-16" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="create-final-household-census-data.html#cb68-1" tabindex="-1"></a> hhc_visit <span class="ot">&lt;-</span></span>
+<span id="cb68-2"><a href="create-final-household-census-data.html#cb68-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb68-3"><a href="create-final-household-census-data.html#cb68-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">is.na</span>(visit_reschedule) <span class="sc">|</span> visit_reschedule <span class="sc">!=</span> <span class="st">&quot;Yes, I will schedule a revisit&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb68-4"><a href="create-final-household-census-data.html#cb68-4" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb68-5"><a href="create-final-household-census-data.html#cb68-5" tabindex="-1"></a>    household_id,</span>
+<span id="cb68-6"><a href="create-final-household-census-data.html#cb68-6" tabindex="-1"></a>    <span class="at">visit_outcome =</span> <span class="fu">case_when</span>(</span>
+<span id="cb68-7"><a href="create-final-household-census-data.html#cb68-7" tabindex="-1"></a>      consent <span class="sc">~</span> <span class="st">&quot;Surveyed&quot;</span>,</span>
+<span id="cb68-8"><a href="create-final-household-census-data.html#cb68-8" tabindex="-1"></a>      visit_notfound <span class="sc">==</span> <span class="st">&quot;No revisit: There is no eligible respondent in the household&quot;</span> <span class="sc">~</span> <span class="st">&quot;No eligible respondent&quot;</span>,</span>
+<span id="cb68-9"><a href="create-final-household-census-data.html#cb68-9" tabindex="-1"></a>      <span class="fu">str_detect</span>(visit_notfound, <span class="st">&quot;inaccessible&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Household not accessible&quot;</span>,</span>
+<span id="cb68-10"><a href="create-final-household-census-data.html#cb68-10" tabindex="-1"></a>      <span class="sc">!</span>consent <span class="sc">|</span> listing_status <span class="sc">==</span> <span class="st">&quot;Respondent Declined&quot;</span> <span class="sc">~</span> <span class="st">&quot;Declined&quot;</span>,</span>
+<span id="cb68-11"><a href="create-final-household-census-data.html#cb68-11" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Respondent not available&quot;</span></span>
+<span id="cb68-12"><a href="create-final-household-census-data.html#cb68-12" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb68-13"><a href="create-final-household-census-data.html#cb68-13" tabindex="-1"></a>      factor,</span>
+<span id="cb68-14"><a href="create-final-household-census-data.html#cb68-14" tabindex="-1"></a>    <span class="at">response =</span> visit_outcome <span class="sc">==</span> <span class="st">&quot;Surveyed&quot;</span>, </span>
+<span id="cb68-15"><a href="create-final-household-census-data.html#cb68-15" tabindex="-1"></a>    <span class="at">inclusion =</span> visit_reason</span>
+<span id="cb68-16"><a href="create-final-household-census-data.html#cb68-16" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="id-variables" class="section level3 hasAnchor" number="6.2.2">
 <h3><span class="header-section-number">6.2.2</span> ID variables<a href="create-final-household-census-data.html#id-variables" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="create-final-household-census-data.html#cb68-1" tabindex="-1"></a>hhc_ids <span class="ot">&lt;-</span></span>
-<span id="cb68-2"><a href="create-final-household-census-data.html#cb68-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb68-3"><a href="create-final-household-census-data.html#cb68-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb68-4"><a href="create-final-household-census-data.html#cb68-4" tabindex="-1"></a>    household_id, date, key,</span>
-<span id="cb68-5"><a href="create-final-household-census-data.html#cb68-5" tabindex="-1"></a>    village_id</span>
-<span id="cb68-6"><a href="create-final-household-census-data.html#cb68-6" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="create-final-household-census-data.html#cb69-1" tabindex="-1"></a>hhc_ids <span class="ot">&lt;-</span></span>
+<span id="cb69-2"><a href="create-final-household-census-data.html#cb69-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb69-3"><a href="create-final-household-census-data.html#cb69-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb69-4"><a href="create-final-household-census-data.html#cb69-4" tabindex="-1"></a>    household_id, date, key,</span>
+<span id="cb69-5"><a href="create-final-household-census-data.html#cb69-5" tabindex="-1"></a>    village_id</span>
+<span id="cb69-6"><a href="create-final-household-census-data.html#cb69-6" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="household-head-characteristics" class="section level3 hasAnchor" number="6.2.3">
 <h3><span class="header-section-number">6.2.3</span> Household head characteristics<a href="create-final-household-census-data.html#household-head-characteristics" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Some of these questions were moved from the household survey into the household census toward the end of data collection, to make the household survey shorter.</p>
-<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="create-final-household-census-data.html#cb69-1" tabindex="-1"></a>hhc_hhh <span class="ot">&lt;-</span></span>
-<span id="cb69-2"><a href="create-final-household-census-data.html#cb69-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb69-3"><a href="create-final-household-census-data.html#cb69-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb69-4"><a href="create-final-household-census-data.html#cb69-4" tabindex="-1"></a>    household_id,</span>
-<span id="cb69-5"><a href="create-final-household-census-data.html#cb69-5" tabindex="-1"></a>    <span class="at">hhh_resp =</span> resp_relationship,</span>
-<span id="cb69-6"><a href="create-final-household-census-data.html#cb69-6" tabindex="-1"></a>    <span class="at">hhh_gender =</span> gender_hhh,</span>
-<span id="cb69-7"><a href="create-final-household-census-data.html#cb69-7" tabindex="-1"></a>    hhh_age,</span>
-<span id="cb69-8"><a href="create-final-household-census-data.html#cb69-8" tabindex="-1"></a>    <span class="at">hhh_educ =</span> <span class="fu">case_when</span>(</span>
-<span id="cb69-9"><a href="create-final-household-census-data.html#cb69-9" tabindex="-1"></a>      <span class="co"># Uganda</span></span>
-<span id="cb69-10"><a href="create-final-household-census-data.html#cb69-10" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Never attended school / did not complete class&quot;</span>, <span class="st">&quot;Informal Training&quot;</span>) <span class="sc">~</span> <span class="st">&quot;None&quot;</span>,</span>
-<span id="cb69-11"><a href="create-final-household-census-data.html#cb69-11" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Pre-primary&quot;</span>, <span class="st">&quot;P1&quot;</span>, <span class="st">&quot;P2&quot;</span>, <span class="st">&quot;P3&quot;</span>, <span class="st">&quot;P4&quot;</span>, <span class="st">&quot;P5&quot;</span>, <span class="st">&quot;P6&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Pre-primary&quot;</span>,</span>
-<span id="cb69-12"><a href="create-final-household-census-data.html#cb69-12" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;P7&quot;</span>, <span class="st">&quot;PLE&quot;</span>, <span class="st">&quot;S1&quot;</span>, <span class="st">&quot;S2&quot;</span>, <span class="st">&quot;S3&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Primary&quot;</span>,</span>
-<span id="cb69-13"><a href="create-final-household-census-data.html#cb69-13" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;S4&quot;</span>, <span class="st">&quot;O level&quot;</span>, <span class="st">&quot;S5&quot;</span>, <span class="st">&quot;S6&quot;</span>, <span class="st">&quot;A level&quot;</span>, <span class="st">&quot;Polytechnic&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Secondary&quot;</span>,</span>
-<span id="cb69-14"><a href="create-final-household-census-data.html#cb69-14" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;College (non-University)&quot;</span>, <span class="st">&quot;University&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Post-secondary&quot;</span>,</span>
-<span id="cb69-15"><a href="create-final-household-census-data.html#cb69-15" tabindex="-1"></a>      <span class="co"># Malawi</span></span>
-<span id="cb69-16"><a href="create-final-household-census-data.html#cb69-16" tabindex="-1"></a>      hh_educ_mw <span class="sc">==</span> <span class="st">&quot;No formal education / Never attended school&quot;</span> <span class="sc">~</span> <span class="st">&quot;None&quot;</span>,</span>
-<span id="cb69-17"><a href="create-final-household-census-data.html#cb69-17" tabindex="-1"></a>      hh_educ_mw <span class="sc">==</span> <span class="st">&quot;Some Primary School (Did not complete Standard 8)&quot;</span> <span class="sc">~</span> <span class="st">&quot;Pre-primary&quot;</span>,</span>
-<span id="cb69-18"><a href="create-final-household-census-data.html#cb69-18" tabindex="-1"></a>      hh_educ_mw <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Primary School Leaving Certificate (PSLCE) (Completed Standard 8)&quot;</span>, <span class="st">&quot;Junior Certificate of Education (JCE) (Completed Form 2)&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Primary&quot;</span>,</span>
-<span id="cb69-19"><a href="create-final-household-census-data.html#cb69-19" tabindex="-1"></a>      hh_educ_mw <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Malawi School Certificate of Education (MSCE) (Completed Form 4)&quot;</span>, <span class="st">&quot;Vocational/Technical Training (e.g., TEVETA certification)&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Secondary&quot;</span>,</span>
-<span id="cb69-20"><a href="create-final-household-census-data.html#cb69-20" tabindex="-1"></a>      hh_educ_mw <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Diploma (e.g., teaching, nursing, other post-secondary diploma)&quot;</span>, <span class="st">&quot;Bachelor&#39;s Degree&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Post-secondary&quot;</span></span>
-<span id="cb69-21"><a href="create-final-household-census-data.html#cb69-21" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb69-22"><a href="create-final-household-census-data.html#cb69-22" tabindex="-1"></a>      factor</span>
-<span id="cb69-23"><a href="create-final-household-census-data.html#cb69-23" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="create-final-household-census-data.html#cb70-1" tabindex="-1"></a>hhc_hhh <span class="ot">&lt;-</span></span>
+<span id="cb70-2"><a href="create-final-household-census-data.html#cb70-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb70-3"><a href="create-final-household-census-data.html#cb70-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb70-4"><a href="create-final-household-census-data.html#cb70-4" tabindex="-1"></a>    household_id,</span>
+<span id="cb70-5"><a href="create-final-household-census-data.html#cb70-5" tabindex="-1"></a>    <span class="at">hhh_resp =</span> resp_relationship,</span>
+<span id="cb70-6"><a href="create-final-household-census-data.html#cb70-6" tabindex="-1"></a>    <span class="at">hhh_gender =</span> gender_hhh,</span>
+<span id="cb70-7"><a href="create-final-household-census-data.html#cb70-7" tabindex="-1"></a>    hhh_age,</span>
+<span id="cb70-8"><a href="create-final-household-census-data.html#cb70-8" tabindex="-1"></a>    <span class="at">hhh_educ =</span> <span class="fu">case_when</span>(</span>
+<span id="cb70-9"><a href="create-final-household-census-data.html#cb70-9" tabindex="-1"></a>      <span class="co"># Uganda</span></span>
+<span id="cb70-10"><a href="create-final-household-census-data.html#cb70-10" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Never attended school / did not complete class&quot;</span>, <span class="st">&quot;Informal Training&quot;</span>) <span class="sc">~</span> <span class="st">&quot;None&quot;</span>,</span>
+<span id="cb70-11"><a href="create-final-household-census-data.html#cb70-11" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Pre-primary&quot;</span>, <span class="st">&quot;P1&quot;</span>, <span class="st">&quot;P2&quot;</span>, <span class="st">&quot;P3&quot;</span>, <span class="st">&quot;P4&quot;</span>, <span class="st">&quot;P5&quot;</span>, <span class="st">&quot;P6&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Pre-primary&quot;</span>,</span>
+<span id="cb70-12"><a href="create-final-household-census-data.html#cb70-12" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;P7&quot;</span>, <span class="st">&quot;PLE&quot;</span>, <span class="st">&quot;S1&quot;</span>, <span class="st">&quot;S2&quot;</span>, <span class="st">&quot;S3&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Primary&quot;</span>,</span>
+<span id="cb70-13"><a href="create-final-household-census-data.html#cb70-13" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;S4&quot;</span>, <span class="st">&quot;O level&quot;</span>, <span class="st">&quot;S5&quot;</span>, <span class="st">&quot;S6&quot;</span>, <span class="st">&quot;A level&quot;</span>, <span class="st">&quot;Polytechnic&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Secondary&quot;</span>,</span>
+<span id="cb70-14"><a href="create-final-household-census-data.html#cb70-14" tabindex="-1"></a>      hh_educ <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;College (non-University)&quot;</span>, <span class="st">&quot;University&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Post-secondary&quot;</span>,</span>
+<span id="cb70-15"><a href="create-final-household-census-data.html#cb70-15" tabindex="-1"></a>      <span class="co"># Malawi</span></span>
+<span id="cb70-16"><a href="create-final-household-census-data.html#cb70-16" tabindex="-1"></a>      hh_educ_mw <span class="sc">==</span> <span class="st">&quot;No formal education / Never attended school&quot;</span> <span class="sc">~</span> <span class="st">&quot;None&quot;</span>,</span>
+<span id="cb70-17"><a href="create-final-household-census-data.html#cb70-17" tabindex="-1"></a>      hh_educ_mw <span class="sc">==</span> <span class="st">&quot;Some Primary School (Did not complete Standard 8)&quot;</span> <span class="sc">~</span> <span class="st">&quot;Pre-primary&quot;</span>,</span>
+<span id="cb70-18"><a href="create-final-household-census-data.html#cb70-18" tabindex="-1"></a>      hh_educ_mw <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Primary School Leaving Certificate (PSLCE) (Completed Standard 8)&quot;</span>, <span class="st">&quot;Junior Certificate of Education (JCE) (Completed Form 2)&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Primary&quot;</span>,</span>
+<span id="cb70-19"><a href="create-final-household-census-data.html#cb70-19" tabindex="-1"></a>      hh_educ_mw <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Malawi School Certificate of Education (MSCE) (Completed Form 4)&quot;</span>, <span class="st">&quot;Vocational/Technical Training (e.g., TEVETA certification)&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Secondary&quot;</span>,</span>
+<span id="cb70-20"><a href="create-final-household-census-data.html#cb70-20" tabindex="-1"></a>      hh_educ_mw <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Diploma (e.g., teaching, nursing, other post-secondary diploma)&quot;</span>, <span class="st">&quot;Bachelor&#39;s Degree&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Post-secondary&quot;</span></span>
+<span id="cb70-21"><a href="create-final-household-census-data.html#cb70-21" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb70-22"><a href="create-final-household-census-data.html#cb70-22" tabindex="-1"></a>      factor</span>
+<span id="cb70-23"><a href="create-final-household-census-data.html#cb70-23" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="household-composition" class="section level3 hasAnchor" number="6.2.4">
 <h3><span class="header-section-number">6.2.4</span> Household composition<a href="create-final-household-census-data.html#household-composition" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>These questions were moved into the household census from the household survey a few weeks after data collection had started.</p>
-<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="create-final-household-census-data.html#cb70-1" tabindex="-1"></a>hhc_hhmembers <span class="ot">&lt;-</span></span>
-<span id="cb70-2"><a href="create-final-household-census-data.html#cb70-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb70-3"><a href="create-final-household-census-data.html#cb70-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(hh_members)) <span class="sc">%&gt;%</span></span>
-<span id="cb70-4"><a href="create-final-household-census-data.html#cb70-4" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb70-5"><a href="create-final-household-census-data.html#cb70-5" tabindex="-1"></a>    household_id,</span>
-<span id="cb70-6"><a href="create-final-household-census-data.html#cb70-6" tabindex="-1"></a>    hh_hhsincompound,</span>
-<span id="cb70-7"><a href="create-final-household-census-data.html#cb70-7" tabindex="-1"></a>    hh_members,</span>
-<span id="cb70-8"><a href="create-final-household-census-data.html#cb70-8" tabindex="-1"></a>    hh_adults,</span>
-<span id="cb70-9"><a href="create-final-household-census-data.html#cb70-9" tabindex="-1"></a>    hh_males,</span>
-<span id="cb70-10"><a href="create-final-household-census-data.html#cb70-10" tabindex="-1"></a>    hh_females,</span>
-<span id="cb70-11"><a href="create-final-household-census-data.html#cb70-11" tabindex="-1"></a>    <span class="at">any_children =</span> hh_adults <span class="sc">&lt;</span> hh_members,</span>
-<span id="cb70-12"><a href="create-final-household-census-data.html#cb70-12" tabindex="-1"></a>    <span class="at">hh_pregnant =</span> <span class="fu">if_else</span>(hh_females <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">0</span>, hh_pregnant),</span>
-<span id="cb70-13"><a href="create-final-household-census-data.html#cb70-13" tabindex="-1"></a>    <span class="at">hh_under5n =</span> <span class="fu">if_else</span>(any_children, hh_under5, <span class="dv">0</span>),</span>
-<span id="cb70-14"><a href="create-final-household-census-data.html#cb70-14" tabindex="-1"></a>    <span class="at">hh_under5yn =</span> hh_under5n <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
-<span id="cb70-15"><a href="create-final-household-census-data.html#cb70-15" tabindex="-1"></a>    <span class="at">hh_under2n =</span> <span class="fu">if_else</span>(any_children, hh_under2, <span class="dv">0</span>),</span>
-<span id="cb70-16"><a href="create-final-household-census-data.html#cb70-16" tabindex="-1"></a>    <span class="at">hh_under2yn =</span> hh_under2n <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
-<span id="cb70-17"><a href="create-final-household-census-data.html#cb70-17" tabindex="-1"></a>  )</span>
-<span id="cb70-18"><a href="create-final-household-census-data.html#cb70-18" tabindex="-1"></a>  </span>
-<span id="cb70-19"><a href="create-final-household-census-data.html#cb70-19" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb70-20"><a href="create-final-household-census-data.html#cb70-20" tabindex="-1"></a>  hhc_hhmembers <span class="sc">%&gt;%</span></span>
-<span id="cb70-21"><a href="create-final-household-census-data.html#cb70-21" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb70-22"><a href="create-final-household-census-data.html#cb70-22" tabindex="-1"></a>      <span class="sc">!</span>(household_id <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;CHPU54248MW2&quot;</span>, <span class="st">&quot;ZOZ243113MW2&quot;</span>, <span class="st">&quot;MAMX13147MW2&quot;</span>)),</span>
-<span id="cb70-23"><a href="create-final-household-census-data.html#cb70-23" tabindex="-1"></a>      <span class="fu">is.na</span>(hh_adults)</span>
-<span id="cb70-24"><a href="create-final-household-census-data.html#cb70-24" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb70-25"><a href="create-final-household-census-data.html#cb70-25" tabindex="-1"></a>    nrow <span class="sc">==</span> <span class="dv">0</span></span>
-<span id="cb70-26"><a href="create-final-household-census-data.html#cb70-26" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="create-final-household-census-data.html#cb71-1" tabindex="-1"></a>hhc_hhmembers <span class="ot">&lt;-</span></span>
+<span id="cb71-2"><a href="create-final-household-census-data.html#cb71-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb71-3"><a href="create-final-household-census-data.html#cb71-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(hh_members)) <span class="sc">%&gt;%</span></span>
+<span id="cb71-4"><a href="create-final-household-census-data.html#cb71-4" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb71-5"><a href="create-final-household-census-data.html#cb71-5" tabindex="-1"></a>    household_id,</span>
+<span id="cb71-6"><a href="create-final-household-census-data.html#cb71-6" tabindex="-1"></a>    hh_hhsincompound,</span>
+<span id="cb71-7"><a href="create-final-household-census-data.html#cb71-7" tabindex="-1"></a>    hh_members,</span>
+<span id="cb71-8"><a href="create-final-household-census-data.html#cb71-8" tabindex="-1"></a>    hh_adults,</span>
+<span id="cb71-9"><a href="create-final-household-census-data.html#cb71-9" tabindex="-1"></a>    hh_males,</span>
+<span id="cb71-10"><a href="create-final-household-census-data.html#cb71-10" tabindex="-1"></a>    hh_females,</span>
+<span id="cb71-11"><a href="create-final-household-census-data.html#cb71-11" tabindex="-1"></a>    <span class="at">any_children =</span> hh_adults <span class="sc">&lt;</span> hh_members,</span>
+<span id="cb71-12"><a href="create-final-household-census-data.html#cb71-12" tabindex="-1"></a>    <span class="at">hh_pregnant =</span> <span class="fu">if_else</span>(hh_females <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">0</span>, hh_pregnant),</span>
+<span id="cb71-13"><a href="create-final-household-census-data.html#cb71-13" tabindex="-1"></a>    <span class="at">hh_under5n =</span> <span class="fu">if_else</span>(any_children, hh_under5, <span class="dv">0</span>),</span>
+<span id="cb71-14"><a href="create-final-household-census-data.html#cb71-14" tabindex="-1"></a>    <span class="at">hh_under5yn =</span> hh_under5n <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb71-15"><a href="create-final-household-census-data.html#cb71-15" tabindex="-1"></a>    <span class="at">hh_under2n =</span> <span class="fu">if_else</span>(any_children, hh_under2, <span class="dv">0</span>),</span>
+<span id="cb71-16"><a href="create-final-household-census-data.html#cb71-16" tabindex="-1"></a>    <span class="at">hh_under2yn =</span> hh_under2n <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb71-17"><a href="create-final-household-census-data.html#cb71-17" tabindex="-1"></a>  )</span>
+<span id="cb71-18"><a href="create-final-household-census-data.html#cb71-18" tabindex="-1"></a>  </span>
+<span id="cb71-19"><a href="create-final-household-census-data.html#cb71-19" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb71-20"><a href="create-final-household-census-data.html#cb71-20" tabindex="-1"></a>  hhc_hhmembers <span class="sc">%&gt;%</span></span>
+<span id="cb71-21"><a href="create-final-household-census-data.html#cb71-21" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb71-22"><a href="create-final-household-census-data.html#cb71-22" tabindex="-1"></a>      <span class="sc">!</span>(household_id <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;CHPU54248MW2&quot;</span>, <span class="st">&quot;ZOZ243113MW2&quot;</span>, <span class="st">&quot;MAMX13147MW2&quot;</span>)),</span>
+<span id="cb71-23"><a href="create-final-household-census-data.html#cb71-23" tabindex="-1"></a>      <span class="fu">is.na</span>(hh_adults)</span>
+<span id="cb71-24"><a href="create-final-household-census-data.html#cb71-24" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb71-25"><a href="create-final-household-census-data.html#cb71-25" tabindex="-1"></a>    nrow <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb71-26"><a href="create-final-household-census-data.html#cb71-26" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="water-point-use" class="section level3 hasAnchor" number="6.2.5">
@@ -430,144 +447,154 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>“Other” options need to be explored</li>
 <li>It seems like some people may not have understood the question, as they are saying why the closest point is not their preferred water point</li>
 </ul>
-<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="create-final-household-census-data.html#cb72-1" tabindex="-1"></a>hhc_wpuse <span class="ot">&lt;-</span></span>
-<span id="cb72-2"><a href="create-final-household-census-data.html#cb72-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb72-3"><a href="create-final-household-census-data.html#cb72-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb72-4"><a href="create-final-household-census-data.html#cb72-4" tabindex="-1"></a>    household_id,</span>
-<span id="cb72-5"><a href="create-final-household-census-data.html#cb72-5" tabindex="-1"></a>    wp_source,</span>
-<span id="cb72-6"><a href="create-final-household-census-data.html#cb72-6" tabindex="-1"></a>    wp_freq,</span>
-<span id="cb72-7"><a href="create-final-household-census-data.html#cb72-7" tabindex="-1"></a>    <span class="at">wp_sec_notworking =</span> wp_secwhen_1,</span>
-<span id="cb72-8"><a href="create-final-household-census-data.html#cb72-8" tabindex="-1"></a>    <span class="at">wp_sec_inadequate =</span> wp_secwhen_2,</span>
-<span id="cb72-9"><a href="create-final-household-census-data.html#cb72-9" tabindex="-1"></a>    <span class="at">wp_sec_intermitent =</span> wp_secwhen_3,</span>
-<span id="cb72-10"><a href="create-final-household-census-data.html#cb72-10" tabindex="-1"></a>    <span class="at">wp_sec_notfixed =</span> wp_secwhen_4,</span>
-<span id="cb72-11"><a href="create-final-household-census-data.html#cb72-11" tabindex="-1"></a>    <span class="at">wp_sec_crowded =</span> wp_secwhen_5,</span>
-<span id="cb72-12"><a href="create-final-household-census-data.html#cb72-12" tabindex="-1"></a>    <span class="at">wp_sec_other =</span> wp_secwhen__666,</span>
-<span id="cb72-13"><a href="create-final-household-census-data.html#cb72-13" tabindex="-1"></a>    <span class="at">wp_sec_specify =</span> wp_secwhen_o,</span>
-<span id="cb72-14"><a href="create-final-household-census-data.html#cb72-14" tabindex="-1"></a>    wp_secweek,</span>
-<span id="cb72-15"><a href="create-final-household-census-data.html#cb72-15" tabindex="-1"></a>    wp_secweekno</span>
-<span id="cb72-16"><a href="create-final-household-census-data.html#cb72-16" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb72-17"><a href="create-final-household-census-data.html#cb72-17" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb72-18"><a href="create-final-household-census-data.html#cb72-18" tabindex="-1"></a>    <span class="at">wp_sec_crowded =</span> <span class="fu">case_when</span>(</span>
-<span id="cb72-19"><a href="create-final-household-census-data.html#cb72-19" tabindex="-1"></a>      <span class="fu">str_detect</span>(</span>
-<span id="cb72-20"><a href="create-final-household-census-data.html#cb72-20" tabindex="-1"></a>        wp_sec_specify,</span>
-<span id="cb72-21"><a href="create-final-household-census-data.html#cb72-21" tabindex="-1"></a>        <span class="fu">regex</span>(<span class="st">&quot;crowd|people|too many|line|queue|que|wait|congestion|congested|population|conjestion&quot;</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb72-22"><a href="create-final-household-census-data.html#cb72-22" tabindex="-1"></a>      ) <span class="sc">~</span> <span class="cn">TRUE</span>,</span>
-<span id="cb72-23"><a href="create-final-household-census-data.html#cb72-23" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.logical</span>(wp_sec_crowded) </span>
-<span id="cb72-24"><a href="create-final-household-census-data.html#cb72-24" tabindex="-1"></a>    ),</span>
-<span id="cb72-25"><a href="create-final-household-census-data.html#cb72-25" tabindex="-1"></a>    <span class="at">wp_sec_other =</span> <span class="fu">if_else</span>(</span>
-<span id="cb72-26"><a href="create-final-household-census-data.html#cb72-26" tabindex="-1"></a>      wp_sec_crowded, </span>
-<span id="cb72-27"><a href="create-final-household-census-data.html#cb72-27" tabindex="-1"></a>      <span class="cn">FALSE</span>, </span>
-<span id="cb72-28"><a href="create-final-household-census-data.html#cb72-28" tabindex="-1"></a>      wp_sec_other</span>
-<span id="cb72-29"><a href="create-final-household-census-data.html#cb72-29" tabindex="-1"></a>    ),</span>
-<span id="cb72-30"><a href="create-final-household-census-data.html#cb72-30" tabindex="-1"></a>    <span class="at">wp_count_pastmonth =</span> <span class="fu">case_when</span>(</span>
-<span id="cb72-31"><a href="create-final-household-census-data.html#cb72-31" tabindex="-1"></a>       wp_secweek <span class="sc">~</span> wp_secweekno <span class="sc">+</span> <span class="dv">1</span>,</span>
-<span id="cb72-32"><a href="create-final-household-census-data.html#cb72-32" tabindex="-1"></a>      <span class="sc">!</span>wp_secweek <span class="sc">~</span> <span class="dv">1</span></span>
-<span id="cb72-33"><a href="create-final-household-census-data.html#cb72-33" tabindex="-1"></a>    )</span>
-<span id="cb72-34"><a href="create-final-household-census-data.html#cb72-34" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="create-final-household-census-data.html#cb73-1" tabindex="-1"></a>hhc_wpuse <span class="ot">&lt;-</span></span>
+<span id="cb73-2"><a href="create-final-household-census-data.html#cb73-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb73-3"><a href="create-final-household-census-data.html#cb73-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb73-4"><a href="create-final-household-census-data.html#cb73-4" tabindex="-1"></a>    household_id,</span>
+<span id="cb73-5"><a href="create-final-household-census-data.html#cb73-5" tabindex="-1"></a>    wp_source,</span>
+<span id="cb73-6"><a href="create-final-household-census-data.html#cb73-6" tabindex="-1"></a>    wp_freq,</span>
+<span id="cb73-7"><a href="create-final-household-census-data.html#cb73-7" tabindex="-1"></a>    <span class="at">wp_sec_notworking =</span> wp_secwhen_1,</span>
+<span id="cb73-8"><a href="create-final-household-census-data.html#cb73-8" tabindex="-1"></a>    <span class="at">wp_sec_inadequate =</span> wp_secwhen_2,</span>
+<span id="cb73-9"><a href="create-final-household-census-data.html#cb73-9" tabindex="-1"></a>    <span class="at">wp_sec_intermitent =</span> wp_secwhen_3,</span>
+<span id="cb73-10"><a href="create-final-household-census-data.html#cb73-10" tabindex="-1"></a>    <span class="at">wp_sec_notfixed =</span> wp_secwhen_4,</span>
+<span id="cb73-11"><a href="create-final-household-census-data.html#cb73-11" tabindex="-1"></a>    <span class="at">wp_sec_crowded =</span> wp_secwhen_5,</span>
+<span id="cb73-12"><a href="create-final-household-census-data.html#cb73-12" tabindex="-1"></a>    <span class="at">wp_sec_other =</span> wp_secwhen__666,</span>
+<span id="cb73-13"><a href="create-final-household-census-data.html#cb73-13" tabindex="-1"></a>    <span class="at">wp_sec_specify =</span> wp_secwhen_o,</span>
+<span id="cb73-14"><a href="create-final-household-census-data.html#cb73-14" tabindex="-1"></a>    wp_secweek,</span>
+<span id="cb73-15"><a href="create-final-household-census-data.html#cb73-15" tabindex="-1"></a>    wp_secweekno</span>
+<span id="cb73-16"><a href="create-final-household-census-data.html#cb73-16" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb73-17"><a href="create-final-household-census-data.html#cb73-17" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb73-18"><a href="create-final-household-census-data.html#cb73-18" tabindex="-1"></a>    <span class="at">wp_sec_crowded =</span> <span class="fu">case_when</span>(</span>
+<span id="cb73-19"><a href="create-final-household-census-data.html#cb73-19" tabindex="-1"></a>      <span class="fu">str_detect</span>(</span>
+<span id="cb73-20"><a href="create-final-household-census-data.html#cb73-20" tabindex="-1"></a>        wp_sec_specify,</span>
+<span id="cb73-21"><a href="create-final-household-census-data.html#cb73-21" tabindex="-1"></a>        <span class="fu">regex</span>(<span class="st">&quot;crowd|people|too many|line|queue|que|wait|congestion|congested|population|conjestion&quot;</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb73-22"><a href="create-final-household-census-data.html#cb73-22" tabindex="-1"></a>      ) <span class="sc">~</span> <span class="cn">TRUE</span>,</span>
+<span id="cb73-23"><a href="create-final-household-census-data.html#cb73-23" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.logical</span>(wp_sec_crowded) </span>
+<span id="cb73-24"><a href="create-final-household-census-data.html#cb73-24" tabindex="-1"></a>    ),</span>
+<span id="cb73-25"><a href="create-final-household-census-data.html#cb73-25" tabindex="-1"></a>    <span class="at">wp_sec_other =</span> <span class="fu">if_else</span>(</span>
+<span id="cb73-26"><a href="create-final-household-census-data.html#cb73-26" tabindex="-1"></a>      wp_sec_crowded, </span>
+<span id="cb73-27"><a href="create-final-household-census-data.html#cb73-27" tabindex="-1"></a>      <span class="cn">FALSE</span>, </span>
+<span id="cb73-28"><a href="create-final-household-census-data.html#cb73-28" tabindex="-1"></a>      wp_sec_other</span>
+<span id="cb73-29"><a href="create-final-household-census-data.html#cb73-29" tabindex="-1"></a>    ),</span>
+<span id="cb73-30"><a href="create-final-household-census-data.html#cb73-30" tabindex="-1"></a>    <span class="at">wp_count_pastmonth =</span> <span class="fu">case_when</span>(</span>
+<span id="cb73-31"><a href="create-final-household-census-data.html#cb73-31" tabindex="-1"></a>       wp_secweek <span class="sc">~</span> wp_secweekno <span class="sc">+</span> <span class="dv">1</span>,</span>
+<span id="cb73-32"><a href="create-final-household-census-data.html#cb73-32" tabindex="-1"></a>      <span class="sc">!</span>wp_secweek <span class="sc">~</span> <span class="dv">1</span></span>
+<span id="cb73-33"><a href="create-final-household-census-data.html#cb73-33" tabindex="-1"></a>    )</span>
+<span id="cb73-34"><a href="create-final-household-census-data.html#cb73-34" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="primary-water-points" class="section level3 hasAnchor" number="6.2.6">
 <h3><span class="header-section-number">6.2.6</span> Primary water points<a href="create-final-household-census-data.html#primary-water-points" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="create-final-household-census-data.html#cb73-1" tabindex="-1"></a>hhc_primarywp <span class="ot">&lt;-</span></span>
-<span id="cb73-2"><a href="create-final-household-census-data.html#cb73-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb73-3"><a href="create-final-household-census-data.html#cb73-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb73-4"><a href="create-final-household-census-data.html#cb73-4" tabindex="-1"></a>    household_id,</span>
-<span id="cb73-5"><a href="create-final-household-census-data.html#cb73-5" tabindex="-1"></a>    village_id,</span>
-<span id="cb73-6"><a href="create-final-household-census-data.html#cb73-6" tabindex="-1"></a>    wp_id_pl,</span>
-<span id="cb73-7"><a href="create-final-household-census-data.html#cb73-7" tabindex="-1"></a>    <span class="at">wp_id_c =</span> <span class="fu">case_when</span>(</span>
-<span id="cb73-8"><a href="create-final-household-census-data.html#cb73-8" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(wp_id_pl) <span class="sc">~</span> <span class="fu">paste0</span>(village_id, <span class="fu">str_sub</span>(wp_id_pl, <span class="fu">str_length</span>(wp_id_pl) <span class="sc">-</span> <span class="dv">2</span>, <span class="fu">str_length</span>(wp_id_pl)))</span>
-<span id="cb73-9"><a href="create-final-household-census-data.html#cb73-9" tabindex="-1"></a>    ),</span>
-<span id="cb73-10"><a href="create-final-household-census-data.html#cb73-10" tabindex="-1"></a>    <span class="at">wp_identified =</span> <span class="sc">!</span><span class="fu">is.na</span>(wp_id_c),</span>
-<span id="cb73-11"><a href="create-final-household-census-data.html#cb73-11" tabindex="-1"></a>    <span class="at">wp_invillage =</span> wp_source <span class="sc">==</span> <span class="st">&quot;From a water point in this village&quot;</span></span>
-<span id="cb73-12"><a href="create-final-household-census-data.html#cb73-12" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb73-13"><a href="create-final-household-census-data.html#cb73-13" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb73-14"><a href="create-final-household-census-data.html#cb73-14" tabindex="-1"></a>    <span class="at">wp_id_c =</span> <span class="fu">case_when</span>(</span>
-<span id="cb73-15"><a href="create-final-household-census-data.html#cb73-15" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2050904017004&quot;</span> <span class="sc">~</span> <span class="st">&quot;2101349269002&quot;</span>,</span>
-<span id="cb73-16"><a href="create-final-household-census-data.html#cb73-16" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2060102007003&quot;</span> <span class="sc">~</span> <span class="st">&quot;2101338209002&quot;</span>,</span>
-<span id="cb73-17"><a href="create-final-household-census-data.html#cb73-17" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2050904017005&quot;</span> <span class="sc">~</span> <span class="st">&quot;2050902005003&quot;</span>,</span>
-<span id="cb73-18"><a href="create-final-household-census-data.html#cb73-18" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2050902006025&quot;</span> <span class="sc">~</span> <span class="st">&quot;2010503012001&quot;</span>,</span>
-<span id="cb73-19"><a href="create-final-household-census-data.html#cb73-19" tabindex="-1"></a>      wp_id_pl <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;WP008&quot;</span>, <span class="st">&quot;WP1471008&quot;</span>, <span class="st">&quot;WP2101433260028&quot;</span>) <span class="sc">~</span> <span class="cn">NA</span>,</span>
-<span id="cb73-20"><a href="create-final-household-census-data.html#cb73-20" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> wp_id_c</span>
-<span id="cb73-21"><a href="create-final-household-census-data.html#cb73-21" tabindex="-1"></a>    )</span>
-<span id="cb73-22"><a href="create-final-household-census-data.html#cb73-22" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb73-23"><a href="create-final-household-census-data.html#cb73-23" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>wp_id_pl)</span></code></pre></div>
-<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="create-final-household-census-data.html#cb74-1" tabindex="-1"></a><span class="co"># This is the code we used to make the manual checks </span></span>
-<span id="cb74-2"><a href="create-final-household-census-data.html#cb74-2" tabindex="-1"></a>hhc_primarywp <span class="sc">%&gt;%</span></span>
-<span id="cb74-3"><a href="create-final-household-census-data.html#cb74-3" tabindex="-1"></a>  <span class="fu">select</span>(household_id, village_id, wp_id_c, wp_id_pl) <span class="sc">%&gt;%</span></span>
-<span id="cb74-4"><a href="create-final-household-census-data.html#cb74-4" tabindex="-1"></a>  na.omit <span class="sc">%&gt;%</span></span>
-<span id="cb74-5"><a href="create-final-household-census-data.html#cb74-5" tabindex="-1"></a>  <span class="fu">anti_join</span>(wp) <span class="sc">%&gt;%</span></span>
-<span id="cb74-6"><a href="create-final-household-census-data.html#cb74-6" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb74-7"><a href="create-final-household-census-data.html#cb74-7" tabindex="-1"></a>    hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb74-8"><a href="create-final-household-census-data.html#cb74-8" tabindex="-1"></a>      <span class="fu">select</span>(wp_id_pl, wp_name_coa) <span class="sc">%&gt;%</span></span>
-<span id="cb74-9"><a href="create-final-household-census-data.html#cb74-9" tabindex="-1"></a>      unique </span>
-<span id="cb74-10"><a href="create-final-household-census-data.html#cb74-10" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb74-11"><a href="create-final-household-census-data.html#cb74-11" tabindex="-1"></a>  unique</span></code></pre></div>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="create-final-household-census-data.html#cb74-1" tabindex="-1"></a>hhc_primarywp <span class="ot">&lt;-</span></span>
+<span id="cb74-2"><a href="create-final-household-census-data.html#cb74-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb74-3"><a href="create-final-household-census-data.html#cb74-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb74-4"><a href="create-final-household-census-data.html#cb74-4" tabindex="-1"></a>    household_id,</span>
+<span id="cb74-5"><a href="create-final-household-census-data.html#cb74-5" tabindex="-1"></a>    village_id,</span>
+<span id="cb74-6"><a href="create-final-household-census-data.html#cb74-6" tabindex="-1"></a>    wp_id_pl,</span>
+<span id="cb74-7"><a href="create-final-household-census-data.html#cb74-7" tabindex="-1"></a>    <span class="at">wp_id_c =</span> <span class="fu">case_when</span>(</span>
+<span id="cb74-8"><a href="create-final-household-census-data.html#cb74-8" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(wp_id_pl) <span class="sc">~</span> <span class="fu">paste0</span>(village_id, <span class="fu">str_sub</span>(wp_id_pl, <span class="fu">str_length</span>(wp_id_pl) <span class="sc">-</span> <span class="dv">2</span>, <span class="fu">str_length</span>(wp_id_pl)))</span>
+<span id="cb74-9"><a href="create-final-household-census-data.html#cb74-9" tabindex="-1"></a>    ),</span>
+<span id="cb74-10"><a href="create-final-household-census-data.html#cb74-10" tabindex="-1"></a>    <span class="at">wp_identified =</span> <span class="sc">!</span><span class="fu">is.na</span>(wp_id_c),</span>
+<span id="cb74-11"><a href="create-final-household-census-data.html#cb74-11" tabindex="-1"></a>    <span class="at">wp_invillage =</span> wp_source <span class="sc">==</span> <span class="st">&quot;From a water point in this village&quot;</span></span>
+<span id="cb74-12"><a href="create-final-household-census-data.html#cb74-12" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb74-13"><a href="create-final-household-census-data.html#cb74-13" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb74-14"><a href="create-final-household-census-data.html#cb74-14" tabindex="-1"></a>    <span class="at">wp_id_c =</span> <span class="fu">case_when</span>(</span>
+<span id="cb74-15"><a href="create-final-household-census-data.html#cb74-15" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2050904017004&quot;</span> <span class="sc">~</span> <span class="st">&quot;2101349269002&quot;</span>,</span>
+<span id="cb74-16"><a href="create-final-household-census-data.html#cb74-16" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2060102007003&quot;</span> <span class="sc">~</span> <span class="st">&quot;2101338209002&quot;</span>,</span>
+<span id="cb74-17"><a href="create-final-household-census-data.html#cb74-17" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2050904017005&quot;</span> <span class="sc">~</span> <span class="st">&quot;2050902005003&quot;</span>,</span>
+<span id="cb74-18"><a href="create-final-household-census-data.html#cb74-18" tabindex="-1"></a>      wp_id_pl <span class="sc">==</span> <span class="st">&quot;WP2050902006025&quot;</span> <span class="sc">~</span> <span class="st">&quot;2010503012001&quot;</span>,</span>
+<span id="cb74-19"><a href="create-final-household-census-data.html#cb74-19" tabindex="-1"></a>      wp_id_pl <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;WP008&quot;</span>, <span class="st">&quot;WP1471008&quot;</span>, <span class="st">&quot;WP2101433260028&quot;</span>) <span class="sc">~</span> <span class="cn">NA</span>,</span>
+<span id="cb74-20"><a href="create-final-household-census-data.html#cb74-20" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> wp_id_c</span>
+<span id="cb74-21"><a href="create-final-household-census-data.html#cb74-21" tabindex="-1"></a>    )</span>
+<span id="cb74-22"><a href="create-final-household-census-data.html#cb74-22" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb74-23"><a href="create-final-household-census-data.html#cb74-23" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>wp_id_pl)</span></code></pre></div>
+<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="create-final-household-census-data.html#cb75-1" tabindex="-1"></a><span class="co"># This is the code we used to make the manual checks </span></span>
+<span id="cb75-2"><a href="create-final-household-census-data.html#cb75-2" tabindex="-1"></a>hhc_primarywp <span class="sc">%&gt;%</span></span>
+<span id="cb75-3"><a href="create-final-household-census-data.html#cb75-3" tabindex="-1"></a>  <span class="fu">select</span>(household_id, village_id, wp_id_c, wp_id_pl) <span class="sc">%&gt;%</span></span>
+<span id="cb75-4"><a href="create-final-household-census-data.html#cb75-4" tabindex="-1"></a>  na.omit <span class="sc">%&gt;%</span></span>
+<span id="cb75-5"><a href="create-final-household-census-data.html#cb75-5" tabindex="-1"></a>  <span class="fu">anti_join</span>(wp) <span class="sc">%&gt;%</span></span>
+<span id="cb75-6"><a href="create-final-household-census-data.html#cb75-6" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb75-7"><a href="create-final-household-census-data.html#cb75-7" tabindex="-1"></a>    hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb75-8"><a href="create-final-household-census-data.html#cb75-8" tabindex="-1"></a>      <span class="fu">select</span>(wp_id_pl, wp_name_coa) <span class="sc">%&gt;%</span></span>
+<span id="cb75-9"><a href="create-final-household-census-data.html#cb75-9" tabindex="-1"></a>      unique </span>
+<span id="cb75-10"><a href="create-final-household-census-data.html#cb75-10" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb75-11"><a href="create-final-household-census-data.html#cb75-11" tabindex="-1"></a>  unique</span></code></pre></div>
 </div>
 <div id="non-users-knowledge" class="section level3 hasAnchor" number="6.2.7">
 <h3><span class="header-section-number">6.2.7</span> Non-users knowledge<a href="create-final-household-census-data.html#non-users-knowledge" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>“Other” methods need to be cleaned</p>
-<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="create-final-household-census-data.html#cb75-1" tabindex="-1"></a>hhc_noevac <span class="ot">&lt;-</span></span>
-<span id="cb75-2"><a href="create-final-household-census-data.html#cb75-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb75-3"><a href="create-final-household-census-data.html#cb75-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb75-4"><a href="create-final-household-census-data.html#cb75-4" tabindex="-1"></a>    household_id, </span>
-<span id="cb75-5"><a href="create-final-household-census-data.html#cb75-5" tabindex="-1"></a>    <span class="at">vil_dsw_selfreport =</span> wtmt_dsw_c,</span>
-<span id="cb75-6"><a href="create-final-household-census-data.html#cb75-6" tabindex="-1"></a>    <span class="at">vil_ilc_selfreport =</span> wtmt_ilc_c,</span>
-<span id="cb75-7"><a href="create-final-household-census-data.html#cb75-7" tabindex="-1"></a>    <span class="at">wtmt_none =</span> wtmt_method_0,</span>
-<span id="cb75-8"><a href="create-final-household-census-data.html#cb75-8" tabindex="-1"></a>    <span class="at">wtmt_pretreated =</span> wtmt_method__111,</span>
-<span id="cb75-9"><a href="create-final-household-census-data.html#cb75-9" tabindex="-1"></a>    <span class="at">wtmt_boil =</span> wtmt_method_1,</span>
-<span id="cb75-10"><a href="create-final-household-census-data.html#cb75-10" tabindex="-1"></a>    <span class="at">wtmt_dispcl =</span> wtmt_method_2,</span>
-<span id="cb75-11"><a href="create-final-household-census-data.html#cb75-11" tabindex="-1"></a>    <span class="at">wtmt_othercl =</span> wtmt_method_3,</span>
-<span id="cb75-12"><a href="create-final-household-census-data.html#cb75-12" tabindex="-1"></a>    <span class="at">wtmt_strain =</span> wtmt_method_4,</span>
-<span id="cb75-13"><a href="create-final-household-census-data.html#cb75-13" tabindex="-1"></a>    <span class="at">wtmt_filter =</span> wtmt_method_5,</span>
-<span id="cb75-14"><a href="create-final-household-census-data.html#cb75-14" tabindex="-1"></a>    <span class="at">wtmt_sand =</span> wtmt_method_6,</span>
-<span id="cb75-15"><a href="create-final-household-census-data.html#cb75-15" tabindex="-1"></a>    <span class="at">wtmt_solar =</span> wtmt_method_7,</span>
-<span id="cb75-16"><a href="create-final-household-census-data.html#cb75-16" tabindex="-1"></a>    <span class="at">wtmt_decant =</span> wtmt_method_8,</span>
-<span id="cb75-17"><a href="create-final-household-census-data.html#cb75-17" tabindex="-1"></a>    <span class="at">wtmt_other =</span> wtmt_method__666,</span>
-<span id="cb75-18"><a href="create-final-household-census-data.html#cb75-18" tabindex="-1"></a>    <span class="at">wtmt_specify =</span> wtmt_method_o</span>
-<span id="cb75-19"><a href="create-final-household-census-data.html#cb75-19" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb75-20"><a href="create-final-household-census-data.html#cb75-20" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb75-21"><a href="create-final-household-census-data.html#cb75-21" tabindex="-1"></a>    <span class="co"># indicator for any chlorination (whether home or dispenser)</span></span>
-<span id="cb75-22"><a href="create-final-household-census-data.html#cb75-22" tabindex="-1"></a>    <span class="at">wtmt_anycl =</span> wtmt_dispcl <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> wtmt_othercl <span class="sc">==</span> <span class="dv">1</span></span>
-<span id="cb75-23"><a href="create-final-household-census-data.html#cb75-23" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="create-final-household-census-data.html#cb76-1" tabindex="-1"></a>hhc_noevac <span class="ot">&lt;-</span></span>
+<span id="cb76-2"><a href="create-final-household-census-data.html#cb76-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb76-3"><a href="create-final-household-census-data.html#cb76-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb76-4"><a href="create-final-household-census-data.html#cb76-4" tabindex="-1"></a>    household_id, </span>
+<span id="cb76-5"><a href="create-final-household-census-data.html#cb76-5" tabindex="-1"></a>    <span class="at">vil_dsw_selfreport =</span> wtmt_dsw_c,</span>
+<span id="cb76-6"><a href="create-final-household-census-data.html#cb76-6" tabindex="-1"></a>    <span class="at">vil_ilc_selfreport =</span> wtmt_ilc_c,</span>
+<span id="cb76-7"><a href="create-final-household-census-data.html#cb76-7" tabindex="-1"></a>    <span class="at">wtmt_none =</span> wtmt_method_0,</span>
+<span id="cb76-8"><a href="create-final-household-census-data.html#cb76-8" tabindex="-1"></a>    <span class="at">wtmt_pretreated =</span> wtmt_method__111,</span>
+<span id="cb76-9"><a href="create-final-household-census-data.html#cb76-9" tabindex="-1"></a>    <span class="at">wtmt_boil =</span> wtmt_method_1,</span>
+<span id="cb76-10"><a href="create-final-household-census-data.html#cb76-10" tabindex="-1"></a>    <span class="at">wtmt_dispcl =</span> wtmt_method_2,</span>
+<span id="cb76-11"><a href="create-final-household-census-data.html#cb76-11" tabindex="-1"></a>    <span class="at">wtmt_othercl =</span> wtmt_method_3,</span>
+<span id="cb76-12"><a href="create-final-household-census-data.html#cb76-12" tabindex="-1"></a>    <span class="at">wtmt_strain =</span> wtmt_method_4,</span>
+<span id="cb76-13"><a href="create-final-household-census-data.html#cb76-13" tabindex="-1"></a>    <span class="at">wtmt_filter =</span> wtmt_method_5,</span>
+<span id="cb76-14"><a href="create-final-household-census-data.html#cb76-14" tabindex="-1"></a>    <span class="at">wtmt_sand =</span> wtmt_method_6,</span>
+<span id="cb76-15"><a href="create-final-household-census-data.html#cb76-15" tabindex="-1"></a>    <span class="at">wtmt_solar =</span> wtmt_method_7,</span>
+<span id="cb76-16"><a href="create-final-household-census-data.html#cb76-16" tabindex="-1"></a>    <span class="at">wtmt_decant =</span> wtmt_method_8,</span>
+<span id="cb76-17"><a href="create-final-household-census-data.html#cb76-17" tabindex="-1"></a>    <span class="at">wtmt_other =</span> wtmt_method__666,</span>
+<span id="cb76-18"><a href="create-final-household-census-data.html#cb76-18" tabindex="-1"></a>    <span class="at">wtmt_specify =</span> wtmt_method_o</span>
+<span id="cb76-19"><a href="create-final-household-census-data.html#cb76-19" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb76-20"><a href="create-final-household-census-data.html#cb76-20" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb76-21"><a href="create-final-household-census-data.html#cb76-21" tabindex="-1"></a>    <span class="co"># indicator for any chlorination (whether home or dispenser)</span></span>
+<span id="cb76-22"><a href="create-final-household-census-data.html#cb76-22" tabindex="-1"></a>    <span class="at">wtmt_anycl =</span> wtmt_dispcl <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> wtmt_othercl <span class="sc">==</span> <span class="dv">1</span></span>
+<span id="cb76-23"><a href="create-final-household-census-data.html#cb76-23" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="meta-data" class="section level3 hasAnchor" number="6.2.8">
 <h3><span class="header-section-number">6.2.8</span> Meta data<a href="create-final-household-census-data.html#meta-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="create-final-household-census-data.html#cb76-1" tabindex="-1"></a>hhc_meta <span class="ot">&lt;-</span></span>
-<span id="cb76-2"><a href="create-final-household-census-data.html#cb76-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb76-3"><a href="create-final-household-census-data.html#cb76-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb76-4"><a href="create-final-household-census-data.html#cb76-4" tabindex="-1"></a>    household_id, </span>
-<span id="cb76-5"><a href="create-final-household-census-data.html#cb76-5" tabindex="-1"></a>    <span class="at">formdef_version =</span> <span class="fu">as.character</span>(formdef_version),</span>
-<span id="cb76-6"><a href="create-final-household-census-data.html#cb76-6" tabindex="-1"></a>    comments, endcomment, </span>
-<span id="cb76-7"><a href="create-final-household-census-data.html#cb76-7" tabindex="-1"></a>    review_comments</span>
-<span id="cb76-8"><a href="create-final-household-census-data.html#cb76-8" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="create-final-household-census-data.html#cb77-1" tabindex="-1"></a>hhc_meta <span class="ot">&lt;-</span></span>
+<span id="cb77-2"><a href="create-final-household-census-data.html#cb77-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb77-3"><a href="create-final-household-census-data.html#cb77-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb77-4"><a href="create-final-household-census-data.html#cb77-4" tabindex="-1"></a>    household_id, </span>
+<span id="cb77-5"><a href="create-final-household-census-data.html#cb77-5" tabindex="-1"></a>    <span class="at">formdef_version =</span> <span class="fu">as.character</span>(formdef_version),</span>
+<span id="cb77-6"><a href="create-final-household-census-data.html#cb77-6" tabindex="-1"></a>    comments, endcomment, </span>
+<span id="cb77-7"><a href="create-final-household-census-data.html#cb77-7" tabindex="-1"></a>    review_comments</span>
+<span id="cb77-8"><a href="create-final-household-census-data.html#cb77-8" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="flags" class="section level3 hasAnchor" number="6.2.9">
 <h3><span class="header-section-number">6.2.9</span> Flags<a href="create-final-household-census-data.html#flags" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="create-final-household-census-data.html#cb77-1" tabindex="-1"></a>hhc_flags <span class="ot">&lt;-</span></span>
-<span id="cb77-2"><a href="create-final-household-census-data.html#cb77-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb77-3"><a href="create-final-household-census-data.html#cb77-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb77-4"><a href="create-final-household-census-data.html#cb77-4" tabindex="-1"></a>    household_id, </span>
-<span id="cb77-5"><a href="create-final-household-census-data.html#cb77-5" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>)</span>
-<span id="cb77-6"><a href="create-final-household-census-data.html#cb77-6" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="create-final-household-census-data.html#cb78-1" tabindex="-1"></a>hhc_flags <span class="ot">&lt;-</span></span>
+<span id="cb78-2"><a href="create-final-household-census-data.html#cb78-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb78-3"><a href="create-final-household-census-data.html#cb78-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb78-4"><a href="create-final-household-census-data.html#cb78-4" tabindex="-1"></a>    household_id, </span>
+<span id="cb78-5"><a href="create-final-household-census-data.html#cb78-5" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>)</span>
+<span id="cb78-6"><a href="create-final-household-census-data.html#cb78-6" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+<div id="promoter-list-indicator" class="section level3 hasAnchor" number="6.2.10">
+<h3><span class="header-section-number">6.2.10</span> Promoter list indicator<a href="create-final-household-census-data.html#promoter-list-indicator" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="sourceCode" id="cb79"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb79-1"><a href="create-final-household-census-data.html#cb79-1" tabindex="-1"></a>hhc_promoter <span class="ot">&lt;-</span></span>
+<span id="cb79-2"><a href="create-final-household-census-data.html#cb79-2" tabindex="-1"></a>  hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb79-3"><a href="create-final-household-census-data.html#cb79-3" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb79-4"><a href="create-final-household-census-data.html#cb79-4" tabindex="-1"></a>    household_id,</span>
+<span id="cb79-5"><a href="create-final-household-census-data.html#cb79-5" tabindex="-1"></a>    <span class="at">promoter_list =</span> household_id <span class="sc">%in%</span> pm_survey_households<span class="sc">$</span>household_id</span>
+<span id="cb79-6"><a href="create-final-household-census-data.html#cb79-6" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 </div>
 <div id="combine-and-save-data" class="section level2 hasAnchor" number="6.3">
 <h2><span class="header-section-number">6.3</span> Combine and save data<a href="create-final-household-census-data.html#combine-and-save-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <div id="only-final-indicators" class="section level3 hasAnchor" number="6.3.1">
 <h3><span class="header-section-number">6.3.1</span> Only final indicators<a href="create-final-household-census-data.html#only-final-indicators" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="create-final-household-census-data.html#cb78-1" tabindex="-1"></a>indexes <span class="ot">&lt;-</span></span>
-<span id="cb78-2"><a href="create-final-household-census-data.html#cb78-2" tabindex="-1"></a>  hhc_ids <span class="sc">%&gt;%</span></span>
-<span id="cb78-3"><a href="create-final-household-census-data.html#cb78-3" tabindex="-1"></a>  <span class="fu">left_join</span>(villages, <span class="at">relationship =</span> <span class="st">&quot;many-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-4"><a href="create-final-household-census-data.html#cb78-4" tabindex="-1"></a>  <span class="fu">inner_join</span>(hhc_visit, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-5"><a href="create-final-household-census-data.html#cb78-5" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_hhh, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-6"><a href="create-final-household-census-data.html#cb78-6" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_hhmembers, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-7"><a href="create-final-household-census-data.html#cb78-7" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_wpuse, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-8"><a href="create-final-household-census-data.html#cb78-8" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_noevac, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-9"><a href="create-final-household-census-data.html#cb78-9" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_meta, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-10"><a href="create-final-household-census-data.html#cb78-10" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_flags, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-11"><a href="create-final-household-census-data.html#cb78-11" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_primarywp, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-12"><a href="create-final-household-census-data.html#cb78-12" tabindex="-1"></a>  <span class="fu">left_join</span>(wp, <span class="at">relationship =</span> <span class="st">&quot;many-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-13"><a href="create-final-household-census-data.html#cb78-13" tabindex="-1"></a>  remove_constant <span class="sc">%&gt;%</span></span>
-<span id="cb78-14"><a href="create-final-household-census-data.html#cb78-14" tabindex="-1"></a>  remove_empty</span></code></pre></div>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="create-final-household-census-data.html#cb80-1" tabindex="-1"></a>indexes <span class="ot">&lt;-</span></span>
+<span id="cb80-2"><a href="create-final-household-census-data.html#cb80-2" tabindex="-1"></a>  hhc_ids <span class="sc">%&gt;%</span></span>
+<span id="cb80-3"><a href="create-final-household-census-data.html#cb80-3" tabindex="-1"></a>  <span class="fu">left_join</span>(villages, <span class="at">relationship =</span> <span class="st">&quot;many-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-4"><a href="create-final-household-census-data.html#cb80-4" tabindex="-1"></a>  <span class="fu">inner_join</span>(hhc_visit, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-5"><a href="create-final-household-census-data.html#cb80-5" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_hhh, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-6"><a href="create-final-household-census-data.html#cb80-6" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_hhmembers, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-7"><a href="create-final-household-census-data.html#cb80-7" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_wpuse, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-8"><a href="create-final-household-census-data.html#cb80-8" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_noevac, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-9"><a href="create-final-household-census-data.html#cb80-9" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_meta, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-10"><a href="create-final-household-census-data.html#cb80-10" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_flags, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-11"><a href="create-final-household-census-data.html#cb80-11" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_promoter, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-12"><a href="create-final-household-census-data.html#cb80-12" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_primarywp, <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-13"><a href="create-final-household-census-data.html#cb80-13" tabindex="-1"></a>  <span class="fu">left_join</span>(wp, <span class="at">relationship =</span> <span class="st">&quot;many-to-one&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-14"><a href="create-final-household-census-data.html#cb80-14" tabindex="-1"></a>  remove_constant <span class="sc">%&gt;%</span></span>
+<span id="cb80-15"><a href="create-final-household-census-data.html#cb80-15" tabindex="-1"></a>  remove_empty</span></code></pre></div>
 <pre><code>## value for &quot;which&quot; not specified, defaulting to c(&quot;rows&quot;, &quot;cols&quot;)</code></pre>
 <pre><code>## Joining with `by = join_by(village_id)`
 ## Joining with `by = join_by(household_id)`
@@ -577,54 +604,55 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## Joining with `by = join_by(household_id)`
 ## Joining with `by = join_by(household_id)`
 ## Joining with `by = join_by(household_id)`
+## Joining with `by = join_by(household_id)`
 ## Joining with `by = join_by(household_id, village_id)`
 ## Joining with `by = join_by(wp_id_c)`</code></pre>
-<div class="sourceCode" id="cb81"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb81-1"><a href="create-final-household-census-data.html#cb81-1" tabindex="-1"></a><span class="fu">nrow</span>(indexes) <span class="sc">==</span> <span class="fu">n_distinct</span>(indexes<span class="sc">$</span>household_id)</span></code></pre></div>
+<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="create-final-household-census-data.html#cb83-1" tabindex="-1"></a><span class="fu">nrow</span>(indexes) <span class="sc">==</span> <span class="fu">n_distinct</span>(indexes<span class="sc">$</span>household_id)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="create-final-household-census-data.html#cb83-1" tabindex="-1"></a>indexes <span class="ot">&lt;-</span></span>
-<span id="cb83-2"><a href="create-final-household-census-data.html#cb83-2" tabindex="-1"></a>  indexes <span class="sc">%&gt;%</span></span>
-<span id="cb83-3"><a href="create-final-household-census-data.html#cb83-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb83-4"><a href="create-final-household-census-data.html#cb83-4" tabindex="-1"></a>    <span class="at">wp_intervention_type =</span> <span class="fu">case_when</span>(</span>
-<span id="cb83-5"><a href="create-final-household-census-data.html#cb83-5" tabindex="-1"></a>      <span class="co"># If the household is using a water point outside of the village, it is not using one of the village&#39;s EvAc water points</span></span>
-<span id="cb83-6"><a href="create-final-household-census-data.html#cb83-6" tabindex="-1"></a><span class="co">#      !wp_invillage ~ &quot;Non-program&quot;,</span></span>
-<span id="cb83-7"><a href="create-final-household-census-data.html#cb83-7" tabindex="-1"></a>      <span class="co"># If the household is using a water point inside the village, but it wasn&#39;t mapped, then it is not an EvAc water point</span></span>
-<span id="cb83-8"><a href="create-final-household-census-data.html#cb83-8" tabindex="-1"></a>      wp_invillage <span class="sc">&amp;</span> <span class="fu">is.na</span>(wp_intervention_type) <span class="sc">~</span> <span class="st">&quot;Non-program&quot;</span>,</span>
-<span id="cb83-9"><a href="create-final-household-census-data.html#cb83-9" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(wp_intervention_type)</span>
-<span id="cb83-10"><a href="create-final-household-census-data.html#cb83-10" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> factor</span>
-<span id="cb83-11"><a href="create-final-household-census-data.html#cb83-11" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="create-final-household-census-data.html#cb85-1" tabindex="-1"></a>indexes <span class="ot">&lt;-</span></span>
+<span id="cb85-2"><a href="create-final-household-census-data.html#cb85-2" tabindex="-1"></a>  indexes <span class="sc">%&gt;%</span></span>
+<span id="cb85-3"><a href="create-final-household-census-data.html#cb85-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb85-4"><a href="create-final-household-census-data.html#cb85-4" tabindex="-1"></a>    <span class="at">wp_intervention_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb85-5"><a href="create-final-household-census-data.html#cb85-5" tabindex="-1"></a>      <span class="co"># If the household is using a water point outside of the village, it is not using one of the village&#39;s EvAc water points</span></span>
+<span id="cb85-6"><a href="create-final-household-census-data.html#cb85-6" tabindex="-1"></a><span class="co">#      !wp_invillage ~ &quot;Non-program&quot;,</span></span>
+<span id="cb85-7"><a href="create-final-household-census-data.html#cb85-7" tabindex="-1"></a>      <span class="co"># If the household is using a water point inside the village, but it wasn&#39;t mapped, then it is not an EvAc water point</span></span>
+<span id="cb85-8"><a href="create-final-household-census-data.html#cb85-8" tabindex="-1"></a>      wp_invillage <span class="sc">&amp;</span> <span class="fu">is.na</span>(wp_intervention_type) <span class="sc">~</span> <span class="st">&quot;Non-program&quot;</span>,</span>
+<span id="cb85-9"><a href="create-final-household-census-data.html#cb85-9" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(wp_intervention_type)</span>
+<span id="cb85-10"><a href="create-final-household-census-data.html#cb85-10" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> factor</span>
+<span id="cb85-11"><a href="create-final-household-census-data.html#cb85-11" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="analysis-data" class="section level3 hasAnchor" number="6.3.2">
 <h3><span class="header-section-number">6.3.2</span> Analysis data<a href="create-final-household-census-data.html#analysis-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="create-final-household-census-data.html#cb84-1" tabindex="-1"></a>final <span class="ot">&lt;-</span> </span>
-<span id="cb84-2"><a href="create-final-household-census-data.html#cb84-2" tabindex="-1"></a>  indexes <span class="sc">%&gt;%</span> </span>
-<span id="cb84-3"><a href="create-final-household-census-data.html#cb84-3" tabindex="-1"></a>  <span class="fu">set_names</span>(</span>
-<span id="cb84-4"><a href="create-final-household-census-data.html#cb84-4" tabindex="-1"></a>    <span class="fu">names</span>(.) <span class="sc">%&gt;%</span> <span class="fu">str_remove_all</span>(<span class="st">&quot;_c$&quot;</span>)</span>
-<span id="cb84-5"><a href="create-final-household-census-data.html#cb84-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb84-6"><a href="create-final-household-census-data.html#cb84-6" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>vil_replaced) <span class="sc">%&gt;%</span></span>
-<span id="cb84-7"><a href="create-final-household-census-data.html#cb84-7" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb84-8"><a href="create-final-household-census-data.html#cb84-8" tabindex="-1"></a>    <span class="sc">-</span>vil_replaced,</span>
-<span id="cb84-9"><a href="create-final-household-census-data.html#cb84-9" tabindex="-1"></a>    <span class="co"># These contain PII</span></span>
-<span id="cb84-10"><a href="create-final-household-census-data.html#cb84-10" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">contains</span>(<span class="st">&quot;comments&quot;</span>)</span>
-<span id="cb84-11"><a href="create-final-household-census-data.html#cb84-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb84-12"><a href="create-final-household-census-data.html#cb84-12" tabindex="-1"></a>  <span class="fu">remove_empty</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb84-13"><a href="create-final-household-census-data.html#cb84-13" tabindex="-1"></a>  <span class="fu">remove_constant</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="create-final-household-census-data.html#cb86-1" tabindex="-1"></a>final <span class="ot">&lt;-</span> </span>
+<span id="cb86-2"><a href="create-final-household-census-data.html#cb86-2" tabindex="-1"></a>  indexes <span class="sc">%&gt;%</span> </span>
+<span id="cb86-3"><a href="create-final-household-census-data.html#cb86-3" tabindex="-1"></a>  <span class="fu">set_names</span>(</span>
+<span id="cb86-4"><a href="create-final-household-census-data.html#cb86-4" tabindex="-1"></a>    <span class="fu">names</span>(.) <span class="sc">%&gt;%</span> <span class="fu">str_remove_all</span>(<span class="st">&quot;_c$&quot;</span>)</span>
+<span id="cb86-5"><a href="create-final-household-census-data.html#cb86-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb86-6"><a href="create-final-household-census-data.html#cb86-6" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>vil_replaced) <span class="sc">%&gt;%</span></span>
+<span id="cb86-7"><a href="create-final-household-census-data.html#cb86-7" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb86-8"><a href="create-final-household-census-data.html#cb86-8" tabindex="-1"></a>    <span class="sc">-</span>vil_replaced,</span>
+<span id="cb86-9"><a href="create-final-household-census-data.html#cb86-9" tabindex="-1"></a>    <span class="co"># These contain PII</span></span>
+<span id="cb86-10"><a href="create-final-household-census-data.html#cb86-10" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">contains</span>(<span class="st">&quot;comments&quot;</span>)</span>
+<span id="cb86-11"><a href="create-final-household-census-data.html#cb86-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb86-12"><a href="create-final-household-census-data.html#cb86-12" tabindex="-1"></a>  <span class="fu">remove_empty</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb86-13"><a href="create-final-household-census-data.html#cb86-13" tabindex="-1"></a>  <span class="fu">remove_constant</span>()</span></code></pre></div>
 <pre><code>## value for &quot;which&quot; not specified, defaulting to c(&quot;rows&quot;, &quot;cols&quot;)</code></pre>
-<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="create-final-household-census-data.html#cb86-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb86-2"><a href="create-final-household-census-data.html#cb86-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb86-3"><a href="create-final-household-census-data.html#cb86-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb86-4"><a href="create-final-household-census-data.html#cb86-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb86-5"><a href="create-final-household-census-data.html#cb86-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb86-6"><a href="create-final-household-census-data.html#cb86-6" tabindex="-1"></a>    <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb86-7"><a href="create-final-household-census-data.html#cb86-7" tabindex="-1"></a>    <span class="st">&quot;hh-census&quot;</span></span>
-<span id="cb86-8"><a href="create-final-household-census-data.html#cb86-8" tabindex="-1"></a>  )</span>
-<span id="cb86-9"><a href="create-final-household-census-data.html#cb86-9" tabindex="-1"></a></span>
-<span id="cb86-10"><a href="create-final-household-census-data.html#cb86-10" tabindex="-1"></a>final <span class="sc">%&gt;%</span></span>
-<span id="cb86-11"><a href="create-final-household-census-data.html#cb86-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb86-12"><a href="create-final-household-census-data.html#cb86-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb86-13"><a href="create-final-household-census-data.html#cb86-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb86-14"><a href="create-final-household-census-data.html#cb86-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="create-final-household-census-data.html#cb88-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb88-2"><a href="create-final-household-census-data.html#cb88-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb88-3"><a href="create-final-household-census-data.html#cb88-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb88-4"><a href="create-final-household-census-data.html#cb88-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb88-5"><a href="create-final-household-census-data.html#cb88-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb88-6"><a href="create-final-household-census-data.html#cb88-6" tabindex="-1"></a>    <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb88-7"><a href="create-final-household-census-data.html#cb88-7" tabindex="-1"></a>    <span class="st">&quot;hh-census&quot;</span></span>
+<span id="cb88-8"><a href="create-final-household-census-data.html#cb88-8" tabindex="-1"></a>  )</span>
+<span id="cb88-9"><a href="create-final-household-census-data.html#cb88-9" tabindex="-1"></a></span>
+<span id="cb88-10"><a href="create-final-household-census-data.html#cb88-10" tabindex="-1"></a>final <span class="sc">%&gt;%</span></span>
+<span id="cb88-11"><a href="create-final-household-census-data.html#cb88-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb88-12"><a href="create-final-household-census-data.html#cb88-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb88-13"><a href="create-final-household-census-data.html#cb88-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb88-14"><a href="create-final-household-census-data.html#cb88-14" tabindex="-1"></a>  )</span></code></pre></div>
 <table>
-<caption><span id="tab:unnamed-chunk-61">Table 6.1: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-63">Table 6.1: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -636,7 +664,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
-<td align="left">97</td>
+<td align="left">100</td>
 </tr>
 <tr class="even">
 <td align="left">_______________________</td>
@@ -660,7 +688,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="odd">
 <td align="left">logical</td>
-<td align="left">50</td>
+<td align="left">53</td>
 </tr>
 <tr class="even">
 <td align="left">numeric</td>
@@ -1165,179 +1193,200 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="left">FAL: 3213, TRU: 1316</td>
 </tr>
 <tr class="even">
+<td align="left">promoter_list</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.39</td>
+<td align="left">FAL: 12328, TRU: 7814</td>
+</tr>
+<tr class="odd">
 <td align="left">wp_identified</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.86</td>
 <td align="left">TRU: 17222, FAL: 2920</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_invillage</td>
 <td align="right">1152</td>
 <td align="right">0.94</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 15949, FAL: 3041</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">dsw</td>
 <td align="right">2927</td>
 <td align="right">0.85</td>
 <td align="right">0.63</td>
 <td align="left">TRU: 10823, FAL: 6392</td>
 </tr>
-<tr class="odd">
-<td align="left">ilc</td>
-<td align="right">13549</td>
-<td align="right">0.33</td>
-<td align="right">0.21</td>
-<td align="left">FAL: 5188, TRU: 1405</td>
-</tr>
 <tr class="even">
+<td align="left">ilc</td>
+<td align="right">2927</td>
+<td align="right">0.85</td>
+<td align="right">0.08</td>
+<td align="left">FAL: 15810, TRU: 1405</td>
+</tr>
+<tr class="odd">
 <td align="left">ilc_wp</td>
 <td align="right">2927</td>
 <td align="right">0.85</td>
 <td align="right">0.01</td>
 <td align="left">FAL: 16986, TRU: 229</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">ilc_wcp</td>
 <td align="right">2927</td>
 <td align="right">0.85</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 15847, TRU: 1368</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw</td>
 <td align="right">4098</td>
 <td align="right">0.80</td>
 <td align="right">0.68</td>
 <td align="left">TRU: 10886, FAL: 5158</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc</td>
 <td align="right">13632</td>
 <td align="right">0.32</td>
 <td align="right">0.21</td>
 <td align="left">FAL: 5174, TRU: 1336</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc_device</td>
 <td align="right">3029</td>
 <td align="right">0.85</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 16112, TRU: 1001</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_func</td>
 <td align="right">2927</td>
 <td align="right">0.85</td>
 <td align="right">0.98</td>
 <td align="left">TRU: 16923, FAL: 292</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_pay</td>
 <td align="right">8269</td>
 <td align="right">0.59</td>
 <td align="right">0.60</td>
 <td align="left">TRU: 7103, FAL: 4770</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_dsw_valve</td>
 <td align="right">11578</td>
 <td align="right">0.43</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 8564</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw_chlorine</td>
 <td align="right">11578</td>
 <td align="right">0.43</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 7191, FAL: 1373</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_meterfcr_01</td>
 <td align="right">11935</td>
 <td align="right">0.41</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7462, FAL: 745</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_metertcr_01</td>
 <td align="right">12002</td>
 <td align="right">0.40</td>
 <td align="right">0.93</td>
 <td align="left">TRU: 7585, FAL: 555</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_meterfcr_un_01</td>
 <td align="right">14044</td>
 <td align="right">0.30</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 5364, TRU: 734</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_metertcr_un_01</td>
 <td align="right">14032</td>
 <td align="right">0.30</td>
 <td align="right">0.17</td>
 <td align="left">FAL: 5065, TRU: 1045</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_meterfcr_02</td>
 <td align="right">11935</td>
 <td align="right">0.41</td>
 <td align="right">0.88</td>
 <td align="left">TRU: 7191, FAL: 1016</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_metertcr_02</td>
 <td align="right">12002</td>
 <td align="right">0.40</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7440, FAL: 700</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_discfcr_02</td>
 <td align="right">12074</td>
 <td align="right">0.40</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7306, FAL: 762</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_disctcr_02</td>
 <td align="right">12074</td>
 <td align="right">0.40</td>
 <td align="right">0.93</td>
 <td align="left">TRU: 7537, FAL: 531</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_meterfcr_un_02</td>
 <td align="right">14044</td>
 <td align="right">0.30</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 5715, TRU: 383</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_metertcr_un_02</td>
 <td align="right">14032</td>
 <td align="right">0.30</td>
 <td align="right">0.07</td>
 <td align="left">FAL: 5690, TRU: 420</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_discfcr_un_02</td>
 <td align="right">12427</td>
 <td align="right">0.38</td>
 <td align="right">0.01</td>
 <td align="left">FAL: 7656, TRU: 59</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_disctcr_un_02</td>
 <td align="right">12427</td>
 <td align="right">0.38</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 7507, TRU: 208</td>
+</tr>
+<tr class="even">
+<td align="left">promoter_surveyed</td>
+<td align="right">2927</td>
+<td align="right">0.85</td>
+<td align="right">0.53</td>
+<td align="left">TRU: 9136, FAL: 8079</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_ea_list</td>
+<td align="right">11006</td>
+<td align="right">0.45</td>
+<td align="right">0.88</td>
+<td align="left">TRU: 8022, FAL: 1114</td>
 </tr>
 </tbody>
 </table>
@@ -1660,53 +1709,53 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb87"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb87-1"><a href="create-final-household-census-data.html#cb87-1" tabindex="-1"></a>final <span class="sc">%&gt;%</span> </span>
-<span id="cb87-2"><a href="create-final-household-census-data.html#cb87-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb87-3"><a href="create-final-household-census-data.html#cb87-3" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb87-4"><a href="create-final-household-census-data.html#cb87-4" tabindex="-1"></a>      <span class="fu">where</span>(is.logical),</span>
-<span id="cb87-5"><a href="create-final-household-census-data.html#cb87-5" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">as.numeric</span>(.)</span>
-<span id="cb87-6"><a href="create-final-household-census-data.html#cb87-6" tabindex="-1"></a>    )</span>
-<span id="cb87-7"><a href="create-final-household-census-data.html#cb87-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb87-8"><a href="create-final-household-census-data.html#cb87-8" tabindex="-1"></a>  <span class="fu">write_dta</span>(</span>
-<span id="cb87-9"><a href="create-final-household-census-data.html#cb87-9" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb87-10"><a href="create-final-household-census-data.html#cb87-10" tabindex="-1"></a>      path_box,</span>
-<span id="cb87-11"><a href="create-final-household-census-data.html#cb87-11" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb87-12"><a href="create-final-household-census-data.html#cb87-12" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb87-13"><a href="create-final-household-census-data.html#cb87-13" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb87-14"><a href="create-final-household-census-data.html#cb87-14" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb87-15"><a href="create-final-household-census-data.html#cb87-15" tabindex="-1"></a>      <span class="st">&quot;hh-census.dta&quot;</span></span>
-<span id="cb87-16"><a href="create-final-household-census-data.html#cb87-16" tabindex="-1"></a>    )</span>
-<span id="cb87-17"><a href="create-final-household-census-data.html#cb87-17" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="create-final-household-census-data.html#cb89-1" tabindex="-1"></a>final <span class="sc">%&gt;%</span> </span>
+<span id="cb89-2"><a href="create-final-household-census-data.html#cb89-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb89-3"><a href="create-final-household-census-data.html#cb89-3" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb89-4"><a href="create-final-household-census-data.html#cb89-4" tabindex="-1"></a>      <span class="fu">where</span>(is.logical),</span>
+<span id="cb89-5"><a href="create-final-household-census-data.html#cb89-5" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">as.numeric</span>(.)</span>
+<span id="cb89-6"><a href="create-final-household-census-data.html#cb89-6" tabindex="-1"></a>    )</span>
+<span id="cb89-7"><a href="create-final-household-census-data.html#cb89-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb89-8"><a href="create-final-household-census-data.html#cb89-8" tabindex="-1"></a>  <span class="fu">write_dta</span>(</span>
+<span id="cb89-9"><a href="create-final-household-census-data.html#cb89-9" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb89-10"><a href="create-final-household-census-data.html#cb89-10" tabindex="-1"></a>      path_box,</span>
+<span id="cb89-11"><a href="create-final-household-census-data.html#cb89-11" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb89-12"><a href="create-final-household-census-data.html#cb89-12" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb89-13"><a href="create-final-household-census-data.html#cb89-13" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb89-14"><a href="create-final-household-census-data.html#cb89-14" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb89-15"><a href="create-final-household-census-data.html#cb89-15" tabindex="-1"></a>      <span class="st">&quot;hh-census.dta&quot;</span></span>
+<span id="cb89-16"><a href="create-final-household-census-data.html#cb89-16" tabindex="-1"></a>    )</span>
+<span id="cb89-17"><a href="create-final-household-census-data.html#cb89-17" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="all-data" class="section level3 hasAnchor" number="6.3.3">
 <h3><span class="header-section-number">6.3.3</span> All data<a href="create-final-household-census-data.html#all-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="create-final-household-census-data.html#cb88-1" tabindex="-1"></a>other_vars <span class="ot">&lt;-</span></span>
-<span id="cb88-2"><a href="create-final-household-census-data.html#cb88-2" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
-<span id="cb88-3"><a href="create-final-household-census-data.html#cb88-3" tabindex="-1"></a>    <span class="fu">names</span>(hhc_clean),</span>
-<span id="cb88-4"><a href="create-final-household-census-data.html#cb88-4" tabindex="-1"></a>    <span class="fu">names</span>(indexes)</span>
-<span id="cb88-5"><a href="create-final-household-census-data.html#cb88-5" tabindex="-1"></a>  )</span>
-<span id="cb88-6"><a href="create-final-household-census-data.html#cb88-6" tabindex="-1"></a></span>
-<span id="cb88-7"><a href="create-final-household-census-data.html#cb88-7" tabindex="-1"></a>hhc_constructed <span class="ot">&lt;-</span></span>
-<span id="cb88-8"><a href="create-final-household-census-data.html#cb88-8" tabindex="-1"></a>  indexes <span class="sc">%&gt;%</span></span>
-<span id="cb88-9"><a href="create-final-household-census-data.html#cb88-9" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb88-10"><a href="create-final-household-census-data.html#cb88-10" tabindex="-1"></a>    hhc_clean <span class="sc">%&gt;%</span></span>
-<span id="cb88-11"><a href="create-final-household-census-data.html#cb88-11" tabindex="-1"></a>      <span class="fu">select</span>(key, <span class="fu">all_of</span>(other_vars))</span>
-<span id="cb88-12"><a href="create-final-household-census-data.html#cb88-12" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="create-final-household-census-data.html#cb90-1" tabindex="-1"></a>other_vars <span class="ot">&lt;-</span></span>
+<span id="cb90-2"><a href="create-final-household-census-data.html#cb90-2" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
+<span id="cb90-3"><a href="create-final-household-census-data.html#cb90-3" tabindex="-1"></a>    <span class="fu">names</span>(hhc_clean),</span>
+<span id="cb90-4"><a href="create-final-household-census-data.html#cb90-4" tabindex="-1"></a>    <span class="fu">names</span>(indexes)</span>
+<span id="cb90-5"><a href="create-final-household-census-data.html#cb90-5" tabindex="-1"></a>  )</span>
+<span id="cb90-6"><a href="create-final-household-census-data.html#cb90-6" tabindex="-1"></a></span>
+<span id="cb90-7"><a href="create-final-household-census-data.html#cb90-7" tabindex="-1"></a>hhc_constructed <span class="ot">&lt;-</span></span>
+<span id="cb90-8"><a href="create-final-household-census-data.html#cb90-8" tabindex="-1"></a>  indexes <span class="sc">%&gt;%</span></span>
+<span id="cb90-9"><a href="create-final-household-census-data.html#cb90-9" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb90-10"><a href="create-final-household-census-data.html#cb90-10" tabindex="-1"></a>    hhc_clean <span class="sc">%&gt;%</span></span>
+<span id="cb90-11"><a href="create-final-household-census-data.html#cb90-11" tabindex="-1"></a>      <span class="fu">select</span>(key, <span class="fu">all_of</span>(other_vars))</span>
+<span id="cb90-12"><a href="create-final-household-census-data.html#cb90-12" tabindex="-1"></a>  )</span></code></pre></div>
 <pre><code>## Joining with `by = join_by(key)`</code></pre>
-<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="create-final-household-census-data.html#cb90-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb90-2"><a href="create-final-household-census-data.html#cb90-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb90-3"><a href="create-final-household-census-data.html#cb90-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb90-4"><a href="create-final-household-census-data.html#cb90-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb90-5"><a href="create-final-household-census-data.html#cb90-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb90-6"><a href="create-final-household-census-data.html#cb90-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb90-7"><a href="create-final-household-census-data.html#cb90-7" tabindex="-1"></a>    <span class="st">&quot;hh-census-constructed&quot;</span></span>
-<span id="cb90-8"><a href="create-final-household-census-data.html#cb90-8" tabindex="-1"></a>  )</span>
-<span id="cb90-9"><a href="create-final-household-census-data.html#cb90-9" tabindex="-1"></a></span>
-<span id="cb90-10"><a href="create-final-household-census-data.html#cb90-10" tabindex="-1"></a>hhc_constructed <span class="sc">%&gt;%</span> </span>
-<span id="cb90-11"><a href="create-final-household-census-data.html#cb90-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb90-12"><a href="create-final-household-census-data.html#cb90-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb90-13"><a href="create-final-household-census-data.html#cb90-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb90-14"><a href="create-final-household-census-data.html#cb90-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="create-final-household-census-data.html#cb92-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb92-2"><a href="create-final-household-census-data.html#cb92-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb92-3"><a href="create-final-household-census-data.html#cb92-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb92-4"><a href="create-final-household-census-data.html#cb92-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb92-5"><a href="create-final-household-census-data.html#cb92-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb92-6"><a href="create-final-household-census-data.html#cb92-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb92-7"><a href="create-final-household-census-data.html#cb92-7" tabindex="-1"></a>    <span class="st">&quot;hh-census-constructed&quot;</span></span>
+<span id="cb92-8"><a href="create-final-household-census-data.html#cb92-8" tabindex="-1"></a>  )</span>
+<span id="cb92-9"><a href="create-final-household-census-data.html#cb92-9" tabindex="-1"></a></span>
+<span id="cb92-10"><a href="create-final-household-census-data.html#cb92-10" tabindex="-1"></a>hhc_constructed <span class="sc">%&gt;%</span> </span>
+<span id="cb92-11"><a href="create-final-household-census-data.html#cb92-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb92-12"><a href="create-final-household-census-data.html#cb92-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb92-13"><a href="create-final-household-census-data.html#cb92-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb92-14"><a href="create-final-household-census-data.html#cb92-14" tabindex="-1"></a>  )</span></code></pre></div>
 <pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
 ## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
@@ -1728,7 +1777,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## ! no non-missing arguments to min; returning Inf
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.</code></pre>
 <table>
-<caption><span id="tab:unnamed-chunk-64">Table 6.2: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-66">Table 6.2: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -1740,7 +1789,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
-<td align="left">375</td>
+<td align="left">378</td>
 </tr>
 <tr class="even">
 <td align="left">_______________________</td>
@@ -1764,7 +1813,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="odd">
 <td align="left">logical</td>
-<td align="left">193</td>
+<td align="left">196</td>
 </tr>
 <tr class="even">
 <td align="left">numeric</td>
@@ -3379,1168 +3428,1189 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="left">FAL: 3646, TRU: 1347</td>
 </tr>
 <tr class="odd">
+<td align="left">promoter_list</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.38</td>
+<td align="left">FAL: 13226, TRU: 8249</td>
+</tr>
+<tr class="even">
 <td align="left">wp_identified</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.85</td>
 <td align="left">TRU: 18326, FAL: 3149</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_invillage</td>
 <td align="right">1270</td>
 <td align="right">0.94</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 16936, FAL: 3269</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">dsw</td>
 <td align="right">3156</td>
 <td align="right">0.85</td>
 <td align="right">0.62</td>
 <td align="left">TRU: 11329, FAL: 6990</td>
 </tr>
-<tr class="even">
-<td align="left">ilc</td>
-<td align="right">14289</td>
-<td align="right">0.33</td>
-<td align="right">0.22</td>
-<td align="left">FAL: 5633, TRU: 1553</td>
-</tr>
 <tr class="odd">
+<td align="left">ilc</td>
+<td align="right">3156</td>
+<td align="right">0.85</td>
+<td align="right">0.08</td>
+<td align="left">FAL: 16766, TRU: 1553</td>
+</tr>
+<tr class="even">
 <td align="left">ilc_wp</td>
 <td align="right">3156</td>
 <td align="right">0.85</td>
 <td align="right">0.02</td>
 <td align="left">FAL: 17942, TRU: 377</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ilc_wcp</td>
 <td align="right">3156</td>
 <td align="right">0.85</td>
 <td align="right">0.07</td>
 <td align="left">FAL: 16951, TRU: 1368</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_dsw</td>
 <td align="right">4480</td>
 <td align="right">0.79</td>
 <td align="right">0.67</td>
 <td align="left">TRU: 11392, FAL: 5603</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc</td>
 <td align="right">14372</td>
 <td align="right">0.33</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 5767, TRU: 1336</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_device</td>
 <td align="right">3263</td>
 <td align="right">0.85</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 17063, TRU: 1149</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_func</td>
 <td align="right">3156</td>
 <td align="right">0.85</td>
 <td align="right">0.98</td>
 <td align="left">TRU: 18022, FAL: 297</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_pay</td>
 <td align="right">9096</td>
 <td align="right">0.58</td>
 <td align="right">0.58</td>
 <td align="left">TRU: 7161, FAL: 5218</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw_valve</td>
 <td align="right">12581</td>
 <td align="right">0.41</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 8894</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_dsw_chlorine</td>
 <td align="right">12581</td>
 <td align="right">0.41</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 7506, FAL: 1388</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_01</td>
 <td align="right">12953</td>
 <td align="right">0.40</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7777, FAL: 745</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_01</td>
 <td align="right">13020</td>
 <td align="right">0.39</td>
 <td align="right">0.93</td>
 <td align="left">TRU: 7900, FAL: 555</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_un_01</td>
 <td align="right">15047</td>
 <td align="right">0.30</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 5679, TRU: 749</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_un_01</td>
 <td align="right">15035</td>
 <td align="right">0.30</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 5214, TRU: 1226</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_02</td>
 <td align="right">12953</td>
 <td align="right">0.40</td>
 <td align="right">0.88</td>
 <td align="left">TRU: 7506, FAL: 1016</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_02</td>
 <td align="right">13020</td>
 <td align="right">0.39</td>
 <td align="right">0.92</td>
 <td align="left">TRU: 7755, FAL: 700</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_discfcr_02</td>
 <td align="right">13092</td>
 <td align="right">0.39</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7621, FAL: 762</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_disctcr_02</td>
 <td align="right">13092</td>
 <td align="right">0.39</td>
 <td align="right">0.94</td>
 <td align="left">TRU: 7852, FAL: 531</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_un_02</td>
 <td align="right">15047</td>
 <td align="right">0.30</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 6045, TRU: 383</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_un_02</td>
 <td align="right">15035</td>
 <td align="right">0.30</td>
 <td align="right">0.07</td>
 <td align="left">FAL: 6005, TRU: 435</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_discfcr_un_02</td>
 <td align="right">13430</td>
 <td align="right">0.37</td>
 <td align="right">0.01</td>
 <td align="left">FAL: 7986, TRU: 59</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_disctcr_un_02</td>
 <td align="right">13430</td>
 <td align="right">0.37</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 7793, TRU: 252</td>
 </tr>
+<tr class="odd">
+<td align="left">promoter_surveyed</td>
+<td align="right">3156</td>
+<td align="right">0.85</td>
+<td align="right">0.52</td>
+<td align="left">TRU: 9551, FAL: 8768</td>
+</tr>
 <tr class="even">
+<td align="left">pm_ea_list</td>
+<td align="right">11924</td>
+<td align="right">0.44</td>
+<td align="right">0.88</td>
+<td align="left">TRU: 8405, FAL: 1146</td>
+</tr>
+<tr class="odd">
 <td align="left">audio_audit</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_selected</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">bc_selected</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">confirm_details_yn</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 21475</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">num_listed_pl</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">visit_found</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.94</td>
 <td align="left">TRU: 20205, FAL: 1270</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent</td>
 <td align="right">1270</td>
 <td align="right">0.94</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 20196, FAL: 9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_audio</td>
 <td align="right">1279</td>
 <td align="right">0.94</td>
 <td align="right">0.96</td>
 <td align="left">TRU: 19411, FAL: 785</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent_gps</td>
 <td align="right">1279</td>
 <td align="right">0.94</td>
 <td align="right">0.99</td>
 <td align="left">TRU: 20074, FAL: 122</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_contact</td>
 <td align="right">1279</td>
 <td align="right">0.94</td>
 <td align="right">0.99</td>
 <td align="left">TRU: 20054, FAL: 142</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">primary_waterpoint</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_eligibility</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">alt_wp_eligible</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_1</td>
 <td align="right">18186</td>
 <td align="right">0.15</td>
 <td align="right">0.46</td>
 <td align="left">FAL: 1769, TRU: 1520</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen_2</td>
 <td align="right">18186</td>
 <td align="right">0.15</td>
 <td align="right">0.23</td>
 <td align="left">FAL: 2518, TRU: 771</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_3</td>
 <td align="right">18186</td>
 <td align="right">0.15</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 2890, TRU: 399</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen_4</td>
 <td align="right">18186</td>
 <td align="right">0.15</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 2667, TRU: 622</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_5</td>
 <td align="right">18752</td>
 <td align="right">0.13</td>
 <td align="right">0.07</td>
 <td align="left">FAL: 2521, TRU: 202</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen__666</td>
 <td align="right">18186</td>
 <td align="right">0.15</td>
 <td align="right">0.11</td>
 <td align="left">FAL: 2916, TRU: 373</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_eligible_pl</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_0</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.48</td>
 <td align="left">FAL: 2583, TRU: 2410</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method__111</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 4837, TRU: 156</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_1</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 4038, TRU: 955</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_2</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 4613, TRU: 380</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_3</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.20</td>
 <td align="left">FAL: 3994, TRU: 999</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_4</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.04</td>
 <td align="left">FAL: 4790, TRU: 203</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_5</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 4864, TRU: 129</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_6</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 4991, TRU: 2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_7</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 4990, TRU: 3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_8</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 4596, TRU: 397</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method__666</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.02</td>
 <td align="left">FAL: 4905, TRU: 88</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method__999</td>
 <td align="right">16482</td>
 <td align="right">0.23</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 4989, TRU: 4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">complete</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">simid</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_key_pl</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">survey1respid_grp1resp_relations</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">meta1instancename</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">_hfcokay</td>
 <td align="right">11802</td>
 <td align="right">0.45</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 9673</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">deviceid_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">username_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">metadata_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">comments_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">today_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">uid_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">randomdraw_hh_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">districtmw_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">tamw_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">gvhmw_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">villagemw_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">vil_id_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">country_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">district_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ta_name_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">gvh_name_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">village_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">village_id_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_randnum_int_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hhid_time_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">sub_hh_district_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">sub_hh_ea_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">village_key_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">subs_enum_id_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">household_id_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">enumerator_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">enumerator_id_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">enumerator_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">visit_landmarks_c</td>
 <td align="right">21474</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">vist_other_vill_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">visit_notfound_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">visit_resch_reason_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">revisit_calc_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_str_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent_whynot_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_signature_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent_end_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_diff_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">respid_str_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_first_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">resp_family_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_common_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">resp_other_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">full_names_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hhh_first_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hhh_surname_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hhh_common_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hhh_other_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">resp_phone_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_phone_confirm_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">respid_end_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">respid_diff_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">household_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_source_str_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_source_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_name_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc_device_c</td>
 <td align="right">14850</td>
 <td align="right">0.31</td>
 <td align="right">0.04</td>
 <td align="left">FAL: 6367, TRU: 258</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_evac_c</td>
 <td align="right">21221</td>
 <td align="right">0.01</td>
 <td align="right">0.11</td>
 <td align="left">FAL: 226, TRU: 28</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc_c</td>
 <td align="right">16567</td>
 <td align="right">0.23</td>
 <td align="right">0.02</td>
 <td align="left">FAL: 4799, TRU: 109</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_id_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_name_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_desc_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_other_dsw_c</td>
 <td align="right">19673</td>
 <td align="right">0.08</td>
 <td align="right">0.54</td>
 <td align="left">TRU: 970, FAL: 832</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_ilc_c</td>
 <td align="right">19675</td>
 <td align="right">0.08</td>
 <td align="right">0.10</td>
 <td align="left">FAL: 1628, TRU: 172</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_source_communal_c</td>
 <td align="right">19701</td>
 <td align="right">0.08</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 1609, FAL: 165</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_comments_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_id_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_name_coa_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_id_coa_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_match_comments_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_source_end_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_source_diff_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_xtics_st_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_under18_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_xtics_end_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_xtics_diff_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_landmarks_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_grp_str_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_dsw_c</td>
 <td align="right">16519</td>
 <td align="right">0.23</td>
 <td align="right">0.61</td>
 <td align="left">TRU: 3012, FAL: 1944</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_ilc_c</td>
 <td align="right">16533</td>
 <td align="right">0.23</td>
 <td align="right">0.25</td>
 <td align="left">FAL: 3683, TRU: 1259</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_o_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_grp_end_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_grp_diff_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">endcomment_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">instancename_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">key_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">skey_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">districtug_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">subcountyug_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">parishug_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">villageug_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">village_name_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">subcounty_name_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">parish_name_pl_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_idbck_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_randtxt_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">review_comments_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">_hfcokayvar_c</td>
 <td align="right">21475</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">missing_gps</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
@@ -5150,24 +5220,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="create-final-household-census-data.html#cb92-1" tabindex="-1"></a>gps_constructed <span class="ot">&lt;-</span></span>
-<span id="cb92-2"><a href="create-final-household-census-data.html#cb92-2" tabindex="-1"></a>  hhc_gps <span class="sc">%&gt;%</span></span>
-<span id="cb92-3"><a href="create-final-household-census-data.html#cb92-3" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_constructed)</span></code></pre></div>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="create-final-household-census-data.html#cb94-1" tabindex="-1"></a>gps_constructed <span class="ot">&lt;-</span></span>
+<span id="cb94-2"><a href="create-final-household-census-data.html#cb94-2" tabindex="-1"></a>  hhc_gps <span class="sc">%&gt;%</span></span>
+<span id="cb94-3"><a href="create-final-household-census-data.html#cb94-3" tabindex="-1"></a>  <span class="fu">left_join</span>(hhc_constructed)</span></code></pre></div>
 <pre><code>## Joining with `by = join_by(key, country, altitude_c, accuracy_c)`</code></pre>
-<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="create-final-household-census-data.html#cb94-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb94-2"><a href="create-final-household-census-data.html#cb94-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb94-3"><a href="create-final-household-census-data.html#cb94-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb94-4"><a href="create-final-household-census-data.html#cb94-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb94-5"><a href="create-final-household-census-data.html#cb94-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb94-6"><a href="create-final-household-census-data.html#cb94-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb94-7"><a href="create-final-household-census-data.html#cb94-7" tabindex="-1"></a>    <span class="st">&quot;hh-census-constructed&quot;</span></span>
-<span id="cb94-8"><a href="create-final-household-census-data.html#cb94-8" tabindex="-1"></a>  )</span>
-<span id="cb94-9"><a href="create-final-household-census-data.html#cb94-9" tabindex="-1"></a></span>
-<span id="cb94-10"><a href="create-final-household-census-data.html#cb94-10" tabindex="-1"></a>gps_constructed <span class="sc">%&gt;%</span> </span>
-<span id="cb94-11"><a href="create-final-household-census-data.html#cb94-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb94-12"><a href="create-final-household-census-data.html#cb94-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb94-13"><a href="create-final-household-census-data.html#cb94-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb94-14"><a href="create-final-household-census-data.html#cb94-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="create-final-household-census-data.html#cb96-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb96-2"><a href="create-final-household-census-data.html#cb96-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb96-3"><a href="create-final-household-census-data.html#cb96-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb96-4"><a href="create-final-household-census-data.html#cb96-4" tabindex="-1"></a>    <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
+<span id="cb96-5"><a href="create-final-household-census-data.html#cb96-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb96-6"><a href="create-final-household-census-data.html#cb96-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb96-7"><a href="create-final-household-census-data.html#cb96-7" tabindex="-1"></a>    <span class="st">&quot;hh-census-constructed&quot;</span></span>
+<span id="cb96-8"><a href="create-final-household-census-data.html#cb96-8" tabindex="-1"></a>  )</span>
+<span id="cb96-9"><a href="create-final-household-census-data.html#cb96-9" tabindex="-1"></a></span>
+<span id="cb96-10"><a href="create-final-household-census-data.html#cb96-10" tabindex="-1"></a>gps_constructed <span class="sc">%&gt;%</span> </span>
+<span id="cb96-11"><a href="create-final-household-census-data.html#cb96-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb96-12"><a href="create-final-household-census-data.html#cb96-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb96-13"><a href="create-final-household-census-data.html#cb96-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb96-14"><a href="create-final-household-census-data.html#cb96-14" tabindex="-1"></a>  )</span></code></pre></div>
 <pre><code>## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
 ## `sfl` provided. Falling back to `character`.</code></pre>
 <pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
@@ -5193,7 +5263,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## ! no non-missing arguments to min; returning Inf
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.</code></pre>
 <table>
-<caption><span id="tab:unnamed-chunk-66">Table 6.3: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-68">Table 6.3: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -5205,7 +5275,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
-<td align="left">376</td>
+<td align="left">379</td>
 </tr>
 <tr class="even">
 <td align="left">_______________________</td>
@@ -5229,7 +5299,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 <tr class="odd">
 <td align="left">logical</td>
-<td align="left">193</td>
+<td align="left">196</td>
 </tr>
 <tr class="even">
 <td align="left">numeric</td>
@@ -6854,1168 +6924,1189 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td align="left">FAL: 3607, TRU: 1339</td>
 </tr>
 <tr class="odd">
+<td align="left">promoter_list</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.40</td>
+<td align="left">FAL: 11886, TRU: 7792</td>
+</tr>
+<tr class="even">
 <td align="left">wp_identified</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 17823, FAL: 1855</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_invillage</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 16456, FAL: 3222</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">dsw</td>
 <td align="right">1861</td>
 <td align="right">0.91</td>
 <td align="right">0.62</td>
 <td align="left">TRU: 10981, FAL: 6836</td>
 </tr>
-<tr class="even">
-<td align="left">ilc</td>
-<td align="right">12651</td>
-<td align="right">0.36</td>
-<td align="right">0.22</td>
-<td align="left">FAL: 5493, TRU: 1534</td>
-</tr>
 <tr class="odd">
+<td align="left">ilc</td>
+<td align="right">1861</td>
+<td align="right">0.91</td>
+<td align="right">0.09</td>
+<td align="left">FAL: 16283, TRU: 1534</td>
+</tr>
+<tr class="even">
 <td align="left">ilc_wp</td>
 <td align="right">1861</td>
 <td align="right">0.91</td>
 <td align="right">0.02</td>
 <td align="left">FAL: 17446, TRU: 371</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ilc_wcp</td>
 <td align="right">1861</td>
 <td align="right">0.91</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 16466, TRU: 1351</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_dsw</td>
 <td align="right">3158</td>
 <td align="right">0.84</td>
 <td align="right">0.67</td>
 <td align="left">TRU: 11044, FAL: 5476</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc</td>
 <td align="right">12734</td>
 <td align="right">0.35</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 5625, TRU: 1319</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_device</td>
 <td align="right">1965</td>
 <td align="right">0.90</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 16577, TRU: 1136</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_func</td>
 <td align="right">1861</td>
 <td align="right">0.91</td>
 <td align="right">0.98</td>
 <td align="left">TRU: 17546, FAL: 271</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_pay</td>
 <td align="right">7671</td>
 <td align="right">0.61</td>
 <td align="right">0.57</td>
 <td align="left">TRU: 6863, FAL: 5144</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw_valve</td>
 <td align="right">10930</td>
 <td align="right">0.44</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 8748</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_dsw_chlorine</td>
 <td align="right">10930</td>
 <td align="right">0.44</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 7380, FAL: 1368</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_01</td>
 <td align="right">11308</td>
 <td align="right">0.43</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7649, FAL: 721</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_01</td>
 <td align="right">11375</td>
 <td align="right">0.42</td>
 <td align="right">0.94</td>
 <td align="left">TRU: 7766, FAL: 537</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_un_01</td>
 <td align="right">13300</td>
 <td align="right">0.32</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 5633, TRU: 745</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_un_01</td>
 <td align="right">13288</td>
 <td align="right">0.32</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 5171, TRU: 1219</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_02</td>
 <td align="right">11308</td>
 <td align="right">0.43</td>
 <td align="right">0.88</td>
 <td align="left">TRU: 7378, FAL: 992</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_02</td>
 <td align="right">11375</td>
 <td align="right">0.42</td>
 <td align="right">0.92</td>
 <td align="left">TRU: 7624, FAL: 679</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_discfcr_02</td>
 <td align="right">11445</td>
 <td align="right">0.42</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 7493, FAL: 740</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_disctcr_02</td>
 <td align="right">11445</td>
 <td align="right">0.42</td>
 <td align="right">0.94</td>
 <td align="left">TRU: 7718, FAL: 515</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_meterfcr_un_02</td>
 <td align="right">13300</td>
 <td align="right">0.32</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 5999, TRU: 379</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_metertcr_un_02</td>
 <td align="right">13288</td>
 <td align="right">0.32</td>
 <td align="right">0.07</td>
 <td align="left">FAL: 5959, TRU: 431</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_discfcr_un_02</td>
 <td align="right">11694</td>
 <td align="right">0.41</td>
 <td align="right">0.01</td>
 <td align="left">FAL: 7925, TRU: 59</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_disctcr_un_02</td>
 <td align="right">11694</td>
 <td align="right">0.41</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 7732, TRU: 252</td>
 </tr>
+<tr class="odd">
+<td align="left">promoter_surveyed</td>
+<td align="right">1861</td>
+<td align="right">0.91</td>
+<td align="right">0.52</td>
+<td align="left">TRU: 9226, FAL: 8591</td>
+</tr>
 <tr class="even">
+<td align="left">pm_ea_list</td>
+<td align="right">10452</td>
+<td align="right">0.47</td>
+<td align="right">0.88</td>
+<td align="left">TRU: 8098, FAL: 1128</td>
+</tr>
+<tr class="odd">
 <td align="left">audio_audit</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_selected</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">bc_selected</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">confirm_details_yn</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 19678</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">num_listed_pl</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">visit_found</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 19678</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 19678</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_audio</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.96</td>
 <td align="left">TRU: 18979, FAL: 699</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent_gps</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 19678</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_contact</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.99</td>
 <td align="left">TRU: 19563, FAL: 115</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">primary_waterpoint</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_eligibility</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">alt_wp_eligible</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_1</td>
 <td align="right">16423</td>
 <td align="right">0.17</td>
 <td align="right">0.46</td>
 <td align="left">FAL: 1745, TRU: 1510</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen_2</td>
 <td align="right">16423</td>
 <td align="right">0.17</td>
 <td align="right">0.23</td>
 <td align="left">FAL: 2494, TRU: 761</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_3</td>
 <td align="right">16423</td>
 <td align="right">0.17</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 2858, TRU: 397</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen_4</td>
 <td align="right">16423</td>
 <td align="right">0.17</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 2641, TRU: 614</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_5</td>
 <td align="right">16974</td>
 <td align="right">0.14</td>
 <td align="right">0.07</td>
 <td align="left">FAL: 2502, TRU: 202</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen__666</td>
 <td align="right">16423</td>
 <td align="right">0.17</td>
 <td align="right">0.11</td>
 <td align="left">FAL: 2888, TRU: 367</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_eligible_pl</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_0</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.48</td>
 <td align="left">FAL: 2561, TRU: 2385</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method__111</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 4793, TRU: 153</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_1</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.19</td>
 <td align="left">FAL: 4002, TRU: 944</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_2</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 4568, TRU: 378</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_3</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.20</td>
 <td align="left">FAL: 3953, TRU: 993</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_4</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.04</td>
 <td align="left">FAL: 4744, TRU: 202</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_5</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 4818, TRU: 128</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_6</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 4944, TRU: 2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_7</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 4943, TRU: 3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_8</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 4550, TRU: 396</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method__666</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.02</td>
 <td align="left">FAL: 4858, TRU: 88</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method__999</td>
 <td align="right">14732</td>
 <td align="right">0.25</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 4942, TRU: 4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">complete</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">simid</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_key_pl</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">survey1respid_grp1resp_relations</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">meta1instancename</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">_hfcokay</td>
 <td align="right">11468</td>
 <td align="right">0.42</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 8210</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">deviceid_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">username_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">metadata_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">comments_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">today_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">uid_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">randomdraw_hh_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">districtmw_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">tamw_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">gvhmw_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">villagemw_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">vil_id_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">country_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">district_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ta_name_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">gvh_name_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">village_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">village_id_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_randnum_int_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hhid_time_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">sub_hh_district_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">sub_hh_ea_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">village_key_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">subs_enum_id_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">household_id_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">enumerator_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">enumerator_id_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">enumerator_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">visit_landmarks_c</td>
 <td align="right">19677</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="left">FAL: 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">vist_other_vill_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">visit_notfound_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">visit_resch_reason_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">revisit_calc_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_str_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent_whynot_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_signature_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">consent_end_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">consent_diff_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">respid_str_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_first_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">resp_family_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_common_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">resp_other_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">full_names_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hhh_first_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hhh_surname_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hhh_common_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hhh_other_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">resp_phone_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">resp_phone_confirm_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">respid_end_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">respid_diff_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">household_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_source_str_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_source_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_name_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc_device_c</td>
 <td align="right">13435</td>
 <td align="right">0.32</td>
 <td align="right">0.04</td>
 <td align="left">FAL: 5988, TRU: 255</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_evac_c</td>
 <td align="right">19427</td>
 <td align="right">0.01</td>
 <td align="right">0.11</td>
 <td align="left">FAL: 223, TRU: 28</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc_c</td>
 <td align="right">14859</td>
 <td align="right">0.24</td>
 <td align="right">0.02</td>
 <td align="left">FAL: 4712, TRU: 107</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_id_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_name_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_desc_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_other_dsw_c</td>
 <td align="right">17902</td>
 <td align="right">0.09</td>
 <td align="right">0.54</td>
 <td align="left">TRU: 960, FAL: 816</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_ilc_c</td>
 <td align="right">17904</td>
 <td align="right">0.09</td>
 <td align="right">0.10</td>
 <td align="left">FAL: 1603, TRU: 171</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_source_communal_c</td>
 <td align="right">17930</td>
 <td align="right">0.09</td>
 <td align="right">0.91</td>
 <td align="left">TRU: 1585, FAL: 163</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_other_comments_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_id_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_name_coa_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_id_coa_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_match_comments_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_secwhen_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_secwhen_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_source_end_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_source_diff_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_xtics_st_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_under18_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_xtics_end_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_xtics_diff_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_landmarks_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_grp_str_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_dsw_c</td>
 <td align="right">14769</td>
 <td align="right">0.25</td>
 <td align="right">0.61</td>
 <td align="left">TRU: 2989, FAL: 1920</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_ilc_c</td>
 <td align="right">14783</td>
 <td align="right">0.25</td>
 <td align="right">0.25</td>
 <td align="left">FAL: 3649, TRU: 1246</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_method_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_method_o_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wtmt_grp_end_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wtmt_grp_diff_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">endcomment_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">instancename_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">key_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">skey_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">districtug_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">subcountyug_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">parishug_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">villageug_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">village_name_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">subcounty_name_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">parish_name_pl_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hh_idbck_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hh_randtxt_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">review_comments_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">_hfcokayvar_c</td>
 <td align="right">19678</td>
 <td align="right">0.00</td>
 <td align="right">NaN</td>
 <td align="left">:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">missing_gps</td>
 <td align="right">0</td>
 <td align="right">1.00</td>

@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-17" />
+<meta name="date" content="2025-10-21" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2133,8 +2133,12 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="13.3.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#dsw-water-points"><i class="fa fa-check"></i><b>13.3.2</b> DSW water points</a></li>
 </ul></li>
 <li class="chapter" data-level="13.4" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-constructed-data"><i class="fa fa-check"></i><b>13.4</b> Export constructed data</a></li>
-<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5</b> Order analysis variables</a></li>
-<li class="chapter" data-level="13.6" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.6</b> Export final data</a></li>
+<li class="chapter" data-level="13.5" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#export-final-data"><i class="fa fa-check"></i><b>13.5</b> Export final data</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#order-analysis-variables"><i class="fa fa-check"></i><b>13.5.1</b> Order analysis variables</a></li>
+<li class="chapter" data-level="13.5.2" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#select-relevant-observations"><i class="fa fa-check"></i><b>13.5.2</b> Select relevant observations</a></li>
+<li class="chapter" data-level="13.5.3" data-path="create-final-water-point-census-data.html"><a href="create-final-water-point-census-data.html#save-data-2"><i class="fa fa-check"></i><b>13.5.3</b> Save data</a></li>
+</ul></li>
 </ul></li>
 </ul>
 
@@ -2156,215 +2160,230 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="create-final-water-point-census-data" class="section level1 hasAnchor" number="13">
 <h1><span class="header-section-number">13</span> Create final water point census data<a href="create-final-water-point-census-data.html#create-final-water-point-census-data" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb251"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb251-1"><a href="create-final-water-point-census-data.html#cb251-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
-<span id="cb251-2"><a href="create-final-water-point-census-data.html#cb251-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb251-3"><a href="create-final-water-point-census-data.html#cb251-3" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>, </span>
-<span id="cb251-4"><a href="create-final-water-point-census-data.html#cb251-4" tabindex="-1"></a>    <span class="st">&quot;here&quot;</span>,</span>
-<span id="cb251-5"><a href="create-final-water-point-census-data.html#cb251-5" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span>,</span>
-<span id="cb251-6"><a href="create-final-water-point-census-data.html#cb251-6" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
-<span id="cb251-7"><a href="create-final-water-point-census-data.html#cb251-7" tabindex="-1"></a>    <span class="st">&quot;units&quot;</span>,</span>
-<span id="cb251-8"><a href="create-final-water-point-census-data.html#cb251-8" tabindex="-1"></a>    <span class="st">&quot;leaflet&quot;</span>,</span>
-<span id="cb251-9"><a href="create-final-water-point-census-data.html#cb251-9" tabindex="-1"></a>    <span class="st">&quot;viridis&quot;</span>,</span>
-<span id="cb251-10"><a href="create-final-water-point-census-data.html#cb251-10" tabindex="-1"></a>    <span class="st">&quot;assertthat&quot;</span></span>
-<span id="cb251-11"><a href="create-final-water-point-census-data.html#cb251-11" tabindex="-1"></a>  )</span>
-<span id="cb251-12"><a href="create-final-water-point-census-data.html#cb251-12" tabindex="-1"></a></span>
-<span id="cb251-13"><a href="create-final-water-point-census-data.html#cb251-13" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(packages, <span class="at">character.only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb238"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb238-1"><a href="create-final-water-point-census-data.html#cb238-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
+<span id="cb238-2"><a href="create-final-water-point-census-data.html#cb238-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb238-3"><a href="create-final-water-point-census-data.html#cb238-3" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>, </span>
+<span id="cb238-4"><a href="create-final-water-point-census-data.html#cb238-4" tabindex="-1"></a>    <span class="st">&quot;here&quot;</span>,</span>
+<span id="cb238-5"><a href="create-final-water-point-census-data.html#cb238-5" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span>,</span>
+<span id="cb238-6"><a href="create-final-water-point-census-data.html#cb238-6" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
+<span id="cb238-7"><a href="create-final-water-point-census-data.html#cb238-7" tabindex="-1"></a>    <span class="st">&quot;units&quot;</span>,</span>
+<span id="cb238-8"><a href="create-final-water-point-census-data.html#cb238-8" tabindex="-1"></a>    <span class="st">&quot;leaflet&quot;</span>,</span>
+<span id="cb238-9"><a href="create-final-water-point-census-data.html#cb238-9" tabindex="-1"></a>    <span class="st">&quot;viridis&quot;</span>,</span>
+<span id="cb238-10"><a href="create-final-water-point-census-data.html#cb238-10" tabindex="-1"></a>    <span class="st">&quot;assertthat&quot;</span></span>
+<span id="cb238-11"><a href="create-final-water-point-census-data.html#cb238-11" tabindex="-1"></a>  )</span>
+<span id="cb238-12"><a href="create-final-water-point-census-data.html#cb238-12" tabindex="-1"></a></span>
+<span id="cb238-13"><a href="create-final-water-point-census-data.html#cb238-13" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(packages, <span class="at">character.only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </details>
 <div id="load-data-7" class="section level2 hasAnchor" number="13.1">
 <h2><span class="header-section-number">13.1</span> Load data<a href="create-final-water-point-census-data.html#load-data-7" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <div id="evidence-action-1" class="section level3 hasAnchor" number="13.1.1">
 <h3><span class="header-section-number">13.1.1</span> Evidence Action<a href="create-final-water-point-census-data.html#evidence-action-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb252"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb252-1"><a href="create-final-water-point-census-data.html#cb252-1" tabindex="-1"></a>villages <span class="ot">&lt;-</span></span>
-<span id="cb252-2"><a href="create-final-water-point-census-data.html#cb252-2" tabindex="-1"></a>   <span class="fu">read_rds</span>(</span>
-<span id="cb252-3"><a href="create-final-water-point-census-data.html#cb252-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
-<span id="cb252-4"><a href="create-final-water-point-census-data.html#cb252-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb252-5"><a href="create-final-water-point-census-data.html#cb252-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb252-6"><a href="create-final-water-point-census-data.html#cb252-6" tabindex="-1"></a>      <span class="st">&quot;Villages&quot;</span>,</span>
-<span id="cb252-7"><a href="create-final-water-point-census-data.html#cb252-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb252-8"><a href="create-final-water-point-census-data.html#cb252-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb252-9"><a href="create-final-water-point-census-data.html#cb252-9" tabindex="-1"></a>      <span class="st">&quot;villages.rds&quot;</span></span>
-<span id="cb252-10"><a href="create-final-water-point-census-data.html#cb252-10" tabindex="-1"></a>    )</span>
-<span id="cb252-11"><a href="create-final-water-point-census-data.html#cb252-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb252-12"><a href="create-final-water-point-census-data.html#cb252-12" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb252-13"><a href="create-final-water-point-census-data.html#cb252-13" tabindex="-1"></a>    <span class="at">ea_dsw =</span> dsw,</span>
-<span id="cb252-14"><a href="create-final-water-point-census-data.html#cb252-14" tabindex="-1"></a>    <span class="at">ea_n_dsw_vil =</span> dsw_wpt,</span>
-<span id="cb252-15"><a href="create-final-water-point-census-data.html#cb252-15" tabindex="-1"></a>    <span class="at">ea_ilc =</span> ilc,</span>
-<span id="cb252-16"><a href="create-final-water-point-census-data.html#cb252-16" tabindex="-1"></a>    <span class="at">ea_n_ilc_wp_vil =</span> ilc_wpt,</span>
-<span id="cb252-17"><a href="create-final-water-point-census-data.html#cb252-17" tabindex="-1"></a>    <span class="at">ea_n_ilc_wcp_vil =</span> ilc_wcp</span>
-<span id="cb252-18"><a href="create-final-water-point-census-data.html#cb252-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb252-19"><a href="create-final-water-point-census-data.html#cb252-19" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb252-20"><a href="create-final-water-point-census-data.html#cb252-20" tabindex="-1"></a>    <span class="at">team =</span> team <span class="sc">%&gt;%</span> factor <span class="sc">%&gt;%</span> as.numeric</span>
-<span id="cb252-21"><a href="create-final-water-point-census-data.html#cb252-21" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb239"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb239-1"><a href="create-final-water-point-census-data.html#cb239-1" tabindex="-1"></a>villages <span class="ot">&lt;-</span></span>
+<span id="cb239-2"><a href="create-final-water-point-census-data.html#cb239-2" tabindex="-1"></a>   <span class="fu">read_rds</span>(</span>
+<span id="cb239-3"><a href="create-final-water-point-census-data.html#cb239-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
+<span id="cb239-4"><a href="create-final-water-point-census-data.html#cb239-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb239-5"><a href="create-final-water-point-census-data.html#cb239-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb239-6"><a href="create-final-water-point-census-data.html#cb239-6" tabindex="-1"></a>      <span class="st">&quot;Villages&quot;</span>,</span>
+<span id="cb239-7"><a href="create-final-water-point-census-data.html#cb239-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb239-8"><a href="create-final-water-point-census-data.html#cb239-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb239-9"><a href="create-final-water-point-census-data.html#cb239-9" tabindex="-1"></a>      <span class="st">&quot;villages.rds&quot;</span></span>
+<span id="cb239-10"><a href="create-final-water-point-census-data.html#cb239-10" tabindex="-1"></a>    )</span>
+<span id="cb239-11"><a href="create-final-water-point-census-data.html#cb239-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb239-12"><a href="create-final-water-point-census-data.html#cb239-12" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb239-13"><a href="create-final-water-point-census-data.html#cb239-13" tabindex="-1"></a>    <span class="at">ea_dsw =</span> dsw,</span>
+<span id="cb239-14"><a href="create-final-water-point-census-data.html#cb239-14" tabindex="-1"></a>    <span class="at">ea_n_dsw_vil =</span> dsw_wpt,</span>
+<span id="cb239-15"><a href="create-final-water-point-census-data.html#cb239-15" tabindex="-1"></a>    <span class="at">ea_ilc =</span> ilc,</span>
+<span id="cb239-16"><a href="create-final-water-point-census-data.html#cb239-16" tabindex="-1"></a>    <span class="at">ea_n_ilc_wp_vil =</span> ilc_wpt,</span>
+<span id="cb239-17"><a href="create-final-water-point-census-data.html#cb239-17" tabindex="-1"></a>    <span class="at">ea_n_ilc_wcp_vil =</span> ilc_wcp</span>
+<span id="cb239-18"><a href="create-final-water-point-census-data.html#cb239-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb239-19"><a href="create-final-water-point-census-data.html#cb239-19" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb239-20"><a href="create-final-water-point-census-data.html#cb239-20" tabindex="-1"></a>    <span class="at">team =</span> team <span class="sc">%&gt;%</span> factor <span class="sc">%&gt;%</span> as.numeric</span>
+<span id="cb239-21"><a href="create-final-water-point-census-data.html#cb239-21" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="gps" class="section level3 hasAnchor" number="13.1.2">
 <h3><span class="header-section-number">13.1.2</span> GPS<a href="create-final-water-point-census-data.html#gps" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb253"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb253-1"><a href="create-final-water-point-census-data.html#cb253-1" tabindex="-1"></a>wp_gps <span class="ot">&lt;-</span></span>
-<span id="cb253-2"><a href="create-final-water-point-census-data.html#cb253-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb253-3"><a href="create-final-water-point-census-data.html#cb253-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
-<span id="cb253-4"><a href="create-final-water-point-census-data.html#cb253-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb253-5"><a href="create-final-water-point-census-data.html#cb253-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb253-6"><a href="create-final-water-point-census-data.html#cb253-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb253-7"><a href="create-final-water-point-census-data.html#cb253-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb253-8"><a href="create-final-water-point-census-data.html#cb253-8" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb253-9"><a href="create-final-water-point-census-data.html#cb253-9" tabindex="-1"></a>      <span class="st">&quot;wp-gps-collapsed.rds&quot;</span></span>
-<span id="cb253-10"><a href="create-final-water-point-census-data.html#cb253-10" tabindex="-1"></a>    )</span>
-<span id="cb253-11"><a href="create-final-water-point-census-data.html#cb253-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb253-12"><a href="create-final-water-point-census-data.html#cb253-12" tabindex="-1"></a>  <span class="fu">select</span>(wp_id_c)</span></code></pre></div>
+<div class="sourceCode" id="cb240"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb240-1"><a href="create-final-water-point-census-data.html#cb240-1" tabindex="-1"></a>wp_gps <span class="ot">&lt;-</span></span>
+<span id="cb240-2"><a href="create-final-water-point-census-data.html#cb240-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb240-3"><a href="create-final-water-point-census-data.html#cb240-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
+<span id="cb240-4"><a href="create-final-water-point-census-data.html#cb240-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb240-5"><a href="create-final-water-point-census-data.html#cb240-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb240-6"><a href="create-final-water-point-census-data.html#cb240-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb240-7"><a href="create-final-water-point-census-data.html#cb240-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb240-8"><a href="create-final-water-point-census-data.html#cb240-8" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb240-9"><a href="create-final-water-point-census-data.html#cb240-9" tabindex="-1"></a>      <span class="st">&quot;wp-gps-collapsed.rds&quot;</span></span>
+<span id="cb240-10"><a href="create-final-water-point-census-data.html#cb240-10" tabindex="-1"></a>    )</span>
+<span id="cb240-11"><a href="create-final-water-point-census-data.html#cb240-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb240-12"><a href="create-final-water-point-census-data.html#cb240-12" tabindex="-1"></a>  <span class="fu">select</span>(wp_id_c)</span></code></pre></div>
 </details>
 </div>
 <div id="census" class="section level3 hasAnchor" number="13.1.3">
 <h3><span class="header-section-number">13.1.3</span> Census<a href="create-final-water-point-census-data.html#census" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb254"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb254-1"><a href="create-final-water-point-census-data.html#cb254-1" tabindex="-1"></a>collapsed <span class="ot">&lt;-</span></span>
-<span id="cb254-2"><a href="create-final-water-point-census-data.html#cb254-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb254-3"><a href="create-final-water-point-census-data.html#cb254-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
-<span id="cb254-4"><a href="create-final-water-point-census-data.html#cb254-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb254-5"><a href="create-final-water-point-census-data.html#cb254-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb254-6"><a href="create-final-water-point-census-data.html#cb254-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb254-7"><a href="create-final-water-point-census-data.html#cb254-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb254-8"><a href="create-final-water-point-census-data.html#cb254-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb254-9"><a href="create-final-water-point-census-data.html#cb254-9" tabindex="-1"></a>      <span class="st">&quot;wp-collapsed.rds&quot;</span></span>
-<span id="cb254-10"><a href="create-final-water-point-census-data.html#cb254-10" tabindex="-1"></a>    )</span>
-<span id="cb254-11"><a href="create-final-water-point-census-data.html#cb254-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb254-12"><a href="create-final-water-point-census-data.html#cb254-12" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb254-13"><a href="create-final-water-point-census-data.html#cb254-13" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">c</span>(district_id, country)</span>
-<span id="cb254-14"><a href="create-final-water-point-census-data.html#cb254-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb241"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb241-1"><a href="create-final-water-point-census-data.html#cb241-1" tabindex="-1"></a>collapsed <span class="ot">&lt;-</span></span>
+<span id="cb241-2"><a href="create-final-water-point-census-data.html#cb241-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb241-3"><a href="create-final-water-point-census-data.html#cb241-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
+<span id="cb241-4"><a href="create-final-water-point-census-data.html#cb241-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb241-5"><a href="create-final-water-point-census-data.html#cb241-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb241-6"><a href="create-final-water-point-census-data.html#cb241-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb241-7"><a href="create-final-water-point-census-data.html#cb241-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb241-8"><a href="create-final-water-point-census-data.html#cb241-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb241-9"><a href="create-final-water-point-census-data.html#cb241-9" tabindex="-1"></a>      <span class="st">&quot;wp-collapsed.rds&quot;</span></span>
+<span id="cb241-10"><a href="create-final-water-point-census-data.html#cb241-10" tabindex="-1"></a>    )</span>
+<span id="cb241-11"><a href="create-final-water-point-census-data.html#cb241-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb241-12"><a href="create-final-water-point-census-data.html#cb241-12" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb241-13"><a href="create-final-water-point-census-data.html#cb241-13" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">c</span>(district_id, country)</span>
+<span id="cb241-14"><a href="create-final-water-point-census-data.html#cb241-14" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="promoter-survey" class="section level3 hasAnchor" number="13.1.4">
 <h3><span class="header-section-number">13.1.4</span> Promoter survey<a href="create-final-water-point-census-data.html#promoter-survey" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb255"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb255-1"><a href="create-final-water-point-census-data.html#cb255-1" tabindex="-1"></a>promoter <span class="ot">&lt;-</span></span>
-<span id="cb255-2"><a href="create-final-water-point-census-data.html#cb255-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb255-3"><a href="create-final-water-point-census-data.html#cb255-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
-<span id="cb255-4"><a href="create-final-water-point-census-data.html#cb255-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb255-5"><a href="create-final-water-point-census-data.html#cb255-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb255-6"><a href="create-final-water-point-census-data.html#cb255-6" tabindex="-1"></a>      <span class="st">&quot;PromoterSurvey&quot;</span>,</span>
-<span id="cb255-7"><a href="create-final-water-point-census-data.html#cb255-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb255-8"><a href="create-final-water-point-census-data.html#cb255-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb255-9"><a href="create-final-water-point-census-data.html#cb255-9" tabindex="-1"></a>      <span class="st">&quot;pm-survey.rds&quot;</span></span>
-<span id="cb255-10"><a href="create-final-water-point-census-data.html#cb255-10" tabindex="-1"></a>    )</span>
-<span id="cb255-11"><a href="create-final-water-point-census-data.html#cb255-11" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb242"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb242-1"><a href="create-final-water-point-census-data.html#cb242-1" tabindex="-1"></a>promoter <span class="ot">&lt;-</span></span>
+<span id="cb242-2"><a href="create-final-water-point-census-data.html#cb242-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb242-3"><a href="create-final-water-point-census-data.html#cb242-3" tabindex="-1"></a>   <span class="fu">here</span>(</span>
+<span id="cb242-4"><a href="create-final-water-point-census-data.html#cb242-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb242-5"><a href="create-final-water-point-census-data.html#cb242-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb242-6"><a href="create-final-water-point-census-data.html#cb242-6" tabindex="-1"></a>      <span class="st">&quot;PromoterSurvey&quot;</span>,</span>
+<span id="cb242-7"><a href="create-final-water-point-census-data.html#cb242-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb242-8"><a href="create-final-water-point-census-data.html#cb242-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb242-9"><a href="create-final-water-point-census-data.html#cb242-9" tabindex="-1"></a>      <span class="st">&quot;pm-survey.rds&quot;</span></span>
+<span id="cb242-10"><a href="create-final-water-point-census-data.html#cb242-10" tabindex="-1"></a>    )</span>
+<span id="cb242-11"><a href="create-final-water-point-census-data.html#cb242-11" tabindex="-1"></a>  )</span>
+<span id="cb242-12"><a href="create-final-water-point-census-data.html#cb242-12" tabindex="-1"></a></span>
+<span id="cb242-13"><a href="create-final-water-point-census-data.html#cb242-13" tabindex="-1"></a>promoter_hhs <span class="ot">&lt;-</span></span>
+<span id="cb242-14"><a href="create-final-water-point-census-data.html#cb242-14" tabindex="-1"></a>  promoter <span class="sc">%&gt;%</span></span>
+<span id="cb242-15"><a href="create-final-water-point-census-data.html#cb242-15" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb242-16"><a href="create-final-water-point-census-data.html#cb242-16" tabindex="-1"></a>    wp_id, promoter_id,</span>
+<span id="cb242-17"><a href="create-final-water-point-census-data.html#cb242-17" tabindex="-1"></a>    <span class="at">pm_ea_list =</span> ea_list,</span>
+<span id="cb242-18"><a href="create-final-water-point-census-data.html#cb242-18" tabindex="-1"></a>    users, users_named, users_census, users_notlisted, users_outside</span>
+<span id="cb242-19"><a href="create-final-water-point-census-data.html#cb242-19" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb242-20"><a href="create-final-water-point-census-data.html#cb242-20" tabindex="-1"></a>  <span class="fu">rename_with</span>(</span>
+<span id="cb242-21"><a href="create-final-water-point-census-data.html#cb242-21" tabindex="-1"></a>    <span class="sc">~</span> <span class="fu">paste0</span>(<span class="st">&quot;pm_&quot;</span>, .),</span>
+<span id="cb242-22"><a href="create-final-water-point-census-data.html#cb242-22" tabindex="-1"></a>    <span class="fu">starts_with</span>(<span class="st">&quot;users&quot;</span>)</span>
+<span id="cb242-23"><a href="create-final-water-point-census-data.html#cb242-23" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="evidence-action-water-point-id" class="section level3 hasAnchor" number="13.1.5">
 <h3><span class="header-section-number">13.1.5</span> Evidence Action water point ID<a href="create-final-water-point-census-data.html#evidence-action-water-point-id" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb256"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb256-1"><a href="create-final-water-point-census-data.html#cb256-1" tabindex="-1"></a>matches <span class="ot">&lt;-</span></span>
-<span id="cb256-2"><a href="create-final-water-point-census-data.html#cb256-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb256-3"><a href="create-final-water-point-census-data.html#cb256-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
-<span id="cb256-4"><a href="create-final-water-point-census-data.html#cb256-4" tabindex="-1"></a>        path_box,</span>
-<span id="cb256-5"><a href="create-final-water-point-census-data.html#cb256-5" tabindex="-1"></a>        <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb256-6"><a href="create-final-water-point-census-data.html#cb256-6" tabindex="-1"></a>        <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb256-7"><a href="create-final-water-point-census-data.html#cb256-7" tabindex="-1"></a>        <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb256-8"><a href="create-final-water-point-census-data.html#cb256-8" tabindex="-1"></a>        <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb256-9"><a href="create-final-water-point-census-data.html#cb256-9" tabindex="-1"></a>        <span class="st">&quot;wp-ea-matched.rds&quot;</span></span>
-<span id="cb256-10"><a href="create-final-water-point-census-data.html#cb256-10" tabindex="-1"></a>      )</span>
-<span id="cb256-11"><a href="create-final-water-point-census-data.html#cb256-11" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb243"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb243-1"><a href="create-final-water-point-census-data.html#cb243-1" tabindex="-1"></a>matches <span class="ot">&lt;-</span></span>
+<span id="cb243-2"><a href="create-final-water-point-census-data.html#cb243-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb243-3"><a href="create-final-water-point-census-data.html#cb243-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
+<span id="cb243-4"><a href="create-final-water-point-census-data.html#cb243-4" tabindex="-1"></a>        path_box,</span>
+<span id="cb243-5"><a href="create-final-water-point-census-data.html#cb243-5" tabindex="-1"></a>        <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb243-6"><a href="create-final-water-point-census-data.html#cb243-6" tabindex="-1"></a>        <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb243-7"><a href="create-final-water-point-census-data.html#cb243-7" tabindex="-1"></a>        <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb243-8"><a href="create-final-water-point-census-data.html#cb243-8" tabindex="-1"></a>        <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb243-9"><a href="create-final-water-point-census-data.html#cb243-9" tabindex="-1"></a>        <span class="st">&quot;wp-ea-matched.rds&quot;</span></span>
+<span id="cb243-10"><a href="create-final-water-point-census-data.html#cb243-10" tabindex="-1"></a>      )</span>
+<span id="cb243-11"><a href="create-final-water-point-census-data.html#cb243-11" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="chlorine-testing" class="section level3 hasAnchor" number="13.1.6">
 <h3><span class="header-section-number">13.1.6</span> Chlorine testing<a href="create-final-water-point-census-data.html#chlorine-testing" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb257"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb257-1"><a href="create-final-water-point-census-data.html#cb257-1" tabindex="-1"></a>tests <span class="ot">&lt;-</span></span>
-<span id="cb257-2"><a href="create-final-water-point-census-data.html#cb257-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb257-3"><a href="create-final-water-point-census-data.html#cb257-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
-<span id="cb257-4"><a href="create-final-water-point-census-data.html#cb257-4" tabindex="-1"></a>        path_box,</span>
-<span id="cb257-5"><a href="create-final-water-point-census-data.html#cb257-5" tabindex="-1"></a>        <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb257-6"><a href="create-final-water-point-census-data.html#cb257-6" tabindex="-1"></a>        <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb257-7"><a href="create-final-water-point-census-data.html#cb257-7" tabindex="-1"></a>        <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb257-8"><a href="create-final-water-point-census-data.html#cb257-8" tabindex="-1"></a>        <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb257-9"><a href="create-final-water-point-census-data.html#cb257-9" tabindex="-1"></a>        <span class="st">&quot;wp-chlorine.rds&quot;</span></span>
-<span id="cb257-10"><a href="create-final-water-point-census-data.html#cb257-10" tabindex="-1"></a>      )</span>
-<span id="cb257-11"><a href="create-final-water-point-census-data.html#cb257-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb257-12"><a href="create-final-water-point-census-data.html#cb257-12" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb257-13"><a href="create-final-water-point-census-data.html#cb257-13" tabindex="-1"></a>    wp_id_c, </span>
-<span id="cb257-14"><a href="create-final-water-point-census-data.html#cb257-14" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;r_c&quot;</span>),</span>
-<span id="cb257-15"><a href="create-final-water-point-census-data.html#cb257-15" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;un_c&quot;</span>),</span>
-<span id="cb257-16"><a href="create-final-water-point-census-data.html#cb257-16" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;01&quot;</span>),</span>
-<span id="cb257-17"><a href="create-final-water-point-census-data.html#cb257-17" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;02&quot;</span>)</span>
-<span id="cb257-18"><a href="create-final-water-point-census-data.html#cb257-18" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb244"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb244-1"><a href="create-final-water-point-census-data.html#cb244-1" tabindex="-1"></a>tests <span class="ot">&lt;-</span></span>
+<span id="cb244-2"><a href="create-final-water-point-census-data.html#cb244-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb244-3"><a href="create-final-water-point-census-data.html#cb244-3" tabindex="-1"></a>    <span class="fu">here</span>(</span>
+<span id="cb244-4"><a href="create-final-water-point-census-data.html#cb244-4" tabindex="-1"></a>        path_box,</span>
+<span id="cb244-5"><a href="create-final-water-point-census-data.html#cb244-5" tabindex="-1"></a>        <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb244-6"><a href="create-final-water-point-census-data.html#cb244-6" tabindex="-1"></a>        <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb244-7"><a href="create-final-water-point-census-data.html#cb244-7" tabindex="-1"></a>        <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb244-8"><a href="create-final-water-point-census-data.html#cb244-8" tabindex="-1"></a>        <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb244-9"><a href="create-final-water-point-census-data.html#cb244-9" tabindex="-1"></a>        <span class="st">&quot;wp-chlorine.rds&quot;</span></span>
+<span id="cb244-10"><a href="create-final-water-point-census-data.html#cb244-10" tabindex="-1"></a>      )</span>
+<span id="cb244-11"><a href="create-final-water-point-census-data.html#cb244-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb244-12"><a href="create-final-water-point-census-data.html#cb244-12" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb244-13"><a href="create-final-water-point-census-data.html#cb244-13" tabindex="-1"></a>    wp_id_c, </span>
+<span id="cb244-14"><a href="create-final-water-point-census-data.html#cb244-14" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;r_c&quot;</span>),</span>
+<span id="cb244-15"><a href="create-final-water-point-census-data.html#cb244-15" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;un_c&quot;</span>),</span>
+<span id="cb244-16"><a href="create-final-water-point-census-data.html#cb244-16" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;01&quot;</span>),</span>
+<span id="cb244-17"><a href="create-final-water-point-census-data.html#cb244-17" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;02&quot;</span>)</span>
+<span id="cb244-18"><a href="create-final-water-point-census-data.html#cb244-18" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="treatment" class="section level3 hasAnchor" number="13.1.7">
 <h3><span class="header-section-number">13.1.7</span> Treatment<a href="create-final-water-point-census-data.html#treatment" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb258"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb258-1"><a href="create-final-water-point-census-data.html#cb258-1" tabindex="-1"></a>wp_tmt <span class="ot">&lt;-</span></span>
-<span id="cb258-2"><a href="create-final-water-point-census-data.html#cb258-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb258-3"><a href="create-final-water-point-census-data.html#cb258-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb258-4"><a href="create-final-water-point-census-data.html#cb258-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb258-5"><a href="create-final-water-point-census-data.html#cb258-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb258-6"><a href="create-final-water-point-census-data.html#cb258-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb258-7"><a href="create-final-water-point-census-data.html#cb258-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb258-8"><a href="create-final-water-point-census-data.html#cb258-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb258-9"><a href="create-final-water-point-census-data.html#cb258-9" tabindex="-1"></a>      <span class="st">&quot;wp-census-treatment.rds&quot;</span></span>
-<span id="cb258-10"><a href="create-final-water-point-census-data.html#cb258-10" tabindex="-1"></a>    )</span>
-<span id="cb258-11"><a href="create-final-water-point-census-data.html#cb258-11" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb245"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb245-1"><a href="create-final-water-point-census-data.html#cb245-1" tabindex="-1"></a>wp_tmt <span class="ot">&lt;-</span></span>
+<span id="cb245-2"><a href="create-final-water-point-census-data.html#cb245-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb245-3"><a href="create-final-water-point-census-data.html#cb245-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb245-4"><a href="create-final-water-point-census-data.html#cb245-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb245-5"><a href="create-final-water-point-census-data.html#cb245-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb245-6"><a href="create-final-water-point-census-data.html#cb245-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb245-7"><a href="create-final-water-point-census-data.html#cb245-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb245-8"><a href="create-final-water-point-census-data.html#cb245-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb245-9"><a href="create-final-water-point-census-data.html#cb245-9" tabindex="-1"></a>      <span class="st">&quot;wp-census-treatment.rds&quot;</span></span>
+<span id="cb245-10"><a href="create-final-water-point-census-data.html#cb245-10" tabindex="-1"></a>    )</span>
+<span id="cb245-11"><a href="create-final-water-point-census-data.html#cb245-11" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 </div>
 <div id="merge-1" class="section level2 hasAnchor" number="13.2">
 <h2><span class="header-section-number">13.2</span> Merge<a href="create-final-water-point-census-data.html#merge-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb259-1"><a href="create-final-water-point-census-data.html#cb259-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
-<span id="cb259-2"><a href="create-final-water-point-census-data.html#cb259-2" tabindex="-1"></a>  collapsed <span class="sc">%&gt;%</span> </span>
-<span id="cb259-3"><a href="create-final-water-point-census-data.html#cb259-3" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
-<span id="cb259-4"><a href="create-final-water-point-census-data.html#cb259-4" tabindex="-1"></a>    wp_tmt,</span>
-<span id="cb259-5"><a href="create-final-water-point-census-data.html#cb259-5" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id&quot;</span>),</span>
-<span id="cb259-6"><a href="create-final-water-point-census-data.html#cb259-6" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>,</span>
-<span id="cb259-7"><a href="create-final-water-point-census-data.html#cb259-7" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
-<span id="cb259-8"><a href="create-final-water-point-census-data.html#cb259-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb259-9"><a href="create-final-water-point-census-data.html#cb259-9" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb259-10"><a href="create-final-water-point-census-data.html#cb259-10" tabindex="-1"></a>    matches,</span>
-<span id="cb259-11"><a href="create-final-water-point-census-data.html#cb259-11" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span>),</span>
-<span id="cb259-12"><a href="create-final-water-point-census-data.html#cb259-12" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>,</span>
-<span id="cb259-13"><a href="create-final-water-point-census-data.html#cb259-13" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
-<span id="cb259-14"><a href="create-final-water-point-census-data.html#cb259-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb259-15"><a href="create-final-water-point-census-data.html#cb259-15" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb259-16"><a href="create-final-water-point-census-data.html#cb259-16" tabindex="-1"></a>    tests,</span>
-<span id="cb259-17"><a href="create-final-water-point-census-data.html#cb259-17" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span>),</span>
-<span id="cb259-18"><a href="create-final-water-point-census-data.html#cb259-18" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>,</span>
-<span id="cb259-19"><a href="create-final-water-point-census-data.html#cb259-19" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
-<span id="cb259-20"><a href="create-final-water-point-census-data.html#cb259-20" tabindex="-1"></a>  )</span>
-<span id="cb259-21"><a href="create-final-water-point-census-data.html#cb259-21" tabindex="-1"></a></span>
-<span id="cb259-22"><a href="create-final-water-point-census-data.html#cb259-22" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb259-23"><a href="create-final-water-point-census-data.html#cb259-23" tabindex="-1"></a>  <span class="fu">all</span>(wp<span class="sc">$</span>village_id <span class="sc">%in%</span> villages<span class="sc">$</span>village_id)</span>
-<span id="cb259-24"><a href="create-final-water-point-census-data.html#cb259-24" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb246"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb246-1"><a href="create-final-water-point-census-data.html#cb246-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
+<span id="cb246-2"><a href="create-final-water-point-census-data.html#cb246-2" tabindex="-1"></a>  collapsed <span class="sc">%&gt;%</span> </span>
+<span id="cb246-3"><a href="create-final-water-point-census-data.html#cb246-3" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb246-4"><a href="create-final-water-point-census-data.html#cb246-4" tabindex="-1"></a>    wp_tmt,</span>
+<span id="cb246-5"><a href="create-final-water-point-census-data.html#cb246-5" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id&quot;</span>),</span>
+<span id="cb246-6"><a href="create-final-water-point-census-data.html#cb246-6" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>,</span>
+<span id="cb246-7"><a href="create-final-water-point-census-data.html#cb246-7" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
+<span id="cb246-8"><a href="create-final-water-point-census-data.html#cb246-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb246-9"><a href="create-final-water-point-census-data.html#cb246-9" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb246-10"><a href="create-final-water-point-census-data.html#cb246-10" tabindex="-1"></a>    matches,</span>
+<span id="cb246-11"><a href="create-final-water-point-census-data.html#cb246-11" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span>),</span>
+<span id="cb246-12"><a href="create-final-water-point-census-data.html#cb246-12" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>,</span>
+<span id="cb246-13"><a href="create-final-water-point-census-data.html#cb246-13" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
+<span id="cb246-14"><a href="create-final-water-point-census-data.html#cb246-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb246-15"><a href="create-final-water-point-census-data.html#cb246-15" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb246-16"><a href="create-final-water-point-census-data.html#cb246-16" tabindex="-1"></a>    tests,</span>
+<span id="cb246-17"><a href="create-final-water-point-census-data.html#cb246-17" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span>),</span>
+<span id="cb246-18"><a href="create-final-water-point-census-data.html#cb246-18" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span>,</span>
+<span id="cb246-19"><a href="create-final-water-point-census-data.html#cb246-19" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
+<span id="cb246-20"><a href="create-final-water-point-census-data.html#cb246-20" tabindex="-1"></a>  )</span>
+<span id="cb246-21"><a href="create-final-water-point-census-data.html#cb246-21" tabindex="-1"></a></span>
+<span id="cb246-22"><a href="create-final-water-point-census-data.html#cb246-22" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb246-23"><a href="create-final-water-point-census-data.html#cb246-23" tabindex="-1"></a>  <span class="fu">all</span>(wp<span class="sc">$</span>village_id <span class="sc">%in%</span> villages<span class="sc">$</span>village_id)</span>
+<span id="cb246-24"><a href="create-final-water-point-census-data.html#cb246-24" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb261"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb261-1"><a href="create-final-water-point-census-data.html#cb261-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
-<span id="cb261-2"><a href="create-final-water-point-census-data.html#cb261-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb261-3"><a href="create-final-water-point-census-data.html#cb261-3" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb261-4"><a href="create-final-water-point-census-data.html#cb261-4" tabindex="-1"></a>    villages,</span>
-<span id="cb261-5"><a href="create-final-water-point-census-data.html#cb261-5" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;many-to-one&quot;</span></span>
-<span id="cb261-6"><a href="create-final-water-point-census-data.html#cb261-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb261-7"><a href="create-final-water-point-census-data.html#cb261-7" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb261-8"><a href="create-final-water-point-census-data.html#cb261-8" tabindex="-1"></a>    <span class="at">promoter_surveyed =</span> wp_id_c <span class="sc">%in%</span> promoter<span class="sc">$</span>wp_id</span>
-<span id="cb261-9"><a href="create-final-water-point-census-data.html#cb261-9" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb248"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb248-1"><a href="create-final-water-point-census-data.html#cb248-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
+<span id="cb248-2"><a href="create-final-water-point-census-data.html#cb248-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb248-3"><a href="create-final-water-point-census-data.html#cb248-3" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb248-4"><a href="create-final-water-point-census-data.html#cb248-4" tabindex="-1"></a>    villages,</span>
+<span id="cb248-5"><a href="create-final-water-point-census-data.html#cb248-5" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;many-to-one&quot;</span></span>
+<span id="cb248-6"><a href="create-final-water-point-census-data.html#cb248-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb248-7"><a href="create-final-water-point-census-data.html#cb248-7" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb248-8"><a href="create-final-water-point-census-data.html#cb248-8" tabindex="-1"></a>    <span class="at">promoter_surveyed =</span> wp_id_c <span class="sc">%in%</span> promoter<span class="sc">$</span>wp_id</span>
+<span id="cb248-9"><a href="create-final-water-point-census-data.html#cb248-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb248-10"><a href="create-final-water-point-census-data.html#cb248-10" tabindex="-1"></a>  <span class="fu">left_join</span>(                                          </span>
+<span id="cb248-11"><a href="create-final-water-point-census-data.html#cb248-11" tabindex="-1"></a>    promoter_hhs,                                      </span>
+<span id="cb248-12"><a href="create-final-water-point-census-data.html#cb248-12" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span> <span class="ot">=</span> <span class="st">&quot;wp_id&quot;</span>),                      </span>
+<span id="cb248-13"><a href="create-final-water-point-census-data.html#cb248-13" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">&quot;one-to-one&quot;</span></span>
+<span id="cb248-14"><a href="create-final-water-point-census-data.html#cb248-14" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(village_id)`</code></pre>
+<pre><code>## Joining with `by = join_by(village_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb263"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb263-1"><a href="create-final-water-point-census-data.html#cb263-1" tabindex="-1"></a>wp_gps <span class="ot">&lt;-</span></span>
-<span id="cb263-2"><a href="create-final-water-point-census-data.html#cb263-2" tabindex="-1"></a>  <span class="fu">left_join</span>(wp_gps, wp)</span></code></pre></div>
+<div class="sourceCode" id="cb250"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb250-1"><a href="create-final-water-point-census-data.html#cb250-1" tabindex="-1"></a>wp_gps <span class="ot">&lt;-</span></span>
+<span id="cb250-2"><a href="create-final-water-point-census-data.html#cb250-2" tabindex="-1"></a>  <span class="fu">left_join</span>(wp_gps, wp)</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by =
-## join_by(wp_id_c)`</code></pre>
+<pre><code>## Joining with `by = join_by(wp_id_c)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb265-1"><a href="create-final-water-point-census-data.html#cb265-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb265-2"><a href="create-final-water-point-census-data.html#cb265-2" tabindex="-1"></a>  <span class="fu">nrow</span>(wp) <span class="sc">==</span> <span class="fu">n_distinct</span>(wp<span class="sc">$</span>wp_id_c)</span>
-<span id="cb265-3"><a href="create-final-water-point-census-data.html#cb265-3" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb252"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb252-1"><a href="create-final-water-point-census-data.html#cb252-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb252-2"><a href="create-final-water-point-census-data.html#cb252-2" tabindex="-1"></a>  <span class="fu">nrow</span>(wp) <span class="sc">==</span> <span class="fu">n_distinct</span>(wp<span class="sc">$</span>wp_id_c)</span>
+<span id="cb252-3"><a href="create-final-water-point-census-data.html#cb252-3" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb267"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb267-1"><a href="create-final-water-point-census-data.html#cb267-1" tabindex="-1"></a>wp <span class="sc">%&gt;%</span></span>
-<span id="cb267-2"><a href="create-final-water-point-census-data.html#cb267-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
-<span id="cb267-3"><a href="create-final-water-point-census-data.html#cb267-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb267-4"><a href="create-final-water-point-census-data.html#cb267-4" tabindex="-1"></a>  view</span></code></pre></div>
+<div class="sourceCode" id="cb254"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb254-1"><a href="create-final-water-point-census-data.html#cb254-1" tabindex="-1"></a>wp <span class="sc">%&gt;%</span></span>
+<span id="cb254-2"><a href="create-final-water-point-census-data.html#cb254-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
+<span id="cb254-3"><a href="create-final-water-point-census-data.html#cb254-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb254-4"><a href="create-final-water-point-census-data.html#cb254-4" tabindex="-1"></a>  view</span></code></pre></div>
 </details>
 </div>
 <div id="check-data-2" class="section level2 hasAnchor" number="13.3">
@@ -2372,54 +2391,53 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="clean-comments" class="section level3 hasAnchor" number="13.3.1">
 <h3><span class="header-section-number">13.3.1</span> Clean comments<a href="create-final-water-point-census-data.html#clean-comments" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb268"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb268-1"><a href="create-final-water-point-census-data.html#cb268-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
-<span id="cb268-2"><a href="create-final-water-point-census-data.html#cb268-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb268-3"><a href="create-final-water-point-census-data.html#cb268-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb268-4"><a href="create-final-water-point-census-data.html#cb268-4" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb268-5"><a href="create-final-water-point-census-data.html#cb268-5" tabindex="-1"></a>      <span class="fu">contains</span>(<span class="st">&quot;comments&quot;</span>),</span>
-<span id="cb268-6"><a href="create-final-water-point-census-data.html#cb268-6" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">if_else</span>(</span>
-<span id="cb268-7"><a href="create-final-water-point-census-data.html#cb268-7" tabindex="-1"></a>        . <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;NONE&quot;</span>, <span class="st">&quot;SUCESSFULLY DONE&quot;</span>, <span class="st">&quot;NO COMMENT .&quot;</span>, <span class="st">&quot;DONE&quot;</span>),</span>
-<span id="cb268-8"><a href="create-final-water-point-census-data.html#cb268-8" tabindex="-1"></a>        <span class="cn">NA</span>,</span>
-<span id="cb268-9"><a href="create-final-water-point-census-data.html#cb268-9" tabindex="-1"></a>        .</span>
-<span id="cb268-10"><a href="create-final-water-point-census-data.html#cb268-10" tabindex="-1"></a>      )</span>
-<span id="cb268-11"><a href="create-final-water-point-census-data.html#cb268-11" tabindex="-1"></a>    )</span>
-<span id="cb268-12"><a href="create-final-water-point-census-data.html#cb268-12" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb255"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb255-1"><a href="create-final-water-point-census-data.html#cb255-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
+<span id="cb255-2"><a href="create-final-water-point-census-data.html#cb255-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb255-3"><a href="create-final-water-point-census-data.html#cb255-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb255-4"><a href="create-final-water-point-census-data.html#cb255-4" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb255-5"><a href="create-final-water-point-census-data.html#cb255-5" tabindex="-1"></a>      <span class="fu">contains</span>(<span class="st">&quot;comments&quot;</span>),</span>
+<span id="cb255-6"><a href="create-final-water-point-census-data.html#cb255-6" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">if_else</span>(</span>
+<span id="cb255-7"><a href="create-final-water-point-census-data.html#cb255-7" tabindex="-1"></a>        . <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;NONE&quot;</span>, <span class="st">&quot;SUCESSFULLY DONE&quot;</span>, <span class="st">&quot;NO COMMENT .&quot;</span>, <span class="st">&quot;DONE&quot;</span>),</span>
+<span id="cb255-8"><a href="create-final-water-point-census-data.html#cb255-8" tabindex="-1"></a>        <span class="cn">NA</span>,</span>
+<span id="cb255-9"><a href="create-final-water-point-census-data.html#cb255-9" tabindex="-1"></a>        .</span>
+<span id="cb255-10"><a href="create-final-water-point-census-data.html#cb255-10" tabindex="-1"></a>      )</span>
+<span id="cb255-11"><a href="create-final-water-point-census-data.html#cb255-11" tabindex="-1"></a>    )</span>
+<span id="cb255-12"><a href="create-final-water-point-census-data.html#cb255-12" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="dsw-water-points" class="section level3 hasAnchor" number="13.3.2">
 <h3><span class="header-section-number">13.3.2</span> DSW water points<a href="create-final-water-point-census-data.html#dsw-water-points" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb269"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb269-1"><a href="create-final-water-point-census-data.html#cb269-1" tabindex="-1"></a>dsw <span class="ot">&lt;-</span></span>
-<span id="cb269-2"><a href="create-final-water-point-census-data.html#cb269-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb269-3"><a href="create-final-water-point-census-data.html#cb269-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">matched =</span> <span class="sc">!</span><span class="fu">is.na</span>(ea_id)) <span class="sc">%&gt;%</span></span>
-<span id="cb269-4"><a href="create-final-water-point-census-data.html#cb269-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(dsw)</span></code></pre></div>
+<div class="sourceCode" id="cb256"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb256-1"><a href="create-final-water-point-census-data.html#cb256-1" tabindex="-1"></a>dsw <span class="ot">&lt;-</span></span>
+<span id="cb256-2"><a href="create-final-water-point-census-data.html#cb256-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb256-3"><a href="create-final-water-point-census-data.html#cb256-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">matched =</span> <span class="sc">!</span><span class="fu">is.na</span>(ea_id)) <span class="sc">%&gt;%</span></span>
+<span id="cb256-4"><a href="create-final-water-point-census-data.html#cb256-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(dsw)</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb270"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb270-1"><a href="create-final-water-point-census-data.html#cb270-1" tabindex="-1"></a>dsw <span class="sc">%&gt;%</span></span>
-<span id="cb270-2"><a href="create-final-water-point-census-data.html#cb270-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(matched)</span></code></pre></div>
+<div class="sourceCode" id="cb257"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb257-1"><a href="create-final-water-point-census-data.html#cb257-1" tabindex="-1"></a>dsw <span class="sc">%&gt;%</span></span>
+<span id="cb257-2"><a href="create-final-water-point-census-data.html#cb257-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(matched)</span></code></pre></div>
 </details>
-<pre><code>##  matched   n    percent
-##    FALSE  20 0.05141388
-##     TRUE 369 0.94858612</code></pre>
+<pre><code>##  matched   n   percent
+##    FALSE  20 0.0511509
+##     TRUE 371 0.9488491</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb272"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb272-1"><a href="create-final-water-point-census-data.html#cb272-1" tabindex="-1"></a>dsw <span class="sc">%&gt;%</span></span>
-<span id="cb272-2"><a href="create-final-water-point-census-data.html#cb272-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ea_program_vil, matched)</span></code></pre></div>
+<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb259-1"><a href="create-final-water-point-census-data.html#cb259-1" tabindex="-1"></a>dsw <span class="sc">%&gt;%</span></span>
+<span id="cb259-2"><a href="create-final-water-point-census-data.html#cb259-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ea_program_vil, matched)</span></code></pre></div>
 </details>
 <pre><code>##  ea_program_vil FALSE TRUE
-##             DSW    17  302
+##             DSW    17  304
 ##             ILC     0    1
 ##       DSW &amp; ILC     3   66</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb274"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb274-1"><a href="create-final-water-point-census-data.html#cb274-1" tabindex="-1"></a>wp <span class="sc">%&gt;%</span> <span class="fu">tabyl</span>(ilc_wp, ilc_wcp)</span></code></pre></div>
+<div class="sourceCode" id="cb261"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb261-1"><a href="create-final-water-point-census-data.html#cb261-1" tabindex="-1"></a>wp <span class="sc">%&gt;%</span> <span class="fu">tabyl</span>(ilc_wp, ilc_wcp)</span></code></pre></div>
 </details>
-<pre><code>##  ilc_wp FALSE TRUE NA_
-##   FALSE   913  133   0
-##    TRUE    14   21   0
-##      NA     0    0 136</code></pre>
+<pre><code>##  ilc_wp FALSE TRUE
+##   FALSE  1016  160
+##    TRUE    14   27</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb276"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb276-1"><a href="create-final-water-point-census-data.html#cb276-1" tabindex="-1"></a>wp <span class="sc">%&gt;%</span> </span>
-<span id="cb276-2"><a href="create-final-water-point-census-data.html#cb276-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(ilc_wp, <span class="sc">!</span>ilc_wcp, <span class="sc">!</span>vil_replaced) <span class="sc">%&gt;%</span></span>
-<span id="cb276-3"><a href="create-final-water-point-census-data.html#cb276-3" tabindex="-1"></a>  <span class="fu">select</span>(wp_id_c)</span></code></pre></div>
+<div class="sourceCode" id="cb263"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb263-1"><a href="create-final-water-point-census-data.html#cb263-1" tabindex="-1"></a>wp <span class="sc">%&gt;%</span> </span>
+<span id="cb263-2"><a href="create-final-water-point-census-data.html#cb263-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(ilc_wp, <span class="sc">!</span>ilc_wcp, <span class="sc">!</span>vil_replaced) <span class="sc">%&gt;%</span></span>
+<span id="cb263-3"><a href="create-final-water-point-census-data.html#cb263-3" tabindex="-1"></a>  <span class="fu">select</span>(wp_id_c)</span></code></pre></div>
 </details>
 <pre><code>## # A tibble: 3 × 1
 ##   wp_id_c      
@@ -2432,59 +2450,41 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="export-constructed-data" class="section level2 hasAnchor" number="13.4">
 <h2><span class="header-section-number">13.4</span> Export constructed data<a href="create-final-water-point-census-data.html#export-constructed-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb278"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb278-1"><a href="create-final-water-point-census-data.html#cb278-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb278-2"><a href="create-final-water-point-census-data.html#cb278-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb278-3"><a href="create-final-water-point-census-data.html#cb278-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb278-4"><a href="create-final-water-point-census-data.html#cb278-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb278-5"><a href="create-final-water-point-census-data.html#cb278-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb278-6"><a href="create-final-water-point-census-data.html#cb278-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb278-7"><a href="create-final-water-point-census-data.html#cb278-7" tabindex="-1"></a>    <span class="st">&quot;wp-constructed&quot;</span></span>
-<span id="cb278-8"><a href="create-final-water-point-census-data.html#cb278-8" tabindex="-1"></a>  ) </span>
-<span id="cb278-9"><a href="create-final-water-point-census-data.html#cb278-9" tabindex="-1"></a></span>
-<span id="cb278-10"><a href="create-final-water-point-census-data.html#cb278-10" tabindex="-1"></a>wp <span class="sc">%&gt;%</span> </span>
-<span id="cb278-11"><a href="create-final-water-point-census-data.html#cb278-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb278-12"><a href="create-final-water-point-census-data.html#cb278-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb278-13"><a href="create-final-water-point-census-data.html#cb278-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb278-14"><a href="create-final-water-point-census-data.html#cb278-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb265-1"><a href="create-final-water-point-census-data.html#cb265-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb265-2"><a href="create-final-water-point-census-data.html#cb265-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb265-3"><a href="create-final-water-point-census-data.html#cb265-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb265-4"><a href="create-final-water-point-census-data.html#cb265-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb265-5"><a href="create-final-water-point-census-data.html#cb265-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb265-6"><a href="create-final-water-point-census-data.html#cb265-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb265-7"><a href="create-final-water-point-census-data.html#cb265-7" tabindex="-1"></a>    <span class="st">&quot;wp-constructed&quot;</span></span>
+<span id="cb265-8"><a href="create-final-water-point-census-data.html#cb265-8" tabindex="-1"></a>  ) </span>
+<span id="cb265-9"><a href="create-final-water-point-census-data.html#cb265-9" tabindex="-1"></a></span>
+<span id="cb265-10"><a href="create-final-water-point-census-data.html#cb265-10" tabindex="-1"></a>wp <span class="sc">%&gt;%</span> </span>
+<span id="cb265-11"><a href="create-final-water-point-census-data.html#cb265-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb265-12"><a href="create-final-water-point-census-data.html#cb265-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb265-13"><a href="create-final-water-point-census-data.html#cb265-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb265-14"><a href="create-final-water-point-census-data.html#cb265-14" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Warning: There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+<pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.
-## There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.
+## There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <table>
 <caption><span id="tab:unnamed-chunk-187">Table 13.1: </span>Data summary</caption>
 <tbody>
@@ -2498,7 +2498,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
-<td align="left">278</td>
+<td align="left">285</td>
 </tr>
 <tr class="even">
 <td align="left">_______________________</td>
@@ -2510,7 +2510,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">character</td>
-<td align="left">88</td>
+<td align="left">89</td>
 </tr>
 <tr class="odd">
 <td align="left">Date</td>
@@ -2522,11 +2522,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">logical</td>
-<td align="left">75</td>
+<td align="left">76</td>
 </tr>
 <tr class="even">
 <td align="left">numeric</td>
-<td align="left">80</td>
+<td align="left">85</td>
 </tr>
 <tr class="odd">
 <td align="left">POSIXct</td>
@@ -3319,17 +3319,17 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">ea_ilc_wpt</td>
-<td align="right">1049</td>
-<td align="right">0.14</td>
+<td align="right">1030</td>
+<td align="right">0.15</td>
 <td align="right">8</td>
 <td align="right">8</td>
 <td align="right">0</td>
-<td align="right">36</td>
+<td align="right">43</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">ea_program</td>
-<td align="right">686</td>
+<td align="right">683</td>
 <td align="right">0.44</td>
 <td align="right">3</td>
 <td align="right">26</td>
@@ -3339,7 +3339,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">match</td>
-<td align="right">643</td>
+<td align="right">640</td>
 <td align="right">0.47</td>
 <td align="right">6</td>
 <td align="right">9</td>
@@ -3359,7 +3359,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">ea_sourcetype</td>
-<td align="right">826</td>
+<td align="right">823</td>
 <td align="right">0.32</td>
 <td align="right">8</td>
 <td align="right">123</td>
@@ -3447,6 +3447,16 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">2</td>
 <td align="right">0</td>
 </tr>
+<tr class="odd">
+<td align="left">promoter_id</td>
+<td align="right">896</td>
+<td align="right">0.26</td>
+<td align="right">36</td>
+<td align="right">36</td>
+<td align="right">0</td>
+<td align="right">204</td>
+<td align="right">0</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Variable type: Date</strong></p>
@@ -3492,7 +3502,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">ipa_visit</td>
-<td align="right">643</td>
+<td align="right">640</td>
 <td align="right">0.47</td>
 <td align="left">2025-07-02</td>
 <td align="left">2025-08-22</td>
@@ -3501,7 +3511,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">date_installation</td>
-<td align="right">826</td>
+<td align="right">823</td>
 <td align="right">0.32</td>
 <td align="left">2013-04-18</td>
 <td align="left">2024-08-26</td>
@@ -3658,7 +3668,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">3</td>
-<td align="left">Non: 660, DSW: 389, ILC: 168</td>
+<td align="left">Non: 625, DSW: 391, ILC: 201</td>
 </tr>
 <tr class="even">
 <td align="left">intervention_type</td>
@@ -3666,23 +3676,23 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">Non: 660, DSW: 389, ILC: 133, ILC: 35</td>
+<td align="left">Non: 625, DSW: 391, ILC: 160, ILC: 41</td>
 </tr>
 <tr class="odd">
 <td align="left">ipa_program</td>
-<td align="right">643</td>
+<td align="right">640</td>
 <td align="right">0.47</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">DSW: 369, ILC: 131, Non: 51, ILC: 23</td>
+<td align="left">DSW: 371, ILC: 158, ILC: 29, Non: 19</td>
 </tr>
 <tr class="even">
 <td align="left">ipa_sourcetype</td>
-<td align="right">659</td>
+<td align="right">657</td>
 <td align="right">0.46</td>
 <td align="left">FALSE</td>
 <td align="right">11</td>
-<td align="left">Bor: 290, Mun: 165, Pro: 45, Pro: 21</td>
+<td align="left">Bor: 290, Mun: 167, Pro: 45, Pro: 21</td>
 </tr>
 <tr class="odd">
 <td align="left">ea_program_vil</td>
@@ -4097,31 +4107,31 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">dsw</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.36</td>
-<td align="left">FAL: 692, TRU: 389</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.32</td>
+<td align="left">FAL: 826, TRU: 391</td>
 </tr>
 <tr class="even">
 <td align="left">ilc</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.16</td>
-<td align="left">FAL: 913, TRU: 168</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.17</td>
+<td align="left">FAL: 1016, TRU: 201</td>
 </tr>
 <tr class="odd">
 <td align="left">ilc_wp</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
 <td align="right">0.03</td>
-<td align="left">FAL: 1046, TRU: 35</td>
+<td align="left">FAL: 1176, TRU: 41</td>
 </tr>
 <tr class="even">
 <td align="left">ilc_wcp</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.14</td>
-<td align="left">FAL: 927, TRU: 154</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.15</td>
+<td align="left">FAL: 1030, TRU: 187</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_c_01</td>
@@ -4268,7 +4278,14 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.26</td>
-<td align="left">FAL: 900, TRU: 317</td>
+<td align="left">FAL: 896, TRU: 321</td>
+</tr>
+<tr class="even">
+<td align="left">pm_ea_list</td>
+<td align="right">896</td>
+<td align="right">0.26</td>
+<td align="right">0.78</td>
+<td align="left">TRU: 249, FAL: 72</td>
 </tr>
 </tbody>
 </table>
@@ -5098,14 +5115,14 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">ea_id</td>
-<td align="right">682</td>
+<td align="right">679</td>
 <td align="right">0.44</td>
-<td align="right">2.226227e+10</td>
-<td align="right">3.700082e+10</td>
+<td align="right">2.213844e+10</td>
+<td align="right">3.693443e+10</td>
 <td align="right">7020106.0</td>
-<td align="right">70190745.50</td>
-<td align="right">82040010.00</td>
-<td align="right">7.523092e+10</td>
+<td align="right">70190745.25</td>
+<td align="right">81062448.50</td>
+<td align="right">7.037829e+10</td>
 <td align="right">8.707081e+10</td>
 <td align="left">▇▁▁▁▃</td>
 </tr>
@@ -5343,6 +5360,71 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">2.500000e+01</td>
 <td align="left">▇▅▆▇▅</td>
 </tr>
+<tr class="odd">
+<td align="left">pm_users</td>
+<td align="right">897</td>
+<td align="right">0.26</td>
+<td align="right">3.752000e+01</td>
+<td align="right">2.436000e+01</td>
+<td align="right">0.0</td>
+<td align="right">20.00</td>
+<td align="right">32.00</td>
+<td align="right">4.725000e+01</td>
+<td align="right">1.860000e+02</td>
+<td align="left">▇▅▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">pm_users_named</td>
+<td align="right">924</td>
+<td align="right">0.24</td>
+<td align="right">3.602000e+01</td>
+<td align="right">2.285000e+01</td>
+<td align="right">1.0</td>
+<td align="right">20.00</td>
+<td align="right">31.00</td>
+<td align="right">4.500000e+01</td>
+<td align="right">1.860000e+02</td>
+<td align="left">▇▃▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_users_census</td>
+<td align="right">897</td>
+<td align="right">0.26</td>
+<td align="right">2.762000e+01</td>
+<td align="right">2.183000e+01</td>
+<td align="right">1.0</td>
+<td align="right">13.00</td>
+<td align="right">23.00</td>
+<td align="right">3.500000e+01</td>
+<td align="right">1.860000e+02</td>
+<td align="left">▇▂▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">pm_users_notlisted</td>
+<td align="right">897</td>
+<td align="right">0.26</td>
+<td align="right">8.420000e+00</td>
+<td align="right">1.104000e+01</td>
+<td align="right">0.0</td>
+<td align="right">1.00</td>
+<td align="right">4.00</td>
+<td align="right">1.200000e+01</td>
+<td align="right">6.800000e+01</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_users_outside</td>
+<td align="right">898</td>
+<td align="right">0.26</td>
+<td align="right">3.200000e+00</td>
+<td align="right">8.030000e+00</td>
+<td align="right">0.0</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">3.000000e+00</td>
+<td align="right">6.900000e+01</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Variable type: POSIXct</strong></p>
@@ -5434,63 +5516,45 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tbody>
 </table>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb280"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb280-1"><a href="create-final-water-point-census-data.html#cb280-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb280-2"><a href="create-final-water-point-census-data.html#cb280-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb280-3"><a href="create-final-water-point-census-data.html#cb280-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb280-4"><a href="create-final-water-point-census-data.html#cb280-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb280-5"><a href="create-final-water-point-census-data.html#cb280-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb280-6"><a href="create-final-water-point-census-data.html#cb280-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb280-7"><a href="create-final-water-point-census-data.html#cb280-7" tabindex="-1"></a>    <span class="st">&quot;wp-gps-constructed&quot;</span></span>
-<span id="cb280-8"><a href="create-final-water-point-census-data.html#cb280-8" tabindex="-1"></a>  ) </span>
-<span id="cb280-9"><a href="create-final-water-point-census-data.html#cb280-9" tabindex="-1"></a></span>
-<span id="cb280-10"><a href="create-final-water-point-census-data.html#cb280-10" tabindex="-1"></a>wp_gps <span class="sc">%&gt;%</span> </span>
-<span id="cb280-11"><a href="create-final-water-point-census-data.html#cb280-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb280-12"><a href="create-final-water-point-census-data.html#cb280-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb280-13"><a href="create-final-water-point-census-data.html#cb280-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb280-14"><a href="create-final-water-point-census-data.html#cb280-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb267"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb267-1"><a href="create-final-water-point-census-data.html#cb267-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb267-2"><a href="create-final-water-point-census-data.html#cb267-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb267-3"><a href="create-final-water-point-census-data.html#cb267-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb267-4"><a href="create-final-water-point-census-data.html#cb267-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb267-5"><a href="create-final-water-point-census-data.html#cb267-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb267-6"><a href="create-final-water-point-census-data.html#cb267-6" tabindex="-1"></a>    <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb267-7"><a href="create-final-water-point-census-data.html#cb267-7" tabindex="-1"></a>    <span class="st">&quot;wp-gps-constructed&quot;</span></span>
+<span id="cb267-8"><a href="create-final-water-point-census-data.html#cb267-8" tabindex="-1"></a>  ) </span>
+<span id="cb267-9"><a href="create-final-water-point-census-data.html#cb267-9" tabindex="-1"></a></span>
+<span id="cb267-10"><a href="create-final-water-point-census-data.html#cb267-10" tabindex="-1"></a>wp_gps <span class="sc">%&gt;%</span> </span>
+<span id="cb267-11"><a href="create-final-water-point-census-data.html#cb267-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb267-12"><a href="create-final-water-point-census-data.html#cb267-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb267-13"><a href="create-final-water-point-census-data.html#cb267-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb267-14"><a href="create-final-water-point-census-data.html#cb267-14" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <pre><code>## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
 ## `sfl` provided. Falling back to `character`.</code></pre>
-<pre><code>## Warning: There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+<pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <pre><code>## Warning: Couldn&#39;t find skimmers for class: sfc_POINT, sfc; No user-defined
 ## `sfl` provided. Falling back to `character`.</code></pre>
-<pre><code>## Warning: There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+<pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <table>
 <caption><span id="tab:unnamed-chunk-188">Table 13.2: </span>Data summary</caption>
 <tbody>
@@ -5504,7 +5568,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
-<td align="left">279</td>
+<td align="left">286</td>
 </tr>
 <tr class="even">
 <td align="left">_______________________</td>
@@ -5516,7 +5580,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">character</td>
-<td align="left">89</td>
+<td align="left">90</td>
 </tr>
 <tr class="odd">
 <td align="left">Date</td>
@@ -5528,11 +5592,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">logical</td>
-<td align="left">75</td>
+<td align="left">76</td>
 </tr>
 <tr class="even">
 <td align="left">numeric</td>
-<td align="left">80</td>
+<td align="left">85</td>
 </tr>
 <tr class="odd">
 <td align="left">POSIXct</td>
@@ -6335,17 +6399,17 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">ea_ilc_wpt</td>
-<td align="right">1049</td>
-<td align="right">0.14</td>
+<td align="right">1030</td>
+<td align="right">0.15</td>
 <td align="right">8</td>
 <td align="right">8</td>
 <td align="right">0</td>
-<td align="right">36</td>
+<td align="right">43</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">ea_program</td>
-<td align="right">686</td>
+<td align="right">683</td>
 <td align="right">0.44</td>
 <td align="right">3</td>
 <td align="right">26</td>
@@ -6355,7 +6419,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">match</td>
-<td align="right">643</td>
+<td align="right">640</td>
 <td align="right">0.47</td>
 <td align="right">6</td>
 <td align="right">9</td>
@@ -6375,7 +6439,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">ea_sourcetype</td>
-<td align="right">826</td>
+<td align="right">823</td>
 <td align="right">0.32</td>
 <td align="right">8</td>
 <td align="right">123</td>
@@ -6463,6 +6527,16 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">2</td>
 <td align="right">0</td>
 </tr>
+<tr class="even">
+<td align="left">promoter_id</td>
+<td align="right">896</td>
+<td align="right">0.26</td>
+<td align="right">36</td>
+<td align="right">36</td>
+<td align="right">0</td>
+<td align="right">204</td>
+<td align="right">0</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Variable type: Date</strong></p>
@@ -6508,7 +6582,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">ipa_visit</td>
-<td align="right">643</td>
+<td align="right">640</td>
 <td align="right">0.47</td>
 <td align="left">2025-07-02</td>
 <td align="left">2025-08-22</td>
@@ -6517,7 +6591,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">date_installation</td>
-<td align="right">826</td>
+<td align="right">823</td>
 <td align="right">0.32</td>
 <td align="left">2013-04-18</td>
 <td align="left">2024-08-26</td>
@@ -6674,7 +6748,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">3</td>
-<td align="left">Non: 660, DSW: 389, ILC: 168</td>
+<td align="left">Non: 625, DSW: 391, ILC: 201</td>
 </tr>
 <tr class="even">
 <td align="left">intervention_type</td>
@@ -6682,23 +6756,23 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">Non: 660, DSW: 389, ILC: 133, ILC: 35</td>
+<td align="left">Non: 625, DSW: 391, ILC: 160, ILC: 41</td>
 </tr>
 <tr class="odd">
 <td align="left">ipa_program</td>
-<td align="right">643</td>
+<td align="right">640</td>
 <td align="right">0.47</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">DSW: 369, ILC: 131, Non: 51, ILC: 23</td>
+<td align="left">DSW: 371, ILC: 158, ILC: 29, Non: 19</td>
 </tr>
 <tr class="even">
 <td align="left">ipa_sourcetype</td>
-<td align="right">659</td>
+<td align="right">657</td>
 <td align="right">0.46</td>
 <td align="left">FALSE</td>
 <td align="right">11</td>
-<td align="left">Bor: 290, Mun: 165, Pro: 45, Pro: 21</td>
+<td align="left">Bor: 290, Mun: 167, Pro: 45, Pro: 21</td>
 </tr>
 <tr class="odd">
 <td align="left">ea_program_vil</td>
@@ -7113,31 +7187,31 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">dsw</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.36</td>
-<td align="left">FAL: 692, TRU: 389</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.32</td>
+<td align="left">FAL: 826, TRU: 391</td>
 </tr>
 <tr class="even">
 <td align="left">ilc</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.16</td>
-<td align="left">FAL: 913, TRU: 168</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.17</td>
+<td align="left">FAL: 1016, TRU: 201</td>
 </tr>
 <tr class="odd">
 <td align="left">ilc_wp</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
 <td align="right">0.03</td>
-<td align="left">FAL: 1046, TRU: 35</td>
+<td align="left">FAL: 1176, TRU: 41</td>
 </tr>
 <tr class="even">
 <td align="left">ilc_wcp</td>
-<td align="right">136</td>
-<td align="right">0.89</td>
-<td align="right">0.14</td>
-<td align="left">FAL: 927, TRU: 154</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.15</td>
+<td align="left">FAL: 1030, TRU: 187</td>
 </tr>
 <tr class="odd">
 <td align="left">meterfcr_c_01</td>
@@ -7284,7 +7358,14 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.26</td>
-<td align="left">FAL: 900, TRU: 317</td>
+<td align="left">FAL: 896, TRU: 321</td>
+</tr>
+<tr class="even">
+<td align="left">pm_ea_list</td>
+<td align="right">896</td>
+<td align="right">0.26</td>
+<td align="right">0.78</td>
+<td align="left">TRU: 249, FAL: 72</td>
 </tr>
 </tbody>
 </table>
@@ -8114,14 +8195,14 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">ea_id</td>
-<td align="right">682</td>
+<td align="right">679</td>
 <td align="right">0.44</td>
-<td align="right">2.226227e+10</td>
-<td align="right">3.700082e+10</td>
+<td align="right">2.213844e+10</td>
+<td align="right">3.693443e+10</td>
 <td align="right">7020106.0</td>
-<td align="right">70190745.50</td>
-<td align="right">82040010.00</td>
-<td align="right">7.523092e+10</td>
+<td align="right">70190745.25</td>
+<td align="right">81062448.50</td>
+<td align="right">7.037829e+10</td>
 <td align="right">8.707081e+10</td>
 <td align="left">▇▁▁▁▃</td>
 </tr>
@@ -8359,6 +8440,71 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">2.500000e+01</td>
 <td align="left">▇▅▆▇▅</td>
 </tr>
+<tr class="odd">
+<td align="left">pm_users</td>
+<td align="right">897</td>
+<td align="right">0.26</td>
+<td align="right">3.752000e+01</td>
+<td align="right">2.436000e+01</td>
+<td align="right">0.0</td>
+<td align="right">20.00</td>
+<td align="right">32.00</td>
+<td align="right">4.725000e+01</td>
+<td align="right">1.860000e+02</td>
+<td align="left">▇▅▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">pm_users_named</td>
+<td align="right">924</td>
+<td align="right">0.24</td>
+<td align="right">3.602000e+01</td>
+<td align="right">2.285000e+01</td>
+<td align="right">1.0</td>
+<td align="right">20.00</td>
+<td align="right">31.00</td>
+<td align="right">4.500000e+01</td>
+<td align="right">1.860000e+02</td>
+<td align="left">▇▃▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_users_census</td>
+<td align="right">897</td>
+<td align="right">0.26</td>
+<td align="right">2.762000e+01</td>
+<td align="right">2.183000e+01</td>
+<td align="right">1.0</td>
+<td align="right">13.00</td>
+<td align="right">23.00</td>
+<td align="right">3.500000e+01</td>
+<td align="right">1.860000e+02</td>
+<td align="left">▇▂▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">pm_users_notlisted</td>
+<td align="right">897</td>
+<td align="right">0.26</td>
+<td align="right">8.420000e+00</td>
+<td align="right">1.104000e+01</td>
+<td align="right">0.0</td>
+<td align="right">1.00</td>
+<td align="right">4.00</td>
+<td align="right">1.200000e+01</td>
+<td align="right">6.800000e+01</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_users_outside</td>
+<td align="right">898</td>
+<td align="right">0.26</td>
+<td align="right">3.200000e+00</td>
+<td align="right">8.030000e+00</td>
+<td align="right">0.0</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">3.000000e+00</td>
+<td align="right">6.900000e+01</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Variable type: POSIXct</strong></p>
@@ -8450,146 +8596,131 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tbody>
 </table>
 </div>
-<div id="order-analysis-variables" class="section level2 hasAnchor" number="13.5">
-<h2><span class="header-section-number">13.5</span> Order analysis variables<a href="create-final-water-point-census-data.html#order-analysis-variables" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="export-final-data" class="section level2 hasAnchor" number="13.5">
+<h2><span class="header-section-number">13.5</span> Export final data<a href="create-final-water-point-census-data.html#export-final-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="order-analysis-variables" class="section level3 hasAnchor" number="13.5.1">
+<h3><span class="header-section-number">13.5.1</span> Order analysis variables<a href="create-final-water-point-census-data.html#order-analysis-variables" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb285"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb285-1"><a href="create-final-water-point-census-data.html#cb285-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
-<span id="cb285-2"><a href="create-final-water-point-census-data.html#cb285-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb285-3"><a href="create-final-water-point-census-data.html#cb285-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb285-4"><a href="create-final-water-point-census-data.html#cb285-4" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb285-5"><a href="create-final-water-point-census-data.html#cb285-5" tabindex="-1"></a>      <span class="fu">c</span>(ilc_wp, ilc_wcp, dsw, ilc),</span>
-<span id="cb285-6"><a href="create-final-water-point-census-data.html#cb285-6" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">replace_na</span>(., <span class="cn">FALSE</span>)</span>
-<span id="cb285-7"><a href="create-final-water-point-census-data.html#cb285-7" tabindex="-1"></a>    ),</span>
-<span id="cb285-8"><a href="create-final-water-point-census-data.html#cb285-8" tabindex="-1"></a>    <span class="at">analysis =</span> wp_drink <span class="sc">&amp;</span> wp_multicompound,</span>
-<span id="cb285-9"><a href="create-final-water-point-census-data.html#cb285-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb285-10"><a href="create-final-water-point-census-data.html#cb285-10" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb285-11"><a href="create-final-water-point-census-data.html#cb285-11" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">c</span>(</span>
-<span id="cb285-12"><a href="create-final-water-point-census-data.html#cb285-12" tabindex="-1"></a>      wp_pay,</span>
-<span id="cb285-13"><a href="create-final-water-point-census-data.html#cb285-13" tabindex="-1"></a>      wp_id</span>
-<span id="cb285-14"><a href="create-final-water-point-census-data.html#cb285-14" tabindex="-1"></a>    )</span>
-<span id="cb285-15"><a href="create-final-water-point-census-data.html#cb285-15" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb285-16"><a href="create-final-water-point-census-data.html#cb285-16" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb285-17"><a href="create-final-water-point-census-data.html#cb285-17" tabindex="-1"></a>    <span class="co"># IDS</span></span>
-<span id="cb285-18"><a href="create-final-water-point-census-data.html#cb285-18" tabindex="-1"></a>    wp_id_c,</span>
-<span id="cb285-19"><a href="create-final-water-point-census-data.html#cb285-19" tabindex="-1"></a>    country,</span>
-<span id="cb285-20"><a href="create-final-water-point-census-data.html#cb285-20" tabindex="-1"></a>    village_id, ilc_cluster_id,</span>
-<span id="cb285-21"><a href="create-final-water-point-census-data.html#cb285-21" tabindex="-1"></a>    district_id,</span>
-<span id="cb285-22"><a href="create-final-water-point-census-data.html#cb285-22" tabindex="-1"></a>    country,</span>
-<span id="cb285-23"><a href="create-final-water-point-census-data.html#cb285-23" tabindex="-1"></a>    sample_group, sample, pre_expansion,</span>
-<span id="cb285-24"><a href="create-final-water-point-census-data.html#cb285-24" tabindex="-1"></a>    vil_replaced,</span>
-<span id="cb285-25"><a href="create-final-water-point-census-data.html#cb285-25" tabindex="-1"></a>    promoter_surveyed,</span>
-<span id="cb285-26"><a href="create-final-water-point-census-data.html#cb285-26" tabindex="-1"></a>    <span class="co"># Metadata</span></span>
-<span id="cb285-27"><a href="create-final-water-point-census-data.html#cb285-27" tabindex="-1"></a>    date, </span>
-<span id="cb285-28"><a href="create-final-water-point-census-data.html#cb285-28" tabindex="-1"></a>    team,</span>
-<span id="cb285-29"><a href="create-final-water-point-census-data.html#cb285-29" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;enum&quot;</span>),</span>
-<span id="cb285-30"><a href="create-final-water-point-census-data.html#cb285-30" tabindex="-1"></a>    <span class="co"># Eligibility</span></span>
-<span id="cb285-31"><a href="create-final-water-point-census-data.html#cb285-31" tabindex="-1"></a>    wp_multicompound, wp_drink,</span>
-<span id="cb285-32"><a href="create-final-water-point-census-data.html#cb285-32" tabindex="-1"></a>    analysis, wp_promoter,</span>
-<span id="cb285-33"><a href="create-final-water-point-census-data.html#cb285-33" tabindex="-1"></a>    <span class="co"># Evidence Action programs</span></span>
-<span id="cb285-34"><a href="create-final-water-point-census-data.html#cb285-34" tabindex="-1"></a>    wp_dsw, wp_ilc_device, wp_ilc,</span>
-<span id="cb285-35"><a href="create-final-water-point-census-data.html#cb285-35" tabindex="-1"></a>    dsw, ilc, ilc_wp, ilc_wcp,</span>
-<span id="cb285-36"><a href="create-final-water-point-census-data.html#cb285-36" tabindex="-1"></a>    intervention_type, intervention,</span>
-<span id="cb285-37"><a href="create-final-water-point-census-data.html#cb285-37" tabindex="-1"></a>    ea_id, ea_program, ea_ilc_wpt, ea_program_vil,</span>
-<span id="cb285-38"><a href="create-final-water-point-census-data.html#cb285-38" tabindex="-1"></a>    <span class="co"># Water point characteristics</span></span>
-<span id="cb285-39"><a href="create-final-water-point-census-data.html#cb285-39" tabindex="-1"></a>    sourcetype, wp_photo,</span>
-<span id="cb285-40"><a href="create-final-water-point-census-data.html#cb285-40" tabindex="-1"></a>    wp_func, </span>
-<span id="cb285-41"><a href="create-final-water-point-census-data.html#cb285-41" tabindex="-1"></a>    <span class="co"># WP spotcheck</span></span>
-<span id="cb285-42"><a href="create-final-water-point-census-data.html#cb285-42" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;wp_notfunc&quot;</span>),</span>
-<span id="cb285-43"><a href="create-final-water-point-census-data.html#cb285-43" tabindex="-1"></a>    wp_func_last,</span>
-<span id="cb285-44"><a href="create-final-water-point-census-data.html#cb285-44" tabindex="-1"></a>    wp_turbidity,</span>
-<span id="cb285-45"><a href="create-final-water-point-census-data.html#cb285-45" tabindex="-1"></a>    <span class="co"># Dispenser spotcheck</span></span>
-<span id="cb285-46"><a href="create-final-water-point-census-data.html#cb285-46" tabindex="-1"></a>    <span class="fu">starts_with</span>(<span class="st">&quot;disp_&quot;</span>), </span>
-<span id="cb285-47"><a href="create-final-water-point-census-data.html#cb285-47" tabindex="-1"></a>    jc_mllost,  jc_mldispensed,</span>
-<span id="cb285-48"><a href="create-final-water-point-census-data.html#cb285-48" tabindex="-1"></a>    <span class="co"># Chlorine testing</span></span>
-<span id="cb285-49"><a href="create-final-water-point-census-data.html#cb285-49" tabindex="-1"></a>    discid, <span class="fu">contains</span>(<span class="st">&quot;tubeid&quot;</span>),</span>
-<span id="cb285-50"><a href="create-final-water-point-census-data.html#cb285-50" tabindex="-1"></a>    meterid, <span class="fu">contains</span>(<span class="st">&quot;vialid&quot;</span>),</span>
-<span id="cb285-51"><a href="create-final-water-point-census-data.html#cb285-51" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;cr_c&quot;</span>),</span>
-<span id="cb285-52"><a href="create-final-water-point-census-data.html#cb285-52" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;un_c&quot;</span>),</span>
-<span id="cb285-53"><a href="create-final-water-point-census-data.html#cb285-53" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;01&quot;</span>),</span>
-<span id="cb285-54"><a href="create-final-water-point-census-data.html#cb285-54" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;02&quot;</span>),</span>
-<span id="cb285-55"><a href="create-final-water-point-census-data.html#cb285-55" tabindex="-1"></a>    <span class="co"># Costs</span></span>
-<span id="cb285-56"><a href="create-final-water-point-census-data.html#cb285-56" tabindex="-1"></a>    <span class="at">wp_pay =</span> wp_pay_c,</span>
-<span id="cb285-57"><a href="create-final-water-point-census-data.html#cb285-57" tabindex="-1"></a>    wp_pay_userfees, wp_pay_maintenance,</span>
-<span id="cb285-58"><a href="create-final-water-point-census-data.html#cb285-58" tabindex="-1"></a>    wp_cost,</span>
-<span id="cb285-59"><a href="create-final-water-point-census-data.html#cb285-59" tabindex="-1"></a>    wp_cost_period,</span>
-<span id="cb285-60"><a href="create-final-water-point-census-data.html#cb285-60" tabindex="-1"></a>    <span class="co"># Data quality flags</span></span>
-<span id="cb285-61"><a href="create-final-water-point-census-data.html#cb285-61" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>),</span>
-<span id="cb285-62"><a href="create-final-water-point-census-data.html#cb285-62" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;comments&quot;</span>)</span>
-<span id="cb285-63"><a href="create-final-water-point-census-data.html#cb285-63" tabindex="-1"></a>  ) </span></code></pre></div>
+<div class="sourceCode" id="cb272"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb272-1"><a href="create-final-water-point-census-data.html#cb272-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
+<span id="cb272-2"><a href="create-final-water-point-census-data.html#cb272-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb272-3"><a href="create-final-water-point-census-data.html#cb272-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb272-4"><a href="create-final-water-point-census-data.html#cb272-4" tabindex="-1"></a>    <span class="at">analysis =</span> wp_drink <span class="sc">&amp;</span> wp_multicompound,</span>
+<span id="cb272-5"><a href="create-final-water-point-census-data.html#cb272-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb272-6"><a href="create-final-water-point-census-data.html#cb272-6" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb272-7"><a href="create-final-water-point-census-data.html#cb272-7" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">c</span>(</span>
+<span id="cb272-8"><a href="create-final-water-point-census-data.html#cb272-8" tabindex="-1"></a>      wp_pay,</span>
+<span id="cb272-9"><a href="create-final-water-point-census-data.html#cb272-9" tabindex="-1"></a>      wp_id</span>
+<span id="cb272-10"><a href="create-final-water-point-census-data.html#cb272-10" tabindex="-1"></a>    )</span>
+<span id="cb272-11"><a href="create-final-water-point-census-data.html#cb272-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb272-12"><a href="create-final-water-point-census-data.html#cb272-12" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb272-13"><a href="create-final-water-point-census-data.html#cb272-13" tabindex="-1"></a>    <span class="co"># IDS</span></span>
+<span id="cb272-14"><a href="create-final-water-point-census-data.html#cb272-14" tabindex="-1"></a>    wp_id_c,</span>
+<span id="cb272-15"><a href="create-final-water-point-census-data.html#cb272-15" tabindex="-1"></a>    country,</span>
+<span id="cb272-16"><a href="create-final-water-point-census-data.html#cb272-16" tabindex="-1"></a>    village_id, ilc_cluster_id,</span>
+<span id="cb272-17"><a href="create-final-water-point-census-data.html#cb272-17" tabindex="-1"></a>    district_id, </span>
+<span id="cb272-18"><a href="create-final-water-point-census-data.html#cb272-18" tabindex="-1"></a>    country,</span>
+<span id="cb272-19"><a href="create-final-water-point-census-data.html#cb272-19" tabindex="-1"></a>    sample_group, sample, pre_expansion,</span>
+<span id="cb272-20"><a href="create-final-water-point-census-data.html#cb272-20" tabindex="-1"></a>    vil_replaced, analysis,</span>
+<span id="cb272-21"><a href="create-final-water-point-census-data.html#cb272-21" tabindex="-1"></a>    <span class="co"># Metadata</span></span>
+<span id="cb272-22"><a href="create-final-water-point-census-data.html#cb272-22" tabindex="-1"></a>    date, </span>
+<span id="cb272-23"><a href="create-final-water-point-census-data.html#cb272-23" tabindex="-1"></a>    team,</span>
+<span id="cb272-24"><a href="create-final-water-point-census-data.html#cb272-24" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;enum&quot;</span>),</span>
+<span id="cb272-25"><a href="create-final-water-point-census-data.html#cb272-25" tabindex="-1"></a>    <span class="co"># Eligibility</span></span>
+<span id="cb272-26"><a href="create-final-water-point-census-data.html#cb272-26" tabindex="-1"></a>    wp_multicompound, wp_drink,</span>
+<span id="cb272-27"><a href="create-final-water-point-census-data.html#cb272-27" tabindex="-1"></a>    analysis, wp_promoter,</span>
+<span id="cb272-28"><a href="create-final-water-point-census-data.html#cb272-28" tabindex="-1"></a>    <span class="co"># Evidence Action programs</span></span>
+<span id="cb272-29"><a href="create-final-water-point-census-data.html#cb272-29" tabindex="-1"></a>    wp_dsw, wp_ilc_device, wp_ilc,</span>
+<span id="cb272-30"><a href="create-final-water-point-census-data.html#cb272-30" tabindex="-1"></a>    dsw, ilc, ilc_wp, ilc_wcp,</span>
+<span id="cb272-31"><a href="create-final-water-point-census-data.html#cb272-31" tabindex="-1"></a>    intervention_type, intervention,</span>
+<span id="cb272-32"><a href="create-final-water-point-census-data.html#cb272-32" tabindex="-1"></a>    ea_id, ea_program, ea_ilc_wpt, ea_program_vil,</span>
+<span id="cb272-33"><a href="create-final-water-point-census-data.html#cb272-33" tabindex="-1"></a>    <span class="co"># Water point characteristics</span></span>
+<span id="cb272-34"><a href="create-final-water-point-census-data.html#cb272-34" tabindex="-1"></a>    sourcetype, wp_photo,</span>
+<span id="cb272-35"><a href="create-final-water-point-census-data.html#cb272-35" tabindex="-1"></a>    wp_func, </span>
+<span id="cb272-36"><a href="create-final-water-point-census-data.html#cb272-36" tabindex="-1"></a>    <span class="co"># WP spotcheck</span></span>
+<span id="cb272-37"><a href="create-final-water-point-census-data.html#cb272-37" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;wp_notfunc&quot;</span>),</span>
+<span id="cb272-38"><a href="create-final-water-point-census-data.html#cb272-38" tabindex="-1"></a>    wp_func_last,</span>
+<span id="cb272-39"><a href="create-final-water-point-census-data.html#cb272-39" tabindex="-1"></a>    wp_turbidity,</span>
+<span id="cb272-40"><a href="create-final-water-point-census-data.html#cb272-40" tabindex="-1"></a>    <span class="co"># Dispenser spotcheck</span></span>
+<span id="cb272-41"><a href="create-final-water-point-census-data.html#cb272-41" tabindex="-1"></a>    <span class="fu">starts_with</span>(<span class="st">&quot;disp_&quot;</span>), </span>
+<span id="cb272-42"><a href="create-final-water-point-census-data.html#cb272-42" tabindex="-1"></a>    jc_mllost,  jc_mldispensed,</span>
+<span id="cb272-43"><a href="create-final-water-point-census-data.html#cb272-43" tabindex="-1"></a>    <span class="co"># Chlorine testing</span></span>
+<span id="cb272-44"><a href="create-final-water-point-census-data.html#cb272-44" tabindex="-1"></a>    discid, <span class="fu">contains</span>(<span class="st">&quot;tubeid&quot;</span>),</span>
+<span id="cb272-45"><a href="create-final-water-point-census-data.html#cb272-45" tabindex="-1"></a>    meterid, <span class="fu">contains</span>(<span class="st">&quot;vialid&quot;</span>),</span>
+<span id="cb272-46"><a href="create-final-water-point-census-data.html#cb272-46" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;cr_c&quot;</span>),</span>
+<span id="cb272-47"><a href="create-final-water-point-census-data.html#cb272-47" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;un_c&quot;</span>),</span>
+<span id="cb272-48"><a href="create-final-water-point-census-data.html#cb272-48" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;01&quot;</span>),</span>
+<span id="cb272-49"><a href="create-final-water-point-census-data.html#cb272-49" tabindex="-1"></a>    <span class="fu">ends_with</span>(<span class="st">&quot;02&quot;</span>),</span>
+<span id="cb272-50"><a href="create-final-water-point-census-data.html#cb272-50" tabindex="-1"></a>    <span class="co"># Costs</span></span>
+<span id="cb272-51"><a href="create-final-water-point-census-data.html#cb272-51" tabindex="-1"></a>    <span class="at">wp_pay =</span> wp_pay_c,</span>
+<span id="cb272-52"><a href="create-final-water-point-census-data.html#cb272-52" tabindex="-1"></a>    wp_pay_userfees, wp_pay_maintenance,</span>
+<span id="cb272-53"><a href="create-final-water-point-census-data.html#cb272-53" tabindex="-1"></a>    wp_cost,</span>
+<span id="cb272-54"><a href="create-final-water-point-census-data.html#cb272-54" tabindex="-1"></a>    wp_cost_period,</span>
+<span id="cb272-55"><a href="create-final-water-point-census-data.html#cb272-55" tabindex="-1"></a>    <span class="co"># Data quality flags</span></span>
+<span id="cb272-56"><a href="create-final-water-point-census-data.html#cb272-56" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>),</span>
+<span id="cb272-57"><a href="create-final-water-point-census-data.html#cb272-57" tabindex="-1"></a>    <span class="fu">contains</span>(<span class="st">&quot;comments&quot;</span>),</span>
+<span id="cb272-58"><a href="create-final-water-point-census-data.html#cb272-58" tabindex="-1"></a>    <span class="co"># Promoter survey</span></span>
+<span id="cb272-59"><a href="create-final-water-point-census-data.html#cb272-59" tabindex="-1"></a>    promoter_surveyed, promoter_id,</span>
+<span id="cb272-60"><a href="create-final-water-point-census-data.html#cb272-60" tabindex="-1"></a>    <span class="fu">starts_with</span>(<span class="st">&quot;pm_&quot;</span>)</span>
+<span id="cb272-61"><a href="create-final-water-point-census-data.html#cb272-61" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
-<div id="export-final-data" class="section level2 hasAnchor" number="13.6">
-<h2><span class="header-section-number">13.6</span> Export final data<a href="create-final-water-point-census-data.html#export-final-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="select-relevant-observations" class="section level3 hasAnchor" number="13.5.2">
+<h3><span class="header-section-number">13.5.2</span> Select relevant observations<a href="create-final-water-point-census-data.html#select-relevant-observations" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb286"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb286-1"><a href="create-final-water-point-census-data.html#cb286-1" tabindex="-1"></a>final <span class="ot">&lt;-</span></span>
-<span id="cb286-2"><a href="create-final-water-point-census-data.html#cb286-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb286-3"><a href="create-final-water-point-census-data.html#cb286-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>vil_replaced) <span class="sc">%&gt;%</span></span>
-<span id="cb286-4"><a href="create-final-water-point-census-data.html#cb286-4" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>vil_replaced) <span class="sc">%&gt;%</span></span>
-<span id="cb286-5"><a href="create-final-water-point-census-data.html#cb286-5" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">wp_id =</span> wp_id_c) <span class="sc">%&gt;%</span></span>
-<span id="cb286-6"><a href="create-final-water-point-census-data.html#cb286-6" tabindex="-1"></a>  <span class="fu">set_names</span>(</span>
-<span id="cb286-7"><a href="create-final-water-point-census-data.html#cb286-7" tabindex="-1"></a>    <span class="fu">names</span>(.) <span class="sc">%&gt;%</span> </span>
-<span id="cb286-8"><a href="create-final-water-point-census-data.html#cb286-8" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;cr_c$&quot;</span>, <span class="st">&quot;cr&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb286-9"><a href="create-final-water-point-census-data.html#cb286-9" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;c_0&quot;</span>, <span class="st">&quot;0&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb286-10"><a href="create-final-water-point-census-data.html#cb286-10" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;un_c&quot;</span>, <span class="st">&quot;un&quot;</span>),</span>
-<span id="cb286-11"><a href="create-final-water-point-census-data.html#cb286-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb286-12"><a href="create-final-water-point-census-data.html#cb286-12" tabindex="-1"></a>  <span class="fu">remove_empty</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb286-13"><a href="create-final-water-point-census-data.html#cb286-13" tabindex="-1"></a>  <span class="fu">remove_constant</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb273"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb273-1"><a href="create-final-water-point-census-data.html#cb273-1" tabindex="-1"></a>final <span class="ot">&lt;-</span></span>
+<span id="cb273-2"><a href="create-final-water-point-census-data.html#cb273-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb273-3"><a href="create-final-water-point-census-data.html#cb273-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>vil_replaced) <span class="sc">%&gt;%</span></span>
+<span id="cb273-4"><a href="create-final-water-point-census-data.html#cb273-4" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>vil_replaced) <span class="sc">%&gt;%</span></span>
+<span id="cb273-5"><a href="create-final-water-point-census-data.html#cb273-5" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">wp_id =</span> wp_id_c) <span class="sc">%&gt;%</span></span>
+<span id="cb273-6"><a href="create-final-water-point-census-data.html#cb273-6" tabindex="-1"></a>  <span class="fu">set_names</span>(</span>
+<span id="cb273-7"><a href="create-final-water-point-census-data.html#cb273-7" tabindex="-1"></a>    <span class="fu">names</span>(.) <span class="sc">%&gt;%</span> </span>
+<span id="cb273-8"><a href="create-final-water-point-census-data.html#cb273-8" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;cr_c$&quot;</span>, <span class="st">&quot;cr&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb273-9"><a href="create-final-water-point-census-data.html#cb273-9" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;c_0&quot;</span>, <span class="st">&quot;0&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb273-10"><a href="create-final-water-point-census-data.html#cb273-10" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;un_c&quot;</span>, <span class="st">&quot;un&quot;</span>),</span>
+<span id="cb273-11"><a href="create-final-water-point-census-data.html#cb273-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb273-12"><a href="create-final-water-point-census-data.html#cb273-12" tabindex="-1"></a>  <span class="fu">remove_empty</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb273-13"><a href="create-final-water-point-census-data.html#cb273-13" tabindex="-1"></a>  <span class="fu">remove_constant</span>()</span></code></pre></div>
 </details>
 <pre><code>## value for &quot;which&quot; not specified, defaulting to c(&quot;rows&quot;, &quot;cols&quot;)</code></pre>
+</div>
+<div id="save-data-2" class="section level3 hasAnchor" number="13.5.3">
+<h3><span class="header-section-number">13.5.3</span> Save data<a href="create-final-water-point-census-data.html#save-data-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb288"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb288-1"><a href="create-final-water-point-census-data.html#cb288-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
-<span id="cb288-2"><a href="create-final-water-point-census-data.html#cb288-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb288-3"><a href="create-final-water-point-census-data.html#cb288-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb288-4"><a href="create-final-water-point-census-data.html#cb288-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb288-5"><a href="create-final-water-point-census-data.html#cb288-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb288-6"><a href="create-final-water-point-census-data.html#cb288-6" tabindex="-1"></a>    <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb288-7"><a href="create-final-water-point-census-data.html#cb288-7" tabindex="-1"></a>    <span class="st">&quot;wp-census&quot;</span></span>
-<span id="cb288-8"><a href="create-final-water-point-census-data.html#cb288-8" tabindex="-1"></a>  ) </span>
-<span id="cb288-9"><a href="create-final-water-point-census-data.html#cb288-9" tabindex="-1"></a></span>
-<span id="cb288-10"><a href="create-final-water-point-census-data.html#cb288-10" tabindex="-1"></a>final <span class="sc">%&gt;%</span> </span>
-<span id="cb288-11"><a href="create-final-water-point-census-data.html#cb288-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb288-12"><a href="create-final-water-point-census-data.html#cb288-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb288-13"><a href="create-final-water-point-census-data.html#cb288-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb288-14"><a href="create-final-water-point-census-data.html#cb288-14" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb275"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb275-1"><a href="create-final-water-point-census-data.html#cb275-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> </span>
+<span id="cb275-2"><a href="create-final-water-point-census-data.html#cb275-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb275-3"><a href="create-final-water-point-census-data.html#cb275-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb275-4"><a href="create-final-water-point-census-data.html#cb275-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb275-5"><a href="create-final-water-point-census-data.html#cb275-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb275-6"><a href="create-final-water-point-census-data.html#cb275-6" tabindex="-1"></a>    <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb275-7"><a href="create-final-water-point-census-data.html#cb275-7" tabindex="-1"></a>    <span class="st">&quot;wp-census&quot;</span></span>
+<span id="cb275-8"><a href="create-final-water-point-census-data.html#cb275-8" tabindex="-1"></a>  ) </span>
+<span id="cb275-9"><a href="create-final-water-point-census-data.html#cb275-9" tabindex="-1"></a></span>
+<span id="cb275-10"><a href="create-final-water-point-census-data.html#cb275-10" tabindex="-1"></a>final <span class="sc">%&gt;%</span> </span>
+<span id="cb275-11"><a href="create-final-water-point-census-data.html#cb275-11" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb275-12"><a href="create-final-water-point-census-data.html#cb275-12" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb275-13"><a href="create-final-water-point-census-data.html#cb275-13" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb275-14"><a href="create-final-water-point-census-data.html#cb275-14" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Warning: There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+<pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.
-## There was 1 warning in
-## `dplyr::summarize()`.
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.
+## There was 1 warning in `dplyr::summarize()`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in
-## `dplyr::summarize()`.
+## ! There were 4 warnings in `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument:
-##   `dplyr::across(tidyselect::any_of(variable_names),
-##   mangled_skimmers$funs)`.
+## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run
-##   `dplyr::last_dplyr_warnings()`
-##   to see the 3 remaining
-##   warnings.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <table>
 <caption><span id="tab:unnamed-chunk-191">Table 13.3: </span>Data summary</caption>
 <tbody>
@@ -8603,7 +8734,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
-<td align="left">115</td>
+<td align="left">122</td>
 </tr>
 <tr class="even">
 <td align="left">_______________________</td>
@@ -8615,7 +8746,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">character</td>
-<td align="left">37</td>
+<td align="left">38</td>
 </tr>
 <tr class="odd">
 <td align="left">Date</td>
@@ -8627,11 +8758,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">logical</td>
-<td align="left">48</td>
+<td align="left">49</td>
 </tr>
 <tr class="even">
 <td align="left">numeric</td>
-<td align="left">16</td>
+<td align="left">21</td>
 </tr>
 <tr class="odd">
 <td align="left">________________________</td>
@@ -8760,7 +8891,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="even">
 <td align="left">ea_program</td>
-<td align="right">619</td>
+<td align="right">616</td>
 <td align="right">0.46</td>
 <td align="right">3</td>
 <td align="right">26</td>
@@ -8770,12 +8901,12 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">ea_ilc_wpt</td>
-<td align="right">968</td>
-<td align="right">0.15</td>
+<td align="right">949</td>
+<td align="right">0.16</td>
 <td align="right">8</td>
 <td align="right">8</td>
 <td align="right">0</td>
-<td align="right">36</td>
+<td align="right">43</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
@@ -9038,6 +9169,16 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">63</td>
 <td align="right">0</td>
 </tr>
+<tr class="even">
+<td align="left">promoter_id</td>
+<td align="right">824</td>
+<td align="right">0.27</td>
+<td align="right">36</td>
+<td align="right">36</td>
+<td align="right">0</td>
+<td align="right">199</td>
+<td align="right">0</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Variable type: Date</strong></p>
@@ -9134,7 +9275,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">Non: 602, DSW: 377, ILC: 133, ILC: 24</td>
+<td align="left">Non: 568, DSW: 378, ILC: 160, ILC: 30</td>
 </tr>
 <tr class="odd">
 <td align="left">intervention</td>
@@ -9142,7 +9283,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.00</td>
 <td align="left">FALSE</td>
 <td align="right">3</td>
-<td align="left">Non: 602, DSW: 377, ILC: 157</td>
+<td align="left">Non: 568, DSW: 378, ILC: 190</td>
 </tr>
 <tr class="even">
 <td align="left">ea_program_vil</td>
@@ -9222,11 +9363,11 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">promoter_surveyed</td>
+<td align="left">analysis</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
-<td align="right">0.27</td>
-<td align="left">FAL: 827, TRU: 309</td>
+<td align="right">0.90</td>
+<td align="left">TRU: 1024, FAL: 112</td>
 </tr>
 <tr class="even">
 <td align="left">wp_multicompound</td>
@@ -9243,333 +9384,340 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="left">TRU: 1052, FAL: 84</td>
 </tr>
 <tr class="even">
-<td align="left">analysis</td>
-<td align="right">0</td>
-<td align="right">1.00</td>
-<td align="right">0.90</td>
-<td align="left">TRU: 1024, FAL: 112</td>
-</tr>
-<tr class="odd">
 <td align="left">wp_promoter</td>
 <td align="right">622</td>
 <td align="right">0.45</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 453, TRU: 61</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_dsw</td>
 <td align="right">230</td>
 <td align="right">0.80</td>
 <td align="right">0.42</td>
 <td align="left">FAL: 525, TRU: 381</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_ilc_device</td>
 <td align="right">91</td>
 <td align="right">0.92</td>
 <td align="right">0.12</td>
 <td align="left">FAL: 918, TRU: 127</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_ilc</td>
 <td align="right">458</td>
 <td align="right">0.60</td>
 <td align="right">0.26</td>
 <td align="left">FAL: 503, TRU: 175</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">dsw</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.33</td>
-<td align="left">FAL: 759, TRU: 377</td>
+<td align="left">FAL: 758, TRU: 378</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ilc</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
-<td align="right">0.14</td>
-<td align="left">FAL: 979, TRU: 157</td>
+<td align="right">0.17</td>
+<td align="left">FAL: 946, TRU: 190</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">ilc_wp</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
-<td align="right">0.02</td>
-<td align="left">FAL: 1112, TRU: 24</td>
+<td align="right">0.03</td>
+<td align="left">FAL: 1106, TRU: 30</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ilc_wcp</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
-<td align="right">0.14</td>
-<td align="left">FAL: 982, TRU: 154</td>
+<td align="right">0.16</td>
+<td align="left">FAL: 949, TRU: 187</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_func</td>
 <td align="right">0</td>
 <td align="right">1.00</td>
 <td align="right">0.87</td>
 <td align="left">TRU: 987, FAL: 149</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_notfunc_dry</td>
 <td align="right">1131</td>
 <td align="right">0.00</td>
 <td align="right">0.20</td>
 <td align="left">FAL: 4, TRU: 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_notfunc_pump</td>
 <td align="right">1131</td>
 <td align="right">0.00</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 5</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_notfunc_ilc_dry</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.75</td>
 <td align="left">TRU: 9, FAL: 3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_notfunc_ilc_pump</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 11, TRU: 1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_notfunc_ilc_pipe</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.17</td>
 <td align="left">FAL: 10, TRU: 2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_notfunc_ilc_tank</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 11, TRU: 1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_notfunc_ilc_closed</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 11, TRU: 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_notfunc_ilc_power</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 11, TRU: 1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_notfunc_ilc_panel</td>
 <td align="right">1124</td>
 <td align="right">0.01</td>
 <td align="right">0.25</td>
 <td align="left">FAL: 9, TRU: 3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">disp_tank_present</td>
 <td align="right">766</td>
 <td align="right">0.33</td>
 <td align="right">0.97</td>
 <td align="left">TRU: 358, FAL: 12</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">disp_casing_present</td>
 <td align="right">766</td>
 <td align="right">0.33</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 369, FAL: 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">disp_pvc_pole_present</td>
 <td align="right">766</td>
 <td align="right">0.33</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 369, FAL: 1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">disp_func</td>
 <td align="right">846</td>
 <td align="right">0.26</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 289, FAL: 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">disp_filled</td>
 <td align="right">847</td>
 <td align="right">0.25</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 242, FAL: 47</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">jc_mllost</td>
 <td align="right">852</td>
 <td align="right">0.25</td>
 <td align="right">0.27</td>
 <td align="left">FAL: 207, TRU: 77</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">meterfcr_01</td>
 <td align="right">825</td>
 <td align="right">0.27</td>
 <td align="right">0.82</td>
 <td align="left">TRU: 256, FAL: 55</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">metertcr_01</td>
 <td align="right">826</td>
 <td align="right">0.27</td>
 <td align="right">0.86</td>
 <td align="left">TRU: 267, FAL: 43</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">discfcr_01</td>
 <td align="right">826</td>
 <td align="right">0.27</td>
 <td align="right">0.80</td>
 <td align="left">TRU: 247, FAL: 63</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">disctcr_01</td>
 <td align="right">826</td>
 <td align="right">0.27</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 261, FAL: 49</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">meterfcr_un_01</td>
 <td align="right">933</td>
 <td align="right">0.18</td>
 <td align="right">0.14</td>
 <td align="left">FAL: 175, TRU: 28</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">metertcr_un_01</td>
 <td align="right">932</td>
 <td align="right">0.18</td>
 <td align="right">0.21</td>
 <td align="left">FAL: 162, TRU: 42</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">discfcr_un_01</td>
 <td align="right">867</td>
 <td align="right">0.24</td>
 <td align="right">0.01</td>
 <td align="left">FAL: 266, TRU: 3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">disctcr_un_01</td>
 <td align="right">867</td>
 <td align="right">0.24</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 260, TRU: 9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">meterfcr_02</td>
 <td align="right">825</td>
 <td align="right">0.27</td>
 <td align="right">0.77</td>
 <td align="left">TRU: 238, FAL: 73</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">metertcr_02</td>
 <td align="right">826</td>
 <td align="right">0.27</td>
 <td align="right">0.81</td>
 <td align="left">TRU: 252, FAL: 58</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">discfcr_02</td>
 <td align="right">826</td>
 <td align="right">0.27</td>
 <td align="right">0.80</td>
 <td align="left">TRU: 247, FAL: 63</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">disctcr_02</td>
 <td align="right">826</td>
 <td align="right">0.27</td>
 <td align="right">0.84</td>
 <td align="left">TRU: 261, FAL: 49</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">meterfcr_un_02</td>
 <td align="right">933</td>
 <td align="right">0.18</td>
 <td align="right">0.06</td>
 <td align="left">FAL: 190, TRU: 13</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">metertcr_un_02</td>
 <td align="right">932</td>
 <td align="right">0.18</td>
 <td align="right">0.09</td>
 <td align="left">FAL: 185, TRU: 19</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">discfcr_un_02</td>
 <td align="right">867</td>
 <td align="right">0.24</td>
 <td align="right">0.01</td>
 <td align="left">FAL: 266, TRU: 3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">disctcr_un_02</td>
 <td align="right">867</td>
 <td align="right">0.24</td>
 <td align="right">0.03</td>
 <td align="left">FAL: 260, TRU: 9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_pay</td>
 <td align="right">662</td>
 <td align="right">0.42</td>
 <td align="right">0.58</td>
 <td align="left">TRU: 274, FAL: 200</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wp_pay_userfees</td>
 <td align="right">862</td>
 <td align="right">0.24</td>
 <td align="right">0.08</td>
 <td align="left">FAL: 251, TRU: 23</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wp_pay_maintenance</td>
 <td align="right">862</td>
 <td align="right">0.24</td>
 <td align="right">0.93</td>
 <td align="left">TRU: 254, FAL: 20</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">flag_wpcensus_conflict</td>
 <td align="right">1114</td>
 <td align="right">0.02</td>
 <td align="right">1.00</td>
 <td align="left">TRU: 22</td>
 </tr>
+<tr class="even">
+<td align="left">promoter_surveyed</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">0.27</td>
+<td align="left">FAL: 824, TRU: 312</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_ea_list</td>
+<td align="right">824</td>
+<td align="right">0.27</td>
+<td align="right">0.78</td>
+<td align="left">TRU: 242, FAL: 70</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Variable type: numeric</strong></p>
 <table style="width:100%;">
 <colgroup>
-<col width="11%" />
+<col width="14%" />
 <col width="7%" />
 <col width="10%" />
 <col width="9%" />
 <col width="9%" />
 <col width="7%" />
-<col width="9%" />
-<col width="9%" />
+<col width="8%" />
+<col width="8%" />
 <col width="9%" />
 <col width="9%" />
 <col width="4%" />
@@ -9644,14 +9792,14 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </tr>
 <tr class="odd">
 <td align="left">ea_id</td>
-<td align="right">615</td>
+<td align="right">612</td>
 <td align="right">0.46</td>
-<td align="right">2.285933e+10</td>
-<td align="right">3.731315e+10</td>
+<td align="right">2.272878e+10</td>
+<td align="right">3.724582e+10</td>
 <td align="right">7020106.0</td>
-<td align="right">70210253.00</td>
-<td align="right">82040169.00</td>
-<td align="right">8.106293e+10</td>
+<td align="right">70205414.50</td>
+<td align="right">82040112.50</td>
+<td align="right">8.106289e+10</td>
 <td align="right">8.707081e+10</td>
 <td align="left">▇▁▁▁▃</td>
 </tr>
@@ -9798,28 +9946,94 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1.500000e+04</td>
 <td align="left">▇▁▁▁▁</td>
 </tr>
+<tr class="odd">
+<td align="left">pm_users</td>
+<td align="right">825</td>
+<td align="right">0.27</td>
+<td align="right">3.694000e+01</td>
+<td align="right">2.262000e+01</td>
+<td align="right">0.0</td>
+<td align="right">20.00</td>
+<td align="right">32.00</td>
+<td align="right">4.700000e+01</td>
+<td align="right">1.700000e+02</td>
+<td align="left">▇▆▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">pm_users_named</td>
+<td align="right">852</td>
+<td align="right">0.25</td>
+<td align="right">3.528000e+01</td>
+<td align="right">2.062000e+01</td>
+<td align="right">5.0</td>
+<td align="right">20.00</td>
+<td align="right">30.00</td>
+<td align="right">4.425000e+01</td>
+<td align="right">1.230000e+02</td>
+<td align="left">▇▇▂▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_users_census</td>
+<td align="right">825</td>
+<td align="right">0.27</td>
+<td align="right">2.686000e+01</td>
+<td align="right">1.933000e+01</td>
+<td align="right">1.0</td>
+<td align="right">13.00</td>
+<td align="right">23.00</td>
+<td align="right">3.400000e+01</td>
+<td align="right">1.220000e+02</td>
+<td align="left">▇▅▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">pm_users_notlisted</td>
+<td align="right">825</td>
+<td align="right">0.27</td>
+<td align="right">8.510000e+00</td>
+<td align="right">1.111000e+01</td>
+<td align="right">0.0</td>
+<td align="right">1.00</td>
+<td align="right">5.00</td>
+<td align="right">1.200000e+01</td>
+<td align="right">6.800000e+01</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">pm_users_outside</td>
+<td align="right">826</td>
+<td align="right">0.27</td>
+<td align="right">3.110000e+00</td>
+<td align="right">7.940000e+00</td>
+<td align="right">0.0</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">2.000000e+00</td>
+<td align="right">6.900000e+01</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
 </tbody>
 </table>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb290"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb290-1"><a href="create-final-water-point-census-data.html#cb290-1" tabindex="-1"></a>final <span class="sc">%&gt;%</span></span>
-<span id="cb290-2"><a href="create-final-water-point-census-data.html#cb290-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb290-3"><a href="create-final-water-point-census-data.html#cb290-3" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb290-4"><a href="create-final-water-point-census-data.html#cb290-4" tabindex="-1"></a>      <span class="fu">where</span>(is.logical),</span>
-<span id="cb290-5"><a href="create-final-water-point-census-data.html#cb290-5" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">as.numeric</span>(.)</span>
-<span id="cb290-6"><a href="create-final-water-point-census-data.html#cb290-6" tabindex="-1"></a>    )</span>
-<span id="cb290-7"><a href="create-final-water-point-census-data.html#cb290-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb290-8"><a href="create-final-water-point-census-data.html#cb290-8" tabindex="-1"></a>  <span class="fu">write_dta</span>(</span>
-<span id="cb290-9"><a href="create-final-water-point-census-data.html#cb290-9" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb290-10"><a href="create-final-water-point-census-data.html#cb290-10" tabindex="-1"></a>      path_box,</span>
-<span id="cb290-11"><a href="create-final-water-point-census-data.html#cb290-11" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb290-12"><a href="create-final-water-point-census-data.html#cb290-12" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb290-13"><a href="create-final-water-point-census-data.html#cb290-13" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb290-14"><a href="create-final-water-point-census-data.html#cb290-14" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb290-15"><a href="create-final-water-point-census-data.html#cb290-15" tabindex="-1"></a>      <span class="st">&quot;wp-census.dta&quot;</span></span>
-<span id="cb290-16"><a href="create-final-water-point-census-data.html#cb290-16" tabindex="-1"></a>    ) </span>
-<span id="cb290-17"><a href="create-final-water-point-census-data.html#cb290-17" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb277"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb277-1"><a href="create-final-water-point-census-data.html#cb277-1" tabindex="-1"></a>final <span class="sc">%&gt;%</span></span>
+<span id="cb277-2"><a href="create-final-water-point-census-data.html#cb277-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb277-3"><a href="create-final-water-point-census-data.html#cb277-3" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb277-4"><a href="create-final-water-point-census-data.html#cb277-4" tabindex="-1"></a>      <span class="fu">where</span>(is.logical),</span>
+<span id="cb277-5"><a href="create-final-water-point-census-data.html#cb277-5" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">as.numeric</span>(.)</span>
+<span id="cb277-6"><a href="create-final-water-point-census-data.html#cb277-6" tabindex="-1"></a>    )</span>
+<span id="cb277-7"><a href="create-final-water-point-census-data.html#cb277-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb277-8"><a href="create-final-water-point-census-data.html#cb277-8" tabindex="-1"></a>  <span class="fu">write_dta</span>(</span>
+<span id="cb277-9"><a href="create-final-water-point-census-data.html#cb277-9" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb277-10"><a href="create-final-water-point-census-data.html#cb277-10" tabindex="-1"></a>      path_box,</span>
+<span id="cb277-11"><a href="create-final-water-point-census-data.html#cb277-11" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb277-12"><a href="create-final-water-point-census-data.html#cb277-12" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb277-13"><a href="create-final-water-point-census-data.html#cb277-13" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb277-14"><a href="create-final-water-point-census-data.html#cb277-14" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
+<span id="cb277-15"><a href="create-final-water-point-census-data.html#cb277-15" tabindex="-1"></a>      <span class="st">&quot;wp-census.dta&quot;</span></span>
+<span id="cb277-16"><a href="create-final-water-point-census-data.html#cb277-16" tabindex="-1"></a>    ) </span>
+<span id="cb277-17"><a href="create-final-water-point-census-data.html#cb277-17" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 
+</div>
 </div>
 </div>
             </section>

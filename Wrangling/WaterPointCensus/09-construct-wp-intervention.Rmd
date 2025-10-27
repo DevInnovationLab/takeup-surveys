@@ -62,23 +62,20 @@ wp_tmt <-
     ilc_wcp = coalesce(ilc_wcp, wp_ilc),
     across(
       c(dsw, ilc_wp, ilc_wcp),
-      ~ case_when(
-        wp_drink & wp_multicompound ~ tidyr::replace_na(., FALSE),
-        TRUE ~ NA
-      )
+      ~ tidyr::replace_na(., FALSE)
     ),
     ilc = ilc_wp | ilc_wcp,
     intervention_type = case_when(
       dsw ~ "DSW",
       ilc_wp ~ "ILC water point",
       ilc_wcp ~ "ILC water collection point",
-      !is.na(dsw) ~ "Non-program"
+      TRUE ~ "Non-program"
     ) %>% 
       as_factor,
     intervention = case_when(
       dsw ~ "DSW",
       ilc ~ "ILC",
-      !is.na(dsw) ~ "Non-program"
+      TRUE ~ "Non-program"
     ) %>% 
       as_factor
   ) %>%
