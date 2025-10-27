@@ -518,8 +518,8 @@ create_combined_table <- function(detailed_table,
 ```
 
 # summary / sample tables
-## table 9
-## table 11
+## TO DO table 9
+## TO DO table 11
 
 # estimates tables
 ## main monitoring estimates (8)
