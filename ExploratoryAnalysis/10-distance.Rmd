@@ -31,6 +31,7 @@ pacman::p_load(
 )
 ```
 
+# load data
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -119,22 +120,33 @@ wp_census <-
   )
 ```
 
-## adding geometry to hh census and wp census
+# add geometry to hh census and wp census
 ```{r}
 hh_census_geom <- hh_census %>%
-  left_join(hh_census_constructed %>% select(geometry, household_id),
+  left_join(hh_census_constructed %>% select(geometry, household_id, gpsaccuracy),
             by = "household_id")
+
+# merge with chlorine test results from hh survey
+hh_census_geom <- hh_census_geom %>%
+  left_join(
+    hh_survey %>%
+      select(household_id, disctcr, discfcr),
+      by = "household_id"
+  ) %>%
+  mutate(
+    disc_tcr_detected = as.numeric(disctcr > 0.2)
+  )
 
 wp_census_geom <- wp_census %>%
   mutate(wp_id = paste0("WP", wp_id)) %>%
-  left_join(wp_constructed %>% select(geometry, wp_id),
+  left_join(wp_constructed %>% select(geometry, wp_id, wp_gpsaccuracy = gps_accuracy),
             by = "wp_id")
 
 wp_census_geom <- wp_census_geom %>%
   dplyr::filter(!st_is_empty(geometry))
 ```
 
-# calculating distance
+# extracting household and water point longitude and latitude from geometry
 ```{r}
 hh_census_geom <- hh_census_geom %>%
   mutate(
@@ -153,13 +165,15 @@ wp_census_geom <- wp_census_geom %>%
     wp_lon = wp_coords[, 1],
     wp_lat = wp_coords[, 2]
   )
+```
 
-# distance to primary WP
+# calculating distance to primary WP
+```{r}
 hh_with_primary <- hh_census_geom %>%
   left_join(
     wp_census_geom %>%
       mutate(wp_id = gsub("^WP", "", wp_id)) %>%  
-      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat),
+      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat, wp_gpsaccuracy),
     by = "wp_id"
   )
 
@@ -168,10 +182,15 @@ hh_with_primary <- hh_with_primary %>%
     dist_to_primary_m = distHaversine(
       cbind(hh_lon, hh_lat),
       cbind(primary_wp_lon, primary_wp_lat)
-    )
-  )
+    ))
+
+hh_with_primary <- hh_with_primary %>%
+  dplyr::filter(wp_gpsaccuracy < 10) %>%
+  dplyr::filter(gpsaccuracy < 10)
+```
 
 # distance to nearest EA WP
+```{r}
 ea_water_points <- wp_census_geom %>%
   dplyr::filter(intervention_type != "Non-program") %>%
   select(wp_id, ea_wp_lon = wp_lon, ea_wp_lat = wp_lat)
@@ -190,24 +209,42 @@ hh_with_primary <- hh_with_primary %>%
   ungroup() %>%
   mutate(dist_to_nearest_ea_m = ifelse(is.infinite(dist_to_nearest_ea_m), 
                                         NA_real_, 
-                                        dist_to_nearest_ea_m))
-```
-
-# regressions
-```{r}
-hh_with_primary <- hh_with_primary %>%
-  left_join(
-    hh_survey %>%
-      select(household_id, disctcr, discfcr),
-      by = "household_id"
-  ) %>%
+                                        dist_to_nearest_ea_m)) %>%
   mutate(
-    disc_tcr_detected = as.numeric(disctcr > 0.2)
+    ea_minus_primary_m = dist_to_nearest_ea_m - dist_to_primary_m 
   )
+    
 ```
 
+# summary data
 ```{r}
-table <- hh_with_primary %>%
+hh_filtered <- hh_with_primary %>%
+  mutate(
+    dist_to_primary_m = as.numeric(dist_to_primary_m)
+  ) %>%
+  dplyr::filter(dist_to_primary_m < 10000 & dist_to_primary_m > 0)
+
+ggplot(hh_filtered, aes(y = dist_to_primary_m)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Distance to Primary Water Point",
+       y = "Distance (meters)") +
+  theme_minimal()
+```
+
+# export to dta
+```{r}
+library(haven)
+library(sf)
+
+hh_without_geom <- st_drop_geometry(hh_with_primary)
+
+write_dta(hh_without_geom, "hh_with_primary.dta")
+```
+
+# summary table
+
+```{r}
+table <- hh_filtered %>%
   mutate(
     dist_to_primary_km = dist_to_primary_m / 1000,
     dist_to_nearest_ea_km = dist_to_nearest_ea_m / 1000,
