@@ -1208,7 +1208,7 @@ stargazer(uganda_model, malawi_model,
 ```
 
 # waterfall charts
-## TO DO share of households outside village among EA water points
+## share of households outside village among EA water points
 ```{r}
 share_outside_tbl <- hh_census %>%
   dplyr::filter(intervention != "NON-PROGRAM") %>%
@@ -1397,7 +1397,6 @@ country_estimates_table10_exout
 ```
 
 ## make waterfall charts
-# waterfall charts
 ```{r}
 #combine all relevant country totals into 1 table
 estimates <- table1 %>%
@@ -1534,3 +1533,88 @@ ggsave("output/waterfall_malawi.pdf",
        units = "in",
        device = "pdf")
 ```
+
+# diff in means tests
+## test for difference between table 1 and 8
+Again, ideally T1 numbers would automatically come from T1 calculations file
+
+difference is statistically significant
+```{r}
+# UGANDA
+# t1 uganda
+mean_t1_uganda <- 3375048
+ci_lower_t1_uganda <- 3295005
+ci_upper_t1_uganda <- 3455090
+# upper CI - lower CI = 2 * 1.96 * SE
+# => SE = (upper CI - lower CI) / (2*1.96)
+se_t1_uganda <- (ci_upper_t1_uganda - ci_lower_t1_uganda) / (2 * 1.96)
+
+# t8 uganda
+mean_t8_uganda <- country_estimates_table8$total_indiv_access_popn[country_estimates_table8$country == "Uganda"]
+ci_lower_t8_uganda <- country_estimates_table8$ci_lower_total_access[country_estimates_table8$country == "Uganda"]
+ci_upper_t8_uganda <- country_estimates_table8$ci_upper_total_access[country_estimates_table8$country == "Uganda"]
+se_t8_uganda <- (ci_upper_t8_uganda - ci_lower_t8_uganda) / (2 * 1.96)
+
+# test
+diff_means_uganda <- mean_t1_uganda - mean_t8_uganda
+se_diff_uganda <- sqrt(se_t1_uganda^2 + se_t8_uganda^2)
+z_stat_uganda <- diff_means_uganda / se_diff_uganda
+p_value_uganda <- 2 * (1 - pnorm(abs(z_stat_uganda)))
+
+# MALAWI
+# t1 malawi
+mean_t1_malawi <- 2211481
+ci_lower_t1_malawi <- 2134790
+ci_upper_t1_malawi <- 2288172
+se_t1_malawi <- (ci_upper_t1_malawi - ci_lower_t1_malawi) / (2 * 1.96)
+
+# t8 malawi
+mean_t8_malawi <- country_estimates_table8$total_indiv_access_popn[country_estimates_table8$country == "Malawi"]
+ci_lower_t8_malawi <- country_estimates_table8$ci_lower_total_access[country_estimates_table8$country == "Malawi"]
+ci_upper_t8_malawi <- country_estimates_table8$ci_upper_total_access[country_estimates_table8$country == "Malawi"]
+se_t8_malawi <- (ci_upper_t8_malawi - ci_lower_t8_malawi) / (2 * 1.96)
+
+# test
+diff_means_malawi <- mean_t1_malawi - mean_t8_malawi
+se_diff_malawi <- sqrt(se_t1_malawi^2 + se_t8_malawi^2)
+z_stat_malawi <- diff_means_malawi / se_diff_malawi
+p_value_malawi <- 2 * (1 - pnorm(abs(z_stat_malawi)))
+
+# p-values
+cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), "\n")
+cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
+```
+
+## test for difference between table 1 and 12
+difference is not statistically significant
+```{r}
+#t12 uganda
+mean_t12_uganda <- country_estimates_table12$total_indiv_access_popn[country_estimates_table12$country == "Uganda"]
+ci_lower_t12_uganda <- country_estimates_table12$ci_lower_total_access[country_estimates_table12$country == "Uganda"]
+ci_upper_t12_uganda <- country_estimates_table12$ci_upper_total_access[country_estimates_table12$country == "Uganda"]
+se_t12_uganda <- (ci_upper_t12_uganda - ci_lower_t12_uganda) / (2 * 1.96)
+
+#t12 malawi
+mean_t12_malawi <- country_estimates_table12$total_indiv_access_popn[country_estimates_table12$country == "Malawi"]
+ci_lower_t12_malawi <- country_estimates_table12$ci_lower_total_access[country_estimates_table12$country == "Malawi"]
+ci_upper_t12_malawi <- country_estimates_table12$ci_upper_total_access[country_estimates_table12$country == "Malawi"]
+se_t12_malawi <- (ci_upper_t12_malawi - ci_lower_t12_malawi) / (2 * 1.96)
+
+# test
+diff_means_uganda <- mean_t1_uganda - mean_t12_uganda
+se_diff_uganda <- sqrt(se_t1_uganda^2 + se_t12_uganda^2)
+z_stat_uganda <- diff_means_uganda / se_diff_uganda
+p_value_uganda <- 2 * (1 - pnorm(abs(z_stat_uganda)))
+
+# test
+diff_means_malawi <- mean_t1_malawi - mean_t12_malawi
+se_diff_malawi <- sqrt(se_t1_malawi^2 + se_t12_malawi^2)
+z_stat_malawi <- diff_means_malawi / se_diff_malawi
+p_value_malawi <- 2 * (1 - pnorm(abs(z_stat_malawi)))
+
+# p-values
+cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), "\n")
+cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
+```
+
+# statistics referenced in-text
