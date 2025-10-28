@@ -1161,6 +1161,75 @@ share_outside_tbl
 ### table 1 excluding outside HHs
 ### table 12 excluding outside HHs
 ### table 10 excluding outside HHs
+```{r}
+hh_count <- hh_census %>%
+  # exclude outside hhs
+  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
+  # use water points in promoter survey
+  dplyr::filter(promoter_surveyed == 1) %>% 
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarise(
+    hh_count = n_distinct(household_id),   # number of distinct households per wp
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarise(
+    wp_values = list(hh_count[!is.na(hh_count)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
+  unnest_wider(tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_count = tmp_mean_val,
+    se_hh_count = tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
+
+hh_stats <- hh_survey %>%
+  # exclude outside hhs
+  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
+  # use household survey
+  dplyr::filter(survey == "Household Survey") %>%
+  # use water points in promoter survey
+  dplyr::filter(promoter_surveyed == 1) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarize(
+    hh_size = mean(hh_members, na.rm = TRUE),
+    chl_rate = mean(disctcr_02, na.rm = TRUE),
+    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    .groups = "drop_last"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarize(
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    wp_rates = list(chl_rate[!is.na(chl_rate)]),
+    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
+    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+  ) %>%
+  unnest_wider(hh_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_size = hh_tmp_mean_val,
+    se_hh_size = hh_tmp_se,
+    avg_chl_rate = chl_tmp_mean_val,
+    se_chl_rate = chl_tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+
+# water point type table
+table10_exout <- create_summary_table(hh_count, hh_stats, country_totals)
+table10_exout
+
+# country estimates table
+country_estimates_table10_exout <- compute_country_totals(table10_exout)
+country_estimates_table10_exout
+```
 
 ## make waterfall charts
 # waterfall charts
