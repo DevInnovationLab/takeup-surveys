@@ -422,7 +422,7 @@ hh_survey %>%
 # spot checks and back checks 
 in both, it seems survey_type is identifying between census/survey or household/monitoring
 
-# TO DO - cleaning duplicates
+## load relevant files
 ```{r}
 library(haven)
 
@@ -494,7 +494,8 @@ backcheck_malawi <-
   rename(hh_id = caseid)
 ```
 
-## analyzing spotchecks
+## TO DO - cleaning duplicates
+## analyze spotchecks
 Note the spotchecks concern all of 1) hh census, 2) hh survey, 3) monitoring survey, 4) promoter survey.
 
 COMMENTS
@@ -516,7 +517,7 @@ spotcheck_summary_malawi <- spotcheck_malawi %>%
   select(all_of(spotcheck_vars)) %>%
   pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
   dplyr::filter(value %in% c(0, 1)) %>%
-  group_by(variable) %>%
+  # group_by(variable) %>%
   summarise(
     n_ones = sum(value == 1),
     n_zeros = sum(value == 0),
@@ -530,7 +531,7 @@ spotcheck_summary_uganda <- spotcheck_uganda %>%  # Change this line
   select(all_of(spotcheck_vars)) %>%
   pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
   dplyr::filter(value %in% c(0, 1)) %>%
-  group_by(variable) %>%
+  # group_by(variable) %>%
   summarise(
     n_ones = sum(value == 1),
     n_zeros = sum(value == 0),
@@ -582,7 +583,6 @@ hh_survey_spotchecks_uganda <- hh_survey %>%
 
 ```{r}
 # compare results with hh_survey results
-
 test_comparison_malawi <- hh_survey_spotchecks_malawi %>%
   select(disctcr, discfcr, tcr, fcr) %>%
   mutate(
@@ -614,62 +614,45 @@ test_comparison_uganda <- hh_survey_spotchecks_uganda %>%
 
 print(test_comparison_uganda)
 
-# test for malawi
-malawi_data <- hh_survey_spotchecks_malawi %>%
-  select(disctcr, discfcr, tcr, fcr) %>%
-  mutate(
-    diff_tcr = disctcr - tcr,
-    diff_fcr = discfcr - fcr
-  ) %>%
-  dplyr::filter(fcr < 100) %>%
-  dplyr::filter(tcr < 100)
-
-tcr_test_malawi <- t.test(malawi_data$disctcr, malawi_data$tcr, paired = TRUE)
-fcr_test_malawi <- t.test(malawi_data$discfcr, malawi_data$fcr, paired = TRUE)
-
-cat("MALAWI RESULTS:\n")
-cat("TCR difference test:\n")
-cat("  p-value:", round(tcr_test_malawi$p.value, 4), "\n")
-cat("FCR difference test:\n")
-cat("  p-value:", round(fcr_test_malawi$p.value, 4), "\n")
-
-# test for uganda
-uganda_data <- hh_survey_spotchecks_uganda %>%
-  select(disctcr, discfcr, tcr, fcr) %>%
-  mutate(
-    diff_tcr = disctcr - tcr,
-    diff_fcr = discfcr - fcr
-  ) %>%
-  dplyr::filter(fcr < 100)
-
-tcr_test_uganda <- t.test(uganda_data$disctcr, uganda_data$tcr, paired = TRUE)
-fcr_test_uganda <- t.test(uganda_data$discfcr, uganda_data$fcr, paired = TRUE)
-
-cat("UGANDA RESULTS:\n")
-cat("TCR difference test:\n")
-cat("  p-value:", round(tcr_test_uganda$p.value, 4), "\n")
-cat("FCR difference test:\n")
-cat("  p-value:", round(fcr_test_uganda$p.value, 4), "\n")
+# # test for malawi
+# malawi_data <- hh_survey_spotchecks_malawi %>%
+#   select(disctcr, discfcr, tcr, fcr) %>%
+#   mutate(
+#     diff_tcr = disctcr - tcr,
+#     diff_fcr = discfcr - fcr
+#   ) %>%
+#   dplyr::filter(fcr < 100) %>%
+#   dplyr::filter(tcr < 100)
+# 
+# tcr_test_malawi <- t.test(malawi_data$disctcr, malawi_data$tcr, paired = TRUE)
+# fcr_test_malawi <- t.test(malawi_data$discfcr, malawi_data$fcr, paired = TRUE)
+# 
+# cat("MALAWI RESULTS:\n")
+# cat("TCR difference test:\n")
+# cat("  p-value:", round(tcr_test_malawi$p.value, 4), "\n")
+# cat("FCR difference test:\n")
+# cat("  p-value:", round(fcr_test_malawi$p.value, 4), "\n")
+# 
+# # test for uganda
+# uganda_data <- hh_survey_spotchecks_uganda %>%
+#   select(disctcr, discfcr, tcr, fcr) %>%
+#   mutate(
+#     diff_tcr = disctcr - tcr,
+#     diff_fcr = discfcr - fcr
+#   ) %>%
+#   dplyr::filter(fcr < 100)
+# 
+# tcr_test_uganda <- t.test(uganda_data$disctcr, uganda_data$tcr, paired = TRUE)
+# fcr_test_uganda <- t.test(uganda_data$discfcr, uganda_data$fcr, paired = TRUE)
+# 
+# cat("UGANDA RESULTS:\n")
+# cat("TCR difference test:\n")
+# cat("  p-value:", round(tcr_test_uganda$p.value, 4), "\n")
+# cat("FCR difference test:\n")
+# cat("  p-value:", round(fcr_test_uganda$p.value, 4), "\n")
 ```
 
 ## analyzing backchecks - compare to hh survey
-
-### merging
-```{r}
-hh_survey_backcheck_uganda <- hh_survey %>%
-  dplyr::filter(country == "UGANDA") %>%
-  left_join(
-    backcheck_uganda %>% select(hh_id, use_waterpoint),
-    by = c("household_id" = "hh_id")
-  )
-
-hh_survey_backcheck_malawi <- hh_survey %>%
-  dplyr::filter(country == "MALAWI") %>%
-  left_join(
-    backcheck_malawi %>% select(hh_id, use_waterpoint),
-    by = c("household_id" = "hh_id")
-  )
-```
 
 ### confirmation of correct WP
 <b>1.9 Is ${wp_name_pl} the primary water source that your household uses for collecting drinking water? YES in >99% of cases
@@ -688,6 +671,25 @@ use_wp_table_malawi <- backcheck_malawi %>%
 
 use_wp_table_malawi
 ```
+
+
+### merging hh survey and backchecks
+```{r}
+hh_survey_backcheck_uganda <- hh_survey %>%
+  dplyr::filter(country == "UGANDA") %>%
+  left_join(
+    backcheck_uganda %>% select(hh_id, use_waterpoint),
+    by = c("household_id" = "hh_id")
+  )
+
+hh_survey_backcheck_malawi <- hh_survey %>%
+  dplyr::filter(country == "MALAWI") %>%
+  left_join(
+    backcheck_malawi %>% select(hh_id, use_waterpoint),
+    by = c("household_id" = "hh_id")
+  )
+```
+
 ### checking consistency
 ```{r}
 consistency_checks_malawi <- hh_survey_backcheck_malawi %>%
@@ -705,3 +707,119 @@ check consistency between hh survey and back check of:
 - other water treatment methods (make_watersafe ...)
 - wp_dsw and wp_ilc - checks of awareness of dispenser
 - if they report using more than 1
+
+```{r}
+### merging hh survey and backchecks
+hh_survey_backcheck_uganda <- hh_survey %>%
+  dplyr::filter(country == "UGANDA") %>%
+  left_join(
+    backcheck_uganda %>% 
+      select(hh_id, 
+             wp_dsw,
+             wp_ilc,
+             wp_more,
+             make_watersafe_0,
+             make_watersafe_1,
+             make_watersafe_2,
+             make_watersafe_3,
+             make_watersafe_4,
+             make_watersafe_5,
+             make_watersafe_6,
+             make_watersafe_7,
+             make_watersafe_8,
+             make_watersafe__666,
+             make_watersafe__999) %>%
+      rename(hh_dsw_backcheck = wp_dsw,
+             hh_ilc_backcheck = wp_ilc,
+             wp_more_backcheck = wp_more,
+             watertreat_any_backcheck = make_watersafe_0,
+             watertreat_boil_backcheck = make_watersafe_1,
+             watertreat_dispcl_backcheck = make_watersafe_2,
+             watertreat_othercl_backcheck = make_watersafe_3,
+             watertreat_strain_backcheck = make_watersafe_4,
+             watertreat_filter_backcheck = make_watersafe_5,
+             watertreat_sand_backcheck = make_watersafe_6,
+             watertreat_solar_backcheck = make_watersafe_7,
+             watertreat_decant_backcheck = make_watersafe_8,
+             watertreat_other_backcheck = make_watersafe__666,
+             watertreat_dk_backcheck = make_watersafe__999),
+    by = c("household_id" = "hh_id")
+  )
+
+hh_survey_backcheck_malawi <- hh_survey %>%
+  dplyr::filter(country == "MALAWI") %>%
+  left_join(
+    backcheck_malawi %>% 
+      select(hh_id,
+             wp_dsw,
+             wp_ilc,
+             wp_more,
+             make_watersafe_0,
+             make_watersafe_1,
+             make_watersafe_2,
+             make_watersafe_3,
+             make_watersafe_4,
+             make_watersafe_5,
+             make_watersafe_6,
+             make_watersafe_7,
+             make_watersafe_8,
+             make_watersafe__666,
+             make_watersafe__999) %>%
+      rename(hh_dsw_backcheck = wp_dsw,
+             hh_ilc_backcheck = wp_ilc,
+             wp_more_backcheck = wp_more,
+             watertreat_any_backcheck = make_watersafe_0,
+             watertreat_boil_backcheck = make_watersafe_1,
+             watertreat_dispcl_backcheck = make_watersafe_2,
+             watertreat_othercl_backcheck = make_watersafe_3,
+             watertreat_strain_backcheck = make_watersafe_4,
+             watertreat_filter_backcheck = make_watersafe_5,
+             watertreat_sand_backcheck = make_watersafe_6,
+             watertreat_solar_backcheck = make_watersafe_7,
+             watertreat_decant_backcheck = make_watersafe_8,
+             watertreat_other_backcheck = make_watersafe__666,
+             watertreat_dk_backcheck = make_watersafe__999),
+    by = c("household_id" = "hh_id")
+  )
+
+### checking consistency
+consistency_checks_malawi <- hh_survey_backcheck_malawi %>%
+  summarize(
+    match_hh_dsw = mean(as.character(hh_dsw) == as.character(hh_dsw_backcheck), na.rm = TRUE),
+    match_hh_ilc = mean(as.character(hh_ilc) == as.character(hh_ilc_backcheck), na.rm = TRUE),
+    match_watertreat_any = mean(as.character(watertreat_any) == as.character(watertreat_any_backcheck), na.rm = TRUE),
+    match_watertreat_boil = mean(as.character(watertreat_boil) == as.character(watertreat_boil_backcheck), na.rm = TRUE),
+    match_watertreat_dispcl = mean(as.character(watertreat_dispcl) == as.character(watertreat_dispcl_backcheck), na.rm = TRUE),
+    match_watertreat_othercl = mean(as.character(watertreat_othercl) == as.character(watertreat_othercl_backcheck), na.rm = TRUE),
+    match_watertreat_strain = mean(as.character(watertreat_strain) == as.character(watertreat_strain_backcheck), na.rm = TRUE),
+    match_watertreat_filter = mean(as.character(watertreat_filter) == as.character(watertreat_filter_backcheck), na.rm = TRUE),
+    match_watertreat_sand = mean(as.character(watertreat_sand) == as.character(watertreat_sand_backcheck), na.rm = TRUE),
+    match_watertreat_solar = mean(as.character(watertreat_solar) == as.character(watertreat_solar_backcheck), na.rm = TRUE),
+    match_watertreat_decant = mean(as.character(watertreat_decant) == as.character(watertreat_decant_backcheck), na.rm = TRUE),
+    match_watertreat_other = mean(as.character(watertreat_other) == as.character(watertreat_other_backcheck), na.rm = TRUE),
+    match_watertreat_dk = mean(as.character(watertreat_dk) == as.character(watertreat_dk_backcheck), na.rm = TRUE),
+    n_households = n()
+  )
+
+consistency_checks_uganda <- hh_survey_backcheck_uganda %>%
+  summarize(
+    match_hh_dsw = mean(as.character(hh_dsw) == as.character(hh_dsw_backcheck), na.rm = TRUE),
+    match_hh_ilc = mean(as.character(hh_ilc) == as.character(hh_ilc_backcheck), na.rm = TRUE),
+    match_watertreat_any = mean(as.character(watertreat_any) == as.character(watertreat_any_backcheck), na.rm = TRUE),
+    match_watertreat_boil = mean(as.character(watertreat_boil) == as.character(watertreat_boil_backcheck), na.rm = TRUE),
+    match_watertreat_dispcl = mean(as.character(watertreat_dispcl) == as.character(watertreat_dispcl_backcheck), na.rm = TRUE),
+    match_watertreat_othercl = mean(as.character(watertreat_othercl) == as.character(watertreat_othercl_backcheck), na.rm = TRUE),
+    match_watertreat_strain = mean(as.character(watertreat_strain) == as.character(watertreat_strain_backcheck), na.rm = TRUE),
+    match_watertreat_filter = mean(as.character(watertreat_filter) == as.character(watertreat_filter_backcheck), na.rm = TRUE),
+    match_watertreat_sand = mean(as.character(watertreat_sand) == as.character(watertreat_sand_backcheck), na.rm = TRUE),
+    match_watertreat_solar = mean(as.character(watertreat_solar) == as.character(watertreat_solar_backcheck), na.rm = TRUE),
+    match_watertreat_decant = mean(as.character(watertreat_decant) == as.character(watertreat_decant_backcheck), na.rm = TRUE),
+    match_watertreat_other = mean(as.character(watertreat_other) == as.character(watertreat_other_backcheck), na.rm = TRUE),
+    match_watertreat_dk = mean(as.character(watertreat_dk) == as.character(watertreat_dk_backcheck), na.rm = TRUE),
+    n_households = n()
+  )
+
+# View results
+print(consistency_checks_malawi)
+print(consistency_checks_uganda)
+```
