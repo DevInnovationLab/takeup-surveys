@@ -9,6 +9,7 @@ This is the code to generate the estimates tables using the monitoring (water-po
 - general approach for NAs in promoter_surveyed and pm_ea_list in wp_census and hh_survey: I have changed NA to FALSE; but this should probably be done in wrangling
 - I have used pm_survey to count the number of households in the promoter survey in table 11
 - I have used ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table 9
+- I have used pm_survey_households for table 11 and to tackle double-counted hhs in table 14
 - for table 1 ex households located outside of village, I did a rough number. ideally, i just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
 - TO DO: have both fcr and tcr in main tables
 
@@ -173,6 +174,7 @@ pm_survey_households <-
   # deleting test village
   pm_survey_households <- pm_survey_households %>%
   dplyr::filter(village_id != "1010602004")
+  ) 
 
 wp_census <-
   read_rds(
@@ -373,7 +375,7 @@ compute_country_totals <- function(data,
 }
 ```
 
-# sample tables (9 and 11)
+# sample tables
 ## water points (9)
 ```{r}
 wp_table <- wp_census %>%
@@ -591,6 +593,28 @@ country_estimates_table8 <- compute_country_totals(table8)
 country_estimates_table8
 ```
 
+```{r}
+## make waterfall charts
+
+# Use country totals tables directly
+estimates <- country_estimates_table1 %>%
+  select(country, table1 = indiv_access_popn) %>%
+  left_join(
+    country_estimates_table1_exout %>% select(country, table1_exout = indiv_access_popn),
+    by = "country"
+  ) %>%
+  left_join(
+    country_estimates_table12_exout %>% select(country, table12_exout = indiv_access_popn),
+    by = "country"
+  ) %>%
+  left_join(
+    country_estimates_table10_exout %>% select(country, table10_exout = indiv_access_popn),
+    by = "country"
+  ) %>%
+  left_join(
+    country_estimates_table14 %>% select(country, table14 = indiv_access_popn),
+    by = "country"
+  ) %>%
 ## using HH census and HH survey; only using WPs in promoter survey (10)
 ```{r}
 hh_count <- hh_census %>%
