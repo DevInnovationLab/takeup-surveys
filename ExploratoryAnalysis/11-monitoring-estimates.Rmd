@@ -416,61 +416,68 @@ wp_census %>%
   count(intervention)
 ```
 
-## TO DO households (11)
+## households (11)
 ```{r}
+# renaming intervention in hh census for consistency
+hh_census <- hh_census %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention)
+
 # number of water points in the promoter survey
 wp_count_pm <- wp_census %>%
-  group_by(country, sample_group, intervention_type) %>% 
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
-    wp_count_pm = n_distinct(wp_id[promoter_surveyed = TRUE]),  
+    wp_count_pm = n_distinct(wp_id),               
     .groups = "drop"
   )
 
 # number of households in the promoter survey
-pm_hh_listed <- pm_survey %>%
-  mutate(users = as.numeric(users)) %>%
-  group_by(country, sample_group, intervention_type) %>% 
+pm_users <- wp_census %>%
+  mutate(pm_users = as.numeric(pm_users)) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
-    pm_hh_listed = sum(users, na.rm = TRUE),               
+    pm_users = sum(pm_users, na.rm = TRUE),               
     .groups = "drop"
   )
 
 # number of households from the promoter survey that are also in the HH census - represented by the variable cal_hh_count for each WP
-pm_hh_census <- hh_census %>%
-  mutate(cal_hh_count = as.numeric(cal_hh_count)) %>%
-  group_by(country, sample_group, intervention_type) %>% 
+pm_users_census <- wp_census %>%
+  mutate(pm_users_census = as.numeric(pm_users_census)) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
-    pm_hh_census = sum(cal_hh_count, na.rm = TRUE),               
+    pm_users_census = sum(pm_users_census, na.rm = TRUE),               
     .groups = "drop"
   )
 
 # number of households whose self-report in HH census matches the promoter's report
-pm_hh_matched <- pm_survey_households_clean %>%
-  left_join(pm_survey %>% select(wp_id, sample_group, intervention_type), 
+pm_hh_matched <- pm_survey_households %>%
+  left_join(wp_census %>% select(wp_id, sample_group, intervention), 
             by = c("wp_id_c" = "wp_id")) %>%
-  dplyr::filter(!is.na(wp_category)) %>%
+  dplyr::filter(!is.na(sample_group)) %>%
+  dplyr::filter(!is.na(intervention)) %>%
   dplyr::filter(household_id %in% hh_census$household_id) %>%
   left_join(hh_census %>% select(household_id, wp_id), 
             by = "household_id", suffix = c("_pm", "_census")) %>%
   mutate(wp_match = wp_id_c == wp_id_census) %>% 
-  group_by(country, wp_category) %>%
+  group_by(country, sample_group, intervention) %>%
   summarise(
     pm_hh_matched = sum(wp_match, na.rm = TRUE),
     .groups = "drop") %>%
   mutate(country = toupper(country))
 
 # number of households outside of the village
-pm_hh_outside <- pm_survey %>%
-  mutate(hh_outsiden = as.numeric(hh_outsiden)) %>%
-  group_by(country, wp_category) %>% 
+pm_users_outside <- wp_census %>%
+  mutate(pm_users_outside = as.numeric(pm_users_outside)) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
-    pm_hh_outside = sum(hh_outsiden, na.rm = TRUE),               
+    pm_users_outside = sum(pm_users_outside, na.rm = TRUE),               
     .groups = "drop"
   )
 
 # total number of water points in the wp census
 wp_count_wp_census <- wp_census %>%
-  group_by(country, wp_category) %>% 
+  group_by(country, sample_group, intervention) %>% 
   summarise(
     wp_count_wp_census = n_distinct(wp_id),               
     .groups = "drop"
@@ -479,29 +486,29 @@ wp_count_wp_census <- wp_census %>%
 # total number of households that report using the water points in the wp census, regardless of whether they are in the promoter survey or not
 census_hh_listed <- hh_census %>%
   dplyr::filter(wp_id %in% wp_census$wp_id) %>%
-  group_by(country, wp_category) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
     census_hh_listed = n_distinct(household_id),
     .groups = "drop"
   )
 
 # average numbers of households per water point
-pm_avg_hh_per_wp <- pm_survey %>%
-  mutate(hh_listed = as.numeric(hh_listed)) %>%
-  group_by(country, wp_category) %>% 
+pm_avg_hh_per_wp <- wp_census %>%
+  mutate(pm_users = as.numeric(pm_users)) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
-    pm_avg_hh_per_wp = round(mean(hh_listed, na.rm = TRUE), 2),               
+    pm_avg_hh_per_wp = round(mean(pm_users, na.rm = TRUE), 2),               
     .groups = "drop"
   )
 
 census_avg_hh_per_wp <- hh_census %>%
   dplyr::filter(wp_id %in% wp_census$wp_id) %>%
-  group_by(country, wp_category, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>% 
   summarise(
     census_hh_listed = n_distinct(household_id),   # households per wp
     .groups = "drop"
   ) %>%
-  group_by(country, wp_category) %>%
+  group_by(country, sample_group, intervention) %>% 
   summarise(
     census_avg_hh_per_wp = round(mean(census_hh_listed, na.rm = TRUE), 2),  # avg across wps
     .groups = "drop"
@@ -509,19 +516,19 @@ census_avg_hh_per_wp <- hh_census %>%
 
 # table
 hh_tbl <- wp_count_pm  %>%
-  left_join(pm_hh_listed, by = c("country", "wp_category")) %>%
-  left_join(pm_hh_outside, by = c("country", "wp_category")) %>%
-  left_join(pm_hh_census, by = c("country", "wp_category")) %>%
-  left_join(pm_hh_matched, by = c("country", "wp_category")) %>%
-  left_join(pm_avg_hh_per_wp, by = c("country", "wp_category")) %>%
-  left_join(wp_count_wp_census, by = c("country", "wp_category")) %>%
-  left_join(census_hh_listed, by = c("country", "wp_category")) %>%
-  left_join(census_avg_hh_per_wp, by = c("country", "wp_category")) %>%
-  dplyr::filter(wp_category %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
-  dplyr::filter(!(country == "UGANDA" & wp_category == "ILC")) %>%
-  mutate(country = factor(country, levels = c("MALAWI", "UGANDA"))) %>%
-  mutate(wp_category = factor(wp_category, levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  arrange(country, wp_category)
+  left_join(pm_users, by = c("country", "sample_group", "intervention")) %>%
+  left_join(pm_users_outside, by = c("country", "sample_group", "intervention")) %>%
+  left_join(pm_users_census, by = c("country", "sample_group", "intervention")) %>%
+  left_join(pm_hh_matched, by = c("country", "sample_group", "intervention")) %>%
+  left_join(pm_avg_hh_per_wp, by = c("country", "sample_group", "intervention")) %>%
+  left_join(wp_count_wp_census, by = c("country", "sample_group", "intervention")) %>%
+  left_join(census_hh_listed, by = c("country", "sample_group", "intervention")) %>%
+  left_join(census_avg_hh_per_wp, by = c("country", "sample_group", "intervention"))
+  # dplyr::filter(wp_category %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
+  # dplyr::filter(!(country == "UGANDA" & wp_category == "ILC")) %>%
+  # mutate(country = factor(country, levels = c("MALAWI", "UGANDA"))) %>%
+  # mutate(wp_category = factor(wp_category, levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
+  # arrange(country, wp_category)
 
 hh_tbl
 ```
