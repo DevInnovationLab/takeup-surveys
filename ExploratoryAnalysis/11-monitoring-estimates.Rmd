@@ -5,8 +5,10 @@ output: html_document
 
 This is the code to generate the estimates tables using the monitoring (water-point level) approach.
 
-# TO DO
-- general approach for NAs in promoter_surveyed and pm_ea_list in wp_census and hh_survey
+# NOTES
+- general approach for NAs in promoter_surveyed and pm_ea_list in wp_census and hh_survey: I have changed NA to FALSE; but this should probably be done in wrangling
+- I have used pm_survey to count the number of households in the promoter survey in table 11
+- I have used pm_survey to count the number of WPs in the promoter survey in table 9 (and ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table)
 
 # load packages
 ```{r}
@@ -56,12 +58,12 @@ registerS3method("knit_print", "data.frame", knit_print.data.frame)
 registerS3method("knit_print", "tbl_df", knit_print.data.frame)
 ```
 
-# define path_box
+## define path_box
 ```{r}
 path_box <- "/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup"
 ```
 
-# load datasets
+## load datasets
 ```{r}
 villages <-
   read_rds(
@@ -74,55 +76,53 @@ villages <-
       "villages.rds"
     )
   )
-# 
-# sampled_villages <-
-#   read_rds(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "Villages",
-#       "DataSets",
-#       "Final",
-#       "villages.rds"
-#     )
-#   ) %>%
-#   dplyr::filter(sample == "Main sample")
 
-# pm_survey <-
-#   read_rds(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "PromoterSurvey",
-#       "DataSets",
-#       "Final",
-#       "pm-survey.rds"
-#     )
-#   )
-# 
-# promoter_list_uganda <-
-#   read_csv(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "PromoterSurvey",
-#       "DataSets",
-#       "Raw",
-#       "promoter_list_uganda.csv"
-#     )
-#   )
-# 
-# promoter_list_malawi <-
-#   read_csv(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "PromoterSurvey",
-#       "DataSets",
-#       "Raw",
-#       "promoter_list_malawi.csv"
-#     )
-#   )
+pm_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Final",
+      "pm-survey.rds"
+    )
+  ) %>%
+  left_join(wp_census %>%
+              select(wp_id, intervention_type, sample_group, country),
+            by = "wp_id")
+
+ea_list_uganda <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_uganda.csv"
+    )
+  ) %>%
+  left_join(wp_census %>%
+            mutate(ea_id = as.numeric(ea_id)) %>%
+            select(ea_id, intervention_type, country),
+          by = c("i102_wpt_id" = "ea_id"))
+
+ea_list_malawi <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_malawi.csv"
+    )
+  ) %>%
+  left_join(wp_census %>%
+            mutate(ea_id = as.numeric(ea_id)) %>%
+            select(ea_id, intervention_type, country),
+          by = c("i102_wpt_id" = "ea_id"))
     
 hh_survey <-
   read_rds(
@@ -154,41 +154,17 @@ hh_census <-
               select(wp_id, intervention_type),
             by = "wp_id")
 
-# pm_survey_households <-
-#   read_rds(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "PromoterSurvey",
-#       "DataSets",
-#       "Constructed",
-#       "pm-survey-households.rds"
-#     )
-#   )
-# 
-# pm_list_mw <-
-#   read_csv(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "PromoterSurvey",
-#       "DataSets",
-#       "Raw",
-#       "promoter_list_malawi.csv"
-#     )
-#   )
-# 
-# pm_list_ug <-
-#   read_csv(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "PromoterSurvey",
-#       "DataSets",
-#       "Raw",
-#       "promoter_list_uganda.csv"
-#     )
-#   )
+pm_survey_households <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Constructed",
+      "pm-survey-households.rds"
+    )
+  )
 
 wp_census <-
   read_rds(
@@ -222,8 +198,8 @@ malawi_villages <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final
 malawi_wcp <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final", "malawi-water-collection-points.dta"))
 ```
 
-# country totals
-i get the same numbers as before if I classify by water point, not by village for expansion and footprint
+## country totals
+I get the same numbers as before if I classify by water point, not by village for expansion and footprint
 ```{r}
 # malawi 
 malawi_villages <- malawi_villages %>%
@@ -299,13 +275,13 @@ country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
     )
   ) %>%
   arrange(country, wp_sample_group, intervention_type) %>%
-  mutate(sample_group = wp_sample_group)
-  # dplyr::filter(!is.na(sample_group)) 
+  mutate(sample_group = wp_sample_group) %>%
+  select(-wp_sample_group)
 
 country_totals
 ```
 
-# create function for SEs
+## create function for SEs
 ```{r}
 compute_se <- function(values, ses = NULL, include_within = FALSE) {
   values <- unlist(values)
@@ -331,7 +307,7 @@ compute_se <- function(values, ses = NULL, include_within = FALSE) {
 }
 ```
 
-# create function for by water point type table
+## create function for by water point type table
 ```{r}
 create_summary_table <- function(count_tbl, stats_tbl, totals_tbl, 
                                  group_vars = c("country", "sample_group", "intervention_type")) {
@@ -357,7 +333,7 @@ create_summary_table <- function(count_tbl, stats_tbl, totals_tbl,
 }
 ```
 
-# create function for country estimates table
+## create function for country estimates table
 ```{r}
 compute_country_totals <- function(data, 
                                    group_var = "country",
@@ -396,130 +372,164 @@ compute_country_totals <- function(data,
 }
 ```
 
-# create final table
+# sample tables (9 and 11)
+## water points (9)
 ```{r}
-# Function to create combined category table from detailed table
-create_combined_table <- function(detailed_table, 
-                                  output_format = "kable") {
-  
-  # Step 1: Create combined categories
-  combined_data <- detailed_table %>%
-    mutate(
-      table_category = case_when(
-        sample_group == "Footprint" & intervention_type == "DSW" ~ "Footprint",
-        sample_group == "Expansion" & intervention_type == "DSW" ~ "Expansion",
-        sample_group == "ILC" & intervention_type == "DSW" ~ "DSW in ILC vill.",
-        sample_group == "ILC" & intervention_type %in% c("ILC water point", "ILC water collection point") ~ "ILC",
-        TRUE ~ NA_character_
-      )
-    ) %>%
-    filter(!is.na(table_category))
-  
-  # Step 2: Aggregate by country and combined category
-  aggregated <- combined_data %>%
-    group_by(country, table_category) %>%
-    summarise(
-      avg_hh_count = mean(avg_hh_count, na.rm = TRUE),
-      se_hh_count = sqrt(sum(se_hh_count^2, na.rm = TRUE)) / n(),
-      avg_hh_size = mean(avg_hh_size, na.rm = TRUE),
-      se_hh_size = sqrt(sum(se_hh_size^2, na.rm = TRUE)) / n(),
-      indiv_access_sample = mean(indiv_access_sample, na.rm = TRUE),
-      se_indiv_access_sample = sqrt(sum(se_indiv_access_sample^2, na.rm = TRUE)) / n(),
-      indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE),
-      se_indiv_access_popn = sqrt(sum(se_indiv_access_popn^2, na.rm = TRUE)),
-      ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
-      ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
-      avg_chl_rate = mean(avg_chl_rate, na.rm = TRUE),
-      se_chl_rate = sqrt(sum(se_chl_rate^2, na.rm = TRUE)) / n(),
-      ci_lower_chl_rate = avg_chl_rate - 1.96 * se_chl_rate,
-      ci_upper_chl_rate = avg_chl_rate + 1.96 * se_chl_rate,
-      country_total = sum(country_total, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  # Step 3: Calculate country totals
-  country_totals <- aggregated %>%
-    group_by(country) %>%
-    summarise(
-      table_category = "Total",
-      avg_hh_count = NA_real_,
-      se_hh_count = NA_real_,
-      avg_hh_size = NA_real_,
-      se_hh_size = NA_real_,
-      indiv_access_sample = NA_real_,
-      se_indiv_access_sample = NA_real_,
-      indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE),
-      se_indiv_access_popn = sqrt(sum(se_indiv_access_popn^2, na.rm = TRUE)),
-      ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
-      ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
-      avg_chl_rate = NA_real_,
-      se_chl_rate = NA_real_,
-      ci_lower_chl_rate = NA_real_,
-      ci_upper_chl_rate = NA_real_,
-      country_total = NA_real_,
-      .groups = "drop"
-    )
-  
-  # Step 4: Combine and arrange
-  full_table <- bind_rows(aggregated, country_totals) %>%
-    arrange(country, factor(table_category, 
-                           levels = c("Footprint", "Expansion", "DSW in ILC vill.", "ILC", "Total")))
-  
-  # Step 5: Format for display
-  if (output_format == "kable") {
-    display_table <- full_table %>%
-      mutate(
-        Category = table_category,
-        `Avg # of HH (SE)` = ifelse(is.na(avg_hh_count), "-", 
-                     paste0(round(avg_hh_count, 2), "\n(", round(se_hh_count, 2), ")")),
-        `Avg # of Members (SE)` = ifelse(is.na(avg_hh_size), "-",
-                     paste0(round(avg_hh_size, 2), "\n(", round(se_hh_size, 2), ")")),
-        `# people per WP (SE)` = ifelse(is.na(indiv_access_sample), "-",
-                     paste0(round(indiv_access_sample, 2), "\n(", round(se_indiv_access_sample, 2), ")")),
-        `Country #WP` = ifelse(is.na(country_total), "-", format(country_total, big.mark = ",")),
-        `People using DSW/ILC (95% CI)` = paste0(
-          format(round(indiv_access_popn, 0), big.mark = ","), "\n(",
-          format(round(ci_lower_indiv_access_popn, 0), big.mark = ","), ", ",
-          format(round(ci_upper_indiv_access_popn, 0), big.mark = ","), ")"
-        ),
-        `TCR>0.2ppm (95% CI)` = ifelse(is.na(avg_chl_rate), "-",
-                     paste0(
-                       round(avg_chl_rate * 100, 1), "%\n(",
-                       round(ci_lower_chl_rate * 100, 1), "%, ",
-                       round(ci_upper_chl_rate * 100, 1), "%)"
-                     ))
-      ) %>%
-      select(country, Category, `Avg # of HH (SE)`, `Avg # of Members (SE)`, 
-             `# people per WP (SE)`, `Country #WP`, 
-             `People using DSW/ILC (95% CI)`, `TCR>0.2ppm (95% CI)`)
-    
-    # Create kable
-    result <- display_table %>%
-      kable(
-        align = c("l", "l", "r", "r", "r", "r", "r", "r"),
-        escape = FALSE
-      ) %>%
-      kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-    
-    # Add row groupings by country
-    countries <- unique(display_table$country)
-    for (ctry in countries) {
-      rows <- which(display_table$country == ctry)
-      result <- result %>%
-        pack_rows(ctry, min(rows), max(rows))
-    }
-    
-    return(result)
-    
-  } else if (output_format == "data") {
-    return(full_table)
-  }
-}
+wp_table <- wp_census %>%
+  group_by(country, sample_group, intervention_type) %>%
+  summarise(
+    wp_census = n_distinct(wp_id),
+    wp_functional = n_distinct(wp_id[wp_func == TRUE]),
+    # promoter_surveyed = n_distinct(wp_id[promoter_surveyed == TRUE]),
+    # ea_list = n_distinct(wp_id[pm_ea_list == TRUE]),
+    .groups = "drop"
+  ) %>%
+  left_join(country_totals, by = c("country", "sample_group", "intervention_type")) %>%
+  left_join(
+    ea_list_malawi %>%
+      group_by(country, sample_group, intervention_type) %>%
+      summarise(ea_list_malawi_count = n_distinct(i102_wpt_id), .groups = "drop"),
+    by = c("country", "sample_group", "intervention_type")
+  ) %>%
+  left_join(
+    ea_list_uganda %>%
+      group_by(country, sample_group, intervention_type) %>%
+      summarise(ea_list_uganda_count = n_distinct(i102_wpt_id), .groups = "drop"),
+    by = c("country", "sample_group", "intervention_type")
+  ) %>%
+  left_join(
+    pm_survey %>%
+      group_by(country, sample_group, intervention_type) %>%
+      summarise(promoter_survey = n_distinct(wp_id), .groups = "drop"),
+    by = c("country", "sample_group", "intervention_type")
+  ) 
+
+wp_table
 ```
 
-# summary / sample tables
-## TO DO table 9
-## TO DO table 11
+Commentary in table caption: 
+For Uganda, 2 of the 112 water points in the EA promoter list were identified as Non-program and 1 as ILC, and are not shown. Similarly for Malawi, where 2 out of 137 were identified as Non-program.
+```{r}
+pm_survey %>%
+  dplyr::filter(country == "Malawi") %>%
+  dplyr::filter(pm_ea_list == TRUE) %>%
+  count(intervention_type)
+
+wp_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(pm_ea_list == TRUE) %>%
+  count(intervention_type)
+```
+
+## TO DO households (11)
+```{r}
+# number of water points in the promoter survey
+wp_count_pm <- wp_census %>%
+  group_by(country, sample_group, intervention_type) %>% 
+  summarise(
+    wp_count_pm = n_distinct(wp_id[promoter_surveyed = TRUE]),  
+    .groups = "drop"
+  )
+
+# number of households in the promoter survey
+pm_hh_listed <- pm_survey %>%
+  mutate(users = as.numeric(users)) %>%
+  group_by(country, sample_group, intervention_type) %>% 
+  summarise(
+    pm_hh_listed = sum(users, na.rm = TRUE),               
+    .groups = "drop"
+  )
+
+# number of households from the promoter survey that are also in the HH census - represented by the variable cal_hh_count for each WP
+pm_hh_census <- hh_census %>%
+  mutate(cal_hh_count = as.numeric(cal_hh_count)) %>%
+  group_by(country, sample_group, intervention_type) %>% 
+  summarise(
+    pm_hh_census = sum(cal_hh_count, na.rm = TRUE),               
+    .groups = "drop"
+  )
+
+# number of households whose self-report in HH census matches the promoter's report
+pm_hh_matched <- pm_survey_households_clean %>%
+  left_join(pm_survey %>% select(wp_id, sample_group, intervention_type), 
+            by = c("wp_id_c" = "wp_id")) %>%
+  dplyr::filter(!is.na(wp_category)) %>%
+  dplyr::filter(household_id %in% hh_census$household_id) %>%
+  left_join(hh_census %>% select(household_id, wp_id), 
+            by = "household_id", suffix = c("_pm", "_census")) %>%
+  mutate(wp_match = wp_id_c == wp_id_census) %>% 
+  group_by(country, wp_category) %>%
+  summarise(
+    pm_hh_matched = sum(wp_match, na.rm = TRUE),
+    .groups = "drop") %>%
+  mutate(country = toupper(country))
+
+# number of households outside of the village
+pm_hh_outside <- pm_survey %>%
+  mutate(hh_outsiden = as.numeric(hh_outsiden)) %>%
+  group_by(country, wp_category) %>% 
+  summarise(
+    pm_hh_outside = sum(hh_outsiden, na.rm = TRUE),               
+    .groups = "drop"
+  )
+
+# total number of water points in the wp census
+wp_count_wp_census <- wp_census %>%
+  group_by(country, wp_category) %>% 
+  summarise(
+    wp_count_wp_census = n_distinct(wp_id),               
+    .groups = "drop"
+  )
+
+# total number of households that report using the water points in the wp census, regardless of whether they are in the promoter survey or not
+census_hh_listed <- hh_census %>%
+  dplyr::filter(wp_id %in% wp_census$wp_id) %>%
+  group_by(country, wp_category) %>%
+  summarise(
+    census_hh_listed = n_distinct(household_id),
+    .groups = "drop"
+  )
+
+# average numbers of households per water point
+pm_avg_hh_per_wp <- pm_survey %>%
+  mutate(hh_listed = as.numeric(hh_listed)) %>%
+  group_by(country, wp_category) %>% 
+  summarise(
+    pm_avg_hh_per_wp = round(mean(hh_listed, na.rm = TRUE), 2),               
+    .groups = "drop"
+  )
+
+census_avg_hh_per_wp <- hh_census %>%
+  dplyr::filter(wp_id %in% wp_census$wp_id) %>%
+  group_by(country, wp_category, wp_id) %>%
+  summarise(
+    census_hh_listed = n_distinct(household_id),   # households per wp
+    .groups = "drop"
+  ) %>%
+  group_by(country, wp_category) %>%
+  summarise(
+    census_avg_hh_per_wp = round(mean(census_hh_listed, na.rm = TRUE), 2),  # avg across wps
+    .groups = "drop"
+  )
+
+# table
+hh_tbl <- wp_count_pm  %>%
+  left_join(pm_hh_listed, by = c("country", "wp_category")) %>%
+  left_join(pm_hh_outside, by = c("country", "wp_category")) %>%
+  left_join(pm_hh_census, by = c("country", "wp_category")) %>%
+  left_join(pm_hh_matched, by = c("country", "wp_category")) %>%
+  left_join(pm_avg_hh_per_wp, by = c("country", "wp_category")) %>%
+  left_join(wp_count_wp_census, by = c("country", "wp_category")) %>%
+  left_join(census_hh_listed, by = c("country", "wp_category")) %>%
+  left_join(census_avg_hh_per_wp, by = c("country", "wp_category")) %>%
+  dplyr::filter(wp_category %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
+  dplyr::filter(!(country == "UGANDA" & wp_category == "ILC")) %>%
+  mutate(country = factor(country, levels = c("MALAWI", "UGANDA"))) %>%
+  mutate(wp_category = factor(wp_category, levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
+  arrange(country, wp_category)
+
+hh_tbl
+```
 
 # estimates tables
 ## main monitoring estimates (8)
@@ -571,19 +581,20 @@ hh_stats <- hh_survey %>%
   select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
-table8_new <- create_summary_table(hh_count, hh_stats, country_totals)
+table8 <- create_summary_table(hh_count, hh_stats, country_totals)
 
-table8_new
+table8
 
 # country estimates table
-country_estimates_table8 <- compute_country_totals(table8_new)
+country_estimates_table8 <- compute_country_totals(table8)
 country_estimates_table8
 ```
 
-## DIFF THAN OVERLEAF using HH census and HH survey; only using WPs in promoter survey (10)
-LOWER NUMBERS THAN IN OVERLEAF
+## using HH census and HH survey; only using WPs in promoter survey (10)
 ```{r}
 hh_count <- hh_census %>%
+  # use water points in promoter survey
+  dplyr::filter(promoter_surveyed == 1) %>% 
   group_by(country, sample_group, intervention_type, wp_id) %>%
   summarise(
     hh_count = n_distinct(household_id),   # number of distinct households per wp
@@ -638,11 +649,11 @@ hh_stats <- hh_survey %>%
   select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
-table10_new <- create_summary_table(hh_count, hh_stats, country_totals)
-table10_new
+table10 <- create_summary_table(hh_count, hh_stats, country_totals)
+table10
 
 # country estimates table
-country_estimates_table10 <- compute_country_totals(table10_new)
+country_estimates_table10 <- compute_country_totals(table10)
 country_estimates_table10
 ```
 
@@ -701,19 +712,75 @@ hh_stats <- hh_survey %>%
   select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
-table12_new <- create_summary_table(hh_count, hh_stats, country_totals)
-table12_new
+table12 <- create_summary_table(hh_count, hh_stats, country_totals)
+table12
 
 # country estimates table
-country_estimates_table12 <- compute_country_totals(table12_new)
+country_estimates_table12 <- compute_country_totals(table12)
 country_estimates_table12
 ```
 
 ## excluding HHs outside village (13)
-table 13: Table 8 but excluding households outside the village from column 1. For households where the promoter provides the number of user households that are outside of the village, I subtract this number from the number of user households they list
+exactly like table 8, but subtract pm_users_outside from pm_users
+```{r}
+hh_count <- wp_census %>%
+  mutate(pm_users_adjusted = pm_users - pm_users_outside) %>%
+  group_by(country, sample_group, intervention_type) %>%
+  summarise(wp_values = list(pm_users_adjusted[!is.na(pm_users_adjusted)]), .groups = "drop") %>%
+  rowwise() %>%
+  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
+  unnest_wider(tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_count = tmp_mean_val,
+    se_hh_count = tmp_se
+  ) %>%
+  select(country, sample_group, intervention_type, avg_hh_count, se_hh_count)
 
-## excluding HHs outside village and double counted HHs (14)
-Table 8 but excluding households outside village and double-counted households
+hh_stats <- hh_survey %>%
+  # use monitoring survey
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  group_by(country, sample_group, intervention_type, wp_id) %>%
+  summarize(
+    # hh size and chlorination rates
+    hh_size = mean(hh_members, na.rm = TRUE),
+    chl_rate = mean(disctcr_02, na.rm = TRUE),
+    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    .groups = "drop_last"
+  ) %>%
+  group_by(country, sample_group, intervention_type) %>%
+  summarize(
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    wp_rates = list(chl_rate[!is.na(chl_rate)]),
+    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
+    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+  ) %>%
+  unnest_wider(hh_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_size = hh_tmp_mean_val,
+    se_hh_size = hh_tmp_se,
+    avg_chl_rate = chl_tmp_mean_val,
+    se_chl_rate = chl_tmp_se
+  ) %>%
+  select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+
+# water point type table
+table13 <- create_summary_table(hh_count, hh_stats, country_totals)
+table13
+
+# country estimates table
+country_estimates_table13 <- compute_country_totals(table13)
+country_estimates_table13
+```
+
+
+## TO DO excluding HHs outside village and double counted HHs (14)
+
 
 # balance tables
 ## create function for balance tables
@@ -741,12 +808,12 @@ create_balance_latex <- function(sumtable_output,
       "Functional water point (wp\\_func)",
       "Tank present (disp\\_tank\\_present)",
       "Tank filled (disp\\_filled)",
-      "FCR measured with colorwheel (discfcr\\_02)",
-      "FCR measured with meter (meterfcr\\_02)",
-      "FCR measured with meter v2 (meterfcr\\_01)",
-      "TCR measured with colorwheel (disctcr\\_02)",
-      "TCR measured with meter (metertcr\\_02)",
-      "TCR measured with meter v2 (metertcr\\_01)"
+      "FCR 0.2ppm measured with colorwheel (discfcr\\_02)",
+      "FCR 0.2ppm measured with meter (meterfcr\\_02)",
+      "FCR 0.1ppm measured with meter (meterfcr\\_01)",
+      "TCR 0.2ppm measured with colorwheel (disctcr\\_02)",
+      "TCR 0.2ppm measured with meter (metertcr\\_02)",
+      "TCR 0.1ppm measured with meter (metertcr\\_01)"
     )
     var_names <- c("wp_func", "disp_tank_present", "disp_filled", 
                    "discfcr_02", "meterfcr_02", "meterfcr_01",
@@ -957,31 +1024,32 @@ create_balance_latex(
 
 ## Malawi ILC (22)
 wp_func significantly different, but this isn't very relevant for us
+- doesn't output a latex table exactly as in overleaf (graphically)
 ```{r}
 balance_table22 <- wp_census %>%
   dplyr::filter(country == "Malawi", sample_group == "ILC", intervention_type != "DSW") %>%
   sumtable(
-    vars = c("wp_func", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
+    vars = c("wp_func", "discfcr_01", "discfcr_02", "disctcr_01", "disctcr_02", "meterfcr_02", "metertcr_02"),
     group = "promoter_surveyed",
     group.test = TRUE,
-    out = "return") 
+    out = "return")
 
 create_balance_latex(
   balance_table22,
-  caption = "Balance checks among ILC water points in Malawi: promoter survey",
+  caption = "Balance checks among ILC water points in Malawi",
   label = "balance_malawi_ilc",
   group1_name = "Not in promoter survey",
   group2_name = "In promoter survey",
   custom_labels = list(
-    names = c("wp_func", "discfcr_02", "meterfcr_02", "meterfcr_01", "disctcr_02", "metertcr_02", "metertcr_01"),
+    names = c("wp_func", "discfcr_01", "discfcr_02", "disctcr_01", "disctcr_02", "meterfcr_02", "metertcr_02"),
     labels = c(
       "Functional water point (wp\\_func)",
-      "Free Chlorine residual tested by colorimeter\n\\qquad 0.2 ppm or above",
-      "Free Chlorine residual tested by meter\n\\qquad 0.2 ppm or above",
-      "\\qquad 0.1 ppm or above",
-      "Total Chlorine residual tested by colorimeter\n\\qquad 0.2 ppm or above",
-      "Total Chlorine residual tested by meter\n\\qquad 0.2 ppm or above",
-      "\\qquad 0.1 ppm or above"
+      "FCR color wheel 0.1 ppm (discfcr\\_01)",
+      "FCR color wheel 0.2 ppm (discfcr\\_02)",
+      "TCR color wheel 0.1 ppm (disctcr\\_01)",
+      "TCR color wheel 0.2 ppm (disctcr\\_02)",
+      "FCR meter 0.2 ppm (meterfcr\\_02)",
+      "TCR meter 0.2 ppm (metertcr\\_02)"
     )
   )
 )
@@ -1067,4 +1135,173 @@ stargazer(uganda_model, malawi_model,
           keep.stat = c("n", "rsq", "adj.rsq"))
 ```
 
-# TO DO waterfall charts
+# waterfall charts
+## TO DO share of households outside village among EA water points
+```{r}
+share_outside_tbl <- hh_census %>%
+  dplyr::filter(intervention_type != "NON-PROGRAM") %>%
+  mutate(
+    outside_village = case_when(
+      inclusion == "Within village boundaries" ~ 0,
+      inclusion == "Up to 200m outside of village boundaries" ~ 1,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  group_by(country, sample_group, wp_id) %>%
+  summarize(
+    share_outside_wp = mean(outside_village, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarize(
+    share_outside = mean(share_outside_wp, na.rm = TRUE),
+    n_wp = n(),
+    .groups  = "drop"
+  )
+
+share_outside_tbl
+```
+
+## TO DO tables excl outside HHs for waterfall charts
+### table 1 excluding outside HHs
+### table 12 excluding outside HHs
+### table 10 excluding outside HHs
+
+## make waterfall charts
+# waterfall charts
+```{r}
+#combine all relevant country totals into 1 table
+estimates <- table1 %>%
+  group_by(country) %>%
+  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
+  left_join(
+    table1_ex_outside %>% group_by(country) %>% summarise(table1_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table12_ex_outside %>% group_by(country) %>% summarise(table12_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10_ex_outside %>% group_by(country) %>% summarise(table10_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table14 %>% group_by(country) %>% summarise(table14 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table12 %>% group_by(country) %>% summarise(table12 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10 %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) 
+
+estimates <- estimates%>%
+  mutate(
+    pm_to_census_ratio = table8 / table1
+  )
+
+# calculate differences for waterfall chart
+create_waterfall <- function(country_name, country_data) {
+  
+  df <- data.frame(
+     category = c("Table 1", 
+                 "Exclude \ncensus\nout-of-village\nhouseholds", 
+                 "Unit of\nobservation",
+                 "Sample \nselection\nof water points",
+                 "Dataset",
+                 "Double \n-counting",
+                 "Promoter\nsurvey\nout-of-village\nhouseholds",
+                 "Table 8"),
+    amount = c(
+      country_data$table1,
+      country_data$table1_ex_outside - country_data$table1,
+      country_data$table12_ex_outside - country_data$table1_ex_outside,
+      country_data$table10_ex_outside - country_data$table12_ex_outside,
+      country_data$table14 - country_data$table10_ex_outside,
+      country_data$table13 - country_data$table14,
+      country_data$table8 - country_data$table13,
+      country_data$table8
+    )
+  )
+  
+  # round (to 50k)
+  df <- df %>%
+    mutate(amount_rounded = round(amount / 50000) * 50000)
+  
+  df$category <- factor(df$category, levels = df$category)
+  
+  df <- df %>%
+    mutate(
+      id = row_number(),
+      type = case_when(
+        id == 1 | id == n() ~ "total",
+        id == 5 ~ "dataset",                     
+        amount_rounded < 0 ~ "decrease",
+        TRUE ~ "increase"
+      ),
+      end = cumsum(amount_rounded),
+      start = lag(end, default = 0)
+    ) %>%
+    mutate(
+      start = ifelse(type == "total", 0, start),
+      end = ifelse(type == "total", amount_rounded, end)
+    )
+  
+# create waterfall charts
+  ggplot(df, aes(x = category, fill = type)) +
+    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
+                  ymin = start, ymax = end)) +
+    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
+              vjust = -0.5, size = 4, fontface = "bold") +
+    scale_fill_manual(values = c("decrease" = "#d73027", 
+                                  "increase" = "#4575b4",
+                                  "dataset" = "#FDB462",    # yellow for unexplained part
+                                  "total" = "#4575b4")) +   
+    labs(
+      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
+         y = "People with access",
+         x = NULL) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
+      # plot.title = element_text(size = 14, face = "bold"),
+      panel.grid.major.x = element_blank()
+    ) +
+    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
+                       labels = scales::comma)
+}
+
+# create plots for each country
+uganda_data <- estimates %>% filter(country == "UGANDA")
+malawi_data <- estimates %>% filter(country == "MALAWI")
+
+waterfall_uganda <- create_waterfall("Uganda", uganda_data)
+waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+
+ggsave("output/waterfall_uganda.pdf", 
+       plot = waterfall_uganda, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+
+ggsave("output/waterfall_malawi.pdf", 
+       plot = waterfall_malawi, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+```
