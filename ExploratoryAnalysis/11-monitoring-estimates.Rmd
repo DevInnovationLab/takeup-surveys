@@ -1634,3 +1634,60 @@ hh_census %>%
     mean(pm_matched, na.rm = TRUE)
   )
 ```
+
+## share of pm survey WPs with some households outside
+approximately 30% in both countries, a bit higher in Uganda (33% vs 28%)
+```{r}
+hh_outside_share <- wp_census %>%
+  group_by(country) %>%
+  dplyr::filter(!is.na(pm_users)) %>% # filter for WPs with response to number of users
+  # group_by(country, sample_group, intervention) %>%
+  summarise(
+    n_water_points = n(),
+    wp_with_outside_hh = sum(pm_users_outside > 0, na.rm = TRUE),
+    share_wp_with_outside = round(wp_with_outside_hh / n_water_points * 100, 1),
+    .groups = "drop"
+  )
+
+print(hh_outside_share)
+```
+
+# number of water points used per household - households in promoter lists
+```{r}
+# filter for HHs in promoter lists
+hh_census_filtered <- hh_census %>%
+  dplyr::filter(promoter_list == TRUE)  
+
+wp_distribution_census <- hh_census_filtered %>%
+  # number of secondary water points plus one = total number of water points
+  mutate(total_wp_used = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(total_wp_used) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample (used in caption)
+total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = as.factor(total_wp_used))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    subtitle = "Limited to households in PM survey data",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included (filtered by PM survey participation).")) +
+  # theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
