@@ -402,18 +402,18 @@ wp_table <- wp_census %>%
 wp_table
 ```
 
-Commentary in table caption: 
-For Uganda, 2 of the 112 water points in the EA promoter list were identified as Non-program and 1 as ILC, and are not shown. Similarly for Malawi, where 2 out of 137 were identified as Non-program.
+text for table caption:
+For Uganda, 2 of the 112 water points in the EA promoter list were identified as ILC, and are not shown. For Malawi, 2 out of 137 were identified as Non-program and are not shown.
 ```{r}
-pm_survey %>%
+wp_census %>%
   dplyr::filter(country == "Malawi") %>%
   dplyr::filter(pm_ea_list == TRUE) %>%
-  count(intervention_type)
+  count(intervention)
 
 wp_census %>%
   dplyr::filter(country == "Uganda") %>%
   dplyr::filter(pm_ea_list == TRUE) %>%
-  count(intervention_type)
+  count(intervention)
 ```
 
 ## TO DO households (11)
@@ -1619,7 +1619,77 @@ cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), 
 # statistics referenced in-text
 ## sample: EA list vs promoter survey
 ### uganda
+```{r}
+ea_promoters_uganda <-
+  ea_promoters_uganda %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id)
+
+# Calculate metrics
+n_promoters <- nrow(ea_promoters_uganda)
+n_unique_wps <- ea_promoters_uganda %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+
+n_in_wp_census <- ea_promoters_uganda %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  distinct(i102_wpt_id) %>%
+  nrow()
+
+n_promoter_surveyed <- wp_census %>%
+  dplyr::filter(ea_id %in% ea_promoters_uganda$i102_wpt_id, promoter_surveyed == TRUE) %>%
+  distinct(ea_id) %>%
+  nrow()
+
+n_surveyed_no_ea_info <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE, 
+         !ea_id %in% ea_promoters_uganda$i102_wpt_id,
+         country == "Uganda") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+n_total_promoter_surveys <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+glue("In Uganda, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information, for a total of {n_total_promoter_surveys} promoter surveys in Uganda.")
+```
+
 ### malawi
+```{r}
+ea_promoters_malawi <- ea_promoters_malawi %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
+  unique()  
+
+n_promoters <- nrow(ea_promoters_malawi)
+n_unique_wps <- ea_promoters_malawi %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+
+n_in_wp_census <- ea_promoters_malawi %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  distinct(i102_wpt_id) %>%
+  nrow()
+
+n_promoter_surveyed <- wp_census %>%
+  dplyr::filter(ea_id %in% ea_promoters_malawi$i102_wpt_id, promoter_surveyed == TRUE) %>%
+  distinct(ea_id) %>%
+  nrow()
+
+n_surveyed_no_ea_info <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE, 
+         !ea_id %in% ea_promoters_malawi$i102_wpt_id,
+         country == "Malawi") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+n_total_promoter_surveys <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+glue("In Malawi, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of {n_total_promoter_surveys} promoter surveys in Malawi.")
+```
 
 ## share of households in hh census identified by promoters
 ```{r}

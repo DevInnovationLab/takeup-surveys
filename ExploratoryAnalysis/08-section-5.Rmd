@@ -316,7 +316,7 @@ pm_survey <- pm_survey %>%
   distinct(wp_id, .keep_all = TRUE)
 ```
 
-# creating wp_category
+### OLD creating wp_category
 wp_category is the variable for water point type in a given village type
 ```{r}
 wp_census <- wp_census %>%
@@ -374,14 +374,14 @@ ea_promoters_uganda <- pm_list_ug %>%
 ```
 
 
-# moving from wp_category to sample_group and intervention_type
+### OLD moving from wp_category to sample_group and intervention_type
 ```{r}
 table(wp_census$intervention_type, wp_census$sample_group)
 
 table(wp_census$wp_category)
 ```
 
-# corrections: pm_survey_households
+### corrections: pm_survey_households
 ```{r}
 #deleting test village
 pm_survey_households <- pm_survey_households %>%
@@ -416,7 +416,7 @@ pm_survey_households_clean <- pm_survey_households %>%
 write.csv(pm_survey_households_clean, "pm_survey_households_corrections.csv", row.names = FALSE)
 ```
 
-## table 8 
+## MOVED table 8 
 Main estimates using promoter survey and monitoring survey
 ```{r}
 # column 1: household count and SE
@@ -569,7 +569,7 @@ country_totals_table8 <- table8 %>%
 country_totals_table8
 ```
 
-# test for difference between table 1 and 8
+# MOVED test for difference between table 1 and 8
 ```{r}
 # UGANDA
 # t1 uganda
@@ -616,7 +616,7 @@ cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), 
 cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
 ```
 
-# test for difference between table 1 and 12
+# MOVED test for difference between table 1 and 12
 ```{r}
 #t12 uganda
 mean_t12_uganda <- country_totals_table12$total_indiv_access_popn[country_totals_table12$country == "UGANDA"]
@@ -647,7 +647,7 @@ cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), 
 cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
 ```
 
-## table 9 [numbers are currently off in cols 2-5]
+## MOVED table 9 [numbers are currently off in cols 2-5]
 Number of water points in different datasets by type
 ```{r}
 wp_table <- wp_census %>%
@@ -693,7 +693,7 @@ ea_promoters_malawi %>%
   count(wp_category, sort = TRUE)
 ```
 
-## table 10 
+## MOVED table 10 
 Table 8 but using HH census and HH survey; only using WPs in promoter survey
 ```{r}
 # column 1: household count and SE
@@ -851,7 +851,7 @@ country_totals_table10 <- table10 %>%
 country_totals_table10
 ```
 
-## table 11
+## MOVED table 11
 Number of households identified by different instruments
 ```{r}
 # number of water points in the promoter survey
@@ -962,7 +962,7 @@ hh_tbl <- wp_count_pm  %>%
 hh_tbl
 ```
 
-## table 12 
+## MOVED table 12 
 Table 10 but for all water points
 ```{r}
 # column 1: household count and SE
@@ -1118,7 +1118,7 @@ country_totals_table12 <- table12 %>%
 country_totals_table12
 ```
 
-## table 13
+## MOVED table 13
 Table 8 but excluding households outside the village from column 1. For households where the promoter provides the number of user households that are outside of the village, I subtract this number from the number of user households they list
 ```{r}
 # column 1: household count and SE
@@ -1278,7 +1278,7 @@ country_totals_table13 <- table13 %>%
 country_totals_table13
 ```
 
-## table 14 
+## MOVED table 14 
 Table 8 but excluding households outside village and double-counted households
 ```{r}
 # identify households that appear multiple times AND only use one water point
@@ -1490,7 +1490,7 @@ country_totals_table14 <- table14 %>%
 country_totals_table14
 ```
 
-## table 15 
+## MOVED table 15 
 Balance tables: Uganda DSW Footprint.
 significant difference in disp_filled
 ```{r}
@@ -1505,7 +1505,7 @@ wp_census %>%
     out = "return") 
 ```
 
-## table 16 
+## MOVED table 16 
 Balance tables: Uganda DSW Footprint but between EA list and not EA list water points
 ```{r}
 wp_census %>%
@@ -1518,7 +1518,7 @@ wp_census %>%
     out = "return") 
 ```
 
-## table 17 
+## MOVED table 17 
 Balance tables: Uganda DSW Expansion.
 difference in disp_filled not significant. difference in disp_tank_present is significant, but since it does not translate to significant difference in chlorine presence, I don't think this is important
 ```{r}
@@ -1531,7 +1531,7 @@ wp_census %>%
     out = "return") 
 ```
 
-# table 17a
+## MOVED table 17a
 compare EA list with promoter survey
 
 ```{r}
@@ -1544,7 +1544,7 @@ wp_census %>%
     out = "return") 
 ```
 
-## table 18 
+## MOVED table 18 
 Balance tables: Malawi DSW Footprint.
 significant difference in meterfcr_02, but because there are just 3 water points in wp_census that the test was conducted for, I don't think this is very important
 ```{r}
@@ -1557,7 +1557,7 @@ wp_census %>%
     out = "return") 
 ```
 
-## table 19 
+## MOVED table 19 
 Balance tables: Malawi DSW Expansion.
 no significant differences
 ```{r}
@@ -1570,7 +1570,7 @@ wp_census %>%
     out = "return") 
 ```
 
-## table 20 
+## MOVED table 20 
 Balance tables: Malawi DSW in ILC vill.
 no significant differences
 ```{r}
@@ -1583,7 +1583,7 @@ wp_census %>%
     out = "return") 
 ```
 
-## table 21 
+## MOVED table 21 
 Balance tables: Malawi ILC.
 no significant differences
 ```{r}
@@ -1596,7 +1596,7 @@ wp_census %>%
     out = "return") 
 ```
 
-# table 22
+## MOVED table 22
 Chlorination at the household regressed on whether the household self-reports using a water point that is in the promoter survey and/or Evidence Action list.
 
 We find that in both Uganda and Malawi, households using water points in the promoter survey are significantly more likely to have chlorine identified at the household, though the magnitude of the coefficient is larger in Uganda. The association is also positive if we regress chlorination on the presence of the self-reported primary water point in the Evidence Action list instead. Indeed, as shown in column (3), for Uganda, if we control for this, then the association between presence in the promoter survey and chlorination becomes insignificant, although this is not the case for Malawi.
@@ -1642,7 +1642,7 @@ stargazer(model1, model2, model3, model4, model5, model6,
           keep.stat = c("n", "rsq", "adj.rsq"))
 ```
 
-## section 6.4.1: adjusting numbers for waterfall charts
+## MOVED section 6.4.1: adjusting numbers for waterfall charts
 share of households outside village among EA water points
 ```{r}
 share_outside_tbl <- hh_census %>%
@@ -1669,7 +1669,7 @@ share_outside_tbl <- hh_census %>%
 share_outside_tbl
 ```
 
-## tables excl outside HHs for waterfall charts
+## MOVED tables excl outside HHs for waterfall charts
 table 1 estimates excluding outside households
 ```{r}
 # table 1 numbers for each village type (sample_group)
@@ -1991,7 +1991,7 @@ country_totals_table10_ex_out <- table10_ex_outside %>%
 country_totals_table10_ex_out
 ```
 
-# waterfall charts
+# MOVED waterfall charts
 ```{r}
 #combine all relevant country totals into 1 table
 estimates <- table1 %>%
@@ -2200,7 +2200,7 @@ ggplot(chart_data_long, aes(x = wp_category, y = change, fill = stage)) +
   )
 ```
 
-## section 6.2: sample: EA list versus promoter survey (Uganda) [numbers are currently off]
+## MOVED section 6.2: sample: EA list versus promoter survey (Uganda) [numbers are currently off]
 In Uganda, Evidence Action provided information for 133 promoters in the sampled villages, representing 129 unique water points. Out of these, 119 are in the water point census, and 110 are included in the promoter survey. There are 10 promoter surveys for water points for which Evidence Action did not provide contact information, for a total of 120 promoter surveys in Uganda.
 ```{r}
 ea_promoters_uganda <-
@@ -2250,7 +2250,7 @@ count(pm_survey_NOT_in_ea_list_uganda)
 count(pm_survey_in_ea_list_uganda)
 ```
 
-## section 6.2: sample: EA list versus promoter survey (Malawi) [numbers are currently off]
+## MOVED section 6.2: sample: EA list versus promoter survey (Malawi) [numbers are currently off]
 In Malawi, Evidence Action provided information for 287 promoters in the sampled villages, representing 264 unique water points. Out of these, 207 are in the water point census (though 20 were identified as Non-program), and 142 are included in the promoter survey. There are 57 promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of 199 promoter surveys in Malawi. 
 ```{r}
 ea_promoters_malawi <- ea_promoters_malawi %>%
@@ -2301,7 +2301,7 @@ count(pm_survey_NOT_in_ea_list_malawi)
 count(pm_survey_in_ea_list_malawi)
 ```
 
-## section 6.3: share of households in hh census identified by promoters
+## MOVED section 6.3: share of households in hh census identified by promoters
 Promoters in Footprint villages are better at identifying households using the water points they are responsible for, being able to identify around 90% of the self-reported users of these water points, in both countries. In Expansion villages, these numbers are lower, at around 84% for Malawi and 74% for Uganda.
 ```{r}
 hh_census %>%
@@ -2315,7 +2315,7 @@ hh_census %>%
   )
 ```
 
-## section 6.4.4: water points with some households outside of village (30%)
+## MOVED section 6.4.4: water points with some households outside of village (30%)
 ```{r}
 # Calculate share of water points with outside households
 hh_outside_share <- pm_survey %>%
@@ -2344,7 +2344,7 @@ overall_share <- pm_survey %>%
 print(overall_share)
 ```
 
-# section 6.4.5 double-counting: how many hh ids come up more than once? [numbers are currently off - updated in description below, but not in report]
+# MOVED section 6.4.5 double-counting: how many hh ids come up more than once? [numbers are currently off - updated in description below, but not in report]
 627 HHs are listed more than once, 341 are double-counted
 ```{r}
 appearing_twice_households <- pm_survey_households_clean %>%
@@ -2368,7 +2368,7 @@ double_counted_households <- pm_survey_households_clean %>%
 double_counted_households
 ```
 
-## section 6.4.6 regression of chlorination on being listed by promoter
+## MOVED section 6.4.6 regression of chlorination on being listed by promoter
 I regress chlorination on household presence in the promoter lists, limiting the sample to households using water points in the promoter survey. We find a significant positive association between these for both Uganda and Malawi.
 ```{r}
 hh_survey <- hh_survey %>%
@@ -2398,7 +2398,7 @@ stargazer(uganda_model, malawi_model,
           keep.stat = c("n", "rsq", "adj.rsq"))
 ```
 
-# number of water points used per household - households in promoter lists
+# MOVED number of water points used per household - households in promoter lists
 ```{r}
 # number of water points used per household - households in promoter lists
 hh_census_filtered <- hh_census %>%
@@ -2438,7 +2438,7 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
   )
 ```
 
-## FCR instead of TCR
+## MOVED FCR instead of TCR
 table 8 with FCR instead of TCR 
 ```{r}
 # column 1: household count and SE
