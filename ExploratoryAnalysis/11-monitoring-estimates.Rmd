@@ -10,6 +10,7 @@ This is the code to generate the estimates tables using the monitoring (water-po
 - I have used pm_survey to count the number of households in the promoter survey in table 11
 - I have used pm_survey to count the number of WPs in the promoter survey in table 9 (and ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table)
 - for table 1 ex households located outside of village, I did a rough number. ideally, i just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
+- TO DO: have both fcr and tcr in main tables
 
 # load packages
 ```{r}
@@ -1635,6 +1636,25 @@ hh_census %>%
   )
 ```
 
+## share of hhs that appear more than once in promoter lists
+521 mentioned twice, of which 341 report only using 1 water point (and thus we would classify as double-counted)
+```{r}
+## share of matched hhs that appear more than once in promoter lists + that appear more than once despite self-reporting only using 1 water point (in past month)
+hh_census %>%
+  # group_by(country) %>%
+  dplyr::filter(!is.na(promoter_list)) %>%
+  summarise(
+    total_hh = n_distinct(household_id),
+    hh_multiple_mentions = sum(promoter_list_mentions > 1, na.rm = TRUE),
+    share_multiple_mentions = hh_multiple_mentions / total_hh,
+    share_pct = round(share_multiple_mentions * 100, 1),
+    # wp_secweek is FALSE -> hh reports not using any additional water sources
+    hh_double_counted = sum(promoter_list_mentions > 1 & wp_secweek == FALSE, na.rm = TRUE),
+    share_double_counted = hh_double_counted / total_hh,
+    share_double_counted_pct = round(share_double_counted * 100, 1)
+  )
+```
+
 ## share of pm survey WPs with some households outside
 approximately 30% in both countries, a bit higher in Uganda (33% vs 28%)
 ```{r}
@@ -1692,7 +1712,8 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
   )
 ```
 
-# number of water points used per household - households NOT in promoter lists
+## number of water points used per household - households NOT in promoter lists
+very similar to above - 2pp higher share using just 1 water point
 ```{r}
 # filter for HHs in promoter lists
 hh_census_not_pm_list <- hh_census %>%
@@ -1732,3 +1753,5 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
   )
 ```
 
+# chlorination
+##
