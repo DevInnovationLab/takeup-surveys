@@ -8,7 +8,7 @@ This is the code to generate the estimates tables using the monitoring (water-po
 # NOTES
 - general approach for NAs in promoter_surveyed and pm_ea_list in wp_census and hh_survey: I have changed NA to FALSE; but this should probably be done in wrangling
 - I have used pm_survey to count the number of households in the promoter survey in table 11
-- I have used pm_survey to count the number of WPs in the promoter survey in table 9 (and ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table)
+- I have used ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table 9
 - for table 1 ex households located outside of village, I did a rough number. ideally, i just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
 - TO DO: have both fcr and tcr in main tables
 
@@ -377,33 +377,27 @@ compute_country_totals <- function(data,
 ## water points (9)
 ```{r}
 wp_table <- wp_census %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarise(
     wp_census = n_distinct(wp_id),
     wp_functional = n_distinct(wp_id[wp_func == TRUE]),
-    # promoter_surveyed = n_distinct(wp_id[promoter_surveyed == TRUE]),
+    promoter_surveyed = n_distinct(wp_id[promoter_surveyed == TRUE]),
     # ea_list = n_distinct(wp_id[pm_ea_list == TRUE]),
     .groups = "drop"
   ) %>%
-  left_join(country_totals, by = c("country", "sample_group", "intervention_type")) %>%
+  left_join(country_totals, by = c("country", "sample_group", "intervention")) %>%
   left_join(
     ea_list_malawi %>%
-      group_by(country, sample_group, intervention_type) %>%
+      group_by(country, sample_group, intervention) %>%
       summarise(ea_list_malawi_count = n_distinct(i102_wpt_id), .groups = "drop"),
-    by = c("country", "sample_group", "intervention_type")
+    by = c("country", "sample_group", "intervention")
   ) %>%
   left_join(
     ea_list_uganda %>%
-      group_by(country, sample_group, intervention_type) %>%
+      group_by(country, sample_group, intervention) %>%
       summarise(ea_list_uganda_count = n_distinct(i102_wpt_id), .groups = "drop"),
-    by = c("country", "sample_group", "intervention_type")
-  ) %>%
-  left_join(
-    pm_survey %>%
-      group_by(country, sample_group, intervention_type) %>%
-      summarise(promoter_survey = n_distinct(wp_id), .groups = "drop"),
-    by = c("country", "sample_group", "intervention_type")
-  ) 
+    by = c("country", "sample_group", "intervention")
+  )
 
 wp_table
 ```
@@ -1623,6 +1617,10 @@ cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), 
 ```
 
 # statistics referenced in-text
+## sample: EA list vs promoter survey
+### uganda
+### malawi
+
 ## share of households in hh census identified by promoters
 ```{r}
 hh_census %>%
@@ -1753,5 +1751,6 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
   )
 ```
 
-# chlorination
-##
+# TO DO chlorination
+## breaking down differences in chlorination
+## regression of chlorination on sample group
