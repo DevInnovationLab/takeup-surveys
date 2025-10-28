@@ -9,6 +9,7 @@ This is the code to generate the estimates tables using the monitoring (water-po
 - general approach for NAs in promoter_surveyed and pm_ea_list in wp_census and hh_survey: I have changed NA to FALSE; but this should probably be done in wrangling
 - I have used pm_survey to count the number of households in the promoter survey in table 11
 - I have used pm_survey to count the number of WPs in the promoter survey in table 9 (and ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table)
+- for table 1 ex households located outside of village, I did a rough number. ideally, i just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
 
 # load packages
 ```{r}
