@@ -1158,7 +1158,29 @@ share_outside_tbl
 ```
 
 ## TO DO tables excl outside HHs for waterfall charts
-### table 1 excluding outside HHs
+### table 1 excluding outside HHs 
+Ideally this would link to our code for table 1, for now I just took the values from the most recent version in overleaf
+```{r}
+# table 1 numbers for each village type (sample_group)
+table1 <- tibble::tribble(
+  ~country, ~sample_group, ~indiv_access_popn,
+  "MALAWI", "EXPANSION", 1775112,
+  "MALAWI", "FOOTPRINT", 247293,
+  "MALAWI", "ILC", 189076,
+  "UGANDA", "EXPANSION", 2495942,
+  "UGANDA", "FOOTPRINT", 879105,
+)
+
+table1_exout <- table1 %>%
+  left_join(share_outside_tbl, by = c("country", "sample_group")) %>%
+  mutate(
+    indiv_access_popn = indiv_access_popn * (1 - coalesce(share_outside, 0))
+  ) %>%
+  select(country, sample_group, indiv_access_popn)
+
+table1_ex_outside
+```
+
 ### table 12 excluding outside HHs
 ```{r}
 hh_count <- hh_census %>%
