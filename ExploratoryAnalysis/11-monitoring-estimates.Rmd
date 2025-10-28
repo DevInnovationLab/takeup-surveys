@@ -205,7 +205,7 @@ malawi_villages <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final
 malawi_wcp <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final", "malawi-water-collection-points.dta"))
 ```
 
-## rank dataset
+## rank dataset (from randomization)
 ```{r}
 pm_survey_clean <-
   read_rds(
@@ -262,8 +262,8 @@ hh_survey <- hh_survey %>%
 #   mutate(
 #     rank = as.numeric(rank),
 #     survey = as.character(survey),  # Convert to character first
-#     survey = ifelse(survey == "Household Survey" & !is.na(rank) & rank <= 4, 
-#                     "Monitoring Survey", 
+#     survey = ifelse(survey == "Household Survey" & !is.na(rank) & rank <= 4,
+#                     "Monitoring Survey",
 #                     survey)
 #   )
 ```
