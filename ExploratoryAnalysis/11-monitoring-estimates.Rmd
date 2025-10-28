@@ -1622,3 +1622,15 @@ cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), 
 ```
 
 # statistics referenced in-text
+## share of households in hh census identified by promoters
+```{r}
+hh_census %>%
+  inner_join(pm_survey_households_clean, by = c("household_id")) %>%
+  mutate(pm_matched = wp_id.x == wp_id_c) %>%
+  group_by(
+    `country.x`, sample_group, intervention
+  ) %>%
+  summarise(
+    mean(pm_matched, na.rm = TRUE)
+  )
+```
