@@ -1233,7 +1233,7 @@ share_outside_tbl <- hh_census %>%
 share_outside_tbl
 ```
 
-## TO DO tables excl outside HHs for waterfall charts
+## Ttables excl outside HHs for waterfall charts
 ### table 1 excluding outside HHs 
 Ideally this would link to our code for table 1, for now I just took the values from the most recent version in overleaf
 ```{r}
@@ -1402,15 +1402,15 @@ estimates <- table1 %>%
   group_by(country) %>%
   summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
   left_join(
-    table1_ex_outside %>% group_by(country) %>% summarise(table1_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
+    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
   ) %>%
   left_join(
-    table12_ex_outside %>% group_by(country) %>% summarise(table12_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
+    table12_exout %>% group_by(country) %>% summarise(table12_exout = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
   ) %>%
   left_join(
-    table10_ex_outside %>% group_by(country) %>% summarise(table10_ex_outside = sum(indiv_access_popn, na.rm = TRUE)),
+    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
   ) %>%
   left_join(
@@ -1454,9 +1454,9 @@ create_waterfall <- function(country_name, country_data) {
     amount = c(
       country_data$table1,
       country_data$table1_ex_outside - country_data$table1,
-      country_data$table12_ex_outside - country_data$table1_ex_outside,
-      country_data$table10_ex_outside - country_data$table12_ex_outside,
-      country_data$table14 - country_data$table10_ex_outside,
+      country_data$table12_ex_outside - country_data$table1_exout,
+      country_data$table10_ex_outside - country_data$table12_exout,
+      country_data$table14 - country_data$table10_exout,
       country_data$table13 - country_data$table14,
       country_data$table8 - country_data$table13,
       country_data$table8
@@ -1512,8 +1512,8 @@ create_waterfall <- function(country_name, country_data) {
 }
 
 # create plots for each country
-uganda_data <- estimates %>% filter(country == "UGANDA")
-malawi_data <- estimates %>% filter(country == "MALAWI")
+uganda_data <- estimates %>% filter(country == "Uganda")
+malawi_data <- estimates %>% filter(country == "Malawi")
 
 waterfall_uganda <- create_waterfall("Uganda", uganda_data)
 waterfall_malawi <- create_waterfall("Malawi", malawi_data)
@@ -1658,8 +1658,7 @@ glue("In Uganda, Evidence Action provided information for {n_promoters} promoter
 ### malawi
 ```{r}
 ea_promoters_malawi <- ea_promoters_malawi %>%
-  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
-  unique()  
+  dplyr::filter(villageid %in% sampled_villages$village_id)
 
 n_promoters <- nrow(ea_promoters_malawi)
 n_unique_wps <- ea_promoters_malawi %>%
