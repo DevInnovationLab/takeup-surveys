@@ -1635,8 +1635,29 @@ create_waterfall <- function(country_name, country_data) {
     country_data$table8  )
   )
   
-  # round (to 50k)
+# round (to 50k)
+df <- df %>%
+    mutate(amount_rounded = round(amount / 50000) * 50000)
   
+  df$category <- factor(df$category, levels = df$category)
+  
+# calculate positions
+  df <- df %>%
+    mutate(
+      id = row_number(),
+      type = case_when(
+        id == 1 | id == n() ~ "total",
+        id == 5 ~ "dataset",                     
+        amount_rounded < 0 ~ "decrease",
+        TRUE ~ "increase"
+      ),
+      end = cumsum(amount_rounded),
+      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
+    )  %>%
+    mutate(
+      start = ifelse(type == "total", 0, start),
+      end = ifelse(type == "total", amount_rounded, end)
+    )
  
 # create waterfall charts
   ggplot(df, aes(x = category, fill = type)) +
@@ -1683,96 +1704,6 @@ ggsave("output/waterfall_malawi.pdf",
        height = 6, 
        units = "in",
        device = "pdf")
-```
-
-```{r}
-# calculate differences for waterfall chart
-create_waterfall <- function(country_name, country_data) {
-  
-  df <- data.frame(
-    category = c("Table 1", 
-                "Exclude \ncensus\nout-of-village\nhouseholds", 
-                "Unit of\nobservation",
-                "Sample \nselection\nof water points",
-                "Dataset",
-                "Double \n-counting",
-                "Promoter\nsurvey\nout-of-village\nhouseholds",
-                "Table 8"),
-    amount = c(
-      country_data$table1,
-      country_data$table1_exout - country_data$table1,
-      country_data$table12_exout - country_data$table1_exout,
-      country_data$table10_exout - country_data$table12_exout,
-      country_data$table14 - country_data$table10_exout,
-      country_data$table13 - country_data$table14,
-      country_data$table8 - country_data$table13,
-      country_data$table8
-    )
-  )
-  
-  # round (to 50k)
-  df <- df %>%
-    mutate(amount_rounded = round(amount / 50000) * 50000)
-  
-  df$category <- factor(df$category, levels = df$category)
-  
-  # Calculate positions using a loop for clarity
-  df <- df %>%
-    mutate(
-      id = row_number(),
-      type = case_when(
-        id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",                     
-        amount_rounded < 0 ~ "decrease",
-        TRUE ~ "increase"
-      )
-    )
-  
-  # Initialize position columns
-  running_total <- 0
-  df$start <- NA
-  df$end <- NA
-  
-  for(i in 1:nrow(df)) {
-    if(df$type[i] == "total" && i == 1) {
-      # First total: start at 0
-      df$start[i] <- 0
-      df$end[i] <- df$amount_rounded[i]
-      running_total <- df$amount_rounded[i]
-    } else if(df$type[i] == "total" && i == nrow(df)) {
-      # Last total: start at 0, end at full value
-      df$start[i] <- 0
-      df$end[i] <- df$amount_rounded[i]
-    } else {
-      # Middle bars: float at running total
-      df$start[i] <- running_total
-      df$end[i] <- running_total + df$amount_rounded[i]
-      running_total <- df$end[i]
-    }
-  }
-  
-  # create waterfall charts
-  ggplot(df, aes(x = category, fill = type)) +
-    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
-                  ymin = start, ymax = end)) +
-    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
-              vjust = -0.5, size = 4, fontface = "bold") +
-    scale_fill_manual(values = c("decrease" = "#d73027", 
-                                  "increase" = "#4575b4",
-                                  "dataset" = "#FDB462",
-                                  "total" = "#4575b4")) +   
-    labs(
-      y = "People with access",
-      x = NULL) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
-                       labels = scales::comma)
-}
 ```
 
 # diff in means tests
