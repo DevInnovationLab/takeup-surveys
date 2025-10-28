@@ -775,7 +775,84 @@ country_estimates_table13
 
 
 ## TO DO excluding HHs outside village and double counted HHs (14)
+```{r}
+# Calculate adjustments based on hh_census duplicates
+wp_adjustments <- hh_census %>%
+  dplyr::filter(promoter_list_mentions > 1) %>%
+  group_by(wp_id) %>%
+  summarise(
+    # Each duplicate household subtracts (mentions - 1) from other water points
+    households_to_subtract = sum(promoter_list_mentions - 1),
+    .groups = "drop"
+  )
 
+# Then apply to wp_census
+wp_census_adjusted <- wp_census %>%
+  left_join(wp_adjustments, by = "wp_id") %>%
+  mutate(
+    households_to_subtract = replace_na(households_to_subtract, 0)
+  )
+
+# Now adjust pm_users in wp_census
+hh_count <- wp_census %>%
+  left_join(wp_adjustments, by = "wp_id") %>%
+  mutate(
+    households_to_subtract = coalesce(households_to_subtract, 0),
+    pm_users_outside = coalesce(pm_users_outside, 0),
+    pm_users_adjusted = pm_users - pm_users_outside - households_to_subtract
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarise(wp_values = list(pm_users_adjusted[!is.na(pm_users_adjusted)]), .groups = "drop") %>%
+  rowwise() %>%
+  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
+  unnest_wider(tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_count = tmp_mean_val,
+    se_hh_count = tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
+
+hh_stats <- hh_survey %>%
+  # use monitoring survey
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarize(
+    # hh size and chlorination rates
+    hh_size = mean(hh_members, na.rm = TRUE),
+    chl_rate = mean(disctcr_02, na.rm = TRUE),
+    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    .groups = "drop_last"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarize(
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    wp_rates = list(chl_rate[!is.na(chl_rate)]),
+    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
+    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+  ) %>%
+  unnest_wider(hh_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_size = hh_tmp_mean_val,
+    se_hh_size = hh_tmp_se,
+    avg_chl_rate = chl_tmp_mean_val,
+    se_chl_rate = chl_tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+
+# water point type table
+table14 <- create_summary_table(hh_count, hh_stats, country_totals)
+table14
+
+# country estimates table
+country_estimates_table14 <- compute_country_totals(table13)
+country_estimates_table14
+```
 
 # balance tables
 ## create function for balance tables
