@@ -2823,6 +2823,59 @@ stargazer(uganda_reg_lm, malawi_reg_lm,
           notes = "Standard errors clustered at village level in parentheses")
 ```
 
+## regression of chlorination on sample group
+```{r}
+hh_survey_filtered <- hh_survey %>%
+  dplyr::filter(sample_group %in% c("Expansion", "Footprint")) %>%
+  dplyr::filter(intervention == "DSW") %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  # First aggregate to water point level
+  group_by(country, sample_group, wp_id, village_id) %>%
+  summarise(
+    wp_chl_rate = mean(disctcr > 0.2, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(expansion_dummy = ifelse(sample_group == "Expansion", 1, 0))
+
+# Uganda regression - use regular lm
+uganda_data <- hh_survey_filtered %>% dplyr::filter(country == "Uganda")
+uganda_reg_lm <- lm(wp_chl_rate ~ expansion_dummy, data = uganda_data)
+
+# Malawi regression - use regular lm
+malawi_data <- hh_survey_filtered %>% dplyr::filter(country == "MALAWI")
+malawi_reg_lm <- lm(wp_chl_rate ~ expansion_dummy, data = malawi_data)
+
+# Get cluster-robust standard errors using lm_robust for reference
+uganda_reg_robust <- lm_robust(wp_chl_rate ~ expansion_dummy,
+                               data = uganda_data,
+                               clusters = village_id,
+                               se_type = "CR2")
+
+malawi_reg_robust <- lm_robust(wp_chl_rate ~ expansion_dummy,
+                               data = malawi_data,
+                               clusters = village_id,
+                               se_type = "CR2")
+
+# Extract cluster-robust SEs
+uganda_se <- uganda_reg_robust$std.error
+malawi_se <- malawi_reg_robust$std.error
+
+# Use stargazer with custom SEs
+library(stargazer)
+stargazer(uganda_reg_lm, malawi_reg_lm,
+          type = "text",
+          se = list(uganda_se, malawi_se),
+          title = "Chlorination Regressions by Country",
+          column.labels = c("Uganda", "Malawi"),
+          covariate.labels = c("DSW Expansion (vs. Footprint)"),
+          dep.var.labels = "Chlorination Level (disctcr)",
+          keep.stat = c("n", "rsq"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = "Standard errors clustered at village level in parentheses")
+```
+
+### new
 ```{r}
 hh_survey_chlorine <- hh_survey %>%
   dplyr::filter(survey == "Household Survey") %>%
