@@ -31,7 +31,8 @@ packages <-
     "stargazer",
     "ggplot2",
     "haven",
-    "estimatr"
+    "estimatr",
+    "janitor"
   )
 
 pacman::p_load(
@@ -202,6 +203,65 @@ malawi_villages <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final
   mutate(villageid = as.character(villageid))
 
 malawi_wcp <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final", "malawi-water-collection-points.dta"))
+```
+
+```{r}
+pm_survey_clean <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Clean",
+      "pm-survey-clean.rds"
+    )
+  )
+
+randomization <- pm_survey_clean %>% 
+  dplyr::select(
+    wp_id, village_id, country,
+    contains("rand_hh")
+  ) %>%
+  pivot_longer(
+    cols = starts_with("rand_hh"),
+    names_prefix = "rand_hh_",
+    names_to = "rank",
+    values_to = "household_name",
+    values_drop_na = TRUE
+  ) %>%
+  mutate(household_name = household_name %>% str_squish %>% str_trim)
+
+
+hhc <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Constructed",
+      "hh-census-constructed.rds"
+    )
+  ) %>%
+  select(village_id, household_id, household_name)
+
+randomization_id <-
+  randomization %>%
+  left_join(hhc)
+
+hh_survey <- hh_survey %>%
+  left_join(
+    randomization_id %>% select(household_id, rank),
+    by = "household_id"
+  )
+
+# randomization_id %>%
+#   dplyr::filter(
+#     is.na(household_id),
+#     str_detect(household_name, "RESP NAME:")
+#   ) %>% view
+#   tabyl(village_id, country)
 ```
 
 ## country totals
