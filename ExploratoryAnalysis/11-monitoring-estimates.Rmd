@@ -257,14 +257,15 @@ hh_survey <- hh_survey %>%
     by = "household_id"
   )
 
-hh_survey <- hh_survey %>%
-  mutate(
-    rank = as.numeric(rank),
-    survey = as.character(survey),  # Convert to character first
-    survey = ifelse(survey == "Household Survey" & !is.na(rank) & rank <= 4, 
-                    "Monitoring Survey", 
-                    survey)
-  )
+# if this code is not commented out, we include households that would have been selected for the monitoring survey but had already been present in the household survey
+# hh_survey <- hh_survey %>%
+#   mutate(
+#     rank = as.numeric(rank),
+#     survey = as.character(survey),  # Convert to character first
+#     survey = ifelse(survey == "Household Survey" & !is.na(rank) & rank <= 4, 
+#                     "Monitoring Survey", 
+#                     survey)
+#   )
 ```
 
 ## country totals
@@ -652,137 +653,6 @@ country_estimates_table8 <- compute_country_totals(table8)
 country_estimates_table8
 ```
 
-```{r}
-## make waterfall charts
-
-# Use country totals tables directly
-estimates <- country_estimates_table1 %>%
-  select(country, table1 = indiv_access_popn) %>%
-  left_join(
-    country_estimates_table1_exout %>% select(country, table1_exout = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table12_exout %>% select(country, table12_exout = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table10_exout %>% select(country, table10_exout = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table14 %>% select(country, table14 = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table13 %>% select(country, table13 = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table8 %>% select(country, table8 = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table12 %>% select(country, table12 = indiv_access_popn),
-    by = "country"
-  ) %>%
-  left_join(
-    country_estimates_table10 %>% select(country, table10 = indiv_access_popn),
-    by = "country"
-  ) %>%
-  mutate(pm_to_census_ratio = table8 / table1)
-
-# Then use the existing waterfall function (with fixed column names as before)
-create_waterfall <- function(country_name, country_data) {
-  
-  df <- data.frame(
-    category = c("Table 1", 
-                 "Exclude \ncensus\nout-of-village\nhouseholds", 
-                 "Unit of\nobservation",
-                 "Sample \nselection\nof water points",
-                 "Dataset",
-                 "Double \n-counting",
-                 "Promoter\nsurvey\nout-of-village\nhouseholds",
-                 "Table 8"),
-    amount = c(
-      country_data$table1,
-      country_data$table1_exout - country_data$table1,
-      country_data$table12_exout - country_data$table1_exout,
-      country_data$table10_exout - country_data$table12_exout,
-      country_data$table14 - country_data$table10_exout,
-      country_data$table13 - country_data$table14,
-      country_data$table8 - country_data$table13,
-      country_data$table8
-    )
-  )
-  
-  # rest of the function stays the same...
-  df <- df %>%
-    mutate(amount_rounded = round(amount / 50000) * 50000)
-  
-  df$category <- factor(df$category, levels = df$category)
-  
-  df <- df %>%
-    mutate(
-      id = row_number(),
-      type = case_when(
-        id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",                     
-        amount_rounded < 0 ~ "decrease",
-        TRUE ~ "increase"
-      ),
-      end = cumsum(amount_rounded),
-      start = lag(end, default = 0)
-    ) %>%
-    mutate(
-      start = ifelse(type == "total", 0, start),
-      end = ifelse(type == "total", amount_rounded, end)
-    )
-  
-  ggplot(df, aes(x = category, fill = type)) +
-    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
-                  ymin = start, ymax = end)) +
-    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
-              vjust = -0.5, size = 4, fontface = "bold") +
-    scale_fill_manual(values = c("decrease" = "#d73027", 
-                                  "increase" = "#4575b4",
-                                  "dataset" = "#FDB462",
-                                  "total" = "#4575b4")) +   
-    labs(
-      y = "People with access",
-      x = NULL) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
-                       labels = scales::comma)
-}
-
-# create plots for each country
-uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
-malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
-
-waterfall_uganda <- create_waterfall("Uganda", uganda_data)
-waterfall_malawi <- create_waterfall("Malawi", malawi_data)
-
-ggsave("output/waterfall_uganda.pdf", 
-       plot = waterfall_uganda, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-
-ggsave("output/waterfall_malawi.pdf", 
-       plot = waterfall_malawi, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-```
-
 ## using HH census and HH survey; only using WPs in promoter survey (10)
 ```{r}
 hh_count <- hh_census %>%
@@ -1076,6 +946,344 @@ table14
 # country estimates table
 country_estimates_table14 <- compute_country_totals(table14)
 country_estimates_table14
+```
+
+# waterfall charts
+## share of households outside village among EA water points
+```{r}
+share_outside_tbl <- hh_census %>%
+  dplyr::filter(intervention != "NON-PROGRAM") %>%
+  mutate(
+    outside_village = case_when(
+      inclusion == "Within village boundaries" ~ 0,
+      inclusion == "Up to 200m outside of village boundaries" ~ 1,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  group_by(country, sample_group, wp_id) %>%
+  summarize(
+    share_outside_wp = mean(outside_village, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarize(
+    share_outside = mean(share_outside_wp, na.rm = TRUE),
+    n_wp = n(),
+    .groups  = "drop"
+  )
+
+share_outside_tbl
+```
+
+## tables excl outside HHs for waterfall charts
+### table 1 excluding outside HHs 
+Ideally this would link to our code for table 1, for now I just took the values from the most recent version in overleaf
+```{r}
+# table 1 numbers for each village type (sample_group)
+table1 <- tibble::tribble(
+  ~country, ~sample_group, ~indiv_access_popn,
+  "Malawi", "Expansion", 1775112,
+  "Malawi", "Footprint", 247293,
+  "Malawi", "ILC", 189076,
+  "Uganda", "Expansion", 2495942,
+  "Uganda", "Footprint", 879105,
+)
+
+table1_exout <- table1 %>%
+  left_join(share_outside_tbl, by = c("country", "sample_group")) %>%
+  mutate(
+    indiv_access_popn = indiv_access_popn * (1 - coalesce(share_outside, 0))
+  ) %>%
+  select(country, sample_group, indiv_access_popn)
+
+# country estimates for table 1
+country_estimates_table1 <- table1 %>%
+  group_by(country) %>%
+  summarise(indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE), .groups = "drop")
+
+country_estimates_table1
+
+country_estimates_table1_exout <- table1_exout %>%
+  group_by(country) %>%
+  summarise(indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE), .groups = "drop")
+
+country_estimates_table1_exout
+```
+
+### table 12 excluding outside HHs
+```{r}
+hh_count <- hh_census %>%
+# excluding households that were not inside village, but rather within 200m of boundary
+  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarise(
+    hh_count = n_distinct(household_id),   # number of distinct households per wp
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarise(
+    wp_values = list(hh_count[!is.na(hh_count)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
+  unnest_wider(tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_count = tmp_mean_val,
+    se_hh_count = tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
+
+hh_stats <- hh_survey %>%
+  # exclude outside hhs
+  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
+  # use household survey
+  dplyr::filter(survey == "Household Survey") %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarize(
+    hh_size = mean(hh_members, na.rm = TRUE),
+    chl_rate = mean(disctcr_02, na.rm = TRUE),
+    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    .groups = "drop_last"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarize(
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    wp_rates = list(chl_rate[!is.na(chl_rate)]),
+    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
+    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+  ) %>%
+  unnest_wider(hh_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_size = hh_tmp_mean_val,
+    se_hh_size = hh_tmp_se,
+    avg_chl_rate = chl_tmp_mean_val,
+    se_chl_rate = chl_tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+
+# water point type table
+table12_exout <- create_summary_table(hh_count, hh_stats, country_totals)
+table12_exout
+
+# country estimates table
+country_estimates_table12_exout <- compute_country_totals(table12_exout)
+country_estimates_table12_exout
+```
+
+### table 10 excluding outside HHs
+```{r}
+hh_count <- hh_census %>%
+  # exclude outside hhs
+  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
+  # use water points in promoter survey
+  dplyr::filter(promoter_surveyed == 1) %>% 
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarise(
+    hh_count = n_distinct(household_id),   # number of distinct households per wp
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarise(
+    wp_values = list(hh_count[!is.na(hh_count)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
+  unnest_wider(tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_count = tmp_mean_val,
+    se_hh_count = tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
+
+hh_stats <- hh_survey %>%
+  # exclude outside hhs
+  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
+  # use household survey
+  dplyr::filter(survey == "Household Survey") %>%
+  # use water points in promoter survey
+  dplyr::filter(promoter_surveyed == 1) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarize(
+    hh_size = mean(hh_members, na.rm = TRUE),
+    chl_rate = mean(disctcr_02, na.rm = TRUE),
+    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    .groups = "drop_last"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarize(
+    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
+    wp_rates = list(chl_rate[!is.na(chl_rate)]),
+    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
+    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+  ) %>%
+  unnest_wider(hh_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp, names_sep = "_") %>%
+  rename(
+    avg_hh_size = hh_tmp_mean_val,
+    se_hh_size = hh_tmp_se,
+    avg_chl_rate = chl_tmp_mean_val,
+    se_chl_rate = chl_tmp_se
+  ) %>%
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+
+# water point type table
+table10_exout <- create_summary_table(hh_count, hh_stats, country_totals)
+table10_exout
+
+# country estimates table
+country_estimates_table10_exout <- compute_country_totals(table10_exout)
+country_estimates_table10_exout
+```
+
+## make waterfall charts
+```{r}
+#combine all relevant country totals into 1 table
+estimates <- table1 %>%
+  group_by(country) %>%
+  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
+  left_join(
+    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table12_exout %>% group_by(country) %>% summarise(table12_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table14 %>% group_by(country) %>% summarise(table14 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table12 %>% group_by(country) %>% summarise(table12 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10 %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) 
+
+estimates <- estimates%>%
+  mutate(
+    pm_to_census_ratio = table8 / table1
+  )
+
+# calculate differences for waterfall chart
+create_waterfall <- function(country_name, country_data) {
+  
+  df <- data.frame(
+  category = c("Table 1", 
+              "Exclude \ncensus\nout-of-village\nhouseholds", 
+              "Unit of\nobservation",
+              "Sample \nselection\nof water points",
+              "Dataset",
+              "Double \n-counting",
+              "Promoter\nsurvey\nout-of-village\nhouseholds",
+              "Table 8"),
+  amount = c(
+    country_data$table1,
+    country_data$table1_exout - country_data$table1,
+    country_data$table12_exout - country_data$table1_exout,
+    country_data$table10_exout - country_data$table12_exout,
+    country_data$table14 - country_data$table10_exout,
+    country_data$table13 - country_data$table14,
+    country_data$table8 - country_data$table13,
+    country_data$table8  )
+  )
+  
+# round (to 50k)
+df <- df %>%
+    mutate(amount_rounded = round(amount / 50000) * 50000)
+  
+  df$category <- factor(df$category, levels = df$category)
+  
+# calculate positions
+  df <- df %>%
+    mutate(
+      id = row_number(),
+      type = case_when(
+        id == 1 | id == n() ~ "total",
+        id == 5 ~ "dataset",                     
+        amount_rounded < 0 ~ "decrease",
+        TRUE ~ "increase"
+      ),
+      end = cumsum(amount_rounded),
+      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
+    )  %>%
+    mutate(
+      start = ifelse(type == "total", 0, start),
+      end = ifelse(type == "total", amount_rounded, end)
+    )
+ 
+# create waterfall charts
+  ggplot(df, aes(x = category, fill = type)) +
+    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
+                  ymin = start, ymax = end)) +
+    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
+              vjust = -0.5, size = 4, fontface = "bold") +
+    scale_fill_manual(values = c("decrease" = "#d73027", 
+                                  "increase" = "#4575b4",
+                                  "dataset" = "#FDB462",    # yellow for unexplained part
+                                  "total" = "#4575b4")) +   
+    labs(
+      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
+         y = "People with access",
+         x = NULL) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
+      # plot.title = element_text(size = 14, face = "bold"),
+      panel.grid.major.x = element_blank()
+    ) +
+    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
+                       labels = scales::comma)
+}
+
+# create plots for each country
+uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
+malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
+
+waterfall_uganda <- create_waterfall("Uganda", uganda_data)
+waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+
+ggsave("output/waterfall_uganda.pdf", 
+       plot = waterfall_uganda, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+
+ggsave("output/waterfall_malawi.pdf", 
+       plot = waterfall_malawi, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
 ```
 
 # balance tables
@@ -1429,344 +1637,6 @@ stargazer(uganda_model, malawi_model,
           column.labels = c("Uganda", "Malawi"),
           model.numbers = FALSE,
           keep.stat = c("n", "rsq", "adj.rsq"))
-```
-
-# waterfall charts
-## share of households outside village among EA water points
-```{r}
-share_outside_tbl <- hh_census %>%
-  dplyr::filter(intervention != "NON-PROGRAM") %>%
-  mutate(
-    outside_village = case_when(
-      inclusion == "Within village boundaries" ~ 0,
-      inclusion == "Up to 200m outside of village boundaries" ~ 1,
-      TRUE ~ NA_real_
-    )
-  ) %>%
-  group_by(country, sample_group, wp_id) %>%
-  summarize(
-    share_outside_wp = mean(outside_village, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  group_by(country, sample_group) %>%
-  summarize(
-    share_outside = mean(share_outside_wp, na.rm = TRUE),
-    n_wp = n(),
-    .groups  = "drop"
-  )
-
-share_outside_tbl
-```
-
-## tables excl outside HHs for waterfall charts
-### table 1 excluding outside HHs 
-Ideally this would link to our code for table 1, for now I just took the values from the most recent version in overleaf
-```{r}
-# table 1 numbers for each village type (sample_group)
-table1 <- tibble::tribble(
-  ~country, ~sample_group, ~indiv_access_popn,
-  "Malawi", "Expansion", 1775112,
-  "Malawi", "Footprint", 247293,
-  "Malawi", "ILC", 189076,
-  "Uganda", "Expansion", 2495942,
-  "Uganda", "Footprint", 879105,
-)
-
-table1_exout <- table1 %>%
-  left_join(share_outside_tbl, by = c("country", "sample_group")) %>%
-  mutate(
-    indiv_access_popn = indiv_access_popn * (1 - coalesce(share_outside, 0))
-  ) %>%
-  select(country, sample_group, indiv_access_popn)
-
-# country estimates for table 1
-country_estimates_table1 <- table1 %>%
-  group_by(country) %>%
-  summarise(indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE), .groups = "drop")
-
-country_estimates_table1
-
-country_estimates_table1_exout <- table1_exout %>%
-  group_by(country) %>%
-  summarise(indiv_access_popn = sum(indiv_access_popn, na.rm = TRUE), .groups = "drop")
-
-country_estimates_table1_exout
-```
-
-### table 12 excluding outside HHs
-```{r}
-hh_count <- hh_census %>%
-# excluding households that were not inside village, but rather within 200m of boundary
-  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
-  group_by(country, sample_group, intervention, wp_id) %>%
-  summarise(
-    hh_count = n_distinct(household_id),   # number of distinct households per wp
-    .groups = "drop"
-  ) %>%
-  group_by(country, sample_group, intervention) %>%
-  summarise(
-    wp_values = list(hh_count[!is.na(hh_count)]),
-    .groups = "drop"
-  ) %>%
-  rowwise() %>%
-  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
-  unnest_wider(tmp, names_sep = "_") %>%
-  rename(
-    avg_hh_count = tmp_mean_val,
-    se_hh_count = tmp_se
-  ) %>%
-  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
-
-hh_stats <- hh_survey %>%
-  # exclude outside hhs
-  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
-  # use household survey
-  dplyr::filter(survey == "Household Survey") %>%
-  group_by(country, sample_group, intervention, wp_id) %>%
-  summarize(
-    hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
-    .groups = "drop_last"
-  ) %>%
-  group_by(country, sample_group, intervention) %>%
-  summarize(
-    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
-    .groups = "drop"
-  ) %>%
-  rowwise() %>%
-  mutate(
-    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
-  ) %>%
-  unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
-  rename(
-    avg_hh_size = hh_tmp_mean_val,
-    se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
-  ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
-
-# water point type table
-table12_exout <- create_summary_table(hh_count, hh_stats, country_totals)
-table12_exout
-
-# country estimates table
-country_estimates_table12_exout <- compute_country_totals(table12_exout)
-country_estimates_table12_exout
-```
-
-### table 10 excluding outside HHs
-```{r}
-hh_count <- hh_census %>%
-  # exclude outside hhs
-  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
-  # use water points in promoter survey
-  dplyr::filter(promoter_surveyed == 1) %>% 
-  group_by(country, sample_group, intervention, wp_id) %>%
-  summarise(
-    hh_count = n_distinct(household_id),   # number of distinct households per wp
-    .groups = "drop"
-  ) %>%
-  group_by(country, sample_group, intervention) %>%
-  summarise(
-    wp_values = list(hh_count[!is.na(hh_count)]),
-    .groups = "drop"
-  ) %>%
-  rowwise() %>%
-  mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
-  unnest_wider(tmp, names_sep = "_") %>%
-  rename(
-    avg_hh_count = tmp_mean_val,
-    se_hh_count = tmp_se
-  ) %>%
-  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
-
-hh_stats <- hh_survey %>%
-  # exclude outside hhs
-  dplyr::filter(inclusion != "Up to 200m outside of village boundaries") %>%
-  # use household survey
-  dplyr::filter(survey == "Household Survey") %>%
-  # use water points in promoter survey
-  dplyr::filter(promoter_surveyed == 1) %>%
-  group_by(country, sample_group, intervention, wp_id) %>%
-  summarize(
-    hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
-    .groups = "drop_last"
-  ) %>%
-  group_by(country, sample_group, intervention) %>%
-  summarize(
-    wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
-    .groups = "drop"
-  ) %>%
-  rowwise() %>%
-  mutate(
-    hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
-  ) %>%
-  unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
-  rename(
-    avg_hh_size = hh_tmp_mean_val,
-    se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
-  ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
-
-# water point type table
-table10_exout <- create_summary_table(hh_count, hh_stats, country_totals)
-table10_exout
-
-# country estimates table
-country_estimates_table10_exout <- compute_country_totals(table10_exout)
-country_estimates_table10_exout
-```
-
-## make waterfall charts
-```{r}
-#combine all relevant country totals into 1 table
-estimates <- table1 %>%
-  group_by(country) %>%
-  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
-  left_join(
-    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table12_exout %>% group_by(country) %>% summarise(table12_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table14 %>% group_by(country) %>% summarise(table14 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table12 %>% group_by(country) %>% summarise(table12 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table10 %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) 
-
-estimates <- estimates%>%
-  mutate(
-    pm_to_census_ratio = table8 / table1
-  )
-
-# calculate differences for waterfall chart
-create_waterfall <- function(country_name, country_data) {
-  
-  df <- data.frame(
-  category = c("Table 1", 
-              "Exclude \ncensus\nout-of-village\nhouseholds", 
-              "Unit of\nobservation",
-              "Sample \nselection\nof water points",
-              "Dataset",
-              "Double \n-counting",
-              "Promoter\nsurvey\nout-of-village\nhouseholds",
-              "Table 8"),
-  amount = c(
-    country_data$table1,
-    country_data$table1_exout - country_data$table1,
-    country_data$table12_exout - country_data$table1_exout,
-    country_data$table10_exout - country_data$table12_exout,
-    country_data$table14 - country_data$table10_exout,
-    country_data$table13 - country_data$table14,
-    country_data$table8 - country_data$table13,
-    country_data$table8  )
-  )
-  
-# round (to 50k)
-df <- df %>%
-    mutate(amount_rounded = round(amount / 50000) * 50000)
-  
-  df$category <- factor(df$category, levels = df$category)
-  
-# calculate positions
-  df <- df %>%
-    mutate(
-      id = row_number(),
-      type = case_when(
-        id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",                     
-        amount_rounded < 0 ~ "decrease",
-        TRUE ~ "increase"
-      ),
-      end = cumsum(amount_rounded),
-      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
-    )  %>%
-    mutate(
-      start = ifelse(type == "total", 0, start),
-      end = ifelse(type == "total", amount_rounded, end)
-    )
- 
-# create waterfall charts
-  ggplot(df, aes(x = category, fill = type)) +
-    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
-                  ymin = start, ymax = end)) +
-    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
-              vjust = -0.5, size = 4, fontface = "bold") +
-    scale_fill_manual(values = c("decrease" = "#d73027", 
-                                  "increase" = "#4575b4",
-                                  "dataset" = "#FDB462",    # yellow for unexplained part
-                                  "total" = "#4575b4")) +   
-    labs(
-      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
-         y = "People with access",
-         x = NULL) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      # plot.title = element_text(size = 14, face = "bold"),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
-                       labels = scales::comma)
-}
-
-# create plots for each country
-uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
-malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
-
-waterfall_uganda <- create_waterfall("Uganda", uganda_data)
-waterfall_malawi <- create_waterfall("Malawi", malawi_data)
-
-ggsave("output/waterfall_uganda.pdf", 
-       plot = waterfall_uganda, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-
-ggsave("output/waterfall_malawi.pdf", 
-       plot = waterfall_malawi, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
 ```
 
 # diff in means tests
