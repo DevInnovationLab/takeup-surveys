@@ -167,7 +167,10 @@ pm_survey_households <-
       "Constructed",
       "pm-survey-households.rds"
     )
-  )
+  ) %>%
+  # deleting test village
+  pm_survey_households <- pm_survey_households %>%
+  dplyr::filter(village_id != "1010602004")
 
 wp_census <-
   read_rds(
