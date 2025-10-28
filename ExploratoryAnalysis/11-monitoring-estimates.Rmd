@@ -1652,13 +1652,13 @@ hh_outside_share <- wp_census %>%
 print(hh_outside_share)
 ```
 
-# number of water points used per household - households in promoter lists
+## number of water points used per household - households in promoter lists
 ```{r}
 # filter for HHs in promoter lists
-hh_census_filtered <- hh_census %>%
+hh_census_pm_list <- hh_census %>%
   dplyr::filter(promoter_list == TRUE)  
 
-wp_distribution_census <- hh_census_filtered %>%
+wp_distribution_census <- hh_census_pm_list %>%
   # number of secondary water points plus one = total number of water points
   mutate(total_wp_used = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
   count(total_wp_used) %>%
@@ -1668,7 +1668,7 @@ wp_distribution_census <- hh_census_filtered %>%
   )
 
 # sample (used in caption)
-total_households_census <- length(unique(trimws(as.character(hh_census_filtered$household_id))))
+total_households_census <- length(unique(trimws(as.character(hh_census_pm_list$household_id))))
 
 # plot
 ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = as.factor(total_wp_used))) +
@@ -1691,3 +1691,44 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
     legend.position = "none"
   )
 ```
+
+# number of water points used per household - households NOT in promoter lists
+```{r}
+# filter for HHs in promoter lists
+hh_census_not_pm_list <- hh_census %>%
+  dplyr::filter(promoter_list != TRUE)  
+
+wp_distribution_census <- hh_census_not_pm_list %>%
+  # number of secondary water points plus one = total number of water points
+  mutate(total_wp_used = if_else(is.na(wp_secweekno), 1L, wp_secweekno + 1L)) %>%
+  count(total_wp_used) %>%
+  mutate(
+    percentage = round(n / sum(n) * 100, 1),
+    label = paste0(percentage, "%")
+  )
+
+# sample (used in caption)
+total_households_census <- length(unique(trimws(as.character(hh_census_not_pm_list$household_id))))
+
+# plot
+ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = as.factor(total_wp_used))) +
+  geom_col() +
+  geom_text(
+    aes(label = label),
+    vjust = -0.5,
+    color = "black"
+  ) +
+  scale_fill_viridis_d(option = "D", direction = -1, name = "Water Points Used") +
+  labs(
+    title = "Distribution of Water Points Used in Past Month per Household",
+    subtitle = "Limited to households in PM survey data",
+    x = "Number of Water Points Used",
+    y = "Number of Households",
+    caption = paste0("Note: N= ",total_households_census," households included (not in PM survey).")) +
+  # theme +
+  theme(
+    plot.caption = element_text(hjust = 0, face = "italic"),
+    legend.position = "none"
+  )
+```
+
