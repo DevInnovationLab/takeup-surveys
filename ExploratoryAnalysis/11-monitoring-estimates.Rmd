@@ -89,7 +89,7 @@ pm_survey <-
     )
   ) %>%
   left_join(wp_census %>%
-              select(wp_id, intervention_type, sample_group, country),
+              select(wp_id, intervention_type, sample_group, country, intervention),
             by = "wp_id")
 
 ea_list_uganda <-
@@ -105,7 +105,7 @@ ea_list_uganda <-
   ) %>%
   left_join(wp_census %>%
             mutate(ea_id = as.numeric(ea_id)) %>%
-            select(ea_id, intervention_type, country),
+            select(ea_id, intervention_type, country, intervention),
           by = c("i102_wpt_id" = "ea_id"))
 
 ea_list_malawi <-
@@ -121,7 +121,7 @@ ea_list_malawi <-
   ) %>%
   left_join(wp_census %>%
             mutate(ea_id = as.numeric(ea_id)) %>%
-            select(ea_id, intervention_type, country),
+            select(ea_id, intervention_type, country, intervention),
           by = c("i102_wpt_id" = "ea_id"))
     
 hh_survey <-
@@ -136,8 +136,11 @@ hh_survey <-
     )
   ) %>%
   left_join(wp_census %>%
-              select(wp_id, intervention_type),
-            by = "wp_id")
+              select(wp_id, intervention_type, intervention),
+            by = "wp_id") %>%
+  left_join(hh_census %>%
+              select(household_id, inclusion),
+            by = "household_id")
 
 hh_census <-
   read_rds(
@@ -151,7 +154,7 @@ hh_census <-
     )
   ) %>%
   left_join(wp_census %>%
-              select(wp_id, intervention_type),
+              select(wp_id, intervention_type, intervention),
             by = "wp_id")
 
 pm_survey_households <-
@@ -214,9 +217,9 @@ malawi_villages <- malawi_villages %>%
 malawi_wp <- malawi_wp %>%
   left_join(malawi_villages %>% select(villageid, sample_group, pre_expansion_village = pre_expansion, ilc, dsw), by = "villageid") %>%
   mutate(
-    intervention_type = case_when(
+    intervention = case_when(
       program == 1 ~ "DSW",
-      program == 2 ~ "ILC water point",
+      program == 2 ~ "ILC",
       TRUE ~ "Non-program" 
     ),
     wp_sample_group = case_when(
@@ -242,7 +245,7 @@ uganda_villages <- uganda_villages %>%
 uganda_wp <- uganda_wp %>%
   left_join(uganda_villages %>% select(villageid, sample_group, pre_expansion_village = pre_expansion, ilc, dsw), by = "villageid") %>%
   mutate(
-    intervention_type = case_when(
+    intervention = case_when(
       program == 1 ~ "DSW",
       program == 2 ~ "ILC water point",
       TRUE ~ "Non-program" 
@@ -258,23 +261,16 @@ uganda_ilc_wcp_count <- nrow(uganda_wcp)
 
 # create country totals table
 country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
-  count(country, wp_sample_group, intervention_type, name = "country_total") %>%
-  # add ILC water collection points as separate category
-  bind_rows(
-    tibble(
-      country = "Malawi",
-      wp_sample_group = "ILC",
-      intervention_type = "ILC water collection point",
-      country_total = malawi_ilc_wcp_count
-    ),
-    tibble(
-      country = "Uganda",
-      wp_sample_group = "ILC",
-      intervention_type = "ILC water collection point",
-      country_total = uganda_ilc_wcp_count
+  count(country, wp_sample_group, intervention, name = "country_total") %>%
+  # Add ILC water collection points to the ILC category
+  mutate(
+    country_total = case_when(
+      country == "Malawi" & intervention == "ILC" ~ country_total + malawi_ilc_wcp_count,
+      country == "Uganda" & intervention == "ILC" ~ country_total + uganda_ilc_wcp_count,
+      TRUE ~ country_total
     )
   ) %>%
-  arrange(country, wp_sample_group, intervention_type) %>%
+  arrange(country, wp_sample_group, intervention) %>%
   mutate(sample_group = wp_sample_group) %>%
   select(-wp_sample_group)
 
@@ -310,7 +306,7 @@ compute_se <- function(values, ses = NULL, include_within = FALSE) {
 ## create function for by water point type table
 ```{r}
 create_summary_table <- function(count_tbl, stats_tbl, totals_tbl, 
-                                 group_vars = c("country", "sample_group", "intervention_type")) {
+                                 group_vars = c("country", "sample_group", "intervention")) {
   
   count_tbl %>%
     left_join(stats_tbl, by = group_vars) %>%
@@ -535,7 +531,7 @@ hh_tbl
 ## main monitoring estimates (8)
 ```{r}
 hh_count <- wp_census %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   # use pm list of users
   summarise(wp_values = list(pm_users[!is.na(pm_users)]), .groups = "drop") %>%
   rowwise() %>%
@@ -545,12 +541,12 @@ hh_count <- wp_census %>%
     avg_hh_count = tmp_mean_val,
     se_hh_count = tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_count, se_hh_count)
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
 hh_stats <- hh_survey %>%
   # use monitoring survey
   dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, sample_group, intervention_type, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     # hh size and chlorination rates
     hh_size = mean(hh_members, na.rm = TRUE),
@@ -558,7 +554,7 @@ hh_stats <- hh_survey %>%
     se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
     .groups = "drop_last"
   ) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
     wp_rates = list(chl_rate[!is.na(chl_rate)]),
@@ -578,11 +574,10 @@ hh_stats <- hh_survey %>%
     avg_chl_rate = chl_tmp_mean_val,
     se_chl_rate = chl_tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
 table8 <- create_summary_table(hh_count, hh_stats, country_totals)
-
 table8
 
 # country estimates table
@@ -595,12 +590,12 @@ country_estimates_table8
 hh_count <- hh_census %>%
   # use water points in promoter survey
   dplyr::filter(promoter_surveyed == 1) %>% 
-  group_by(country, sample_group, intervention_type, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
   summarise(
     hh_count = n_distinct(household_id),   # number of distinct households per wp
     .groups = "drop"
   ) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarise(
     wp_values = list(hh_count[!is.na(hh_count)]),
     .groups = "drop"
@@ -612,21 +607,21 @@ hh_count <- hh_census %>%
     avg_hh_count = tmp_mean_val,
     se_hh_count = tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_count, se_hh_count)
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
 hh_stats <- hh_survey %>%
   # use household survey
   dplyr::filter(survey == "Household Survey") %>%
   # use water points in promoter survey
   dplyr::filter(promoter_surveyed == 1) %>%
-  group_by(country, sample_group, intervention_type, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     hh_size = mean(hh_members, na.rm = TRUE),
     chl_rate = mean(disctcr_02, na.rm = TRUE),
     se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
     .groups = "drop_last"
   ) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
     wp_rates = list(chl_rate[!is.na(chl_rate)]),
@@ -646,7 +641,7 @@ hh_stats <- hh_survey %>%
     avg_chl_rate = chl_tmp_mean_val,
     se_chl_rate = chl_tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
 table10 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -660,12 +655,12 @@ country_estimates_table10
 ## using HH census and HH survey; all water points (12)
 ```{r}
 hh_count <- hh_census %>%
-  group_by(country, sample_group, intervention_type, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
   summarise(
     hh_count = n_distinct(household_id),   # number of distinct households per wp
     .groups = "drop"
   ) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarise(
     wp_values = list(hh_count[!is.na(hh_count)]),
     .groups = "drop"
@@ -677,19 +672,19 @@ hh_count <- hh_census %>%
     avg_hh_count = tmp_mean_val,
     se_hh_count = tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_count, se_hh_count)
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
 hh_stats <- hh_survey %>%
   # use household survey
   dplyr::filter(survey == "Household Survey") %>%
-  group_by(country, sample_group, intervention_type, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     hh_size = mean(hh_members, na.rm = TRUE),
     chl_rate = mean(disctcr_02, na.rm = TRUE),
     se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
     .groups = "drop_last"
   ) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
     wp_rates = list(chl_rate[!is.na(chl_rate)]),
@@ -709,7 +704,7 @@ hh_stats <- hh_survey %>%
     avg_chl_rate = chl_tmp_mean_val,
     se_chl_rate = chl_tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
 table12 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -725,7 +720,7 @@ exactly like table 8, but subtract pm_users_outside from pm_users
 ```{r}
 hh_count <- wp_census %>%
   mutate(pm_users_adjusted = pm_users - pm_users_outside) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarise(wp_values = list(pm_users_adjusted[!is.na(pm_users_adjusted)]), .groups = "drop") %>%
   rowwise() %>%
   mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
@@ -734,12 +729,12 @@ hh_count <- wp_census %>%
     avg_hh_count = tmp_mean_val,
     se_hh_count = tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_count, se_hh_count)
+  select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
 hh_stats <- hh_survey %>%
   # use monitoring survey
   dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(country, sample_group, intervention_type, wp_id) %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     # hh size and chlorination rates
     hh_size = mean(hh_members, na.rm = TRUE),
@@ -747,7 +742,7 @@ hh_stats <- hh_survey %>%
     se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
     .groups = "drop_last"
   ) %>%
-  group_by(country, sample_group, intervention_type) %>%
+  group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
     wp_rates = list(chl_rate[!is.na(chl_rate)]),
@@ -767,7 +762,7 @@ hh_stats <- hh_survey %>%
     avg_chl_rate = chl_tmp_mean_val,
     se_chl_rate = chl_tmp_se
   ) %>%
-  select(country, sample_group, intervention_type, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
 
 # water point type table
 table13 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -1139,7 +1134,7 @@ stargazer(uganda_model, malawi_model,
 ## TO DO share of households outside village among EA water points
 ```{r}
 share_outside_tbl <- hh_census %>%
-  dplyr::filter(intervention_type != "NON-PROGRAM") %>%
+  dplyr::filter(intervention != "NON-PROGRAM") %>%
   mutate(
     outside_village = case_when(
       inclusion == "Within village boundaries" ~ 0,
