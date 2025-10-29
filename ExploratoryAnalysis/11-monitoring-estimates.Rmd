@@ -454,6 +454,137 @@ compute_country_totals <- function(data,
 }
 ```
 
+## create function to generate latex table from summary table and country totals
+```{r}
+# function to generate latex table from summary table and country totals
+generate_latex_table <- function(summary_table, country_totals_table, 
+                                  caption = "User estimates",
+                                  label = "beneficiaries") {
+  
+  # prepare data
+  table_data <- summary_table %>%
+    mutate(
+      sample_group = case_when(
+        sample_group == "Footprint" & intervention == "DSW" ~ "Footprint",
+        sample_group == "Expansion" & intervention == "DSW" ~ "Expansion",
+        sample_group == "ILC" & intervention == "DSW" ~ "DSW in ILC vill.",
+        sample_group == "ILC" & intervention == "ILC" ~ "ILC",
+        TRUE ~ sample_group
+      ),
+      # create ordering variable
+      order_var = case_when(
+        sample_group == "Footprint" ~ 1,
+        sample_group == "Expansion" ~ 2,
+        sample_group == "DSW in ILC vill." ~ 3,
+        sample_group == "ILC" ~ 4,
+        TRUE ~ 5
+      )
+    ) %>%
+    dplyr::filter(intervention == "DSW" | (sample_group == "ILC" & intervention == "ILC")) %>%
+    dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+    arrange(country, order_var)
+  
+  # separate by country
+  malawi_data <- table_data %>%
+    dplyr::filter(country == "Malawi") %>%
+    select(sample_group, avg_hh_count, se_hh_count, avg_hh_size, se_hh_size, 
+           indiv_access_sample, se_indiv_access_sample, country_total, 
+           indiv_access_popn, ci_lower_indiv_access_popn, ci_upper_indiv_access_popn,
+           avg_chl_rate_tcr, ci_lower_chl_rate_tcr, ci_upper_chl_rate_tcr,
+           avg_chl_rate_fcr, ci_lower_chl_rate_fcr, ci_upper_chl_rate_fcr)
+  
+  uganda_data <- table_data %>%
+    dplyr::filter(country == "Uganda") %>%
+    select(sample_group, avg_hh_count, se_hh_count, avg_hh_size, se_hh_size, 
+           indiv_access_sample, se_indiv_access_sample, country_total, 
+           indiv_access_popn, ci_lower_indiv_access_popn, ci_upper_indiv_access_popn,
+           avg_chl_rate_tcr, ci_lower_chl_rate_tcr, ci_upper_chl_rate_tcr,
+           avg_chl_rate_fcr, ci_lower_chl_rate_fcr, ci_upper_chl_rate_fcr)
+  
+  # get country totals
+  malawi_total <- country_totals_table %>%
+    dplyr::filter(country == "Malawi")
+  
+  uganda_total <- country_totals_table %>%
+    dplyr::filter(country == "Uganda")
+  
+  # start generating latex
+  cat("\\begin{table}[htbp]\\centering\n")
+  cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
+  cat(sprintf("\\caption{%s\\label{%s}}\n", caption, label))
+  cat("\\begin{tabular}{l*{7}{c}}\n")
+  cat("\\hline \\hline\n")
+  cat("& (1) & (2) & (3) & (4) & (5) & (6) & (7)\\\\\n")
+  cat("& \\multicolumn{3}{c}{\\textbf{Sample}} & \\multicolumn{2}{c}{\\textbf{Country-level estimates}} & & \\\\\n")
+  cat("\\cmidrule(lr){2-4} \\cmidrule(lr){5-6}\n")
+  cat(" & \\shortstack{Avg \\# \\\\of HH \\\\ (SE)} &\\shortstack{Avg \\# of \\\\ Members\\\\ (SE)} & \\shortstack{\\# people \\\\ per WP\\\\ (SE)} & \\shortstack{Country \\\\\\#WP} & \\shortstack{People using\\\\ DSW/ILC \\\\ (95\\% CI)} & \\shortstack{TCR>0.2ppm \\\\ (95\\% CI)} & \\shortstack{FCR>0.2ppm \\\\ (95\\% CI)}\\\\\n")
+  cat("\\hline\n")
+  cat("\\textbf{Malawi} & & & & & & & \\\\\n")
+  cat("\\hline\n")
+  
+  # malawi rows
+  for(i in 1:nrow(malawi_data)) {
+    row <- malawi_data[i,]
+    cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)}\\\\\n",
+                row$sample_group,
+                row$avg_hh_count, row$se_hh_count,
+                row$avg_hh_size, row$se_hh_size,
+                row$indiv_access_sample, row$se_indiv_access_sample,
+                format(row$country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+                row$avg_chl_rate_tcr * 100,
+                row$ci_lower_chl_rate_tcr * 100,
+                row$ci_upper_chl_rate_tcr * 100,
+                row$avg_chl_rate_fcr * 100,
+                row$ci_lower_chl_rate_fcr * 100,
+                row$ci_upper_chl_rate_fcr * 100))
+  }
+  
+  # malawi total
+  cat(sprintf("\\textbf{Total} & - & - & - & - & \\shortstack{%s \\\\ (%s, %s)} & - & -\\\\\n",
+              format(round(malawi_total$total_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+              format(round(malawi_total$ci_lower_total_access), big.mark = ",", scientific = FALSE, trim = TRUE),
+              format(round(malawi_total$ci_upper_total_access), big.mark = ",", scientific = FALSE, trim = TRUE)))
+  
+  cat("\\hline\n")
+  cat("\\textbf{Uganda} &  &   & &      & & & \\\\\n")
+  cat("\\hline\n")
+  
+  # uganda rows
+  for(i in 1:nrow(uganda_data)) {
+    row <- uganda_data[i,]
+    cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)}\\\\\n",
+                row$sample_group,
+                row$avg_hh_count, row$se_hh_count,
+                row$avg_hh_size, row$se_hh_size,
+                row$indiv_access_sample, row$se_indiv_access_sample,
+                format(row$country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+                row$avg_chl_rate_tcr * 100,
+                row$ci_lower_chl_rate_tcr * 100,
+                row$ci_upper_chl_rate_tcr * 100,
+                row$avg_chl_rate_fcr * 100,
+                row$ci_lower_chl_rate_fcr * 100,
+                row$ci_upper_chl_rate_fcr * 100))
+  }
+  
+  # uganda total
+  cat(sprintf("\\textbf{Total} & - & - & - & - & \\shortstack{%s \\\\ (%s, %s)} & - & -\\\\\n",
+              format(round(uganda_total$total_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
+              format(round(uganda_total$ci_lower_total_access), big.mark = ",", scientific = FALSE, trim = TRUE),
+              format(round(uganda_total$ci_upper_total_access), big.mark = ",", scientific = FALSE, trim = TRUE)))
+  
+  cat("\\hline\\hline\n")
+  cat("\\multicolumn{8}{p{\\linewidth}}{\\footnotesize Notes: In col. 3, the number of people per water point is calculated as the product of the average number of households per water point and the average number of members per household. The population estimate of people using water points with DSW or ILC in col. 5 is calculated by multiplying the number of people per water point by the number of water points of that type in the country. Col. 6 reports the share of households with positive chlorine among those using DSW or ILC as their primary water source. In this table, positive chlorine is defined as the total chlorination level higher than 0.2 ppm measured with color-wheel.}\\\\\n")
+  cat("\\end{tabular}\n")
+  cat("\\end{table}\n")
+}
+```
+
 # sample tables
 ## water points (9)
 ```{r}
@@ -924,6 +1055,14 @@ table8
 # country estimates table
 country_estimates_table8 <- compute_country_totals(table8)
 country_estimates_table8
+
+# generate latex table
+generate_latex_table(
+  summary_table = table8,
+  country_totals_table = country_estimates_table8,
+  caption = "User estimates for water points in the promoter survey using water-point level data from the promoter survey and monitoring survey",
+  label = "beneficiaries_pm"
+)
 ```
 
 ## using HH census and HH survey; only using WPs in promoter survey (10)
@@ -999,6 +1138,14 @@ table10
 # country estimates table
 country_estimates_table10 <- compute_country_totals(table10)
 country_estimates_table10
+
+# generate latex table
+generate_latex_table(
+  summary_table = table10,
+  country_totals_table = country_estimates_table10,
+  caption = "User estimates for water points in the promoter survey using water-point level data from the household census and household survey",
+  label = "beneficiaries_hh"
+)
 ```
 
 ## using HH census and HH survey; all water points (12)
@@ -1070,6 +1217,14 @@ table12
 # country estimates table
 country_estimates_table12 <- compute_country_totals(table12)
 country_estimates_table12
+
+# generate latex table
+generate_latex_table(
+  summary_table = table12,
+  country_totals_table = country_estimates_table12,
+  caption = "User estimates for water points in the water point census using water-point level data from the household census and household survey",
+  label = "beneficiaries_wp_census"
+)
 ```
 
 ## excluding HHs outside village (13)
@@ -1136,6 +1291,14 @@ table13
 # country estimates table
 country_estimates_table13 <- compute_country_totals(table13)
 country_estimates_table13
+
+# generate latex table
+generate_latex_table(
+  summary_table = table13,
+  country_totals_table = country_estimates_table13,
+  caption = "User estimates for water points in the promoter survey using water-point level data from the promoter survey and monitoring survey, excluding households outside of village",
+  label = "beneficiaries_exout"
+)
 ```
 
 
@@ -1251,6 +1414,14 @@ table14
 # country estimates table
 country_estimates_table14 <- compute_country_totals(table14)
 country_estimates_table14
+
+# generate latex table
+generate_latex_table(
+  summary_table = table14,
+  country_totals_table = country_estimates_table14,
+  caption = "User estimates for water points in the water point census using water-point level data from the promoter survey and monitoring survey, excluding households outside of village and double-counted households",
+  label = "beneficiaries_exout_exdouble"
+)
 ```
 
 # waterfall charts
