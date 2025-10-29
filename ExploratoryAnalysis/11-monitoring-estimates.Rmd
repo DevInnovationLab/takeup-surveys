@@ -11,7 +11,6 @@ This is the code to generate the estimates tables using the monitoring (water-po
 - I have used ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table 9
 - I have used pm_survey_households for table 11 and to tackle double-counted hhs in table 14
 - for table 1 ex households located outside of village, I did a rough number. ideally, i just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
-- TO DO: have both fcr and tcr in main tables
 
 # load packages
 ```{r}
@@ -277,12 +276,39 @@ pm_survey_households <- pm_survey_households %>%
 # identify water points that don't match to wp census
 unmatched_wps <- pm_survey_households %>%
   dplyr::filter(!wp_id_c %in% wp_census$wp_id) %>%
-  select(wp_id_c, wp_name) %>%
+  select(wp_id_c, wp_name, village_id, country) %>%
   distinct()
+
+# drop replaced villages
+pm_survey_households <- pm_survey_households %>%
+  dplyr::filter(village_id != "2030413108")
 
 unmatched_wps
 
+# manually recode unmatched water point IDs
+wp_id_recoding <- tribble(
+  ~wp_id_c_old,          ~wp_id_c_new,
+  "2070301002007",       "2070302012007",
+  "2070301002004",       "2070302012004"
+)
 
+# apply recoding to pm_survey_households
+pm_survey_households <- pm_survey_households %>%
+  left_join(wp_id_recoding, by = c("wp_id_c" = "wp_id_c_old")) %>%
+  mutate(wp_id_c = coalesce(wp_id_c_new, wp_id_c)) %>%
+  select(-wp_id_c_new)
+
+# check if any are still unmatched
+unmatched_wps_after <- pm_survey_households %>%
+  dplyr::filter(!wp_id_c %in% wp_census$wp_id) %>%
+  select(wp_id_c, wp_name) %>%
+  distinct()
+
+unmatched_wps_after
+
+# drop remaining for now because these are Uganda ILC - hence why they don't match
+pm_survey_households <- pm_survey_households %>%
+  dplyr::filter(!wp_id_c %in% wp_census$wp_id)
 ```
 
 ## country totals
