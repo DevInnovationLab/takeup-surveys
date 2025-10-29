@@ -615,9 +615,9 @@ wp_census %>%
 ## households (11)
 ```{r}
 # renaming intervention in hh census for consistency
-hh_census <- hh_census %>%
-  mutate(intervention = wp_intervention) %>%
-  select(-wp_intervention)
+# hh_census <- hh_census %>%
+#   mutate(intervention = wp_intervention) %>%
+#   select(-wp_intervention)
 
 # number of water points in the promoter survey
 wp_count_pm <- wp_census %>%
@@ -659,8 +659,7 @@ pm_hh_matched <- pm_survey_households %>%
   group_by(country, sample_group, intervention) %>%
   summarise(
     pm_hh_matched = sum(wp_match, na.rm = TRUE),
-    .groups = "drop") %>%
-  mutate(country = toupper(country))
+    .groups = "drop") 
 
 # number of households outside of the village
 pm_users_outside <- wp_census %>%
@@ -727,6 +726,137 @@ hh_tbl <- wp_count_pm  %>%
   # arrange(country, wp_category)
 
 hh_tbl
+```
+
+```{r}
+# prepare data for table
+hh_table_latex <- hh_tbl %>%
+  mutate(
+    sample_group = case_when(
+      sample_group == "Footprint" & intervention == "DSW" ~ "Footprint",
+      sample_group == "Expansion" & intervention == "DSW" ~ "Expansion",
+      sample_group == "ILC" & intervention == "DSW" ~ "DSW in ILC vill.",
+      sample_group == "ILC" & intervention == "ILC" ~ "ILC",
+      TRUE ~ sample_group
+    )
+  ) %>%
+  dplyr::filter(intervention == "DSW" | (sample_group == "ILC" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+# create separate datasets for Malawi and Uganda
+malawi_data <- hh_table_latex %>%
+  dplyr::filter(country == "Malawi") %>%
+  select(sample_group, wp_count_pm, pm_users, pm_users_outside, pm_users_census, 
+         pm_hh_matched, pm_avg_hh_per_wp, wp_count_wp_census, census_hh_listed, census_avg_hh_per_wp)
+
+uganda_data <- hh_table_latex %>%
+  dplyr::filter(country == "Uganda") %>%
+  select(sample_group, wp_count_pm, pm_users, pm_users_outside, pm_users_census, 
+         pm_hh_matched, pm_avg_hh_per_wp, wp_count_wp_census, census_hh_listed, census_avg_hh_per_wp)
+
+# calculate totals
+malawi_total <- malawi_data %>%
+  summarise(
+    sample_group = "\\textbf{Total}",
+    wp_count_pm = sum(wp_count_pm, na.rm = TRUE),
+    pm_users = sum(pm_users, na.rm = TRUE),
+    pm_users_outside = sum(pm_users_outside, na.rm = TRUE),
+    pm_users_census = sum(pm_users_census, na.rm = TRUE),
+    pm_hh_matched = sum(pm_hh_matched, na.rm = TRUE),
+    pm_avg_hh_per_wp = NA,
+    wp_count_wp_census = sum(wp_count_wp_census, na.rm = TRUE),
+    census_hh_listed = sum(census_hh_listed, na.rm = TRUE),
+    census_avg_hh_per_wp = NA
+  )
+
+uganda_total <- uganda_data %>%
+  summarise(
+    sample_group = "\\textbf{Total}",
+    wp_count_pm = sum(wp_count_pm, na.rm = TRUE),
+    pm_users = sum(pm_users, na.rm = TRUE),
+    pm_users_outside = sum(pm_users_outside, na.rm = TRUE),
+    pm_users_census = sum(pm_users_census, na.rm = TRUE),
+    pm_hh_matched = sum(pm_hh_matched, na.rm = TRUE),
+    pm_avg_hh_per_wp = NA,
+    wp_count_wp_census = sum(wp_count_wp_census, na.rm = TRUE),
+    census_hh_listed = sum(census_hh_listed, na.rm = TRUE),
+    census_avg_hh_per_wp = NA
+  )
+
+overall_total <- bind_rows(malawi_data, uganda_data) %>%
+  summarise(
+    sample_group = "\\textbf{Overall Total}",
+    wp_count_pm = sum(wp_count_pm, na.rm = TRUE),
+    pm_users = sum(pm_users, na.rm = TRUE),
+    pm_users_outside = sum(pm_users_outside, na.rm = TRUE),
+    pm_users_census = sum(pm_users_census, na.rm = TRUE),
+    pm_hh_matched = sum(pm_hh_matched, na.rm = TRUE),
+    pm_avg_hh_per_wp = NA,
+    wp_count_wp_census = sum(wp_count_wp_census, na.rm = TRUE),
+    census_hh_listed = sum(census_hh_listed, na.rm = TRUE),
+    census_avg_hh_per_wp = NA
+  )
+
+malawi_section <- bind_rows(malawi_data, malawi_total)
+uganda_section <- bind_rows(uganda_data, uganda_total)
+
+# format numbers
+format_num <- function(x) {
+  ifelse(is.na(x), "-", format(x, big.mark = ",", scientific = FALSE, trim = TRUE))
+}
+
+malawi_section <- malawi_section %>%
+  mutate(across(-sample_group, ~format_num(.x)))
+
+uganda_section <- uganda_section %>%
+  mutate(across(-sample_group, ~format_num(.x)))
+
+overall_total <- overall_total %>%
+  mutate(across(-sample_group, ~format_num(.x)))
+
+# generate LaTeX table
+cat("\\begin{table}[htbp]\\centering\n")
+cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
+cat("\\caption{Number of households identified by different instruments \\label{hh_identified}}\n")
+cat("\\begin{tabular}{l*{9}{c}}\n")
+cat("\\hline \\hline\n")
+cat("& (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9)\\\\\n")
+cat("& \\multicolumn{6}{c}{\\textbf{Promoter Survey}} & \\multicolumn{3}{c}{{\\textbf{WP \\& HH Census}}} \\\\\n")
+cat("\\cmidrule(lr){2-7} \\cmidrule(lr){8-10}\n")
+cat(" & \\shortstack{\\#WP} & \\shortstack{Total \\\\\\#HH\\\\ Listed} & \\shortstack{\\#HH \\\\ Outside \\\\ Village} & \\shortstack{\\#HH \\\\ in Census} & \\shortstack{\\#HH \\\\ Matched} & \\shortstack{Avg \\#HH \\\\ per WP } & \\shortstack{\\#WP} & \\shortstack{Total \\\\ \\#HH} & \\shortstack{Avg \\#HH \\\\ per WP}\\\\\n")
+cat("\\hline\n")
+cat("\\textbf{Malawi}                  &            &            &          & & & & & &  \\\\\n")
+cat("\\hline\n")
+
+for(i in 1:nrow(malawi_section)) {
+  row <- malawi_section[i,]
+  cat(sprintf("%s & %s & %s & %s & %s & %s & %s & %s & %s & %s\\\\\n",
+              row$sample_group, row$wp_count_pm, row$pm_users, row$pm_users_outside,
+              row$pm_users_census, row$pm_hh_matched, row$pm_avg_hh_per_wp,
+              row$wp_count_wp_census, row$census_hh_listed, row$census_avg_hh_per_wp))
+}
+
+cat("\\hline\n")
+cat("\\textbf{Uganda}                  &   & & & & & & & &    \\\\\n")
+cat("\\hline\n")
+
+for(i in 1:nrow(uganda_section)) {
+  row <- uganda_section[i,]
+  cat(sprintf("%s & %s & %s & %s & %s & %s & %s & %s & %s & %s\\\\\n",
+              row$sample_group, row$wp_count_pm, row$pm_users, row$pm_users_outside,
+              row$pm_users_census, row$pm_hh_matched, row$pm_avg_hh_per_wp,
+              row$wp_count_wp_census, row$census_hh_listed, row$census_avg_hh_per_wp))
+}
+
+cat("\\hline\n")
+cat(sprintf("\\textbf{Overall Total} & %s & %s & %s & %s & %s & %s & %s & %s & %s\\\\\n",
+            overall_total$wp_count_pm, overall_total$pm_users, overall_total$pm_users_outside,
+            overall_total$pm_users_census, overall_total$pm_hh_matched, overall_total$pm_avg_hh_per_wp,
+            overall_total$wp_count_wp_census, overall_total$census_hh_listed, overall_total$census_avg_hh_per_wp))
+cat("\\hline\\hline\n")
+cat("\\multicolumn{10}{p{\\linewidth}}{\\footnotesize Notes: Total \\#HH Listed refers to the total number of user households listed by promoters for water points of given type. This double-counts some households, as they are listed as users by several promoters. \\#HH Outside Village shows the total number of households that promoters say are users located in a different village than the water point. \\#HH in Census is the total of the number of households listed for each water point that were also identified in the household census. \\#HH Matched is a subset of this, only containing households where the household's report of its primary water point matches the promoter report.}\\\\\n")
+cat("\\end{tabular}\n")
+cat("\\end{table}\n")
 ```
 
 # estimates tables
