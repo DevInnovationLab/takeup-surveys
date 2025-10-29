@@ -385,8 +385,10 @@ create_summary_table <- function(count_tbl, stats_tbl, totals_tbl,
       se_indiv_access_popn   = country_total * se_indiv_access_sample,
       ci_lower_indiv_access_popn = indiv_access_popn - 1.96 * se_indiv_access_popn,
       ci_upper_indiv_access_popn = indiv_access_popn + 1.96 * se_indiv_access_popn,
-      ci_lower_chl_rate = avg_chl_rate - 1.96 * se_chl_rate,
-      ci_upper_chl_rate = avg_chl_rate + 1.96 * se_chl_rate
+      ci_lower_chl_rate_tcr = avg_chl_rate_tcr - 1.96 * se_chl_rate_tcr,  
+      ci_upper_chl_rate_tcr = avg_chl_rate_tcr + 1.96 * se_chl_rate_tcr,  
+      ci_lower_chl_rate_fcr = avg_chl_rate_fcr - 1.96 * se_chl_rate_fcr,  
+      ci_upper_chl_rate_fcr = avg_chl_rate_fcr + 1.96 * se_chl_rate_fcr 
     ) %>%
     mutate(across(c(avg_hh_count, avg_hh_size, indiv_access_sample, indiv_access_popn, 
                     se_hh_count, se_hh_size, se_indiv_access_sample, se_indiv_access_popn,
@@ -618,31 +620,40 @@ hh_stats <- hh_survey %>%
   summarize(
     # hh size and chlorination rates
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),  # within-WP SE
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),  # RENAME from wp_ses
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
-  ) %>%
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),  
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))  
+    ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,  
+    se_chl_rate_tcr = chl_tmp_tcr_se,         
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val, 
+    se_chl_rate_fcr = chl_tmp_fcr_se         
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, 
+         avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)  
 
 # water point type table
 table8 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -977,6 +988,7 @@ share_outside_tbl
 
 ## tables excl outside HHs for waterfall charts
 ### table 1 excluding outside HHs 
+These
 Ideally this would link to our code for table 1, for now I just took the values from the most recent version in overleaf
 ```{r}
 # table 1 numbers for each village type (sample_group)
