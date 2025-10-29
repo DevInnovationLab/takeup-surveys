@@ -3,14 +3,16 @@ title: "Monitoring Estimates"
 output: html_document
 ---
 
-This is the code to generate the estimates tables using the monitoring (water-point level) approach.
+This is the code to generate the estimates tables using the monitoring (water-point level) approach, as well as tables and statistics used in sections 6 and 7 of the takeup report.
 
-# NOTES
-- general approach for NAs in promoter_surveyed and pm_ea_list in wp_census and hh_survey: I have changed NA to FALSE; but this should probably be done in wrangling
+# notes
 - I have used pm_survey to count the number of households in the promoter survey in table 11
 - I have used ea_list_uganda and ea_list_malawi for the number of WPs int the EA list in table 9
 - I have used pm_survey_households for table 11 and to tackle double-counted hhs in table 14
-- for table 1 ex households located outside of village, I did a rough number. ideally, i just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
+- For table 1 ex households located outside of village, I did a rough calculation based on finding the share of households for each sample group that was outside the village, and then lowering the total for that sample group by this share. Ideally, I just rerun the table 1 code here but without households that have inclusion as within 200m of village boundary for a more exact number
+
+TO DO 
+- what if i classify by the village sample group (impact on country totals and hence estimates)
 
 # load packages
 ```{r}
@@ -204,7 +206,7 @@ malawi_villages <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final
 malawi_wcp <- read_dta(file.path(path_box, "Data", "EvidenceAction", "Final", "malawi-water-collection-points.dta"))
 ```
 
-## rank dataset (from randomization)
+## load rank dataset (from randomization)
 ```{r}
 pm_survey_clean <-
   read_rds(
@@ -256,7 +258,7 @@ hh_survey <- hh_survey %>%
     by = "household_id"
   )
 
-# if this code is not commented out, we include households that would have been selected for the monitoring survey but had already been present in the household survey
+# if this code is NOT commented out, the tables below will include households that would have been selected for the monitoring survey but had already been present in the household survey
 # hh_survey <- hh_survey %>%
 #   mutate(
 #     rank = as.numeric(rank),
@@ -312,7 +314,7 @@ pm_survey_households <- pm_survey_households %>%
 ```
 
 ## country totals
-I get the same numbers as before if I classify by water point, not by village for expansion and footprint
+Currently classifying by the sample group of the water point
 ```{r}
 # malawi 
 malawi_villages <- malawi_villages %>%
@@ -482,7 +484,6 @@ compute_country_totals <- function(data,
 
 ## create function to generate latex table from summary table and country totals
 ```{r}
-# function to generate latex table from summary table and country totals
 generate_latex_table <- function(summary_table, country_totals_table, 
                                   caption = "User estimates",
                                   label = "beneficiaries") {
@@ -640,7 +641,7 @@ wp_table <- wp_census %>%
 
 wp_table
 
-# generating latex table
+# generate latex table
 wp_table_latex <- wp_table %>%
   mutate(
     ea_list_count = coalesce(ea_list_malawi_count, ea_list_uganda_count)
@@ -739,7 +740,7 @@ cat("\\end{tabular}\n")
 cat("\\end{table}\n")
 ```
 
-text for table caption:
+### text for table caption
 For Uganda, 2 of the 112 water points in the EA promoter list were identified as ILC, and are not shown. For Malawi, 2 out of 137 were identified as Non-program and are not shown.
 ```{r}
 ea_list_malawi
@@ -771,7 +772,7 @@ wp_census %>%
 
 ## households (11)
 ```{r}
-# renaming intervention in hh census for consistency
+# renaming intervention in hh census for consistency - this is needed if intervention in hh_census is called wp_intervention
 # hh_census <- hh_census %>%
 #   mutate(intervention = wp_intervention) %>%
 #   select(-wp_intervention)
@@ -876,16 +877,10 @@ hh_tbl <- wp_count_pm  %>%
   left_join(wp_count_wp_census, by = c("country", "sample_group", "intervention")) %>%
   left_join(census_hh_listed, by = c("country", "sample_group", "intervention")) %>%
   left_join(census_avg_hh_per_wp, by = c("country", "sample_group", "intervention"))
-  # dplyr::filter(wp_category %in% c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC")) %>%
-  # dplyr::filter(!(country == "UGANDA" & wp_category == "ILC")) %>%
-  # mutate(country = factor(country, levels = c("MALAWI", "UGANDA"))) %>%
-  # mutate(wp_category = factor(wp_category, levels = c("DSW Footprint", "DSW Expansion", "DSW in ILC village", "ILC"))) %>%
-  # arrange(country, wp_category)
 
 hh_tbl
-```
 
-```{r}
+# creating latex table
 # prepare data for table
 hh_table_latex <- hh_tbl %>%
   mutate(
@@ -1019,9 +1014,10 @@ cat("\\end{table}\n")
 # estimates tables
 ## main monitoring estimates (8)
 ```{r}
+# number of households per water point
 hh_count <- wp_census %>%
   group_by(country, sample_group, intervention) %>%
-  # use pm list of users
+  # use pm list of users (a variable originally from the promoter survey)
   summarise(wp_values = list(pm_users[!is.na(pm_users)]), .groups = "drop") %>%
   rowwise() %>%
   mutate(tmp = list(compute_se(wp_values, include_within = FALSE))) %>%
@@ -1032,6 +1028,7 @@ hh_count <- wp_census %>%
   ) %>%
   select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
+# chlorination and number of household members
 hh_stats <- hh_survey %>%
   # use monitoring survey
   dplyr::filter(survey == "Monitoring Survey") %>%
@@ -1177,6 +1174,7 @@ generate_latex_table(
 ## using HH census and HH survey; all water points (12)
 ```{r}
 hh_count <- hh_census %>%
+  # use household census and do not filter for water point being in promoter survey 
   group_by(country, sample_group, intervention, wp_id) %>%
   summarise(
     hh_count = n_distinct(household_id),   # number of distinct households per wp
@@ -1197,7 +1195,7 @@ hh_count <- hh_census %>%
   select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
 hh_stats <- hh_survey %>%
-  # use household survey
+  # use household survey and do not filter for water point being in promoter survey 
   dplyr::filter(survey == "Household Survey") %>%
   group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
@@ -1269,6 +1267,7 @@ hh_count <- wp_census %>%
   ) %>%
   select(country, sample_group, intervention, avg_hh_count, se_hh_count)
 
+# average number of households inside village per water point
 hh_stats <- hh_survey %>%
   # use monitoring survey
   dplyr::filter(survey == "Monitoring Survey") %>%
@@ -1329,6 +1328,7 @@ generate_latex_table(
 
 
 ## excluding HHs outside village and double counted HHs (14)
+exactly like table 8, but excluding households located outside village and getting rid of double-counting
 ```{r}
 # identify households that appear multiple times AND only use one water point
 double_counted_households <- pm_survey_households_clean %>%
@@ -1338,7 +1338,7 @@ double_counted_households <- pm_survey_households_clean %>%
   dplyr::filter(wp_secweek == FALSE) %>%
   pull(household_id)
 
-# for double-counted households, determine their "correct" water point assignment
+# for double-counted households, determine their "correct" water point assignment - based on self-report in hh_census, as long as this matches one of the water points that the household was listed for
 primary_assignments <- pm_survey_households_clean %>%
   dplyr::filter(household_id %in% double_counted_households) %>%
   left_join(
@@ -1370,12 +1370,13 @@ wp_adjustments <- pm_survey_households_clean %>%
     .groups = "drop"
   )
 
-# Now adjust pm_users in wp_census
+# adjust pm_users in wp_census
 hh_count <- wp_census %>%
   left_join(wp_adjustments, by = c("wp_id" = "wp_id_c")) %>%
   mutate(
     households_to_subtract = coalesce(households_to_subtract, 0),
     pm_users_outside = coalesce(pm_users_outside, 0),
+  # subtract both households outside and households that were double-counted
     pm_users_adjusted = pm_users - pm_users_outside - households_to_subtract
   ) %>%
   group_by(country, sample_group, intervention) %>%
@@ -1451,7 +1452,7 @@ generate_latex_table(
 ```
 
 # waterfall charts
-## share of households outside village among EA water points
+## share of households outside village - used to adjust table 1 estimates
 ```{r}
 share_outside_tbl <- hh_census %>%
   dplyr::filter(intervention != "NON-PROGRAM") %>%
@@ -1479,7 +1480,6 @@ share_outside_tbl
 
 ## tables excl outside HHs for waterfall charts
 ### table 1 excluding outside HHs 
-These
 Ideally this would link to our code for table 1, for now I just took the values from the most recent version in overleaf
 ```{r}
 # table 1 numbers for each village type (sample_group)
@@ -1807,9 +1807,9 @@ ggsave("output/waterfall_malawi.pdf",
 
 # difference in means tests
 ## test for difference between table 1 and 8
-ideally T1 numbers would automatically come from T1 calculations file
+Again, ideally table 1 numbers will automatically come from table 1 calculations file - I need to add this
 
-difference is statistically significant
+difference between table 1 and table 8 estimates is statistically significant for both countries
 ```{r}
 # UGANDA
 # t1 uganda
@@ -1857,7 +1857,7 @@ cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), 
 ```
 
 ## test for difference between table 1 and 12
-difference is not statistically significant
+difference is not statistically significant for either country
 ```{r}
 #t12 uganda
 mean_t12_uganda <- country_estimates_table12$total_indiv_access_popn[country_estimates_table12$country == "Uganda"]
@@ -1985,6 +1985,8 @@ balance_table15 <- wp_census %>%
     group.test = TRUE,
     out = "return") 
 
+balance_table15
+
 create_balance_latex(
   balance_table15,
   caption = "Balance checks among Footprint DSW water points in Uganda: promoter survey",
@@ -1999,6 +2001,7 @@ difference in disp_filled is not significant
 ```{r}
 balance_table16 <- wp_census %>%
   dplyr::filter(country == "Uganda", sample_group == "Footprint", intervention_type == "DSW") %>%
+  # I treat NAs as false for the purpose of balance tests (if NA on whether a water point is in the EA list, I treat is as though it is FALSE)
   mutate(
     pm_ea_list = replace_na(pm_ea_list, FALSE)
   ) %>%
@@ -2011,6 +2014,8 @@ balance_table16 <- wp_census %>%
     out = "return"
   )
 
+balance_table16
+
 create_balance_latex(
   balance_table16,
   caption = "Balance checks among Footprint DSW water points in Uganda: EA list",
@@ -2021,7 +2026,7 @@ create_balance_latex(
 ```
 
 ## Uganda DSW Expansion (17)
-significant difference in disp_filled
+significant difference in disp_filled and wp_func
 ```{r}
 balance_table17 <- wp_census %>%
   dplyr::filter(country == "Uganda", sample_group == "Expansion", intervention_type == "DSW") %>%
@@ -2031,6 +2036,8 @@ balance_table17 <- wp_census %>%
     group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
+
+balance_table17
 
 create_balance_latex(
   balance_table17,
@@ -2042,10 +2049,11 @@ create_balance_latex(
 ```
 
 ## Uganda DSW expansion, but EA list (18)
-significant difference in disp_filled
+significant difference in disp_filled and wp_func
 ```{r}
 balance_table18 <- wp_census %>%
   dplyr::filter(country == "Uganda", sample_group == "Expansion", intervention_type == "DSW") %>%
+  # I treat NAs as false for the purpose of balance tests (if NA on whether a water point is in the EA list, I treat is as though it is FALSE)
   mutate(
     pm_ea_list = replace_na(pm_ea_list, FALSE)
   ) %>%
@@ -2055,6 +2063,8 @@ balance_table18 <- wp_census %>%
     group = "pm_ea_list",
     group.test = TRUE,
     out = "return") 
+
+balance_table18
 
 create_balance_latex(
   balance_table18,
@@ -2066,7 +2076,6 @@ create_balance_latex(
 ```
 
 ## Malawi DSW Footprint (19)
-significant difference in meterfcr_02, but because there are just 3 water points in wp_census that the test was conducted for, I don't think this warrants attention
 ```{r}
 balance_table19 <- wp_census %>%
   dplyr::filter(country == "Malawi", sample_group == "Footprint", intervention_type == "DSW") %>%
@@ -2076,6 +2085,8 @@ balance_table19 <- wp_census %>%
     group = "promoter_surveyed",
     group.test = TRUE,
     out = "return") 
+
+balance_table19
     
 create_balance_latex(
   balance_table19,
@@ -2098,6 +2109,8 @@ balance_table20 <- wp_census %>%
     group.test = TRUE,
     out = "return") 
 
+balance_table20
+
 create_balance_latex(
   balance_table20,
   caption = "Balance checks among Expansion DSW water points in Malawi: promoter survey",
@@ -2119,6 +2132,8 @@ balance_table21 <- wp_census %>%
     group.test = TRUE,
     out = "return") 
 
+balance_table21
+
 create_balance_latex(
   balance_table21,
   caption = "Balance checks among DSW water points in ILC villages in Malawi: promoter survey",
@@ -2129,7 +2144,7 @@ create_balance_latex(
 ```
 
 ## Malawi ILC (22)
-wp_func significantly different, but this isn't very relevant for us
+wp_func significantly different, but this isn't very relevant
 - doesn't output a latex table exactly as in overleaf (graphically)
 ```{r}
 balance_table22 <- wp_census %>%
@@ -2139,6 +2154,8 @@ balance_table22 <- wp_census %>%
     group = "promoter_surveyed",
     group.test = TRUE,
     out = "return")
+
+balance_table22
 
 create_balance_latex(
   balance_table22,
@@ -2166,6 +2183,7 @@ create_balance_latex(
 ```{r}
 uganda_hh_survey <- hh_survey %>%
   dplyr::filter(country == "Uganda") %>%
+  # I treat NAs as false for the purpose of balance tests (if NA on whether a water point is in the EA list or promoter survey, I treat is as though it is FALSE)
   mutate(
     promoter_surveyed = replace_na(promoter_surveyed, FALSE),
     pm_ea_list = replace_na(pm_ea_list, FALSE)
@@ -2173,6 +2191,7 @@ uganda_hh_survey <- hh_survey %>%
 
 malawi_hh_survey <- hh_survey %>%
   dplyr::filter(country == "Malawi") %>%
+  # I treat NAs as false for the purpose of balance tests (if NA on whether a water point is in the EA list or promoter survey, I treat is as though it is FALSE)
   mutate(
     promoter_surveyed = replace_na(promoter_surveyed, FALSE),
     pm_ea_list = replace_na(pm_ea_list, FALSE)
@@ -2192,7 +2211,15 @@ model5 <- lm(disctcr ~ pm_ea_list, data = malawi_hh_survey)
 # column 6: both, Malawi
 model6 <- lm(disctcr ~ pm_ea_list + promoter_surveyed, data = malawi_hh_survey)
 
-# generate table
+# view in R
+stargazer(model1, model2, model3, model4, model5, model6,
+          type = "text",
+          title = "Association between Promoter Survey, EA List and Chlorination",
+          dep.var.labels = "TCR (Colorwheel)",
+          covariate.labels = c("Promoter Survey", "EA list"),
+          keep.stat = c("n", "rsq", "adj.rsq"))
+
+# generate LaTeX 
 stargazer(model1, model2, model3, model4, model5, model6,
           type = "latex",
           title = "Association between Promoter Survey, EA List and Chlorination",
@@ -2328,10 +2355,9 @@ hh_census %>%
 ```
 
 ## share of hhs that appear more than once in promoter lists
-521 mentioned twice, of which 341 report only using 1 water point (and thus we would classify as double-counted)
 ```{r}
 ## share of matched hhs that appear more than once in promoter lists + that appear more than once despite self-reporting only using 1 water point (in past month)
-hh_census %>%
+hh_double_count_stats <- hh_census %>%
   # group_by(country) %>%
   dplyr::filter(!is.na(promoter_list)) %>%
   summarise(
@@ -2344,15 +2370,18 @@ hh_census %>%
     share_double_counted = hh_double_counted / total_hh,
     share_double_counted_pct = round(share_double_counted * 100, 1)
   )
+
+# auto-generate text summary
+cat(sprintf("%d mentioned twice, of which %d report only using 1 water point (and thus we would classify as double-counted)\n",
+            hh_double_count_stats$hh_multiple_mentions,
+            hh_double_count_stats$hh_double_counted))
 ```
 
 ## share of pm survey WPs with some households outside
-approximately 30% in both countries, a bit higher in Uganda (33% vs 28%)
 ```{r}
 hh_outside_share <- wp_census %>%
   group_by(country) %>%
   dplyr::filter(!is.na(pm_users)) %>% # filter for WPs with response to number of users
-  # group_by(country, sample_group, intervention) %>%
   summarise(
     n_water_points = n(),
     wp_with_outside_hh = sum(pm_users_outside > 0, na.rm = TRUE),
@@ -2360,7 +2389,13 @@ hh_outside_share <- wp_census %>%
     .groups = "drop"
   )
 
-print(hh_outside_share)
+# auto-generate text summary
+malawi_share <- hh_outside_share %>% dplyr::filter(country == "Malawi") %>% pull(share_wp_with_outside)
+uganda_share <- hh_outside_share %>% dplyr::filter(country == "Uganda") %>% pull(share_wp_with_outside)
+
+cat(sprintf("The share of water points in the promoter survey with some users reported to be outside the village is %s%% in Malawi and %s%% in Uganda.\n",
+            malawi_share,
+            uganda_share))
 ```
 
 ## number of water points used per household - households in promoter lists
