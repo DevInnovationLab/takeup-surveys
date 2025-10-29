@@ -612,61 +612,6 @@ wp_census %>%
   count(intervention)
 ```
 
-```{r}
-# EA list counts
-malawi_ea <- wp_census %>%
-  dplyr::filter(country == "Malawi") %>%
-  dplyr::filter(pm_ea_list == TRUE) %>%
-  count(intervention)
-
-uganda_ea <- wp_census %>%
-  dplyr::filter(country == "Uganda") %>%
-  dplyr::filter(pm_ea_list == TRUE) %>%
-  count(intervention)
-
-malawi_ea_total <- sum(malawi_ea$n)
-malawi_ea_nonprog <- malawi_ea$n[malawi_ea$intervention == "Non-program"]
-if(length(malawi_ea_nonprog) == 0) malawi_ea_nonprog <- 0
-
-uganda_ea_total <- sum(uganda_ea$n)
-uganda_ea_nonprog <- uganda_ea$n[uganda_ea$intervention == "Non-program"]
-uganda_ea_ilc <- uganda_ea$n[uganda_ea$intervention == "ILC"]
-if(length(uganda_ea_nonprog) == 0) uganda_ea_nonprog <- 0
-if(length(uganda_ea_ilc) == 0) uganda_ea_ilc <- 0
-
-# Promoter survey counts
-malawi_pm <- wp_census %>%
-  dplyr::filter(country == "Malawi") %>%
-  dplyr::filter(promoter_surveyed == TRUE) %>%
-  count(intervention)
-
-uganda_pm <- wp_census %>%
-  dplyr::filter(country == "Uganda") %>%
-  dplyr::filter(promoter_surveyed == TRUE) %>%
-  count(intervention)
-
-malawi_pm_total <- sum(malawi_pm$n)
-malawi_pm_nonprog <- malawi_pm$n[malawi_pm$intervention == "Non-program"]
-if(length(malawi_pm_nonprog) == 0) malawi_pm_nonprog <- 0
-
-uganda_pm_total <- sum(uganda_pm$n)
-uganda_pm_nonprog <- uganda_pm$n[uganda_pm$intervention == "Non-program"]
-uganda_pm_ilc <- uganda_pm$n[uganda_pm$intervention == "ILC"]
-if(length(uganda_pm_nonprog) == 0) uganda_pm_nonprog <- 0
-if(length(uganda_pm_ilc) == 0) uganda_pm_ilc <- 0
-
-# Generate caption
-caption_text <- sprintf(
-  "Column (4) only includes those water points from the EA promoter list that were identified in the water point census as EA water points. For Uganda, %d of the %d water points in the EA promoter list were identified as Non-program and %d as ILC, and are not shown. Similarly for Malawi, where %d out of %d were identified as Non-program. In column (5), in Uganda, while the total number of promoter surveys was %d, %d of these were Non-program and %d ILC, so they are not shown here. Similarly, in Malawi, of the %d promoter surveys, %d concerned Non-program water points.",
-  uganda_ea_nonprog, uganda_ea_total, uganda_ea_ilc,
-  malawi_ea_nonprog, malawi_ea_total,
-  uganda_pm_total, uganda_pm_nonprog, uganda_pm_ilc,
-  malawi_pm_total, malawi_pm_nonprog
-)
-
-print(caption_text)
-```
-
 ## households (11)
 ```{r}
 # renaming intervention in hh census for consistency
