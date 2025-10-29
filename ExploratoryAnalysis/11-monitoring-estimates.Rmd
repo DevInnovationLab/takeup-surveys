@@ -671,7 +671,7 @@ hh_count <- hh_census %>%
   dplyr::filter(promoter_surveyed == 1) %>% 
   group_by(country, sample_group, intervention, wp_id) %>%
   summarise(
-    hh_count = n_distinct(household_id),   # number of distinct households per wp
+    hh_count = n_distinct(household_id),
     .groups = "drop"
   ) %>%
   group_by(country, sample_group, intervention) %>%
@@ -696,31 +696,39 @@ hh_stats <- hh_survey %>%
   group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
   ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
 
 # water point type table
 table10 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -759,31 +767,39 @@ hh_stats <- hh_survey %>%
   group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
   ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
 
 # water point type table
 table12 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -817,31 +833,39 @@ hh_stats <- hh_survey %>%
   summarize(
     # hh size and chlorination rates
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
   ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
 
 # water point type table
 table13 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -924,31 +948,39 @@ hh_stats <- hh_survey %>%
   summarize(
     # hh size and chlorination rates
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
   ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
 
 # water point type table
 table14 <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -1054,31 +1086,39 @@ hh_stats <- hh_survey %>%
   group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
   ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
 
 # water point type table
 table12_exout <- create_summary_table(hh_count, hh_stats, country_totals)
@@ -1098,7 +1138,7 @@ hh_count <- hh_census %>%
   dplyr::filter(promoter_surveyed == 1) %>% 
   group_by(country, sample_group, intervention, wp_id) %>%
   summarise(
-    hh_count = n_distinct(household_id),   # number of distinct households per wp
+    hh_count = n_distinct(household_id),
     .groups = "drop"
   ) %>%
   group_by(country, sample_group, intervention) %>%
@@ -1125,31 +1165,39 @@ hh_stats <- hh_survey %>%
   group_by(country, sample_group, intervention, wp_id) %>%
   summarize(
     hh_size = mean(hh_members, na.rm = TRUE),
-    chl_rate = mean(disctcr_02, na.rm = TRUE),
-    se_chl_rate = sqrt(chl_rate * (1 - chl_rate) / n()),  # within-WP SE
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
     .groups = "drop_last"
   ) %>%
   group_by(country, sample_group, intervention) %>%
   summarize(
     wp_hh_sizes = list(hh_size[!is.na(hh_size)]),
-    wp_rates = list(chl_rate[!is.na(chl_rate)]),
-    wp_ses = list(se_chl_rate[!is.na(se_chl_rate)]),
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
     .groups = "drop"
   ) %>%
   rowwise() %>%
   mutate(
     hh_tmp = list(compute_se(wp_hh_sizes, include_within = FALSE)),
-    chl_tmp = list(compute_se(wp_rates, wp_ses, include_within = TRUE))
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
   ) %>%
   unnest_wider(hh_tmp, names_sep = "_") %>%
-  unnest_wider(chl_tmp, names_sep = "_") %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
   rename(
     avg_hh_size = hh_tmp_mean_val,
     se_hh_size = hh_tmp_se,
-    avg_chl_rate = chl_tmp_mean_val,
-    se_chl_rate = chl_tmp_se
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
   ) %>%
-  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate, se_chl_rate)
+  select(country, sample_group, intervention, avg_hh_size, se_hh_size, avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
 
 # water point type table
 table10_exout <- create_summary_table(hh_count, hh_stats, country_totals)
