@@ -268,6 +268,23 @@ hh_survey <- hh_survey %>%
 #   )
 ```
 
+## pm_survey_households - cleaning, to be moved to wrangling
+```{r}
+# delete test village
+pm_survey_households <- pm_survey_households %>%
+  dplyr::filter(village_id != "1010602004")
+
+# identify water points that don't match to wp census
+unmatched_wps <- pm_survey_households %>%
+  dplyr::filter(!wp_id_c %in% wp_census$wp_id) %>%
+  select(wp_id_c, wp_name) %>%
+  distinct()
+
+unmatched_wps
+
+
+```
+
 ## country totals
 I get the same numbers as before if I classify by water point, not by village for expansion and footprint
 ```{r}
@@ -440,6 +457,7 @@ compute_country_totals <- function(data,
 # sample tables
 ## water points (9)
 ```{r}
+# calculations
 wp_table <- wp_census %>%
   group_by(country, sample_group, intervention) %>%
   summarise(
@@ -464,11 +482,115 @@ wp_table <- wp_census %>%
   )
 
 wp_table
+
+# generating latex table
+wp_table_latex <- wp_table %>%
+  mutate(
+    ea_list_count = coalesce(ea_list_malawi_count, ea_list_uganda_count)
+  ) %>%
+  select(country, sample_group, intervention, country_total, wp_census, wp_functional, ea_list_count, promoter_surveyed)
+
+malawi_footprint <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "Footprint", intervention == "DSW") %>%
+  mutate(sample_group = "Footprint")
+
+malawi_expansion <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "Expansion", intervention == "DSW") %>%
+  mutate(sample_group = "Expansion")
+
+malawi_dsw_ilc <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "ILC", intervention == "DSW") %>%
+  mutate(sample_group = "DSW in ILC vill.")
+
+malawi_ilc <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "ILC", intervention == "ILC") %>%
+  mutate(sample_group = "ILC")
+
+malawi_data <- bind_rows(malawi_footprint, malawi_expansion, malawi_dsw_ilc, malawi_ilc) %>%
+  select(-country, -intervention)
+
+uganda_footprint <- wp_table_latex %>%
+  dplyr::filter(country == "Uganda", sample_group == "Footprint", intervention == "DSW") %>%
+  mutate(sample_group = "Footprint")
+
+uganda_expansion <- wp_table_latex %>%
+  dplyr::filter(country == "Uganda", sample_group == "Expansion", intervention == "DSW") %>%
+  mutate(sample_group = "Expansion")
+
+uganda_data <- bind_rows(uganda_footprint, uganda_expansion) %>%
+  select(-country, -intervention)
+
+malawi_total <- malawi_data %>%
+  summarise(
+    sample_group = "\\textbf{Total EA points}",
+    country_total = sum(country_total, na.rm = TRUE),
+    wp_census = sum(wp_census, na.rm = TRUE),
+    wp_functional = sum(wp_functional, na.rm = TRUE),
+    ea_list_count = sum(ea_list_count, na.rm = TRUE),
+    promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE)
+  )
+
+uganda_total <- uganda_data %>%
+  summarise(
+    sample_group = "\\textbf{Total EA points}",
+    country_total = sum(country_total, na.rm = TRUE),
+    wp_census = sum(wp_census, na.rm = TRUE),
+    wp_functional = sum(wp_functional, na.rm = TRUE),
+    ea_list_count = sum(ea_list_count, na.rm = TRUE),
+    promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE)
+  )
+
+malawi_section <- bind_rows(malawi_data, malawi_total)
+uganda_section <- bind_rows(uganda_data, uganda_total)
+
+malawi_section <- malawi_section %>%
+  mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE)))
+
+uganda_section <- uganda_section %>%
+  mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE)))
+
+cat("\\begin{table}[htbp]\\centering\n")
+cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
+cat("\\begin{tabular}{l*{5}c}\n")
+cat("\\hline\\hline\n")
+cat("& (1) & (2) & (3) & (4) & (5)\\\\\n")
+cat("                   & Country Total & WP Census & \\shortstack{WP Census \\\\Functional} & EA Promoter List & Promoter Survey\\\\\n")
+cat("\\hline\n")
+cat("\\textbf{Malawi}                  &            &           &        &        &         \\\\\n")
+cat("\\hline\n")
+
+for(i in 1:nrow(malawi_section)) {
+  row <- malawi_section[i,]
+  cat(sprintf("%s & %s & %s & %s & %s & %s \\\\\n",
+              row$sample_group, row$country_total, row$wp_census, 
+              row$wp_functional, row$ea_list_count, row$promoter_surveyed))
+}
+
+cat("\\hline\n")
+cat("\\textbf{Uganda}                  &            &          &        &        &        \\\\\n")
+cat("\\hline\n")
+
+for(i in 1:nrow(uganda_section)) {
+  row <- uganda_section[i,]
+  cat(sprintf("%s & %s & %s & %s & %s & %s \\\\\n",
+              row$sample_group, row$country_total, row$wp_census, 
+              row$wp_functional, row$ea_list_count, row$promoter_surveyed))
+}
+
+cat("\\hline\\hline\n")
+cat("\\end{tabular}\n")
+cat("\\end{table}\n")
 ```
 
 text for table caption:
 For Uganda, 2 of the 112 water points in the EA promoter list were identified as ILC, and are not shown. For Malawi, 2 out of 137 were identified as Non-program and are not shown.
 ```{r}
+ea_list_malawi
+
+ea_list_malawi %>%
+      group_by(country, sample_group) %>%
+      summarise(ea_list_malawi_count = n_distinct(i102_wpt_id), .groups = "drop")
+
 wp_census %>%
   dplyr::filter(country == "Malawi") %>%
   dplyr::filter(pm_ea_list == TRUE) %>%
@@ -478,6 +600,71 @@ wp_census %>%
   dplyr::filter(country == "Uganda") %>%
   dplyr::filter(pm_ea_list == TRUE) %>%
   count(intervention)
+
+wp_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  count(intervention)
+
+wp_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  count(intervention)
+```
+
+```{r}
+# EA list counts
+malawi_ea <- wp_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  dplyr::filter(pm_ea_list == TRUE) %>%
+  count(intervention)
+
+uganda_ea <- wp_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(pm_ea_list == TRUE) %>%
+  count(intervention)
+
+malawi_ea_total <- sum(malawi_ea$n)
+malawi_ea_nonprog <- malawi_ea$n[malawi_ea$intervention == "Non-program"]
+if(length(malawi_ea_nonprog) == 0) malawi_ea_nonprog <- 0
+
+uganda_ea_total <- sum(uganda_ea$n)
+uganda_ea_nonprog <- uganda_ea$n[uganda_ea$intervention == "Non-program"]
+uganda_ea_ilc <- uganda_ea$n[uganda_ea$intervention == "ILC"]
+if(length(uganda_ea_nonprog) == 0) uganda_ea_nonprog <- 0
+if(length(uganda_ea_ilc) == 0) uganda_ea_ilc <- 0
+
+# Promoter survey counts
+malawi_pm <- wp_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  count(intervention)
+
+uganda_pm <- wp_census %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  count(intervention)
+
+malawi_pm_total <- sum(malawi_pm$n)
+malawi_pm_nonprog <- malawi_pm$n[malawi_pm$intervention == "Non-program"]
+if(length(malawi_pm_nonprog) == 0) malawi_pm_nonprog <- 0
+
+uganda_pm_total <- sum(uganda_pm$n)
+uganda_pm_nonprog <- uganda_pm$n[uganda_pm$intervention == "Non-program"]
+uganda_pm_ilc <- uganda_pm$n[uganda_pm$intervention == "ILC"]
+if(length(uganda_pm_nonprog) == 0) uganda_pm_nonprog <- 0
+if(length(uganda_pm_ilc) == 0) uganda_pm_ilc <- 0
+
+# Generate caption
+caption_text <- sprintf(
+  "Column (4) only includes those water points from the EA promoter list that were identified in the water point census as EA water points. For Uganda, %d of the %d water points in the EA promoter list were identified as Non-program and %d as ILC, and are not shown. Similarly for Malawi, where %d out of %d were identified as Non-program. In column (5), in Uganda, while the total number of promoter surveys was %d, %d of these were Non-program and %d ILC, so they are not shown here. Similarly, in Malawi, of the %d promoter surveys, %d concerned Non-program water points.",
+  uganda_ea_nonprog, uganda_ea_total, uganda_ea_ilc,
+  malawi_ea_nonprog, malawi_ea_total,
+  uganda_pm_total, uganda_pm_nonprog, uganda_pm_ilc,
+  malawi_pm_total, malawi_pm_nonprog
+)
+
+print(caption_text)
 ```
 
 ## households (11)
