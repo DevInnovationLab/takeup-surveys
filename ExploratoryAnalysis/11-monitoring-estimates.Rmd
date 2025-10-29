@@ -2478,3 +2478,47 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
     legend.position = "none"
   )
 ```
+
+# exploratory: does the number of people per water point differ significantly by sample group?
+YES for promoter survey water points (and promoter survey user counts), NO for water point census water points (and hh census user counts) 
+```{r}
+# method 1: convert to unordered factor, then relevel
+wp_users_pm <- wp_users_pm %>%
+  mutate(sample_group = factor(sample_group, ordered = FALSE),
+         sample_group = relevel(sample_group, ref = "Expansion"))
+
+wp_users_census <- wp_users_census %>%
+  mutate(sample_group = factor(sample_group, ordered = FALSE),
+         sample_group = relevel(sample_group, ref = "Expansion"))
+
+# then run regressions
+model_pm_malawi_dsw <- lm(pm_users ~ sample_group, 
+                          data = wp_users_pm %>% dplyr::filter(country == "Malawi", intervention == "DSW"))
+
+model_pm_uganda_dsw <- lm(pm_users ~ sample_group, 
+                          data = wp_users_pm %>% dplyr::filter(country == "Uganda", intervention == "DSW"))
+
+model_census_malawi_dsw <- lm(hh_count ~ sample_group, 
+                              data = wp_users_census %>% dplyr::filter(country == "Malawi", intervention == "DSW"))
+
+model_census_uganda_dsw <- lm(hh_count ~ sample_group, 
+                              data = wp_users_census %>% dplyr::filter(country == "Uganda", intervention == "DSW"))
+
+# view promoter survey results
+stargazer(model_pm_malawi_dsw, model_pm_uganda_dsw,
+          type = "text",
+          title = "Number of users per water point by sample group (Promoter Survey)",
+          column.labels = c("Malawi DSW", "Uganda DSW"),
+          dep.var.labels = "PM Users",
+          covariate.labels = c("Footprint", "ILC"),
+          keep.stat = c("n", "rsq"))
+
+# view household census results
+stargazer(model_census_malawi_dsw, model_census_uganda_dsw,
+          type = "text",
+          title = "Number of users per water point by sample group (Household Census)",
+          column.labels = c("Malawi DSW", "Uganda DSW"),
+          dep.var.labels = "Census HH Count",
+          covariate.labels = c("Footprint", "ILC"),
+          keep.stat = c("n", "rsq"))
+```
