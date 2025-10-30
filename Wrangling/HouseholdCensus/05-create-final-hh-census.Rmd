@@ -69,7 +69,6 @@ wp <-
   transmute(
     wp_id_c,
     dsw, ilc, ilc_wp, ilc_wcp,
-    wp_dsw, wp_ilc, wp_ilc_device,
     wp_func,
     wp_intervention = intervention,
     wp_intervention_type = intervention_type,
@@ -262,7 +261,8 @@ hhc_wpuse <-
     wp_sec_other = wp_secwhen__666,
     wp_sec_specify = wp_secwhen_o,
     wp_secweek,
-    wp_secweekno
+    wp_secweekno,
+    wp_name_o
   ) %>%
   mutate(
     wp_sec_crowded = case_when(
@@ -297,7 +297,9 @@ hhc_primarywp <-
       !is.na(wp_id_pl) ~ paste0(village_id, str_sub(wp_id_pl, str_length(wp_id_pl) - 2, str_length(wp_id_pl)))
     ),
     wp_identified = !is.na(wp_id_c),
-    wp_invillage = wp_source == "From a water point in this village"
+    wp_invillage = wp_source == "From a water point in this village",
+    wp_dsw = coalesce(wp_dsw_pl %>% as.numeric %>% as.logical, wp_dsw),
+    wp_ilc = coalesce(wp_ilc_pl %>% as.numeric %>% as.logical, wp_ilc == "Yes")
   ) %>%
   mutate(
     wp_id_c = case_when(
@@ -387,7 +389,9 @@ hhc_promoter <-
   hhc_clean %>%
   transmute(
     household_id,
-    promoter_list = household_id %in% pm_survey_households$household_id
+    promoter_list = household_id %in% pm_survey_households$household_id,
+    promoter_list_mentions = household_id %>%
+      map_int(~sum(pm_survey_households$household_id == .x))
   )
 ```
 
@@ -416,16 +420,58 @@ indexes <-
 ```{r}
 nrow(indexes) == n_distinct(indexes$household_id)
 ```
+
 ```{r}
 indexes <-
   indexes %>%
   mutate(
     wp_intervention_type = case_when(
-      # If the household is using a water point outside of the village, it is not using one of the village's EvAc water points
-#      !wp_invillage ~ "Non-program",
+      # In this village, all of the water points within the boundaries (ILC taps) were not functioning. Therefore, all of the households were using water points outside of the village. The enumerators indicated which of these had ILC/DSW in the survey
+      village_id == "2040920077" & wp_name_o %in% c(
+        "Zumulu school borehole",
+        "Zumulu borehole",
+        "Zumulu borehole/ Zumulu CCAP",
+        "Nkopoti borehole",
+        "Mjigo wa pa school",
+        "Mpopi wa pa school",
+        "Mjigo wa ku Zumulu Primary",
+        "Mjigo wa ku Zumulu Primary school",
+        "Khuzumulu borehole"
+      ) ~ "DSW",
+      village_id == "2040920077" ~ "Non-program",
+      # In this village, the water point with DSW is at a far corner, so many households use water points with DSW in other villages. The enumerators indicated which of these have DSW in the survey
+      village_id == "2101405067" & wp_name_o %in% c(
+        "Malidadi borehole",
+        "Mjigo Wa Pa Malidad",
+        "Mjigo Wa Pa Malidadi",
+        "Mayilosi Borehole",
+        "Mjigo Wa Kwa Anamukutako",
+        "Mjigo wa Kwa Namukutaku",
+        "Mjigo Wa Kwa Ndaje",
+        "Mjigo Wa Pa Chipatala",
+        "Mjigo wa Mmudzi Mwa a Taulo"
+      ) ~ "DSW",
+      village_id == "2101405067" & wp_name_o %in% c(
+        "Mpambana tap",
+        "Mpopi Wa Kwa Mpambana",
+        "Mpopi Wa Kwa Mukwali",
+        "Mpopi Wa Kwa Mukwalu",
+        "Mpopi Wa Kwa Mukwalu Village"
+      ) ~ "ILC water point",
+      # In this village, the only water point within the boundaries (a tap with DSW) was not functioning. Therefore, all of the households were using water points outside of the village. The enumerators indicated which of these have DSW in the survey
+      village_id == "2101220134" & !is.na(wp_name_o) ~ "DSW",
+      village_id == "2101220134" &  is.na(wp_name_o) ~ NA,
       # If the household is using a water point inside the village, but it wasn't mapped, then it is not an EvAc water point
       wp_invillage & is.na(wp_intervention_type) ~ "Non-program",
       TRUE ~ as.character(wp_intervention_type)
+    ) %>% 
+      factor,
+    wp_intervention = case_when(
+       is.na(wp_intervention) & wp_intervention_type == "DSW" ~ "DSW",
+       is.na(wp_intervention) & str_detect(wp_intervention_type, "ILC") ~ "ILC",
+       # Households using piped water into the house
+       village_id == "2101220134" & is.na(wp_name_o) ~ NA,
+      !is.na(wp_intervention) ~ wp_intervention
     ) %>% factor
   )
 ```
@@ -442,6 +488,7 @@ final <-
   dplyr::filter(!vil_replaced) %>%
   select(
     -vil_replaced,
+    -wp_name_o,
     # These contain PII
     -contains("comments")
   ) %>%

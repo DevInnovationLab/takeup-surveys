@@ -328,7 +328,7 @@ wp <-
   ) %>%
   select(
     # IDS
-    wp_id_c,
+    wp_id_c, wp_name,
     country,
     village_id, ilc_cluster_id,
     district_id, 

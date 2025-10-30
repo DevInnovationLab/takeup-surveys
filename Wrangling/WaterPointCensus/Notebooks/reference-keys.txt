@@ -8,12 +8,12 @@ tab:unnamed-chunk-62
 tab:unnamed-chunk-67
 tab:unnamed-chunk-102
 tab:unnamed-chunk-103
-tab:unnamed-chunk-110
-tab:unnamed-chunk-154
-tab:unnamed-chunk-168
-tab:unnamed-chunk-187
+tab:unnamed-chunk-111
+tab:unnamed-chunk-155
+tab:unnamed-chunk-169
 tab:unnamed-chunk-188
-tab:unnamed-chunk-191
+tab:unnamed-chunk-189
+tab:unnamed-chunk-192
 introduction
 import-water-point-census-data
 load-water-point-dataset

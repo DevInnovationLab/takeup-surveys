@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-21" />
+<meta name="date" content="2025-10-29" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2198,7 +2198,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb144-10"><a href="construct-treatment-variables.html#cb144-10" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">correction_comments =</span> comments)</span></code></pre></div>
 </details>
 <pre><code>## Rows: 206 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ──────
 ## Delimiter: &quot;,&quot;
 ## chr (3): wp_id, initials, comments
 ## lgl (3): dsw, ilc_wp, ilc_wcp
@@ -2218,51 +2218,61 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </div>
 <div id="create-indicators" class="section level2 hasAnchor" number="10.3">
 <h2><span class="header-section-number">10.3</span> Create indicators<a href="construct-treatment-variables.html#create-indicators" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>These were identified by Evidence Action</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb148"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb148-1"><a href="construct-treatment-variables.html#cb148-1" tabindex="-1"></a>wp_tmt <span class="ot">&lt;-</span></span>
-<span id="cb148-2"><a href="construct-treatment-variables.html#cb148-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb148-3"><a href="construct-treatment-variables.html#cb148-3" tabindex="-1"></a>  <span class="fu">left_join</span>(manual_treatment) <span class="sc">%&gt;%</span></span>
-<span id="cb148-4"><a href="construct-treatment-variables.html#cb148-4" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb148-5"><a href="construct-treatment-variables.html#cb148-5" tabindex="-1"></a>    <span class="at">dsw =</span> <span class="fu">coalesce</span>(dsw, wp_dsw),</span>
-<span id="cb148-6"><a href="construct-treatment-variables.html#cb148-6" tabindex="-1"></a>    <span class="at">ilc_wp =</span> <span class="fu">coalesce</span>(ilc_wp, wp_ilc_device),</span>
-<span id="cb148-7"><a href="construct-treatment-variables.html#cb148-7" tabindex="-1"></a>    <span class="at">ilc_wcp =</span> <span class="fu">coalesce</span>(ilc_wcp, wp_ilc),</span>
-<span id="cb148-8"><a href="construct-treatment-variables.html#cb148-8" tabindex="-1"></a>    <span class="fu">across</span>(</span>
-<span id="cb148-9"><a href="construct-treatment-variables.html#cb148-9" tabindex="-1"></a>      <span class="fu">c</span>(dsw, ilc_wp, ilc_wcp),</span>
-<span id="cb148-10"><a href="construct-treatment-variables.html#cb148-10" tabindex="-1"></a>      <span class="sc">~</span> tidyr<span class="sc">::</span><span class="fu">replace_na</span>(., <span class="cn">FALSE</span>)</span>
-<span id="cb148-11"><a href="construct-treatment-variables.html#cb148-11" tabindex="-1"></a>    ),</span>
-<span id="cb148-12"><a href="construct-treatment-variables.html#cb148-12" tabindex="-1"></a>    <span class="at">ilc =</span> ilc_wp <span class="sc">|</span> ilc_wcp,</span>
-<span id="cb148-13"><a href="construct-treatment-variables.html#cb148-13" tabindex="-1"></a>    <span class="at">intervention_type =</span> <span class="fu">case_when</span>(</span>
-<span id="cb148-14"><a href="construct-treatment-variables.html#cb148-14" tabindex="-1"></a>      dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb148-15"><a href="construct-treatment-variables.html#cb148-15" tabindex="-1"></a>      ilc_wp <span class="sc">~</span> <span class="st">&quot;ILC water point&quot;</span>,</span>
-<span id="cb148-16"><a href="construct-treatment-variables.html#cb148-16" tabindex="-1"></a>      ilc_wcp <span class="sc">~</span> <span class="st">&quot;ILC water collection point&quot;</span>,</span>
-<span id="cb148-17"><a href="construct-treatment-variables.html#cb148-17" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Non-program&quot;</span></span>
-<span id="cb148-18"><a href="construct-treatment-variables.html#cb148-18" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb148-19"><a href="construct-treatment-variables.html#cb148-19" tabindex="-1"></a>      as_factor,</span>
-<span id="cb148-20"><a href="construct-treatment-variables.html#cb148-20" tabindex="-1"></a>    <span class="at">intervention =</span> <span class="fu">case_when</span>(</span>
-<span id="cb148-21"><a href="construct-treatment-variables.html#cb148-21" tabindex="-1"></a>      dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb148-22"><a href="construct-treatment-variables.html#cb148-22" tabindex="-1"></a>      ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span>,</span>
-<span id="cb148-23"><a href="construct-treatment-variables.html#cb148-23" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Non-program&quot;</span></span>
-<span id="cb148-24"><a href="construct-treatment-variables.html#cb148-24" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb148-25"><a href="construct-treatment-variables.html#cb148-25" tabindex="-1"></a>      as_factor</span>
-<span id="cb148-26"><a href="construct-treatment-variables.html#cb148-26" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb148-27"><a href="construct-treatment-variables.html#cb148-27" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb148-28"><a href="construct-treatment-variables.html#cb148-28" tabindex="-1"></a>    wp_id,</span>
-<span id="cb148-29"><a href="construct-treatment-variables.html#cb148-29" tabindex="-1"></a>    dsw, ilc, ilc_wp, ilc_wcp,</span>
-<span id="cb148-30"><a href="construct-treatment-variables.html#cb148-30" tabindex="-1"></a>    intervention, intervention_type</span>
-<span id="cb148-31"><a href="construct-treatment-variables.html#cb148-31" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb148-32"><a href="construct-treatment-variables.html#cb148-32" tabindex="-1"></a>  unique</span></code></pre></div>
+<div class="sourceCode" id="cb148"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb148-1"><a href="construct-treatment-variables.html#cb148-1" tabindex="-1"></a>ea_inactive <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb148-2"><a href="construct-treatment-variables.html#cb148-2" tabindex="-1"></a>  <span class="st">&quot;80060045&quot;</span>, <span class="st">&quot;70070141&quot;</span>, <span class="st">&quot;7040516&quot;</span>, <span class="st">&quot;70190753&quot;</span></span>
+<span id="cb148-3"><a href="construct-treatment-variables.html#cb148-3" tabindex="-1"></a>)</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb150"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb150-1"><a href="construct-treatment-variables.html#cb150-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb150-2"><a href="construct-treatment-variables.html#cb150-2" tabindex="-1"></a>  <span class="fu">nrow</span>(wp_tmt) <span class="sc">==</span> <span class="fu">n_distinct</span>(wp_tmt<span class="sc">$</span>wp_id)</span>
-<span id="cb150-3"><a href="construct-treatment-variables.html#cb150-3" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb149-1"><a href="construct-treatment-variables.html#cb149-1" tabindex="-1"></a>wp_tmt <span class="ot">&lt;-</span></span>
+<span id="cb149-2"><a href="construct-treatment-variables.html#cb149-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb149-3"><a href="construct-treatment-variables.html#cb149-3" tabindex="-1"></a>  <span class="fu">left_join</span>(manual_treatment) <span class="sc">%&gt;%</span></span>
+<span id="cb149-4"><a href="construct-treatment-variables.html#cb149-4" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb149-5"><a href="construct-treatment-variables.html#cb149-5" tabindex="-1"></a>    <span class="at">dsw =</span> <span class="fu">case_when</span>(</span>
+<span id="cb149-6"><a href="construct-treatment-variables.html#cb149-6" tabindex="-1"></a>      disp_dsw_id <span class="sc">%in%</span> ea_inactive <span class="sc">~</span> <span class="cn">FALSE</span>,</span>
+<span id="cb149-7"><a href="construct-treatment-variables.html#cb149-7" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">coalesce</span>(dsw, wp_dsw)</span>
+<span id="cb149-8"><a href="construct-treatment-variables.html#cb149-8" tabindex="-1"></a>    ),</span>
+<span id="cb149-9"><a href="construct-treatment-variables.html#cb149-9" tabindex="-1"></a>    <span class="at">ilc_wp =</span> <span class="fu">coalesce</span>(ilc_wp, wp_ilc_device),</span>
+<span id="cb149-10"><a href="construct-treatment-variables.html#cb149-10" tabindex="-1"></a>    <span class="at">ilc_wcp =</span> <span class="fu">coalesce</span>(ilc_wcp, wp_ilc),</span>
+<span id="cb149-11"><a href="construct-treatment-variables.html#cb149-11" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb149-12"><a href="construct-treatment-variables.html#cb149-12" tabindex="-1"></a>      <span class="fu">c</span>(dsw, ilc_wp, ilc_wcp),</span>
+<span id="cb149-13"><a href="construct-treatment-variables.html#cb149-13" tabindex="-1"></a>      <span class="sc">~</span> tidyr<span class="sc">::</span><span class="fu">replace_na</span>(., <span class="cn">FALSE</span>)</span>
+<span id="cb149-14"><a href="construct-treatment-variables.html#cb149-14" tabindex="-1"></a>    ),</span>
+<span id="cb149-15"><a href="construct-treatment-variables.html#cb149-15" tabindex="-1"></a>    <span class="at">ilc =</span> ilc_wp <span class="sc">|</span> ilc_wcp,</span>
+<span id="cb149-16"><a href="construct-treatment-variables.html#cb149-16" tabindex="-1"></a>    <span class="at">intervention_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb149-17"><a href="construct-treatment-variables.html#cb149-17" tabindex="-1"></a>      dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
+<span id="cb149-18"><a href="construct-treatment-variables.html#cb149-18" tabindex="-1"></a>      ilc_wp <span class="sc">~</span> <span class="st">&quot;ILC water point&quot;</span>,</span>
+<span id="cb149-19"><a href="construct-treatment-variables.html#cb149-19" tabindex="-1"></a>      ilc_wcp <span class="sc">~</span> <span class="st">&quot;ILC water collection point&quot;</span>,</span>
+<span id="cb149-20"><a href="construct-treatment-variables.html#cb149-20" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Non-program&quot;</span></span>
+<span id="cb149-21"><a href="construct-treatment-variables.html#cb149-21" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb149-22"><a href="construct-treatment-variables.html#cb149-22" tabindex="-1"></a>      as_factor,</span>
+<span id="cb149-23"><a href="construct-treatment-variables.html#cb149-23" tabindex="-1"></a>    <span class="at">intervention =</span> <span class="fu">case_when</span>(</span>
+<span id="cb149-24"><a href="construct-treatment-variables.html#cb149-24" tabindex="-1"></a>      dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
+<span id="cb149-25"><a href="construct-treatment-variables.html#cb149-25" tabindex="-1"></a>      ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span>,</span>
+<span id="cb149-26"><a href="construct-treatment-variables.html#cb149-26" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Non-program&quot;</span></span>
+<span id="cb149-27"><a href="construct-treatment-variables.html#cb149-27" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb149-28"><a href="construct-treatment-variables.html#cb149-28" tabindex="-1"></a>      as_factor</span>
+<span id="cb149-29"><a href="construct-treatment-variables.html#cb149-29" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb149-30"><a href="construct-treatment-variables.html#cb149-30" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb149-31"><a href="construct-treatment-variables.html#cb149-31" tabindex="-1"></a>    wp_id,</span>
+<span id="cb149-32"><a href="construct-treatment-variables.html#cb149-32" tabindex="-1"></a>    dsw, ilc, ilc_wp, ilc_wcp,</span>
+<span id="cb149-33"><a href="construct-treatment-variables.html#cb149-33" tabindex="-1"></a>    intervention, intervention_type</span>
+<span id="cb149-34"><a href="construct-treatment-variables.html#cb149-34" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb149-35"><a href="construct-treatment-variables.html#cb149-35" tabindex="-1"></a>  unique</span></code></pre></div>
+</details>
+<pre><code>## Joining with `by =
+## join_by(wp_id)`</code></pre>
+<details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb151"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb151-1"><a href="construct-treatment-variables.html#cb151-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb151-2"><a href="construct-treatment-variables.html#cb151-2" tabindex="-1"></a>  <span class="fu">nrow</span>(wp_tmt) <span class="sc">==</span> <span class="fu">n_distinct</span>(wp_tmt<span class="sc">$</span>wp_id)</span>
+<span id="cb151-3"><a href="construct-treatment-variables.html#cb151-3" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb152"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb152-1"><a href="construct-treatment-variables.html#cb152-1" tabindex="-1"></a>wp_tmt <span class="sc">%&gt;%</span></span>
-<span id="cb152-2"><a href="construct-treatment-variables.html#cb152-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id) <span class="sc">%&gt;%</span></span>
-<span id="cb152-3"><a href="construct-treatment-variables.html#cb152-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb153"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb153-1"><a href="construct-treatment-variables.html#cb153-1" tabindex="-1"></a>wp_tmt <span class="sc">%&gt;%</span></span>
+<span id="cb153-2"><a href="construct-treatment-variables.html#cb153-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb153-3"><a href="construct-treatment-variables.html#cb153-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>()</span></code></pre></div>
 </details>
 <pre><code>## # A tibble: 1,217 × 7
 ## # Groups:   wp_id [1,217]
@@ -2283,23 +2293,23 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="export-data-4" class="section level2 hasAnchor" number="10.4">
 <h2><span class="header-section-number">10.4</span> Export data<a href="construct-treatment-variables.html#export-data-4" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb154"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb154-1"><a href="construct-treatment-variables.html#cb154-1" tabindex="-1"></a>path <span class="ot">&lt;-</span></span>
-<span id="cb154-2"><a href="construct-treatment-variables.html#cb154-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb154-3"><a href="construct-treatment-variables.html#cb154-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb154-4"><a href="construct-treatment-variables.html#cb154-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb154-5"><a href="construct-treatment-variables.html#cb154-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb154-6"><a href="construct-treatment-variables.html#cb154-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb154-7"><a href="construct-treatment-variables.html#cb154-7" tabindex="-1"></a>    <span class="st">&quot;wp-census-treatment&quot;</span></span>
-<span id="cb154-8"><a href="construct-treatment-variables.html#cb154-8" tabindex="-1"></a>  )</span>
-<span id="cb154-9"><a href="construct-treatment-variables.html#cb154-9" tabindex="-1"></a></span>
-<span id="cb154-10"><a href="construct-treatment-variables.html#cb154-10" tabindex="-1"></a><span class="fu">write_meta</span>(</span>
-<span id="cb154-11"><a href="construct-treatment-variables.html#cb154-11" tabindex="-1"></a>  wp_tmt,</span>
-<span id="cb154-12"><a href="construct-treatment-variables.html#cb154-12" tabindex="-1"></a>  <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb154-13"><a href="construct-treatment-variables.html#cb154-13" tabindex="-1"></a>  <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb154-14"><a href="construct-treatment-variables.html#cb154-14" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb155-1"><a href="construct-treatment-variables.html#cb155-1" tabindex="-1"></a>path <span class="ot">&lt;-</span></span>
+<span id="cb155-2"><a href="construct-treatment-variables.html#cb155-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb155-3"><a href="construct-treatment-variables.html#cb155-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb155-4"><a href="construct-treatment-variables.html#cb155-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb155-5"><a href="construct-treatment-variables.html#cb155-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb155-6"><a href="construct-treatment-variables.html#cb155-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb155-7"><a href="construct-treatment-variables.html#cb155-7" tabindex="-1"></a>    <span class="st">&quot;wp-census-treatment&quot;</span></span>
+<span id="cb155-8"><a href="construct-treatment-variables.html#cb155-8" tabindex="-1"></a>  )</span>
+<span id="cb155-9"><a href="construct-treatment-variables.html#cb155-9" tabindex="-1"></a></span>
+<span id="cb155-10"><a href="construct-treatment-variables.html#cb155-10" tabindex="-1"></a><span class="fu">write_meta</span>(</span>
+<span id="cb155-11"><a href="construct-treatment-variables.html#cb155-11" tabindex="-1"></a>  wp_tmt,</span>
+<span id="cb155-12"><a href="construct-treatment-variables.html#cb155-12" tabindex="-1"></a>  <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb155-13"><a href="construct-treatment-variables.html#cb155-13" tabindex="-1"></a>  <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb155-14"><a href="construct-treatment-variables.html#cb155-14" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <table>
-<caption><span id="tab:unnamed-chunk-110">Table 10.1: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-111">Table 10.1: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -2407,7 +2417,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1</td>
 <td align="left">FALSE</td>
 <td align="right">3</td>
-<td align="left">Non: 625, DSW: 391, ILC: 201</td>
+<td align="left">Non: 627, DSW: 389, ILC: 201</td>
 </tr>
 <tr class="even">
 <td align="left">intervention_type</td>
@@ -2415,7 +2425,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">1</td>
 <td align="left">FALSE</td>
 <td align="right">4</td>
-<td align="left">Non: 625, DSW: 391, ILC: 160, ILC: 41</td>
+<td align="left">Non: 627, DSW: 389, ILC: 160, ILC: 41</td>
 </tr>
 </tbody>
 </table>
@@ -2436,7 +2446,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.32</td>
-<td align="left">FAL: 826, TRU: 391</td>
+<td align="left">FAL: 828, TRU: 389</td>
 </tr>
 <tr class="even">
 <td align="left">ilc</td>

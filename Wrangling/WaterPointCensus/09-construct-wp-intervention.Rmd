@@ -52,12 +52,24 @@ assert_that(
 
 ## Create indicators
 
+These were identified by Evidence Action
+
+```{r}
+ea_inactive <- c(
+  "80060045", "70070141", "7040516", "70190753"
+)
+```
+
+
 ```{r}
 wp_tmt <-
   wp %>%
   left_join(manual_treatment) %>%
   mutate(
-    dsw = coalesce(dsw, wp_dsw),
+    dsw = case_when(
+      disp_dsw_id %in% ea_inactive ~ FALSE,
+      TRUE ~ coalesce(dsw, wp_dsw)
+    ),
     ilc_wp = coalesce(ilc_wp, wp_ilc_device),
     ilc_wcp = coalesce(ilc_wcp, wp_ilc),
     across(
@@ -86,6 +98,7 @@ wp_tmt <-
   ) %>%
   unique
 ```
+
 
 ```{r}
 assert_that(

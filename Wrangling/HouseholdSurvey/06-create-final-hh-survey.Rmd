@@ -130,7 +130,8 @@ hh_census <-
     hhh_educ_hhc = hhh_educ, hhh_gender_hhc = hhh_gender, hhh_age_hhc = hhh_age,
     hh_hhsincompound, hh_members, hh_adults, hh_males, hh_females, hh_pregnant,
     hh_under5, hh_under2
-  )
+  ) %>%
+  select(-wp_name_o)
 ```
 
 ### Water point census
@@ -282,7 +283,8 @@ meta <-
       fct_recode(
         "Household Survey" = "Household Survey (HH Census Respondents)",
         "Monitoring Survey" = "Monitoring Survey (Promoter Respondents)"
-      )
+      ),
+    formdef_version
   )
 ```
 
@@ -309,6 +311,7 @@ household <-
       as.factor,
     resp_educ = case_when(
       !is.na(educ) ~ educ,
+      !is.na(educ_mw) ~ educ_mw,
       resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_educ_hhc) ~ hhh_educ_hhc,
       resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_educ) ~ hhh_educ
     ) %>%
@@ -418,10 +421,9 @@ water <-
       household_id %in% c("CHB321206MW2", "CHQN45243MW2", "CHKA54451MW2") ~ 16,
       household_id == "CHXH58325MW2" ~ 17,
     ),
-    prep_different = if_else(
-      prep_different_0 & !prep_different_1,
-      FALSE,
-      prepare_water_c
+    prep_different = case_when(
+      prep_different_0 & !prep_different_1 ~ FALSE,
+      TRUE ~ prepare_water_c
     ),
     size = case_when(
       size != "Other (specify)" ~ parse_number(size %>% as.character),

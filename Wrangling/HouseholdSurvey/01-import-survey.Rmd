@@ -22,6 +22,8 @@ pacman::p_load(
 
 ## Load household survey dataset
 
+### Uganda DSW
+
 ```{r}
 hh_raw_ug <- 
   read_dta(
@@ -44,7 +46,82 @@ hh_raw_ug <-
   select(
     -contains("hr")
   )
+```
 
+Some of the variables were exported after being removed from the survey form and were not included in the SurveyCTO import do-file. These are imported below.
+
+```{r}
+hh_raw_ug_reexport <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "UG-hh-survey-export-error.csv"
+    )
+  ) %>%
+  clean_names %>%
+  mutate(
+    gender_hhh =
+      factor(
+        gender_hhh,
+        levels = c(1, 2),
+        labels = c("Male", "Female")
+      ),
+    across(
+      hh_educ,
+      ~ case_when(
+        . == 0	  ~ "Never attended school / did not complete class",
+        . == 111	~ "Pre-Primary",
+        . == 1	  ~ "P1",
+        . == 2	  ~ "P2",
+        . == 3	  ~ "P3",
+        . == 4	  ~ "P4",
+        . == 5	  ~ "P5",
+        . == 6	  ~ "P6",
+        . == 7	  ~ "P7",
+        . == 8	  ~ "PLE",
+        . == 11	  ~ "S1",
+        . == 12	  ~ "S2",
+        . == 13	  ~ "S3",
+        . == 14	  ~ "S4",
+        . == 15	  ~ "O level",
+        . == 16	  ~ "S5",
+        . == 17	  ~ "S6",
+        . == 18	  ~ "A level",
+        . == 20	  ~ "Polytechnic",
+        . == 21	  ~ "Informal Training",
+        . == 22	  ~ "College (non-University)",
+        . == 30	  ~ "University",
+        . == -666	~ "Other",
+        . == -999	~ "Don't know"
+      ) %>% factor
+    )
+  ) %>%
+  select(-metertcrhr_error04) %>%
+  remove_empty()
+```
+ 
+```{r}
+hh_raw_ug <-
+  hh_raw_ug %>%
+  left_join(
+    hh_raw_ug_reexport,
+    by = "key"
+  ) %>%
+  mutate(
+    hh_educ = coalesce(hh_educ.x, hh_educ.y), 
+    gender_hhh = coalesce(gender_hhh.x, gender_hhh.y), 
+    hhh_age = coalesce(hhh_age.x, hhh_age.y)
+  ) %>%
+  select(-contains("."))
+```
+ 
+### Uganda ILC
+
+```{r}
 hh_raw_ug_ilc <- 
   read_dta(
     file.path(
@@ -66,7 +143,11 @@ hh_raw_ug_ilc <-
   select(
     -contains("hr")
   )
+```
 
+### Malawi
+
+```{r}
 hh_raw_mw <- 
   read_dta(
     file.path(
@@ -107,10 +188,58 @@ hh_raw_mw <-
       int_warned_who == -666 ~ "Other"
     )
   )
+```
+
+Some of the variables were exported after being removed from the survey form and were not included in the SurveyCTO import do-file. These are imported below
+
+```{r}
+hh_raw_mw_reexport <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "MW-hh-survey-export-error.csv"
+    )
+  ) %>%
+  clean_names %>%
+  mutate(
+    hh_educ_mw = coalesce(hh_educ_mw_2, hh_educ_mw_6),
+    across(
+      hh_educ_mw,
+      ~ case_when(
+        . == 1	  ~ "No formal education / Never attended school",
+        . == 2	  ~ "Some Primary School (Did not complete Standard 8)",
+        . == 3	  ~ "Primary School Leaving Certificate (PSLCE) (Completed Standard 8)",
+        . == 4	  ~ "Some Secondary School (Did not complete Form 4 / MSCE)",
+        . == 5	  ~ "Junior Certificate of Education (JCE) (Completed Form 2)",
+        . == 6	  ~ "Malawi School Certificate of Education (MSCE) (Completed Form 4)",
+        . == 7	  ~ "Vocational/Technical Training (e.g., TEVETA certification)",
+        . == 8	  ~ "Diploma (e.g., teaching, nursing, other post-secondary diploma)",
+        . == 9	  ~ "Bachelor's Degree",
+        . == 10	  ~ "Postgraduate Degree (e.g., Master's, Doctorate)",
+        . == -666	~ "Other",
+        . == -999	~ "Don't know"
+      ) %>%
+        factor
+    ),
+    gender_hhh = coalesce(gender_hhh_3, gender_hhh_7) %>%
+      factor(
+        levels = c(1, 2),
+        labels = c("Male", "Female")
+      ),
+    hhh_age = coalesce(hhh_age_4, hhh_age_8)
+  ) %>%
+  select(key, hh_educ_mw, gender_hhh, hhh_age) %>%
+  remove_empty()
 
 hh_raw <- 
   hh_raw_mw %>%
-  bind_rows(hh_raw_ug) 
+  left_join(hh_raw_mw_reexport) %>%
+  bind_rows(hh_raw_ug) %>%
+  left_join(hh_raw_ug_reexport)
 # %>%
 #   bind_rows(hh_raw_ug_ilc)
 ```

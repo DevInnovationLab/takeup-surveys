@@ -91,7 +91,7 @@ hh <-
   )
 ```
 
-## Flag if there was Evidence Action/promoter interference
+## Flag if there interference in the survey
 
 ```{r}
 interference_vil_ids <- c(
@@ -105,26 +105,7 @@ interference_vil_ids <- c(
   ### Malawi
   "2030309037", # Mataka 2
   "2041608019", # Saidi Mataka
-  "2030901003", # Likhomo
-  
-  ### Household respondents reported being warned
-  "1130904002",
-  "1101309001",
-  "1020306002",
-  "1130904002",
-  "1101309001",
-  "1160604001",
-  "1190401001",
-  "1130904002",
-  "1190401001",
-  "1090403006",
-  "1130904002",
-  "2020708036",
-  "2020317075",
-  "2030106036"
-
-  
-  
+  "2030901003" # Likhomo
 )
 
 hh <- 

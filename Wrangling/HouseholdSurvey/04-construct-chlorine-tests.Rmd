@@ -87,6 +87,22 @@ hh <-
   )
 ```
 
+## Flag inconsistent values that could not be corrected
+
+These are cases where either we do not have images or the images confirm the readings
+
+```{r}
+hh <-
+  hh %>%
+  mutate(
+    flag_disctcr_value = disctcr_c > 0 & disctcr_c < 0.2,
+    flag_discfcr_value = discfcr_c > 0 & discfcr_c < 0.2,
+    flag_disc_inconsistent = discfcr_c > disctcr_c,
+    flag_meter_inconsistent = meterfcr_c > metertcr_c
+  )
+```
+
+
 ## Export data
 
 ```{r}

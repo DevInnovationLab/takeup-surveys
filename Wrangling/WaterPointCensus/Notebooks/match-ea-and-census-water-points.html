@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-10-21" />
+<meta name="date" content="2025-10-29" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2160,21 +2160,21 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="match-ea-and-census-water-points" class="section level1 hasAnchor" number="11">
 <h1><span class="header-section-number">11</span> Match EA and Census water points<a href="match-ea-and-census-water-points.html#match-ea-and-census-water-points" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb155-1"><a href="match-ea-and-census-water-points.html#cb155-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
-<span id="cb155-2"><a href="match-ea-and-census-water-points.html#cb155-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb155-3"><a href="match-ea-and-census-water-points.html#cb155-3" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>, </span>
-<span id="cb155-4"><a href="match-ea-and-census-water-points.html#cb155-4" tabindex="-1"></a>    <span class="st">&quot;here&quot;</span>,</span>
-<span id="cb155-5"><a href="match-ea-and-census-water-points.html#cb155-5" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span>,</span>
-<span id="cb155-6"><a href="match-ea-and-census-water-points.html#cb155-6" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
-<span id="cb155-7"><a href="match-ea-and-census-water-points.html#cb155-7" tabindex="-1"></a>    <span class="st">&quot;units&quot;</span>,</span>
-<span id="cb155-8"><a href="match-ea-and-census-water-points.html#cb155-8" tabindex="-1"></a>    <span class="st">&quot;leaflet&quot;</span>,</span>
-<span id="cb155-9"><a href="match-ea-and-census-water-points.html#cb155-9" tabindex="-1"></a>    <span class="st">&quot;viridis&quot;</span>,</span>
-<span id="cb155-10"><a href="match-ea-and-census-water-points.html#cb155-10" tabindex="-1"></a>    <span class="st">&quot;googlesheets4&quot;</span>,</span>
-<span id="cb155-11"><a href="match-ea-and-census-water-points.html#cb155-11" tabindex="-1"></a>    <span class="st">&quot;tictoc&quot;</span>,</span>
-<span id="cb155-12"><a href="match-ea-and-census-water-points.html#cb155-12" tabindex="-1"></a>    <span class="st">&quot;assertthat&quot;</span></span>
-<span id="cb155-13"><a href="match-ea-and-census-water-points.html#cb155-13" tabindex="-1"></a>    )</span>
-<span id="cb155-14"><a href="match-ea-and-census-water-points.html#cb155-14" tabindex="-1"></a></span>
-<span id="cb155-15"><a href="match-ea-and-census-water-points.html#cb155-15" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(packages, <span class="at">character.only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb156"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb156-1"><a href="match-ea-and-census-water-points.html#cb156-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
+<span id="cb156-2"><a href="match-ea-and-census-water-points.html#cb156-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb156-3"><a href="match-ea-and-census-water-points.html#cb156-3" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>, </span>
+<span id="cb156-4"><a href="match-ea-and-census-water-points.html#cb156-4" tabindex="-1"></a>    <span class="st">&quot;here&quot;</span>,</span>
+<span id="cb156-5"><a href="match-ea-and-census-water-points.html#cb156-5" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span>,</span>
+<span id="cb156-6"><a href="match-ea-and-census-water-points.html#cb156-6" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
+<span id="cb156-7"><a href="match-ea-and-census-water-points.html#cb156-7" tabindex="-1"></a>    <span class="st">&quot;units&quot;</span>,</span>
+<span id="cb156-8"><a href="match-ea-and-census-water-points.html#cb156-8" tabindex="-1"></a>    <span class="st">&quot;leaflet&quot;</span>,</span>
+<span id="cb156-9"><a href="match-ea-and-census-water-points.html#cb156-9" tabindex="-1"></a>    <span class="st">&quot;viridis&quot;</span>,</span>
+<span id="cb156-10"><a href="match-ea-and-census-water-points.html#cb156-10" tabindex="-1"></a>    <span class="st">&quot;googlesheets4&quot;</span>,</span>
+<span id="cb156-11"><a href="match-ea-and-census-water-points.html#cb156-11" tabindex="-1"></a>    <span class="st">&quot;tictoc&quot;</span>,</span>
+<span id="cb156-12"><a href="match-ea-and-census-water-points.html#cb156-12" tabindex="-1"></a>    <span class="st">&quot;assertthat&quot;</span></span>
+<span id="cb156-13"><a href="match-ea-and-census-water-points.html#cb156-13" tabindex="-1"></a>    )</span>
+<span id="cb156-14"><a href="match-ea-and-census-water-points.html#cb156-14" tabindex="-1"></a></span>
+<span id="cb156-15"><a href="match-ea-and-census-water-points.html#cb156-15" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(packages, <span class="at">character.only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </details>
 <div id="load-data-5" class="section level2 hasAnchor" number="11.1">
 <h2><span class="header-section-number">11.1</span> Load data<a href="match-ea-and-census-water-points.html#load-data-5" class="anchor-section" aria-label="Anchor link to header"></a></h2>
@@ -2182,18 +2182,18 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <h3><span class="header-section-number">11.1.1</span> Corrections<a href="match-ea-and-census-water-points.html#corrections-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>After comparing the maps from Evidence Action water points and the Water Point Census, we have identified some matches of census water points and Evidence Action water points that would not be identified through an algorithm. We also inspected the images from the water point census to determine whether ILC devices and DSW dispensers were present. These corrections were manually entered into CSV files</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb156"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb156-1"><a href="match-ea-and-census-water-points.html#cb156-1" tabindex="-1"></a>manual_matches <span class="ot">&lt;-</span> </span>
-<span id="cb156-2"><a href="match-ea-and-census-water-points.html#cb156-2" tabindex="-1"></a>  <span class="fu">read_csv</span>( </span>
-<span id="cb156-3"><a href="match-ea-and-census-water-points.html#cb156-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb156-4"><a href="match-ea-and-census-water-points.html#cb156-4" tabindex="-1"></a>      path_git,</span>
-<span id="cb156-5"><a href="match-ea-and-census-water-points.html#cb156-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
-<span id="cb156-6"><a href="match-ea-and-census-water-points.html#cb156-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb156-7"><a href="match-ea-and-census-water-points.html#cb156-7" tabindex="-1"></a>      <span class="st">&quot;manual-match-to-ea-wp.csv&quot;</span></span>
-<span id="cb156-8"><a href="match-ea-and-census-water-points.html#cb156-8" tabindex="-1"></a>    )</span>
-<span id="cb156-9"><a href="match-ea-and-census-water-points.html#cb156-9" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb157"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb157-1"><a href="match-ea-and-census-water-points.html#cb157-1" tabindex="-1"></a>manual_matches <span class="ot">&lt;-</span> </span>
+<span id="cb157-2"><a href="match-ea-and-census-water-points.html#cb157-2" tabindex="-1"></a>  <span class="fu">read_csv</span>( </span>
+<span id="cb157-3"><a href="match-ea-and-census-water-points.html#cb157-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb157-4"><a href="match-ea-and-census-water-points.html#cb157-4" tabindex="-1"></a>      path_git,</span>
+<span id="cb157-5"><a href="match-ea-and-census-water-points.html#cb157-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
+<span id="cb157-6"><a href="match-ea-and-census-water-points.html#cb157-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb157-7"><a href="match-ea-and-census-water-points.html#cb157-7" tabindex="-1"></a>      <span class="st">&quot;manual-match-to-ea-wp.csv&quot;</span></span>
+<span id="cb157-8"><a href="match-ea-and-census-water-points.html#cb157-8" tabindex="-1"></a>    )</span>
+<span id="cb157-9"><a href="match-ea-and-census-water-points.html#cb157-9" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <pre><code>## Rows: 289 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ──────
 ## Delimiter: &quot;,&quot;
 ## chr (4): wp_id, date, intials, comments
 ## dbl (2): ea_id, ilc_cluster_wp
@@ -2201,30 +2201,30 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb158"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb158-1"><a href="match-ea-and-census-water-points.html#cb158-1" tabindex="-1"></a><span class="co"># This is commented out because there are WPs mapped to two different villages</span></span>
-<span id="cb158-2"><a href="match-ea-and-census-water-points.html#cb158-2" tabindex="-1"></a></span>
-<span id="cb158-3"><a href="match-ea-and-census-water-points.html#cb158-3" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb158-4"><a href="match-ea-and-census-water-points.html#cb158-4" tabindex="-1"></a>  manual_matches <span class="sc">%&gt;%</span> </span>
-<span id="cb158-5"><a href="match-ea-and-census-water-points.html#cb158-5" tabindex="-1"></a>    <span class="fu">select</span>(wp_id, ea_id) <span class="sc">%&gt;%</span></span>
-<span id="cb158-6"><a href="match-ea-and-census-water-points.html#cb158-6" tabindex="-1"></a>    unique <span class="sc">%&gt;%</span></span>
-<span id="cb158-7"><a href="match-ea-and-census-water-points.html#cb158-7" tabindex="-1"></a>    nrow</span>
-<span id="cb158-8"><a href="match-ea-and-census-water-points.html#cb158-8" tabindex="-1"></a>  <span class="sc">==</span></span>
-<span id="cb158-9"><a href="match-ea-and-census-water-points.html#cb158-9" tabindex="-1"></a>    <span class="fu">nrow</span>(manual_matches)</span>
-<span id="cb158-10"><a href="match-ea-and-census-water-points.html#cb158-10" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb159"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb159-1"><a href="match-ea-and-census-water-points.html#cb159-1" tabindex="-1"></a><span class="co"># This is commented out because there are WPs mapped to two different villages</span></span>
+<span id="cb159-2"><a href="match-ea-and-census-water-points.html#cb159-2" tabindex="-1"></a></span>
+<span id="cb159-3"><a href="match-ea-and-census-water-points.html#cb159-3" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb159-4"><a href="match-ea-and-census-water-points.html#cb159-4" tabindex="-1"></a>  manual_matches <span class="sc">%&gt;%</span> </span>
+<span id="cb159-5"><a href="match-ea-and-census-water-points.html#cb159-5" tabindex="-1"></a>    <span class="fu">select</span>(wp_id, ea_id) <span class="sc">%&gt;%</span></span>
+<span id="cb159-6"><a href="match-ea-and-census-water-points.html#cb159-6" tabindex="-1"></a>    unique <span class="sc">%&gt;%</span></span>
+<span id="cb159-7"><a href="match-ea-and-census-water-points.html#cb159-7" tabindex="-1"></a>    nrow</span>
+<span id="cb159-8"><a href="match-ea-and-census-water-points.html#cb159-8" tabindex="-1"></a>  <span class="sc">==</span></span>
+<span id="cb159-9"><a href="match-ea-and-census-water-points.html#cb159-9" tabindex="-1"></a>    <span class="fu">nrow</span>(manual_matches)</span>
+<span id="cb159-10"><a href="match-ea-and-census-water-points.html#cb159-10" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb159"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb159-1"><a href="match-ea-and-census-water-points.html#cb159-1" tabindex="-1"></a>manual_unmatched <span class="ot">&lt;-</span></span>
-<span id="cb159-2"><a href="match-ea-and-census-water-points.html#cb159-2" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
-<span id="cb159-3"><a href="match-ea-and-census-water-points.html#cb159-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb159-4"><a href="match-ea-and-census-water-points.html#cb159-4" tabindex="-1"></a>      path_git,</span>
-<span id="cb159-5"><a href="match-ea-and-census-water-points.html#cb159-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
-<span id="cb159-6"><a href="match-ea-and-census-water-points.html#cb159-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb159-7"><a href="match-ea-and-census-water-points.html#cb159-7" tabindex="-1"></a>      <span class="st">&quot;ea-wpt-unmatched.csv&quot;</span></span>
-<span id="cb159-8"><a href="match-ea-and-census-water-points.html#cb159-8" tabindex="-1"></a>    )</span>
-<span id="cb159-9"><a href="match-ea-and-census-water-points.html#cb159-9" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb160"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb160-1"><a href="match-ea-and-census-water-points.html#cb160-1" tabindex="-1"></a>manual_unmatched <span class="ot">&lt;-</span></span>
+<span id="cb160-2"><a href="match-ea-and-census-water-points.html#cb160-2" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
+<span id="cb160-3"><a href="match-ea-and-census-water-points.html#cb160-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb160-4"><a href="match-ea-and-census-water-points.html#cb160-4" tabindex="-1"></a>      path_git,</span>
+<span id="cb160-5"><a href="match-ea-and-census-water-points.html#cb160-5" tabindex="-1"></a>      <span class="st">&quot;documentation&quot;</span>,</span>
+<span id="cb160-6"><a href="match-ea-and-census-water-points.html#cb160-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb160-7"><a href="match-ea-and-census-water-points.html#cb160-7" tabindex="-1"></a>      <span class="st">&quot;ea-wpt-unmatched.csv&quot;</span></span>
+<span id="cb160-8"><a href="match-ea-and-census-water-points.html#cb160-8" tabindex="-1"></a>    )</span>
+<span id="cb160-9"><a href="match-ea-and-census-water-points.html#cb160-9" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <pre><code>## Rows: 14 Columns: 3
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ──────
 ## Delimiter: &quot;,&quot;
 ## chr (2): initials, comments
 ## dbl (1): ea_id
@@ -2232,33 +2232,17 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb161"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb161-1"><a href="match-ea-and-census-water-points.html#cb161-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb161-2"><a href="match-ea-and-census-water-points.html#cb161-2" tabindex="-1"></a>  manual_unmatched <span class="sc">%&gt;%</span> </span>
-<span id="cb161-3"><a href="match-ea-and-census-water-points.html#cb161-3" tabindex="-1"></a>    <span class="fu">pull</span>(ea_id) <span class="sc">%&gt;%</span></span>
-<span id="cb161-4"><a href="match-ea-and-census-water-points.html#cb161-4" tabindex="-1"></a>    n_distinct</span>
-<span id="cb161-5"><a href="match-ea-and-census-water-points.html#cb161-5" tabindex="-1"></a>  <span class="sc">==</span></span>
-<span id="cb161-6"><a href="match-ea-and-census-water-points.html#cb161-6" tabindex="-1"></a>    <span class="fu">nrow</span>(manual_unmatched)</span>
-<span id="cb161-7"><a href="match-ea-and-census-water-points.html#cb161-7" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb162"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb162-1"><a href="match-ea-and-census-water-points.html#cb162-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb162-2"><a href="match-ea-and-census-water-points.html#cb162-2" tabindex="-1"></a>  manual_unmatched <span class="sc">%&gt;%</span> </span>
+<span id="cb162-3"><a href="match-ea-and-census-water-points.html#cb162-3" tabindex="-1"></a>    <span class="fu">pull</span>(ea_id) <span class="sc">%&gt;%</span></span>
+<span id="cb162-4"><a href="match-ea-and-census-water-points.html#cb162-4" tabindex="-1"></a>    n_distinct</span>
+<span id="cb162-5"><a href="match-ea-and-census-water-points.html#cb162-5" tabindex="-1"></a>  <span class="sc">==</span></span>
+<span id="cb162-6"><a href="match-ea-and-census-water-points.html#cb162-6" tabindex="-1"></a>    <span class="fu">nrow</span>(manual_unmatched)</span>
+<span id="cb162-7"><a href="match-ea-and-census-water-points.html#cb162-7" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb163"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb163-1"><a href="match-ea-and-census-water-points.html#cb163-1" tabindex="-1"></a>wp_tmt <span class="ot">&lt;-</span></span>
-<span id="cb163-2"><a href="match-ea-and-census-water-points.html#cb163-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb163-3"><a href="match-ea-and-census-water-points.html#cb163-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb163-4"><a href="match-ea-and-census-water-points.html#cb163-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb163-5"><a href="match-ea-and-census-water-points.html#cb163-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb163-6"><a href="match-ea-and-census-water-points.html#cb163-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb163-7"><a href="match-ea-and-census-water-points.html#cb163-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb163-8"><a href="match-ea-and-census-water-points.html#cb163-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb163-9"><a href="match-ea-and-census-water-points.html#cb163-9" tabindex="-1"></a>      <span class="st">&quot;wp-census-treatment.rds&quot;</span></span>
-<span id="cb163-10"><a href="match-ea-and-census-water-points.html#cb163-10" tabindex="-1"></a>    )</span>
-<span id="cb163-11"><a href="match-ea-and-census-water-points.html#cb163-11" tabindex="-1"></a>  )</span></code></pre></div>
-</details>
-</div>
-<div id="ipa" class="section level3 hasAnchor" number="11.1.2">
-<h3><span class="header-section-number">11.1.2</span> IPA<a href="match-ea-and-census-water-points.html#ipa" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb164"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb164-1"><a href="match-ea-and-census-water-points.html#cb164-1" tabindex="-1"></a>wp_tabular <span class="ot">&lt;-</span></span>
+<div class="sourceCode" id="cb164"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb164-1"><a href="match-ea-and-census-water-points.html#cb164-1" tabindex="-1"></a>wp_tmt <span class="ot">&lt;-</span></span>
 <span id="cb164-2"><a href="match-ea-and-census-water-points.html#cb164-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
 <span id="cb164-3"><a href="match-ea-and-census-water-points.html#cb164-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
 <span id="cb164-4"><a href="match-ea-and-census-water-points.html#cb164-4" tabindex="-1"></a>      path_box,</span>
@@ -2266,151 +2250,169 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <span id="cb164-6"><a href="match-ea-and-census-water-points.html#cb164-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
 <span id="cb164-7"><a href="match-ea-and-census-water-points.html#cb164-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
 <span id="cb164-8"><a href="match-ea-and-census-water-points.html#cb164-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb164-9"><a href="match-ea-and-census-water-points.html#cb164-9" tabindex="-1"></a>      <span class="st">&quot;wp-collapsed.rds&quot;</span></span>
+<span id="cb164-9"><a href="match-ea-and-census-water-points.html#cb164-9" tabindex="-1"></a>      <span class="st">&quot;wp-census-treatment.rds&quot;</span></span>
 <span id="cb164-10"><a href="match-ea-and-census-water-points.html#cb164-10" tabindex="-1"></a>    )</span>
-<span id="cb164-11"><a href="match-ea-and-census-water-points.html#cb164-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb164-12"><a href="match-ea-and-census-water-points.html#cb164-12" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
-<span id="cb164-13"><a href="match-ea-and-census-water-points.html#cb164-13" tabindex="-1"></a>    wp_tmt,</span>
-<span id="cb164-14"><a href="match-ea-and-census-water-points.html#cb164-14" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
-<span id="cb164-15"><a href="match-ea-and-census-water-points.html#cb164-15" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb164-11"><a href="match-ea-and-census-water-points.html#cb164-11" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
+</div>
+<div id="ipa" class="section level3 hasAnchor" number="11.1.2">
+<h3><span class="header-section-number">11.1.2</span> IPA<a href="match-ea-and-census-water-points.html#ipa" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb166"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb166-1"><a href="match-ea-and-census-water-points.html#cb166-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
-<span id="cb166-2"><a href="match-ea-and-census-water-points.html#cb166-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb166-3"><a href="match-ea-and-census-water-points.html#cb166-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb166-4"><a href="match-ea-and-census-water-points.html#cb166-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb166-5"><a href="match-ea-and-census-water-points.html#cb166-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb166-6"><a href="match-ea-and-census-water-points.html#cb166-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb166-7"><a href="match-ea-and-census-water-points.html#cb166-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb166-8"><a href="match-ea-and-census-water-points.html#cb166-8" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb166-9"><a href="match-ea-and-census-water-points.html#cb166-9" tabindex="-1"></a>      <span class="st">&quot;wp-gps-collapsed.rds&quot;</span></span>
-<span id="cb166-10"><a href="match-ea-and-census-water-points.html#cb166-10" tabindex="-1"></a>    )</span>
-<span id="cb166-11"><a href="match-ea-and-census-water-points.html#cb166-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb166-12"><a href="match-ea-and-census-water-points.html#cb166-12" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb166-13"><a href="match-ea-and-census-water-points.html#cb166-13" tabindex="-1"></a>    wp_tmt,</span>
-<span id="cb166-14"><a href="match-ea-and-census-water-points.html#cb166-14" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
-<span id="cb166-15"><a href="match-ea-and-census-water-points.html#cb166-15" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb165"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb165-1"><a href="match-ea-and-census-water-points.html#cb165-1" tabindex="-1"></a>wp_tabular <span class="ot">&lt;-</span></span>
+<span id="cb165-2"><a href="match-ea-and-census-water-points.html#cb165-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb165-3"><a href="match-ea-and-census-water-points.html#cb165-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb165-4"><a href="match-ea-and-census-water-points.html#cb165-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb165-5"><a href="match-ea-and-census-water-points.html#cb165-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb165-6"><a href="match-ea-and-census-water-points.html#cb165-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb165-7"><a href="match-ea-and-census-water-points.html#cb165-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb165-8"><a href="match-ea-and-census-water-points.html#cb165-8" tabindex="-1"></a>      <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb165-9"><a href="match-ea-and-census-water-points.html#cb165-9" tabindex="-1"></a>      <span class="st">&quot;wp-collapsed.rds&quot;</span></span>
+<span id="cb165-10"><a href="match-ea-and-census-water-points.html#cb165-10" tabindex="-1"></a>    )</span>
+<span id="cb165-11"><a href="match-ea-and-census-water-points.html#cb165-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb165-12"><a href="match-ea-and-census-water-points.html#cb165-12" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb165-13"><a href="match-ea-and-census-water-points.html#cb165-13" tabindex="-1"></a>    wp_tmt,</span>
+<span id="cb165-14"><a href="match-ea-and-census-water-points.html#cb165-14" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
+<span id="cb165-15"><a href="match-ea-and-census-water-points.html#cb165-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
+<pre><code>## Joining with `by =
+## join_by(wp_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb168-1"><a href="match-ea-and-census-water-points.html#cb168-1" tabindex="-1"></a>ipa_uganda <span class="ot">&lt;-</span></span>
-<span id="cb168-2"><a href="match-ea-and-census-water-points.html#cb168-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb168-3"><a href="match-ea-and-census-water-points.html#cb168-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb168-4"><a href="match-ea-and-census-water-points.html#cb168-4" tabindex="-1"></a>    country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span></span>
-<span id="cb168-5"><a href="match-ea-and-census-water-points.html#cb168-5" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb167"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb167-1"><a href="match-ea-and-census-water-points.html#cb167-1" tabindex="-1"></a>wp <span class="ot">&lt;-</span></span>
+<span id="cb167-2"><a href="match-ea-and-census-water-points.html#cb167-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb167-3"><a href="match-ea-and-census-water-points.html#cb167-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb167-4"><a href="match-ea-and-census-water-points.html#cb167-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb167-5"><a href="match-ea-and-census-water-points.html#cb167-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb167-6"><a href="match-ea-and-census-water-points.html#cb167-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb167-7"><a href="match-ea-and-census-water-points.html#cb167-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb167-8"><a href="match-ea-and-census-water-points.html#cb167-8" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb167-9"><a href="match-ea-and-census-water-points.html#cb167-9" tabindex="-1"></a>      <span class="st">&quot;wp-gps-collapsed.rds&quot;</span></span>
+<span id="cb167-10"><a href="match-ea-and-census-water-points.html#cb167-10" tabindex="-1"></a>    )</span>
+<span id="cb167-11"><a href="match-ea-and-census-water-points.html#cb167-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb167-12"><a href="match-ea-and-census-water-points.html#cb167-12" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb167-13"><a href="match-ea-and-census-water-points.html#cb167-13" tabindex="-1"></a>    wp_tmt,</span>
+<span id="cb167-14"><a href="match-ea-and-census-water-points.html#cb167-14" tabindex="-1"></a>    <span class="at">unmatched =</span> <span class="st">&quot;error&quot;</span></span>
+<span id="cb167-15"><a href="match-ea-and-census-water-points.html#cb167-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
+<pre><code>## Joining with `by =
+## join_by(wp_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb169"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb169-1"><a href="match-ea-and-census-water-points.html#cb169-1" tabindex="-1"></a>ipa_malawi <span class="ot">&lt;-</span></span>
+<div class="sourceCode" id="cb169"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb169-1"><a href="match-ea-and-census-water-points.html#cb169-1" tabindex="-1"></a>ipa_uganda <span class="ot">&lt;-</span></span>
 <span id="cb169-2"><a href="match-ea-and-census-water-points.html#cb169-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
 <span id="cb169-3"><a href="match-ea-and-census-water-points.html#cb169-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb169-4"><a href="match-ea-and-census-water-points.html#cb169-4" tabindex="-1"></a>    country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span></span>
+<span id="cb169-4"><a href="match-ea-and-census-water-points.html#cb169-4" tabindex="-1"></a>    country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span></span>
 <span id="cb169-5"><a href="match-ea-and-census-water-points.html#cb169-5" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb170"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb170-1"><a href="match-ea-and-census-water-points.html#cb170-1" tabindex="-1"></a>ipa_malawi <span class="ot">&lt;-</span></span>
+<span id="cb170-2"><a href="match-ea-and-census-water-points.html#cb170-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb170-3"><a href="match-ea-and-census-water-points.html#cb170-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb170-4"><a href="match-ea-and-census-water-points.html#cb170-4" tabindex="-1"></a>    country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span></span>
+<span id="cb170-5"><a href="match-ea-and-census-water-points.html#cb170-5" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 </div>
 <div id="evidence-action" class="section level3 hasAnchor" number="11.1.3">
 <h3><span class="header-section-number">11.1.3</span> Evidence Action<a href="match-ea-and-census-water-points.html#evidence-action" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb170"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb170-1"><a href="match-ea-and-census-water-points.html#cb170-1" tabindex="-1"></a>ea_malawi_wpt <span class="ot">&lt;-</span> </span>
-<span id="cb170-2"><a href="match-ea-and-census-water-points.html#cb170-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb170-3"><a href="match-ea-and-census-water-points.html#cb170-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb170-4"><a href="match-ea-and-census-water-points.html#cb170-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb170-5"><a href="match-ea-and-census-water-points.html#cb170-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb170-6"><a href="match-ea-and-census-water-points.html#cb170-6" tabindex="-1"></a>      <span class="st">&quot;EvidenceAction&quot;</span>,</span>
-<span id="cb170-7"><a href="match-ea-and-census-water-points.html#cb170-7" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb170-8"><a href="match-ea-and-census-water-points.html#cb170-8" tabindex="-1"></a>      <span class="st">&quot;ea-malawi-wp-sf.rds&quot;</span></span>
-<span id="cb170-9"><a href="match-ea-and-census-water-points.html#cb170-9" tabindex="-1"></a>      )</span>
-<span id="cb170-10"><a href="match-ea-and-census-water-points.html#cb170-10" tabindex="-1"></a>  )</span>
-<span id="cb170-11"><a href="match-ea-and-census-water-points.html#cb170-11" tabindex="-1"></a></span>
-<span id="cb170-12"><a href="match-ea-and-census-water-points.html#cb170-12" tabindex="-1"></a>ea_malawi_wcp <span class="ot">&lt;-</span> </span>
-<span id="cb170-13"><a href="match-ea-and-census-water-points.html#cb170-13" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb170-14"><a href="match-ea-and-census-water-points.html#cb170-14" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb170-15"><a href="match-ea-and-census-water-points.html#cb170-15" tabindex="-1"></a>      path_box,</span>
-<span id="cb170-16"><a href="match-ea-and-census-water-points.html#cb170-16" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb170-17"><a href="match-ea-and-census-water-points.html#cb170-17" tabindex="-1"></a>      <span class="st">&quot;EvidenceAction&quot;</span>,</span>
-<span id="cb170-18"><a href="match-ea-and-census-water-points.html#cb170-18" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb170-19"><a href="match-ea-and-census-water-points.html#cb170-19" tabindex="-1"></a>      <span class="st">&quot;ea-malawi-wcp-sf.rds&quot;</span></span>
-<span id="cb170-20"><a href="match-ea-and-census-water-points.html#cb170-20" tabindex="-1"></a>      )</span>
-<span id="cb170-21"><a href="match-ea-and-census-water-points.html#cb170-21" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb170-22"><a href="match-ea-and-census-water-points.html#cb170-22" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb170-23"><a href="match-ea-and-census-water-points.html#cb170-23" tabindex="-1"></a>    <span class="at">wpt_id =</span> wcp_id,</span>
-<span id="cb170-24"><a href="match-ea-and-census-water-points.html#cb170-24" tabindex="-1"></a>    <span class="at">villageid =</span> <span class="fu">as.character</span>(wcp_villageid)</span>
-<span id="cb170-25"><a href="match-ea-and-census-water-points.html#cb170-25" tabindex="-1"></a>  )</span>
-<span id="cb170-26"><a href="match-ea-and-census-water-points.html#cb170-26" tabindex="-1"></a></span>
-<span id="cb170-27"><a href="match-ea-and-census-water-points.html#cb170-27" tabindex="-1"></a>ea_malawi <span class="ot">&lt;-</span></span>
-<span id="cb170-28"><a href="match-ea-and-census-water-points.html#cb170-28" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb170-29"><a href="match-ea-and-census-water-points.html#cb170-29" tabindex="-1"></a>    ea_malawi_wpt,</span>
-<span id="cb170-30"><a href="match-ea-and-census-water-points.html#cb170-30" tabindex="-1"></a>    ea_malawi_wcp</span>
-<span id="cb170-31"><a href="match-ea-and-census-water-points.html#cb170-31" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb170-32"><a href="match-ea-and-census-water-points.html#cb170-32" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb170-33"><a href="match-ea-and-census-water-points.html#cb170-33" tabindex="-1"></a>     <span class="at">program =</span> program <span class="sc">%&gt;%</span> </span>
-<span id="cb170-34"><a href="match-ea-and-census-water-points.html#cb170-34" tabindex="-1"></a>      as.character <span class="sc">%&gt;%</span> </span>
-<span id="cb170-35"><a href="match-ea-and-census-water-points.html#cb170-35" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC water point&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb170-36"><a href="match-ea-and-census-water-points.html#cb170-36" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">replace_na</span>(<span class="st">&quot;ILC water collection point&quot;</span>)</span>
-<span id="cb170-37"><a href="match-ea-and-census-water-points.html#cb170-37" tabindex="-1"></a>  )</span></code></pre></div>
-</details>
-<details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb171"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb171-1"><a href="match-ea-and-census-water-points.html#cb171-1" tabindex="-1"></a>ea_uganda_wpt <span class="ot">&lt;-</span> </span>
+<div class="sourceCode" id="cb171"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb171-1"><a href="match-ea-and-census-water-points.html#cb171-1" tabindex="-1"></a>ea_malawi_wpt <span class="ot">&lt;-</span> </span>
 <span id="cb171-2"><a href="match-ea-and-census-water-points.html#cb171-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
 <span id="cb171-3"><a href="match-ea-and-census-water-points.html#cb171-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
 <span id="cb171-4"><a href="match-ea-and-census-water-points.html#cb171-4" tabindex="-1"></a>      path_box,</span>
 <span id="cb171-5"><a href="match-ea-and-census-water-points.html#cb171-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
 <span id="cb171-6"><a href="match-ea-and-census-water-points.html#cb171-6" tabindex="-1"></a>      <span class="st">&quot;EvidenceAction&quot;</span>,</span>
 <span id="cb171-7"><a href="match-ea-and-census-water-points.html#cb171-7" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb171-8"><a href="match-ea-and-census-water-points.html#cb171-8" tabindex="-1"></a>      <span class="st">&quot;ea-uganda-wp-sf.rds&quot;</span></span>
-<span id="cb171-9"><a href="match-ea-and-census-water-points.html#cb171-9" tabindex="-1"></a>    )</span>
+<span id="cb171-8"><a href="match-ea-and-census-water-points.html#cb171-8" tabindex="-1"></a>      <span class="st">&quot;ea-malawi-wp-sf.rds&quot;</span></span>
+<span id="cb171-9"><a href="match-ea-and-census-water-points.html#cb171-9" tabindex="-1"></a>      )</span>
 <span id="cb171-10"><a href="match-ea-and-census-water-points.html#cb171-10" tabindex="-1"></a>  )</span>
 <span id="cb171-11"><a href="match-ea-and-census-water-points.html#cb171-11" tabindex="-1"></a></span>
-<span id="cb171-12"><a href="match-ea-and-census-water-points.html#cb171-12" tabindex="-1"></a>ea_uganda_wcp <span class="ot">&lt;-</span> </span>
+<span id="cb171-12"><a href="match-ea-and-census-water-points.html#cb171-12" tabindex="-1"></a>ea_malawi_wcp <span class="ot">&lt;-</span> </span>
 <span id="cb171-13"><a href="match-ea-and-census-water-points.html#cb171-13" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
 <span id="cb171-14"><a href="match-ea-and-census-water-points.html#cb171-14" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
 <span id="cb171-15"><a href="match-ea-and-census-water-points.html#cb171-15" tabindex="-1"></a>      path_box,</span>
 <span id="cb171-16"><a href="match-ea-and-census-water-points.html#cb171-16" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
 <span id="cb171-17"><a href="match-ea-and-census-water-points.html#cb171-17" tabindex="-1"></a>      <span class="st">&quot;EvidenceAction&quot;</span>,</span>
 <span id="cb171-18"><a href="match-ea-and-census-water-points.html#cb171-18" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
-<span id="cb171-19"><a href="match-ea-and-census-water-points.html#cb171-19" tabindex="-1"></a>      <span class="st">&quot;ea-uganda-wcp-sf.rds&quot;</span></span>
-<span id="cb171-20"><a href="match-ea-and-census-water-points.html#cb171-20" tabindex="-1"></a>    )</span>
+<span id="cb171-19"><a href="match-ea-and-census-water-points.html#cb171-19" tabindex="-1"></a>      <span class="st">&quot;ea-malawi-wcp-sf.rds&quot;</span></span>
+<span id="cb171-20"><a href="match-ea-and-census-water-points.html#cb171-20" tabindex="-1"></a>      )</span>
 <span id="cb171-21"><a href="match-ea-and-census-water-points.html#cb171-21" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb171-22"><a href="match-ea-and-census-water-points.html#cb171-22" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb171-22"><a href="match-ea-and-census-water-points.html#cb171-22" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
 <span id="cb171-23"><a href="match-ea-and-census-water-points.html#cb171-23" tabindex="-1"></a>    <span class="at">wpt_id =</span> wcp_id,</span>
-<span id="cb171-24"><a href="match-ea-and-census-water-points.html#cb171-24" tabindex="-1"></a>    <span class="at">villageid =</span> wcp_villageid</span>
+<span id="cb171-24"><a href="match-ea-and-census-water-points.html#cb171-24" tabindex="-1"></a>    <span class="at">villageid =</span> <span class="fu">as.character</span>(wcp_villageid)</span>
 <span id="cb171-25"><a href="match-ea-and-census-water-points.html#cb171-25" tabindex="-1"></a>  )</span>
 <span id="cb171-26"><a href="match-ea-and-census-water-points.html#cb171-26" tabindex="-1"></a></span>
-<span id="cb171-27"><a href="match-ea-and-census-water-points.html#cb171-27" tabindex="-1"></a>ea_uganda <span class="ot">&lt;-</span></span>
+<span id="cb171-27"><a href="match-ea-and-census-water-points.html#cb171-27" tabindex="-1"></a>ea_malawi <span class="ot">&lt;-</span></span>
 <span id="cb171-28"><a href="match-ea-and-census-water-points.html#cb171-28" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb171-29"><a href="match-ea-and-census-water-points.html#cb171-29" tabindex="-1"></a>    ea_uganda_wpt,</span>
-<span id="cb171-30"><a href="match-ea-and-census-water-points.html#cb171-30" tabindex="-1"></a>    ea_uganda_wcp</span>
+<span id="cb171-29"><a href="match-ea-and-census-water-points.html#cb171-29" tabindex="-1"></a>    ea_malawi_wpt,</span>
+<span id="cb171-30"><a href="match-ea-and-census-water-points.html#cb171-30" tabindex="-1"></a>    ea_malawi_wcp</span>
 <span id="cb171-31"><a href="match-ea-and-census-water-points.html#cb171-31" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
 <span id="cb171-32"><a href="match-ea-and-census-water-points.html#cb171-32" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb171-33"><a href="match-ea-and-census-water-points.html#cb171-33" tabindex="-1"></a>    <span class="at">program =</span> program <span class="sc">%&gt;%</span> </span>
+<span id="cb171-33"><a href="match-ea-and-census-water-points.html#cb171-33" tabindex="-1"></a>     <span class="at">program =</span> program <span class="sc">%&gt;%</span> </span>
 <span id="cb171-34"><a href="match-ea-and-census-water-points.html#cb171-34" tabindex="-1"></a>      as.character <span class="sc">%&gt;%</span> </span>
 <span id="cb171-35"><a href="match-ea-and-census-water-points.html#cb171-35" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC water point&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb171-36"><a href="match-ea-and-census-water-points.html#cb171-36" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">replace_na</span>(<span class="st">&quot;ILC water collection point&quot;</span>)</span>
 <span id="cb171-37"><a href="match-ea-and-census-water-points.html#cb171-37" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
+<details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb172"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb172-1"><a href="match-ea-and-census-water-points.html#cb172-1" tabindex="-1"></a>ea_uganda_wpt <span class="ot">&lt;-</span> </span>
+<span id="cb172-2"><a href="match-ea-and-census-water-points.html#cb172-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb172-3"><a href="match-ea-and-census-water-points.html#cb172-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb172-4"><a href="match-ea-and-census-water-points.html#cb172-4" tabindex="-1"></a>      path_box,</span>
+<span id="cb172-5"><a href="match-ea-and-census-water-points.html#cb172-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb172-6"><a href="match-ea-and-census-water-points.html#cb172-6" tabindex="-1"></a>      <span class="st">&quot;EvidenceAction&quot;</span>,</span>
+<span id="cb172-7"><a href="match-ea-and-census-water-points.html#cb172-7" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb172-8"><a href="match-ea-and-census-water-points.html#cb172-8" tabindex="-1"></a>      <span class="st">&quot;ea-uganda-wp-sf.rds&quot;</span></span>
+<span id="cb172-9"><a href="match-ea-and-census-water-points.html#cb172-9" tabindex="-1"></a>    )</span>
+<span id="cb172-10"><a href="match-ea-and-census-water-points.html#cb172-10" tabindex="-1"></a>  )</span>
+<span id="cb172-11"><a href="match-ea-and-census-water-points.html#cb172-11" tabindex="-1"></a></span>
+<span id="cb172-12"><a href="match-ea-and-census-water-points.html#cb172-12" tabindex="-1"></a>ea_uganda_wcp <span class="ot">&lt;-</span> </span>
+<span id="cb172-13"><a href="match-ea-and-census-water-points.html#cb172-13" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
+<span id="cb172-14"><a href="match-ea-and-census-water-points.html#cb172-14" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
+<span id="cb172-15"><a href="match-ea-and-census-water-points.html#cb172-15" tabindex="-1"></a>      path_box,</span>
+<span id="cb172-16"><a href="match-ea-and-census-water-points.html#cb172-16" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb172-17"><a href="match-ea-and-census-water-points.html#cb172-17" tabindex="-1"></a>      <span class="st">&quot;EvidenceAction&quot;</span>,</span>
+<span id="cb172-18"><a href="match-ea-and-census-water-points.html#cb172-18" tabindex="-1"></a>      <span class="st">&quot;Spatial&quot;</span>,</span>
+<span id="cb172-19"><a href="match-ea-and-census-water-points.html#cb172-19" tabindex="-1"></a>      <span class="st">&quot;ea-uganda-wcp-sf.rds&quot;</span></span>
+<span id="cb172-20"><a href="match-ea-and-census-water-points.html#cb172-20" tabindex="-1"></a>    )</span>
+<span id="cb172-21"><a href="match-ea-and-census-water-points.html#cb172-21" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb172-22"><a href="match-ea-and-census-water-points.html#cb172-22" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb172-23"><a href="match-ea-and-census-water-points.html#cb172-23" tabindex="-1"></a>    <span class="at">wpt_id =</span> wcp_id,</span>
+<span id="cb172-24"><a href="match-ea-and-census-water-points.html#cb172-24" tabindex="-1"></a>    <span class="at">villageid =</span> wcp_villageid</span>
+<span id="cb172-25"><a href="match-ea-and-census-water-points.html#cb172-25" tabindex="-1"></a>  )</span>
+<span id="cb172-26"><a href="match-ea-and-census-water-points.html#cb172-26" tabindex="-1"></a></span>
+<span id="cb172-27"><a href="match-ea-and-census-water-points.html#cb172-27" tabindex="-1"></a>ea_uganda <span class="ot">&lt;-</span></span>
+<span id="cb172-28"><a href="match-ea-and-census-water-points.html#cb172-28" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb172-29"><a href="match-ea-and-census-water-points.html#cb172-29" tabindex="-1"></a>    ea_uganda_wpt,</span>
+<span id="cb172-30"><a href="match-ea-and-census-water-points.html#cb172-30" tabindex="-1"></a>    ea_uganda_wcp</span>
+<span id="cb172-31"><a href="match-ea-and-census-water-points.html#cb172-31" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb172-32"><a href="match-ea-and-census-water-points.html#cb172-32" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb172-33"><a href="match-ea-and-census-water-points.html#cb172-33" tabindex="-1"></a>    <span class="at">program =</span> program <span class="sc">%&gt;%</span> </span>
+<span id="cb172-34"><a href="match-ea-and-census-water-points.html#cb172-34" tabindex="-1"></a>      as.character <span class="sc">%&gt;%</span> </span>
+<span id="cb172-35"><a href="match-ea-and-census-water-points.html#cb172-35" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC water point&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb172-36"><a href="match-ea-and-census-water-points.html#cb172-36" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">replace_na</span>(<span class="st">&quot;ILC water collection point&quot;</span>)</span>
+<span id="cb172-37"><a href="match-ea-and-census-water-points.html#cb172-37" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
 <p>Combine both countries</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb172"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb172-1"><a href="match-ea-and-census-water-points.html#cb172-1" tabindex="-1"></a>ea <span class="ot">&lt;-</span></span>
-<span id="cb172-2"><a href="match-ea-and-census-water-points.html#cb172-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb172-3"><a href="match-ea-and-census-water-points.html#cb172-3" tabindex="-1"></a>    ea_malawi,</span>
-<span id="cb172-4"><a href="match-ea-and-census-water-points.html#cb172-4" tabindex="-1"></a>    ea_uganda</span>
-<span id="cb172-5"><a href="match-ea-and-census-water-points.html#cb172-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb172-6"><a href="match-ea-and-census-water-points.html#cb172-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb172-7"><a href="match-ea-and-census-water-points.html#cb172-7" tabindex="-1"></a>    <span class="at">sourcetype =</span> <span class="fu">str_to_sentence</span>(sourcetype),</span>
-<span id="cb172-8"><a href="match-ea-and-census-water-points.html#cb172-8" tabindex="-1"></a>    <span class="at">sourcetype_simp =</span> <span class="fu">case_when</span>(</span>
-<span id="cb172-9"><a href="match-ea-and-census-water-points.html#cb172-9" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;Borehole&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Borehole&quot;</span>,</span>
-<span id="cb172-10"><a href="match-ea-and-census-water-points.html#cb172-10" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;Municipal&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Municipal water supply&quot;</span>,</span>
-<span id="cb172-11"><a href="match-ea-and-census-water-points.html#cb172-11" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;well&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Dug well&quot;</span>,</span>
-<span id="cb172-12"><a href="match-ea-and-census-water-points.html#cb172-12" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;spring&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Spring&quot;</span>,</span>
-<span id="cb172-13"><a href="match-ea-and-census-water-points.html#cb172-13" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;Dam&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Surface water&quot;</span>,</span>
-<span id="cb172-14"><a href="match-ea-and-census-water-points.html#cb172-14" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;water source&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Surface water&quot;</span></span>
-<span id="cb172-15"><a href="match-ea-and-census-water-points.html#cb172-15" tabindex="-1"></a>    ),</span>
-<span id="cb172-16"><a href="match-ea-and-census-water-points.html#cb172-16" tabindex="-1"></a>    <span class="at">wpt_id =</span> <span class="fu">as.numeric</span>(wpt_id)</span>
-<span id="cb172-17"><a href="match-ea-and-census-water-points.html#cb172-17" tabindex="-1"></a>  )</span>
-<span id="cb172-18"><a href="match-ea-and-census-water-points.html#cb172-18" tabindex="-1"></a></span>
-<span id="cb172-19"><a href="match-ea-and-census-water-points.html#cb172-19" tabindex="-1"></a>ea_tabular <span class="ot">&lt;-</span> </span>
-<span id="cb172-20"><a href="match-ea-and-census-water-points.html#cb172-20" tabindex="-1"></a>  ea <span class="sc">%&gt;%</span></span>
-<span id="cb172-21"><a href="match-ea-and-census-water-points.html#cb172-21" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb173"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb173-1"><a href="match-ea-and-census-water-points.html#cb173-1" tabindex="-1"></a>ea <span class="ot">&lt;-</span></span>
+<span id="cb173-2"><a href="match-ea-and-census-water-points.html#cb173-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb173-3"><a href="match-ea-and-census-water-points.html#cb173-3" tabindex="-1"></a>    ea_malawi,</span>
+<span id="cb173-4"><a href="match-ea-and-census-water-points.html#cb173-4" tabindex="-1"></a>    ea_uganda</span>
+<span id="cb173-5"><a href="match-ea-and-census-water-points.html#cb173-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb173-6"><a href="match-ea-and-census-water-points.html#cb173-6" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb173-7"><a href="match-ea-and-census-water-points.html#cb173-7" tabindex="-1"></a>    <span class="at">sourcetype =</span> <span class="fu">str_to_sentence</span>(sourcetype),</span>
+<span id="cb173-8"><a href="match-ea-and-census-water-points.html#cb173-8" tabindex="-1"></a>    <span class="at">sourcetype_simp =</span> <span class="fu">case_when</span>(</span>
+<span id="cb173-9"><a href="match-ea-and-census-water-points.html#cb173-9" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;Borehole&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Borehole&quot;</span>,</span>
+<span id="cb173-10"><a href="match-ea-and-census-water-points.html#cb173-10" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;Municipal&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Municipal water supply&quot;</span>,</span>
+<span id="cb173-11"><a href="match-ea-and-census-water-points.html#cb173-11" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;well&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Dug well&quot;</span>,</span>
+<span id="cb173-12"><a href="match-ea-and-census-water-points.html#cb173-12" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;spring&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Spring&quot;</span>,</span>
+<span id="cb173-13"><a href="match-ea-and-census-water-points.html#cb173-13" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;Dam&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Surface water&quot;</span>,</span>
+<span id="cb173-14"><a href="match-ea-and-census-water-points.html#cb173-14" tabindex="-1"></a>      <span class="fu">str_detect</span>(sourcetype, <span class="st">&quot;water source&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Surface water&quot;</span></span>
+<span id="cb173-15"><a href="match-ea-and-census-water-points.html#cb173-15" tabindex="-1"></a>    ),</span>
+<span id="cb173-16"><a href="match-ea-and-census-water-points.html#cb173-16" tabindex="-1"></a>    <span class="at">wpt_id =</span> <span class="fu">as.numeric</span>(wpt_id)</span>
+<span id="cb173-17"><a href="match-ea-and-census-water-points.html#cb173-17" tabindex="-1"></a>  )</span>
+<span id="cb173-18"><a href="match-ea-and-census-water-points.html#cb173-18" tabindex="-1"></a></span>
+<span id="cb173-19"><a href="match-ea-and-census-water-points.html#cb173-19" tabindex="-1"></a>ea_tabular <span class="ot">&lt;-</span> </span>
+<span id="cb173-20"><a href="match-ea-and-census-water-points.html#cb173-20" tabindex="-1"></a>  ea <span class="sc">%&gt;%</span></span>
+<span id="cb173-21"><a href="match-ea-and-census-water-points.html#cb173-21" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>()</span></code></pre></div>
 </details>
 </div>
 </div>
@@ -2419,39 +2421,40 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="calculate-distances" class="section level3 hasAnchor" number="11.2.1">
 <h3><span class="header-section-number">11.2.1</span> Calculate distances<a href="match-ea-and-census-water-points.html#calculate-distances" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb173"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb173-1"><a href="match-ea-and-census-water-points.html#cb173-1" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb173-2"><a href="match-ea-and-census-water-points.html#cb173-2" tabindex="-1"></a></span>
-<span id="cb173-3"><a href="match-ea-and-census-water-points.html#cb173-3" tabindex="-1"></a>wp_uganda <span class="ot">&lt;-</span></span>
-<span id="cb173-4"><a href="match-ea-and-census-water-points.html#cb173-4" tabindex="-1"></a>  <span class="fu">st_distance_df</span>(</span>
-<span id="cb173-5"><a href="match-ea-and-census-water-points.html#cb173-5" tabindex="-1"></a>    ipa_uganda, <span class="st">&quot;wp_id_c&quot;</span>,</span>
-<span id="cb173-6"><a href="match-ea-and-census-water-points.html#cb173-6" tabindex="-1"></a>    ea_uganda, <span class="st">&quot;wpt_id&quot;</span></span>
-<span id="cb173-7"><a href="match-ea-and-census-water-points.html#cb173-7" tabindex="-1"></a>  )</span>
-<span id="cb173-8"><a href="match-ea-and-census-water-points.html#cb173-8" tabindex="-1"></a></span>
-<span id="cb173-9"><a href="match-ea-and-census-water-points.html#cb173-9" tabindex="-1"></a><span class="fu">toc</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb174"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb174-1"><a href="match-ea-and-census-water-points.html#cb174-1" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb174-2"><a href="match-ea-and-census-water-points.html#cb174-2" tabindex="-1"></a></span>
+<span id="cb174-3"><a href="match-ea-and-census-water-points.html#cb174-3" tabindex="-1"></a>wp_uganda <span class="ot">&lt;-</span></span>
+<span id="cb174-4"><a href="match-ea-and-census-water-points.html#cb174-4" tabindex="-1"></a>  <span class="fu">st_distance_df</span>(</span>
+<span id="cb174-5"><a href="match-ea-and-census-water-points.html#cb174-5" tabindex="-1"></a>    ipa_uganda, <span class="st">&quot;wp_id_c&quot;</span>,</span>
+<span id="cb174-6"><a href="match-ea-and-census-water-points.html#cb174-6" tabindex="-1"></a>    ea_uganda, <span class="st">&quot;wpt_id&quot;</span></span>
+<span id="cb174-7"><a href="match-ea-and-census-water-points.html#cb174-7" tabindex="-1"></a>  )</span>
+<span id="cb174-8"><a href="match-ea-and-census-water-points.html#cb174-8" tabindex="-1"></a></span>
+<span id="cb174-9"><a href="match-ea-and-census-water-points.html#cb174-9" tabindex="-1"></a><span class="fu">toc</span>()</span></code></pre></div>
 </details>
-<pre><code>## 44.37 sec elapsed</code></pre>
+<pre><code>## 63.1 sec elapsed</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb175"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb175-1"><a href="match-ea-and-census-water-points.html#cb175-1" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb175-2"><a href="match-ea-and-census-water-points.html#cb175-2" tabindex="-1"></a></span>
-<span id="cb175-3"><a href="match-ea-and-census-water-points.html#cb175-3" tabindex="-1"></a>wp_malawi <span class="ot">&lt;-</span></span>
-<span id="cb175-4"><a href="match-ea-and-census-water-points.html#cb175-4" tabindex="-1"></a>  <span class="fu">st_distance_df</span>(</span>
-<span id="cb175-5"><a href="match-ea-and-census-water-points.html#cb175-5" tabindex="-1"></a>    ipa_malawi, <span class="st">&quot;wp_id_c&quot;</span>,</span>
-<span id="cb175-6"><a href="match-ea-and-census-water-points.html#cb175-6" tabindex="-1"></a>    ea_malawi, <span class="st">&quot;wpt_id&quot;</span></span>
-<span id="cb175-7"><a href="match-ea-and-census-water-points.html#cb175-7" tabindex="-1"></a>  ) </span>
-<span id="cb175-8"><a href="match-ea-and-census-water-points.html#cb175-8" tabindex="-1"></a></span>
-<span id="cb175-9"><a href="match-ea-and-census-water-points.html#cb175-9" tabindex="-1"></a><span class="fu">toc</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb176"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb176-1"><a href="match-ea-and-census-water-points.html#cb176-1" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb176-2"><a href="match-ea-and-census-water-points.html#cb176-2" tabindex="-1"></a></span>
+<span id="cb176-3"><a href="match-ea-and-census-water-points.html#cb176-3" tabindex="-1"></a>wp_malawi <span class="ot">&lt;-</span></span>
+<span id="cb176-4"><a href="match-ea-and-census-water-points.html#cb176-4" tabindex="-1"></a>  <span class="fu">st_distance_df</span>(</span>
+<span id="cb176-5"><a href="match-ea-and-census-water-points.html#cb176-5" tabindex="-1"></a>    ipa_malawi, <span class="st">&quot;wp_id_c&quot;</span>,</span>
+<span id="cb176-6"><a href="match-ea-and-census-water-points.html#cb176-6" tabindex="-1"></a>    ea_malawi, <span class="st">&quot;wpt_id&quot;</span></span>
+<span id="cb176-7"><a href="match-ea-and-census-water-points.html#cb176-7" tabindex="-1"></a>  ) </span>
+<span id="cb176-8"><a href="match-ea-and-census-water-points.html#cb176-8" tabindex="-1"></a></span>
+<span id="cb176-9"><a href="match-ea-and-census-water-points.html#cb176-9" tabindex="-1"></a><span class="fu">toc</span>()</span></code></pre></div>
 </details>
-<pre><code>## 44.98 sec elapsed</code></pre>
+<pre><code>## 62.13 sec elapsed</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb177"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb177-1"><a href="match-ea-and-census-water-points.html#cb177-1" tabindex="-1"></a>wps <span class="ot">&lt;-</span></span>
-<span id="cb177-2"><a href="match-ea-and-census-water-points.html#cb177-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb177-3"><a href="match-ea-and-census-water-points.html#cb177-3" tabindex="-1"></a>    wp_uganda,</span>
-<span id="cb177-4"><a href="match-ea-and-census-water-points.html#cb177-4" tabindex="-1"></a>    wp_malawi</span>
-<span id="cb177-5"><a href="match-ea-and-census-water-points.html#cb177-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb177-6"><a href="match-ea-and-census-water-points.html#cb177-6" tabindex="-1"></a>  <span class="fu">left_join</span>(wp <span class="sc">%&gt;%</span> <span class="fu">select</span>(wp_id, wp_id_c)) <span class="sc">%&gt;%</span></span>
-<span id="cb177-7"><a href="match-ea-and-census-water-points.html#cb177-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">wpt_id =</span> <span class="fu">as.numeric</span>(wpt_id))</span></code></pre></div>
+<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb178-1"><a href="match-ea-and-census-water-points.html#cb178-1" tabindex="-1"></a>wps <span class="ot">&lt;-</span></span>
+<span id="cb178-2"><a href="match-ea-and-census-water-points.html#cb178-2" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb178-3"><a href="match-ea-and-census-water-points.html#cb178-3" tabindex="-1"></a>    wp_uganda,</span>
+<span id="cb178-4"><a href="match-ea-and-census-water-points.html#cb178-4" tabindex="-1"></a>    wp_malawi</span>
+<span id="cb178-5"><a href="match-ea-and-census-water-points.html#cb178-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb178-6"><a href="match-ea-and-census-water-points.html#cb178-6" tabindex="-1"></a>  <span class="fu">left_join</span>(wp <span class="sc">%&gt;%</span> <span class="fu">select</span>(wp_id, wp_id_c)) <span class="sc">%&gt;%</span></span>
+<span id="cb178-7"><a href="match-ea-and-census-water-points.html#cb178-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">wpt_id =</span> <span class="fu">as.numeric</span>(wpt_id))</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(wp_id_c)`</code></pre>
+<pre><code>## Joining with `by =
+## join_by(wp_id_c)`</code></pre>
 </div>
 </div>
 <div id="match-ipa-water-points-to-ea-water-points" class="section level2 hasAnchor" number="11.3">
@@ -2460,147 +2463,149 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <h3><span class="header-section-number">11.3.1</span> Manual matches<a href="match-ea-and-census-water-points.html#manual-matches" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Manual matches take precedence over any algorithmic matching. We will not try to match water points that were already matched (including if they were marked as unmatched).</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb179"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb179-1"><a href="match-ea-and-census-water-points.html#cb179-1" tabindex="-1"></a>matched_manual <span class="ot">&lt;-</span> </span>
-<span id="cb179-2"><a href="match-ea-and-census-water-points.html#cb179-2" tabindex="-1"></a>  manual_matches <span class="sc">%&gt;%</span></span>
-<span id="cb179-3"><a href="match-ea-and-census-water-points.html#cb179-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(manual_unmatched) <span class="sc">%&gt;%</span></span>
-<span id="cb179-4"><a href="match-ea-and-census-water-points.html#cb179-4" tabindex="-1"></a>  <span class="fu">select</span>(wp_id, ea_id, ilc_cluster_wp, <span class="at">match_comments =</span> comments) <span class="sc">%&gt;%</span></span>
-<span id="cb179-5"><a href="match-ea-and-census-water-points.html#cb179-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;Manual&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb180-1"><a href="match-ea-and-census-water-points.html#cb180-1" tabindex="-1"></a>matched_manual <span class="ot">&lt;-</span> </span>
+<span id="cb180-2"><a href="match-ea-and-census-water-points.html#cb180-2" tabindex="-1"></a>  manual_matches <span class="sc">%&gt;%</span></span>
+<span id="cb180-3"><a href="match-ea-and-census-water-points.html#cb180-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(manual_unmatched) <span class="sc">%&gt;%</span></span>
+<span id="cb180-4"><a href="match-ea-and-census-water-points.html#cb180-4" tabindex="-1"></a>  <span class="fu">select</span>(wp_id, ea_id, ilc_cluster_wp, <span class="at">match_comments =</span> comments) <span class="sc">%&gt;%</span></span>
+<span id="cb180-5"><a href="match-ea-and-census-water-points.html#cb180-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;Manual&quot;</span>)</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb180-1"><a href="match-ea-and-census-water-points.html#cb180-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb180-2"><a href="match-ea-and-census-water-points.html#cb180-2" tabindex="-1"></a>  matched_manual <span class="sc">%&gt;%</span></span>
-<span id="cb180-3"><a href="match-ea-and-census-water-points.html#cb180-3" tabindex="-1"></a>    <span class="fu">select</span>(ea_id, wp_id) <span class="sc">%&gt;%</span></span>
-<span id="cb180-4"><a href="match-ea-and-census-water-points.html#cb180-4" tabindex="-1"></a>    unique <span class="sc">%&gt;%</span></span>
-<span id="cb180-5"><a href="match-ea-and-census-water-points.html#cb180-5" tabindex="-1"></a>    <span class="fu">nrow</span>()</span>
-<span id="cb180-6"><a href="match-ea-and-census-water-points.html#cb180-6" tabindex="-1"></a>  <span class="sc">==</span></span>
-<span id="cb180-7"><a href="match-ea-and-census-water-points.html#cb180-7" tabindex="-1"></a>    <span class="fu">nrow</span>(matched_manual)</span>
-<span id="cb180-8"><a href="match-ea-and-census-water-points.html#cb180-8" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb181"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb181-1"><a href="match-ea-and-census-water-points.html#cb181-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb181-2"><a href="match-ea-and-census-water-points.html#cb181-2" tabindex="-1"></a>  matched_manual <span class="sc">%&gt;%</span></span>
+<span id="cb181-3"><a href="match-ea-and-census-water-points.html#cb181-3" tabindex="-1"></a>    <span class="fu">select</span>(ea_id, wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb181-4"><a href="match-ea-and-census-water-points.html#cb181-4" tabindex="-1"></a>    unique <span class="sc">%&gt;%</span></span>
+<span id="cb181-5"><a href="match-ea-and-census-water-points.html#cb181-5" tabindex="-1"></a>    <span class="fu">nrow</span>()</span>
+<span id="cb181-6"><a href="match-ea-and-census-water-points.html#cb181-6" tabindex="-1"></a>  <span class="sc">==</span></span>
+<span id="cb181-7"><a href="match-ea-and-census-water-points.html#cb181-7" tabindex="-1"></a>    <span class="fu">nrow</span>(matched_manual)</span>
+<span id="cb181-8"><a href="match-ea-and-census-water-points.html#cb181-8" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="by-dsw-id-and-distance" class="section level3 hasAnchor" number="11.3.2">
 <h3><span class="header-section-number">11.3.2</span> By DSW ID and distance<a href="match-ea-and-census-water-points.html#by-dsw-id-and-distance" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb182-1"><a href="match-ea-and-census-water-points.html#cb182-1" tabindex="-1"></a>matched_id <span class="ot">&lt;-</span></span>
-<span id="cb182-2"><a href="match-ea-and-census-water-points.html#cb182-2" tabindex="-1"></a>  wp_tabular <span class="sc">%&gt;%</span></span>
-<span id="cb182-3"><a href="match-ea-and-census-water-points.html#cb182-3" tabindex="-1"></a>  <span class="fu">select</span>(wp_id_c, <span class="at">wpt_id =</span> disp_dsw_id) <span class="sc">%&gt;%</span></span>
-<span id="cb182-4"><a href="match-ea-and-census-water-points.html#cb182-4" tabindex="-1"></a>  <span class="fu">inner_join</span>(ea_tabular) <span class="sc">%&gt;%</span></span>
-<span id="cb182-5"><a href="match-ea-and-census-water-points.html#cb182-5" tabindex="-1"></a>  <span class="fu">left_join</span>(wps) <span class="sc">%&gt;%</span></span>
-<span id="cb182-6"><a href="match-ea-and-census-water-points.html#cb182-6" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(distance <span class="sc">&lt;</span> <span class="dv">50</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb182-7"><a href="match-ea-and-census-water-points.html#cb182-7" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">ea_id =</span> wpt_id, wp_id) <span class="sc">%&gt;%</span></span>
-<span id="cb182-8"><a href="match-ea-and-census-water-points.html#cb182-8" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;DSW ID&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb183-1"><a href="match-ea-and-census-water-points.html#cb183-1" tabindex="-1"></a>matched_id <span class="ot">&lt;-</span></span>
+<span id="cb183-2"><a href="match-ea-and-census-water-points.html#cb183-2" tabindex="-1"></a>  wp_tabular <span class="sc">%&gt;%</span></span>
+<span id="cb183-3"><a href="match-ea-and-census-water-points.html#cb183-3" tabindex="-1"></a>  <span class="fu">select</span>(wp_id_c, <span class="at">wpt_id =</span> disp_dsw_id) <span class="sc">%&gt;%</span></span>
+<span id="cb183-4"><a href="match-ea-and-census-water-points.html#cb183-4" tabindex="-1"></a>  <span class="fu">inner_join</span>(ea_tabular) <span class="sc">%&gt;%</span></span>
+<span id="cb183-5"><a href="match-ea-and-census-water-points.html#cb183-5" tabindex="-1"></a>  <span class="fu">left_join</span>(wps) <span class="sc">%&gt;%</span></span>
+<span id="cb183-6"><a href="match-ea-and-census-water-points.html#cb183-6" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(distance <span class="sc">&lt;</span> <span class="dv">50</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb183-7"><a href="match-ea-and-census-water-points.html#cb183-7" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">ea_id =</span> wpt_id, wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb183-8"><a href="match-ea-and-census-water-points.html#cb183-8" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;DSW ID&quot;</span>)</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(wpt_id)`
-## Joining with `by = join_by(wp_id_c, wpt_id)`</code></pre>
+<pre><code>## Joining with `by =
+## join_by(wpt_id)`
+## Joining with `by =
+## join_by(wp_id_c, wpt_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb184-1"><a href="match-ea-and-census-water-points.html#cb184-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb184-2"><a href="match-ea-and-census-water-points.html#cb184-2" tabindex="-1"></a>  <span class="fu">n_distinct</span>(matched_id<span class="sc">$</span>wp_id) <span class="sc">==</span> <span class="fu">nrow</span>(matched_id)</span>
-<span id="cb184-3"><a href="match-ea-and-census-water-points.html#cb184-3" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb185"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb185-1"><a href="match-ea-and-census-water-points.html#cb185-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb185-2"><a href="match-ea-and-census-water-points.html#cb185-2" tabindex="-1"></a>  <span class="fu">n_distinct</span>(matched_id<span class="sc">$</span>wp_id) <span class="sc">==</span> <span class="fu">nrow</span>(matched_id)</span>
+<span id="cb185-3"><a href="match-ea-and-census-water-points.html#cb185-3" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb186"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb186-1"><a href="match-ea-and-census-water-points.html#cb186-1" tabindex="-1"></a>matched_manual_id <span class="ot">&lt;-</span></span>
-<span id="cb186-2"><a href="match-ea-and-census-water-points.html#cb186-2" tabindex="-1"></a>  matched_manual <span class="sc">%&gt;%</span></span>
-<span id="cb186-3"><a href="match-ea-and-census-water-points.html#cb186-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(matched_id) </span></code></pre></div>
+<div class="sourceCode" id="cb187"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb187-1"><a href="match-ea-and-census-water-points.html#cb187-1" tabindex="-1"></a>matched_manual_id <span class="ot">&lt;-</span></span>
+<span id="cb187-2"><a href="match-ea-and-census-water-points.html#cb187-2" tabindex="-1"></a>  matched_manual <span class="sc">%&gt;%</span></span>
+<span id="cb187-3"><a href="match-ea-and-census-water-points.html#cb187-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(matched_id) </span></code></pre></div>
 </details>
 </div>
 <div id="by-distance-and-source-type" class="section level3 hasAnchor" number="11.3.3">
 <h3><span class="header-section-number">11.3.3</span> By distance and source type<a href="match-ea-and-census-water-points.html#by-distance-and-source-type" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>We will only try to match water points that have not yet been matched.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb187"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb187-1"><a href="match-ea-and-census-water-points.html#cb187-1" tabindex="-1"></a>nearby_wps <span class="ot">&lt;-</span></span>
-<span id="cb187-2"><a href="match-ea-and-census-water-points.html#cb187-2" tabindex="-1"></a>  wps <span class="sc">%&gt;%</span></span>
-<span id="cb187-3"><a href="match-ea-and-census-water-points.html#cb187-3" tabindex="-1"></a>  <span class="co"># We consider that two water points further than 100m from one another cannot be the same</span></span>
-<span id="cb187-4"><a href="match-ea-and-census-water-points.html#cb187-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb187-5"><a href="match-ea-and-census-water-points.html#cb187-5" tabindex="-1"></a>    distance <span class="sc">&lt;=</span> <span class="dv">100</span></span>
-<span id="cb187-6"><a href="match-ea-and-census-water-points.html#cb187-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb187-7"><a href="match-ea-and-census-water-points.html#cb187-7" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb187-8"><a href="match-ea-and-census-water-points.html#cb187-8" tabindex="-1"></a>    <span class="sc">!</span>(wp_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>wp_id),</span>
-<span id="cb187-9"><a href="match-ea-and-census-water-points.html#cb187-9" tabindex="-1"></a>    <span class="sc">!</span>(wpt_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>ea_id)</span>
-<span id="cb187-10"><a href="match-ea-and-census-water-points.html#cb187-10" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb188"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb188-1"><a href="match-ea-and-census-water-points.html#cb188-1" tabindex="-1"></a>nearby_wps <span class="ot">&lt;-</span></span>
+<span id="cb188-2"><a href="match-ea-and-census-water-points.html#cb188-2" tabindex="-1"></a>  wps <span class="sc">%&gt;%</span></span>
+<span id="cb188-3"><a href="match-ea-and-census-water-points.html#cb188-3" tabindex="-1"></a>  <span class="co"># We consider that two water points further than 100m from one another cannot be the same</span></span>
+<span id="cb188-4"><a href="match-ea-and-census-water-points.html#cb188-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb188-5"><a href="match-ea-and-census-water-points.html#cb188-5" tabindex="-1"></a>    distance <span class="sc">&lt;=</span> <span class="dv">100</span></span>
+<span id="cb188-6"><a href="match-ea-and-census-water-points.html#cb188-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb188-7"><a href="match-ea-and-census-water-points.html#cb188-7" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb188-8"><a href="match-ea-and-census-water-points.html#cb188-8" tabindex="-1"></a>    <span class="sc">!</span>(wp_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>wp_id),</span>
+<span id="cb188-9"><a href="match-ea-and-census-water-points.html#cb188-9" tabindex="-1"></a>    <span class="sc">!</span>(wpt_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>ea_id)</span>
+<span id="cb188-10"><a href="match-ea-and-census-water-points.html#cb188-10" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <p>We will use simplified source type to determine a match between the IPA points and the EA points. We also create other identifiers to export to the spreadsheet shared with Evidence Action.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb188"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb188-1"><a href="match-ea-and-census-water-points.html#cb188-1" tabindex="-1"></a>ea_wps <span class="ot">&lt;-</span></span>
-<span id="cb188-2"><a href="match-ea-and-census-water-points.html#cb188-2" tabindex="-1"></a>  nearby_wps <span class="sc">%&gt;%</span> </span>
-<span id="cb188-3"><a href="match-ea-and-census-water-points.html#cb188-3" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb188-4"><a href="match-ea-and-census-water-points.html#cb188-4" tabindex="-1"></a>    wp <span class="sc">%&gt;%</span> </span>
-<span id="cb188-5"><a href="match-ea-and-census-water-points.html#cb188-5" tabindex="-1"></a>      <span class="fu">select</span>(</span>
-<span id="cb188-6"><a href="match-ea-and-census-water-points.html#cb188-6" tabindex="-1"></a>        country, wp_id_c, wp_id, wp_name,</span>
-<span id="cb188-7"><a href="match-ea-and-census-water-points.html#cb188-7" tabindex="-1"></a>        <span class="at">sourcetype_simp_ipa =</span> sourcetype_simp, </span>
-<span id="cb188-8"><a href="match-ea-and-census-water-points.html#cb188-8" tabindex="-1"></a>        <span class="at">sourcetype_ipa =</span> sourcetype, </span>
-<span id="cb188-9"><a href="match-ea-and-census-water-points.html#cb188-9" tabindex="-1"></a>        disp_dsw_id, disp_barcode,</span>
-<span id="cb188-10"><a href="match-ea-and-census-water-points.html#cb188-10" tabindex="-1"></a>        dsw, ilc</span>
-<span id="cb188-11"><a href="match-ea-and-census-water-points.html#cb188-11" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb188-12"><a href="match-ea-and-census-water-points.html#cb188-12" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>(),</span>
-<span id="cb188-13"><a href="match-ea-and-census-water-points.html#cb188-13" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span>, <span class="st">&quot;wp_id&quot;</span>)</span>
-<span id="cb188-14"><a href="match-ea-and-census-water-points.html#cb188-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb188-15"><a href="match-ea-and-census-water-points.html#cb188-15" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb188-16"><a href="match-ea-and-census-water-points.html#cb188-16" tabindex="-1"></a>    ea <span class="sc">%&gt;%</span> </span>
-<span id="cb188-17"><a href="match-ea-and-census-water-points.html#cb188-17" tabindex="-1"></a>      <span class="fu">select</span>(</span>
-<span id="cb188-18"><a href="match-ea-and-census-water-points.html#cb188-18" tabindex="-1"></a>        wpt_id, </span>
-<span id="cb188-19"><a href="match-ea-and-census-water-points.html#cb188-19" tabindex="-1"></a>        <span class="at">sourcetype_simp_ea =</span> sourcetype_simp, </span>
-<span id="cb188-20"><a href="match-ea-and-census-water-points.html#cb188-20" tabindex="-1"></a>        <span class="at">sourcetype_ea =</span> sourcetype, </span>
-<span id="cb188-21"><a href="match-ea-and-census-water-points.html#cb188-21" tabindex="-1"></a>        program</span>
-<span id="cb188-22"><a href="match-ea-and-census-water-points.html#cb188-22" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span> </span>
-<span id="cb188-23"><a href="match-ea-and-census-water-points.html#cb188-23" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>(),</span>
-<span id="cb188-24"><a href="match-ea-and-census-water-points.html#cb188-24" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;wpt_id&quot;</span></span>
-<span id="cb188-25"><a href="match-ea-and-census-water-points.html#cb188-25" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb188-26"><a href="match-ea-and-census-water-points.html#cb188-26" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb188-27"><a href="match-ea-and-census-water-points.html#cb188-27" tabindex="-1"></a>    <span class="at">type_match =</span> <span class="fu">case_when</span>(</span>
-<span id="cb188-28"><a href="match-ea-and-census-water-points.html#cb188-28" tabindex="-1"></a>      program <span class="sc">!=</span> <span class="st">&quot;ILC water collection point&quot;</span> <span class="sc">~</span> (sourcetype_simp_ea <span class="sc">==</span> sourcetype_simp_ipa),</span>
-<span id="cb188-29"><a href="match-ea-and-census-water-points.html#cb188-29" tabindex="-1"></a>      program <span class="sc">==</span> <span class="st">&quot;ILC water collection point&quot;</span> <span class="sc">~</span> <span class="fu">is.na</span>(sourcetype_simp_ipa),</span>
-<span id="cb188-30"><a href="match-ea-and-census-water-points.html#cb188-30" tabindex="-1"></a>    ),</span>
-<span id="cb188-31"><a href="match-ea-and-census-water-points.html#cb188-31" tabindex="-1"></a>    <span class="at">program_match =</span> (dsw <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>) <span class="sc">|</span> (ilc <span class="sc">&amp;</span> <span class="fu">str_detect</span>(program, <span class="st">&quot;ILC&quot;</span>)),</span>
-<span id="cb188-32"><a href="match-ea-and-census-water-points.html#cb188-32" tabindex="-1"></a>    <span class="at">missing_disp =</span> (<span class="sc">!</span>dsw <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>),</span>
-<span id="cb188-33"><a href="match-ea-and-census-water-points.html#cb188-33" tabindex="-1"></a>    <span class="at">missing_ilc =</span> (<span class="sc">!</span>ilc <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>),</span>
-<span id="cb188-34"><a href="match-ea-and-census-water-points.html#cb188-34" tabindex="-1"></a>    <span class="at">program_mismatch =</span> <span class="fu">case_when</span>(</span>
-<span id="cb188-35"><a href="match-ea-and-census-water-points.html#cb188-35" tabindex="-1"></a>      (dsw <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>) <span class="sc">|</span> (ilc <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>) <span class="sc">~</span> <span class="cn">TRUE</span>,</span>
-<span id="cb188-36"><a href="match-ea-and-census-water-points.html#cb188-36" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">FALSE</span></span>
-<span id="cb188-37"><a href="match-ea-and-census-water-points.html#cb188-37" tabindex="-1"></a>    ),</span>
-<span id="cb188-38"><a href="match-ea-and-census-water-points.html#cb188-38" tabindex="-1"></a>    <span class="at">matched =</span> (type_match <span class="sc">&amp;</span> program_match)</span>
-<span id="cb188-39"><a href="match-ea-and-census-water-points.html#cb188-39" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb189"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb189-1"><a href="match-ea-and-census-water-points.html#cb189-1" tabindex="-1"></a>ea_wps <span class="ot">&lt;-</span></span>
+<span id="cb189-2"><a href="match-ea-and-census-water-points.html#cb189-2" tabindex="-1"></a>  nearby_wps <span class="sc">%&gt;%</span> </span>
+<span id="cb189-3"><a href="match-ea-and-census-water-points.html#cb189-3" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb189-4"><a href="match-ea-and-census-water-points.html#cb189-4" tabindex="-1"></a>    wp <span class="sc">%&gt;%</span> </span>
+<span id="cb189-5"><a href="match-ea-and-census-water-points.html#cb189-5" tabindex="-1"></a>      <span class="fu">select</span>(</span>
+<span id="cb189-6"><a href="match-ea-and-census-water-points.html#cb189-6" tabindex="-1"></a>        country, wp_id_c, wp_id, wp_name,</span>
+<span id="cb189-7"><a href="match-ea-and-census-water-points.html#cb189-7" tabindex="-1"></a>        <span class="at">sourcetype_simp_ipa =</span> sourcetype_simp, </span>
+<span id="cb189-8"><a href="match-ea-and-census-water-points.html#cb189-8" tabindex="-1"></a>        <span class="at">sourcetype_ipa =</span> sourcetype, </span>
+<span id="cb189-9"><a href="match-ea-and-census-water-points.html#cb189-9" tabindex="-1"></a>        disp_dsw_id, disp_barcode,</span>
+<span id="cb189-10"><a href="match-ea-and-census-water-points.html#cb189-10" tabindex="-1"></a>        dsw, ilc</span>
+<span id="cb189-11"><a href="match-ea-and-census-water-points.html#cb189-11" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb189-12"><a href="match-ea-and-census-water-points.html#cb189-12" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>(),</span>
+<span id="cb189-13"><a href="match-ea-and-census-water-points.html#cb189-13" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;wp_id_c&quot;</span>, <span class="st">&quot;wp_id&quot;</span>)</span>
+<span id="cb189-14"><a href="match-ea-and-census-water-points.html#cb189-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb189-15"><a href="match-ea-and-census-water-points.html#cb189-15" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb189-16"><a href="match-ea-and-census-water-points.html#cb189-16" tabindex="-1"></a>    ea <span class="sc">%&gt;%</span> </span>
+<span id="cb189-17"><a href="match-ea-and-census-water-points.html#cb189-17" tabindex="-1"></a>      <span class="fu">select</span>(</span>
+<span id="cb189-18"><a href="match-ea-and-census-water-points.html#cb189-18" tabindex="-1"></a>        wpt_id, </span>
+<span id="cb189-19"><a href="match-ea-and-census-water-points.html#cb189-19" tabindex="-1"></a>        <span class="at">sourcetype_simp_ea =</span> sourcetype_simp, </span>
+<span id="cb189-20"><a href="match-ea-and-census-water-points.html#cb189-20" tabindex="-1"></a>        <span class="at">sourcetype_ea =</span> sourcetype, </span>
+<span id="cb189-21"><a href="match-ea-and-census-water-points.html#cb189-21" tabindex="-1"></a>        program</span>
+<span id="cb189-22"><a href="match-ea-and-census-water-points.html#cb189-22" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span> </span>
+<span id="cb189-23"><a href="match-ea-and-census-water-points.html#cb189-23" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>(),</span>
+<span id="cb189-24"><a href="match-ea-and-census-water-points.html#cb189-24" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;wpt_id&quot;</span></span>
+<span id="cb189-25"><a href="match-ea-and-census-water-points.html#cb189-25" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb189-26"><a href="match-ea-and-census-water-points.html#cb189-26" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb189-27"><a href="match-ea-and-census-water-points.html#cb189-27" tabindex="-1"></a>    <span class="at">type_match =</span> <span class="fu">case_when</span>(</span>
+<span id="cb189-28"><a href="match-ea-and-census-water-points.html#cb189-28" tabindex="-1"></a>      program <span class="sc">!=</span> <span class="st">&quot;ILC water collection point&quot;</span> <span class="sc">~</span> (sourcetype_simp_ea <span class="sc">==</span> sourcetype_simp_ipa),</span>
+<span id="cb189-29"><a href="match-ea-and-census-water-points.html#cb189-29" tabindex="-1"></a>      program <span class="sc">==</span> <span class="st">&quot;ILC water collection point&quot;</span> <span class="sc">~</span> <span class="fu">is.na</span>(sourcetype_simp_ipa),</span>
+<span id="cb189-30"><a href="match-ea-and-census-water-points.html#cb189-30" tabindex="-1"></a>    ),</span>
+<span id="cb189-31"><a href="match-ea-and-census-water-points.html#cb189-31" tabindex="-1"></a>    <span class="at">program_match =</span> (dsw <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>) <span class="sc">|</span> (ilc <span class="sc">&amp;</span> <span class="fu">str_detect</span>(program, <span class="st">&quot;ILC&quot;</span>)),</span>
+<span id="cb189-32"><a href="match-ea-and-census-water-points.html#cb189-32" tabindex="-1"></a>    <span class="at">missing_disp =</span> (<span class="sc">!</span>dsw <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>),</span>
+<span id="cb189-33"><a href="match-ea-and-census-water-points.html#cb189-33" tabindex="-1"></a>    <span class="at">missing_ilc =</span> (<span class="sc">!</span>ilc <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>),</span>
+<span id="cb189-34"><a href="match-ea-and-census-water-points.html#cb189-34" tabindex="-1"></a>    <span class="at">program_mismatch =</span> <span class="fu">case_when</span>(</span>
+<span id="cb189-35"><a href="match-ea-and-census-water-points.html#cb189-35" tabindex="-1"></a>      (dsw <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>) <span class="sc">|</span> (ilc <span class="sc">&amp;</span> program <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>) <span class="sc">~</span> <span class="cn">TRUE</span>,</span>
+<span id="cb189-36"><a href="match-ea-and-census-water-points.html#cb189-36" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">FALSE</span></span>
+<span id="cb189-37"><a href="match-ea-and-census-water-points.html#cb189-37" tabindex="-1"></a>    ),</span>
+<span id="cb189-38"><a href="match-ea-and-census-water-points.html#cb189-38" tabindex="-1"></a>    <span class="at">matched =</span> (type_match <span class="sc">&amp;</span> program_match)</span>
+<span id="cb189-39"><a href="match-ea-and-census-water-points.html#cb189-39" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb189"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb189-1"><a href="match-ea-and-census-water-points.html#cb189-1" tabindex="-1"></a>matched_dist <span class="ot">&lt;-</span></span>
-<span id="cb189-2"><a href="match-ea-and-census-water-points.html#cb189-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb189-3"><a href="match-ea-and-census-water-points.html#cb189-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(matched <span class="sc">|</span> missing_disp <span class="sc">|</span> missing_ilc) <span class="sc">%&gt;%</span></span>
-<span id="cb189-4"><a href="match-ea-and-census-water-points.html#cb189-4" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb189-5"><a href="match-ea-and-census-water-points.html#cb189-5" tabindex="-1"></a>    <span class="at">ea_id =</span> wpt_id,</span>
-<span id="cb189-6"><a href="match-ea-and-census-water-points.html#cb189-6" tabindex="-1"></a>    wp_id,</span>
-<span id="cb189-7"><a href="match-ea-and-census-water-points.html#cb189-7" tabindex="-1"></a>    distance</span>
-<span id="cb189-8"><a href="match-ea-and-census-water-points.html#cb189-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb189-9"><a href="match-ea-and-census-water-points.html#cb189-9" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;Algorithm&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb190"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb190-1"><a href="match-ea-and-census-water-points.html#cb190-1" tabindex="-1"></a>matched_dist <span class="ot">&lt;-</span></span>
+<span id="cb190-2"><a href="match-ea-and-census-water-points.html#cb190-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb190-3"><a href="match-ea-and-census-water-points.html#cb190-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(matched <span class="sc">|</span> missing_disp <span class="sc">|</span> missing_ilc) <span class="sc">%&gt;%</span></span>
+<span id="cb190-4"><a href="match-ea-and-census-water-points.html#cb190-4" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb190-5"><a href="match-ea-and-census-water-points.html#cb190-5" tabindex="-1"></a>    <span class="at">ea_id =</span> wpt_id,</span>
+<span id="cb190-6"><a href="match-ea-and-census-water-points.html#cb190-6" tabindex="-1"></a>    wp_id,</span>
+<span id="cb190-7"><a href="match-ea-and-census-water-points.html#cb190-7" tabindex="-1"></a>    distance</span>
+<span id="cb190-8"><a href="match-ea-and-census-water-points.html#cb190-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb190-9"><a href="match-ea-and-census-water-points.html#cb190-9" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match =</span> <span class="st">&quot;Algorithm&quot;</span>)</span></code></pre></div>
 </details>
 <div id="check-how-many-water-points-are-matched-this-way" class="section level4 hasAnchor" number="11.3.3.1">
 <h4><span class="header-section-number">11.3.3.1</span> Check how many water points are matched this way<a href="match-ea-and-census-water-points.html#check-how-many-water-points-are-matched-this-way" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb190"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb190-1"><a href="match-ea-and-census-water-points.html#cb190-1" tabindex="-1"></a>ea_wps <span class="ot">&lt;-</span></span>
-<span id="cb190-2"><a href="match-ea-and-census-water-points.html#cb190-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb190-3"><a href="match-ea-and-census-water-points.html#cb190-3" tabindex="-1"></a>  unique <span class="sc">%&gt;%</span></span>
-<span id="cb190-4"><a href="match-ea-and-census-water-points.html#cb190-4" tabindex="-1"></a>  <span class="fu">group_by</span>(wpt_id) <span class="sc">%&gt;%</span></span>
-<span id="cb190-5"><a href="match-ea-and-census-water-points.html#cb190-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ea_matches =</span> <span class="fu">sum</span>(matched, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb190-6"><a href="match-ea-and-census-water-points.html#cb190-6" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
-<span id="cb190-7"><a href="match-ea-and-census-water-points.html#cb190-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ipa_matches =</span> <span class="fu">sum</span>(matched, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb190-8"><a href="match-ea-and-census-water-points.html#cb190-8" tabindex="-1"></a>  ungroup </span></code></pre></div>
+<div class="sourceCode" id="cb191"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb191-1"><a href="match-ea-and-census-water-points.html#cb191-1" tabindex="-1"></a>ea_wps <span class="ot">&lt;-</span></span>
+<span id="cb191-2"><a href="match-ea-and-census-water-points.html#cb191-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb191-3"><a href="match-ea-and-census-water-points.html#cb191-3" tabindex="-1"></a>  unique <span class="sc">%&gt;%</span></span>
+<span id="cb191-4"><a href="match-ea-and-census-water-points.html#cb191-4" tabindex="-1"></a>  <span class="fu">group_by</span>(wpt_id) <span class="sc">%&gt;%</span></span>
+<span id="cb191-5"><a href="match-ea-and-census-water-points.html#cb191-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ea_matches =</span> <span class="fu">sum</span>(matched, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb191-6"><a href="match-ea-and-census-water-points.html#cb191-6" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
+<span id="cb191-7"><a href="match-ea-and-census-water-points.html#cb191-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ipa_matches =</span> <span class="fu">sum</span>(matched, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb191-8"><a href="match-ea-and-census-water-points.html#cb191-8" tabindex="-1"></a>  ungroup </span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb191"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb191-1"><a href="match-ea-and-census-water-points.html#cb191-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb191-2"><a href="match-ea-and-census-water-points.html#cb191-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ea_matches)</span></code></pre></div>
+<div class="sourceCode" id="cb192"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb192-1"><a href="match-ea-and-census-water-points.html#cb192-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb192-2"><a href="match-ea-and-census-water-points.html#cb192-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ea_matches)</span></code></pre></div>
 </details>
 <pre><code>##  ea_matches   n   percent
 ##           0  25 0.1404494
 ##           1 153 0.8595506</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb193"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb193-1"><a href="match-ea-and-census-water-points.html#cb193-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb193-2"><a href="match-ea-and-census-water-points.html#cb193-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ipa_matches, dsw)</span></code></pre></div>
+<div class="sourceCode" id="cb194"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb194-1"><a href="match-ea-and-census-water-points.html#cb194-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb194-2"><a href="match-ea-and-census-water-points.html#cb194-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ipa_matches, dsw)</span></code></pre></div>
 </details>
 <pre><code>##  ipa_matches FALSE TRUE
 ##            0    22    0
 ##            1     0  156</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb195"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb195-1"><a href="match-ea-and-census-water-points.html#cb195-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb195-2"><a href="match-ea-and-census-water-points.html#cb195-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ipa_matches)</span></code></pre></div>
+<div class="sourceCode" id="cb196"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb196-1"><a href="match-ea-and-census-water-points.html#cb196-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb196-2"><a href="match-ea-and-census-water-points.html#cb196-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(ipa_matches)</span></code></pre></div>
 </details>
 <pre><code>##  ipa_matches   n   percent
 ##            0  22 0.1235955
@@ -2615,226 +2620,246 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 - <code>wpt_id</code> 7030631 was mapped in 1140202002 and 1140202012
 - <code>wpt_id</code> 70220610 was mapped in 1151005002 and 1151005003</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb197"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb197-1"><a href="match-ea-and-census-water-points.html#cb197-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb197-2"><a href="match-ea-and-census-water-points.html#cb197-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb197-3"><a href="match-ea-and-census-water-points.html#cb197-3" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb197-4"><a href="match-ea-and-census-water-points.html#cb197-4" tabindex="-1"></a>      ea_matches <span class="sc">&gt;</span> <span class="dv">1</span>,</span>
-<span id="cb197-5"><a href="match-ea-and-census-water-points.html#cb197-5" tabindex="-1"></a>      <span class="sc">!</span>(wpt_id <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">70070419</span>, <span class="dv">70060146</span>, <span class="dv">7030631</span>, <span class="dv">7020280</span>, <span class="dv">7020281</span>, <span class="dv">70220610</span>))</span>
-<span id="cb197-6"><a href="match-ea-and-census-water-points.html#cb197-6" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb197-7"><a href="match-ea-and-census-water-points.html#cb197-7" tabindex="-1"></a>    nrow <span class="sc">==</span></span>
-<span id="cb197-8"><a href="match-ea-and-census-water-points.html#cb197-8" tabindex="-1"></a>    <span class="dv">0</span></span>
-<span id="cb197-9"><a href="match-ea-and-census-water-points.html#cb197-9" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb198"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb198-1"><a href="match-ea-and-census-water-points.html#cb198-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb198-2"><a href="match-ea-and-census-water-points.html#cb198-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb198-3"><a href="match-ea-and-census-water-points.html#cb198-3" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb198-4"><a href="match-ea-and-census-water-points.html#cb198-4" tabindex="-1"></a>      ea_matches <span class="sc">&gt;</span> <span class="dv">1</span>,</span>
+<span id="cb198-5"><a href="match-ea-and-census-water-points.html#cb198-5" tabindex="-1"></a>      <span class="sc">!</span>(wpt_id <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">70070419</span>, <span class="dv">70060146</span>, <span class="dv">7030631</span>, <span class="dv">7020280</span>, <span class="dv">7020281</span>, <span class="dv">70220610</span>))</span>
+<span id="cb198-6"><a href="match-ea-and-census-water-points.html#cb198-6" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb198-7"><a href="match-ea-and-census-water-points.html#cb198-7" tabindex="-1"></a>    nrow <span class="sc">==</span></span>
+<span id="cb198-8"><a href="match-ea-and-census-water-points.html#cb198-8" tabindex="-1"></a>    <span class="dv">0</span></span>
+<span id="cb198-9"><a href="match-ea-and-census-water-points.html#cb198-9" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb199"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb199-1"><a href="match-ea-and-census-water-points.html#cb199-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb199-2"><a href="match-ea-and-census-water-points.html#cb199-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(ea_matches <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb199-3"><a href="match-ea-and-census-water-points.html#cb199-3" tabindex="-1"></a>  <span class="fu">select</span>(country, wpt_id, wp_id, disp_dsw_id, disp_barcode, wp_id_c, sourcetype_ipa, sourcetype_ea, distance, dsw, ilc_wcp, ilc_wp) <span class="sc">%&gt;%</span></span>
-<span id="cb199-4"><a href="match-ea-and-census-water-points.html#cb199-4" tabindex="-1"></a>  view</span></code></pre></div>
+<div class="sourceCode" id="cb200"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb200-1"><a href="match-ea-and-census-water-points.html#cb200-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb200-2"><a href="match-ea-and-census-water-points.html#cb200-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(ea_matches <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb200-3"><a href="match-ea-and-census-water-points.html#cb200-3" tabindex="-1"></a>  <span class="fu">select</span>(country, wpt_id, wp_id, disp_dsw_id, disp_barcode, wp_id_c, sourcetype_ipa, sourcetype_ea, distance, dsw, ilc_wcp, ilc_wp) <span class="sc">%&gt;%</span></span>
+<span id="cb200-4"><a href="match-ea-and-census-water-points.html#cb200-4" tabindex="-1"></a>  view</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb200"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb200-1"><a href="match-ea-and-census-water-points.html#cb200-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb200-2"><a href="match-ea-and-census-water-points.html#cb200-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb200-3"><a href="match-ea-and-census-water-points.html#cb200-3" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(ipa_matches <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb200-4"><a href="match-ea-and-census-water-points.html#cb200-4" tabindex="-1"></a>    nrow <span class="sc">==</span></span>
-<span id="cb200-5"><a href="match-ea-and-census-water-points.html#cb200-5" tabindex="-1"></a>    <span class="dv">0</span></span>
-<span id="cb200-6"><a href="match-ea-and-census-water-points.html#cb200-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb201"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb201-1"><a href="match-ea-and-census-water-points.html#cb201-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb201-2"><a href="match-ea-and-census-water-points.html#cb201-2" tabindex="-1"></a>  ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb201-3"><a href="match-ea-and-census-water-points.html#cb201-3" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(ipa_matches <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb201-4"><a href="match-ea-and-census-water-points.html#cb201-4" tabindex="-1"></a>    nrow <span class="sc">==</span></span>
+<span id="cb201-5"><a href="match-ea-and-census-water-points.html#cb201-5" tabindex="-1"></a>    <span class="dv">0</span></span>
+<span id="cb201-6"><a href="match-ea-and-census-water-points.html#cb201-6" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb202"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb202-1"><a href="match-ea-and-census-water-points.html#cb202-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb202-2"><a href="match-ea-and-census-water-points.html#cb202-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(ipa_matches <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb202-3"><a href="match-ea-and-census-water-points.html#cb202-3" tabindex="-1"></a>  <span class="fu">select</span>(country, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) <span class="sc">%&gt;%</span></span>
-<span id="cb202-4"><a href="match-ea-and-census-water-points.html#cb202-4" tabindex="-1"></a>  view</span></code></pre></div>
+<div class="sourceCode" id="cb203"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb203-1"><a href="match-ea-and-census-water-points.html#cb203-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb203-2"><a href="match-ea-and-census-water-points.html#cb203-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(ipa_matches <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb203-3"><a href="match-ea-and-census-water-points.html#cb203-3" tabindex="-1"></a>  <span class="fu">select</span>(country, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) <span class="sc">%&gt;%</span></span>
+<span id="cb203-4"><a href="match-ea-and-census-water-points.html#cb203-4" tabindex="-1"></a>  view</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb203"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb203-1"><a href="match-ea-and-census-water-points.html#cb203-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb203-2"><a href="match-ea-and-census-water-points.html#cb203-2" tabindex="-1"></a>  <span class="fu">nrow</span>(ea_wps) <span class="sc">==</span> <span class="fu">n_distinct</span>(ea_wps<span class="sc">$</span>wp_id_c)</span>
-<span id="cb203-3"><a href="match-ea-and-census-water-points.html#cb203-3" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb204"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb204-1"><a href="match-ea-and-census-water-points.html#cb204-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb204-2"><a href="match-ea-and-census-water-points.html#cb204-2" tabindex="-1"></a>  <span class="fu">nrow</span>(ea_wps) <span class="sc">==</span> <span class="fu">n_distinct</span>(ea_wps<span class="sc">$</span>wp_id_c)</span>
+<span id="cb204-3"><a href="match-ea-and-census-water-points.html#cb204-3" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb204"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb204-1"><a href="match-ea-and-census-water-points.html#cb204-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
-<span id="cb204-2"><a href="match-ea-and-census-water-points.html#cb204-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
-<span id="cb204-3"><a href="match-ea-and-census-water-points.html#cb204-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb204-4"><a href="match-ea-and-census-water-points.html#cb204-4" tabindex="-1"></a>  <span class="fu">select</span>(country, wp_id, wp_name, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) <span class="sc">%&gt;%</span></span>
-<span id="cb204-5"><a href="match-ea-and-census-water-points.html#cb204-5" tabindex="-1"></a>  view</span></code></pre></div>
+<div class="sourceCode" id="cb205"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb205-1"><a href="match-ea-and-census-water-points.html#cb205-1" tabindex="-1"></a>ea_wps <span class="sc">%&gt;%</span></span>
+<span id="cb205-2"><a href="match-ea-and-census-water-points.html#cb205-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
+<span id="cb205-3"><a href="match-ea-and-census-water-points.html#cb205-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb205-4"><a href="match-ea-and-census-water-points.html#cb205-4" tabindex="-1"></a>  <span class="fu">select</span>(country, wp_id, wp_name, wpt_id, disp_dsw_id, disp_barcode, wp_id, wp_id_c, sourcetype_ipa, sourcetype_ea, distance) <span class="sc">%&gt;%</span></span>
+<span id="cb205-5"><a href="match-ea-and-census-water-points.html#cb205-5" tabindex="-1"></a>  view</span></code></pre></div>
 </details>
 </div>
 </div>
 <div id="combine-all-3" class="section level3 hasAnchor" number="11.3.4">
 <h3><span class="header-section-number">11.3.4</span> Combine all<a href="match-ea-and-census-water-points.html#combine-all-3" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb205"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb205-1"><a href="match-ea-and-census-water-points.html#cb205-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb205-2"><a href="match-ea-and-census-water-points.html#cb205-2" tabindex="-1"></a>  <span class="sc">!</span>(matched_dist<span class="sc">$</span>ea_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>ea_id) <span class="sc">%&gt;%</span></span>
-<span id="cb205-3"><a href="match-ea-and-census-water-points.html#cb205-3" tabindex="-1"></a>    all</span>
-<span id="cb205-4"><a href="match-ea-and-census-water-points.html#cb205-4" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb206"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb206-1"><a href="match-ea-and-census-water-points.html#cb206-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb206-2"><a href="match-ea-and-census-water-points.html#cb206-2" tabindex="-1"></a>  <span class="sc">!</span>(matched_dist<span class="sc">$</span>ea_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>ea_id) <span class="sc">%&gt;%</span></span>
+<span id="cb206-3"><a href="match-ea-and-census-water-points.html#cb206-3" tabindex="-1"></a>    all</span>
+<span id="cb206-4"><a href="match-ea-and-census-water-points.html#cb206-4" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb207"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb207-1"><a href="match-ea-and-census-water-points.html#cb207-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb207-2"><a href="match-ea-and-census-water-points.html#cb207-2" tabindex="-1"></a>  <span class="sc">!</span>(matched_dist<span class="sc">$</span>wp_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>wp_id) <span class="sc">%&gt;%</span></span>
-<span id="cb207-3"><a href="match-ea-and-census-water-points.html#cb207-3" tabindex="-1"></a>    all</span>
-<span id="cb207-4"><a href="match-ea-and-census-water-points.html#cb207-4" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb208"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb208-1"><a href="match-ea-and-census-water-points.html#cb208-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb208-2"><a href="match-ea-and-census-water-points.html#cb208-2" tabindex="-1"></a>  <span class="sc">!</span>(matched_dist<span class="sc">$</span>wp_id <span class="sc">%in%</span> matched_manual_id<span class="sc">$</span>wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb208-3"><a href="match-ea-and-census-water-points.html#cb208-3" tabindex="-1"></a>    all</span>
+<span id="cb208-4"><a href="match-ea-and-census-water-points.html#cb208-4" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb209"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb209-1"><a href="match-ea-and-census-water-points.html#cb209-1" tabindex="-1"></a>matched_all <span class="ot">&lt;-</span></span>
-<span id="cb209-2"><a href="match-ea-and-census-water-points.html#cb209-2" tabindex="-1"></a>  matched_manual_id <span class="sc">%&gt;%</span></span>
-<span id="cb209-3"><a href="match-ea-and-census-water-points.html#cb209-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(matched_dist) <span class="sc">%&gt;%</span></span>
-<span id="cb209-4"><a href="match-ea-and-census-water-points.html#cb209-4" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb210"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb210-1"><a href="match-ea-and-census-water-points.html#cb210-1" tabindex="-1"></a>matched_all <span class="ot">&lt;-</span></span>
+<span id="cb210-2"><a href="match-ea-and-census-water-points.html#cb210-2" tabindex="-1"></a>  matched_manual_id <span class="sc">%&gt;%</span></span>
+<span id="cb210-3"><a href="match-ea-and-census-water-points.html#cb210-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(matched_dist) <span class="sc">%&gt;%</span></span>
+<span id="cb210-4"><a href="match-ea-and-census-water-points.html#cb210-4" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>()</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb210"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb210-1"><a href="match-ea-and-census-water-points.html#cb210-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb210-2"><a href="match-ea-and-census-water-points.html#cb210-2" tabindex="-1"></a>  matched_all <span class="sc">%&gt;%</span></span>
-<span id="cb210-3"><a href="match-ea-and-census-water-points.html#cb210-3" tabindex="-1"></a>    <span class="fu">select</span>(ea_id, wp_id) <span class="sc">%&gt;%</span></span>
-<span id="cb210-4"><a href="match-ea-and-census-water-points.html#cb210-4" tabindex="-1"></a>    nrow </span>
-<span id="cb210-5"><a href="match-ea-and-census-water-points.html#cb210-5" tabindex="-1"></a>  <span class="sc">==</span></span>
-<span id="cb210-6"><a href="match-ea-and-census-water-points.html#cb210-6" tabindex="-1"></a>    <span class="fu">nrow</span>(matched_all)</span>
-<span id="cb210-7"><a href="match-ea-and-census-water-points.html#cb210-7" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb211"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb211-1"><a href="match-ea-and-census-water-points.html#cb211-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb211-2"><a href="match-ea-and-census-water-points.html#cb211-2" tabindex="-1"></a>  matched_all <span class="sc">%&gt;%</span></span>
+<span id="cb211-3"><a href="match-ea-and-census-water-points.html#cb211-3" tabindex="-1"></a>    <span class="fu">select</span>(ea_id, wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb211-4"><a href="match-ea-and-census-water-points.html#cb211-4" tabindex="-1"></a>    nrow </span>
+<span id="cb211-5"><a href="match-ea-and-census-water-points.html#cb211-5" tabindex="-1"></a>  <span class="sc">==</span></span>
+<span id="cb211-6"><a href="match-ea-and-census-water-points.html#cb211-6" tabindex="-1"></a>    <span class="fu">nrow</span>(matched_all)</span>
+<span id="cb211-7"><a href="match-ea-and-census-water-points.html#cb211-7" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb212"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb212-1"><a href="match-ea-and-census-water-points.html#cb212-1" tabindex="-1"></a>matched_all <span class="ot">&lt;-</span></span>
-<span id="cb212-2"><a href="match-ea-and-census-water-points.html#cb212-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb212-3"><a href="match-ea-and-census-water-points.html#cb212-3" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb212-4"><a href="match-ea-and-census-water-points.html#cb212-4" tabindex="-1"></a>  <span class="fu">right_join</span>(matched_all) <span class="sc">%&gt;%</span></span>
-<span id="cb212-5"><a href="match-ea-and-census-water-points.html#cb212-5" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb212-6"><a href="match-ea-and-census-water-points.html#cb212-6" tabindex="-1"></a>    ea <span class="sc">%&gt;%</span></span>
-<span id="cb212-7"><a href="match-ea-and-census-water-points.html#cb212-7" tabindex="-1"></a>      <span class="fu">transmute</span>(</span>
-<span id="cb212-8"><a href="match-ea-and-census-water-points.html#cb212-8" tabindex="-1"></a>        <span class="at">ea_id =</span> wpt_id, </span>
-<span id="cb212-9"><a href="match-ea-and-census-water-points.html#cb212-9" tabindex="-1"></a>        <span class="at">ea_village_id =</span> villageid, </span>
-<span id="cb212-10"><a href="match-ea-and-census-water-points.html#cb212-10" tabindex="-1"></a>        <span class="at">ea_sourcetype =</span> sourcetype, </span>
-<span id="cb212-11"><a href="match-ea-and-census-water-points.html#cb212-11" tabindex="-1"></a>        <span class="at">ea_program =</span> program <span class="sc">%&gt;%</span> as.factor, </span>
-<span id="cb212-12"><a href="match-ea-and-census-water-points.html#cb212-12" tabindex="-1"></a>        date_installation</span>
-<span id="cb212-13"><a href="match-ea-and-census-water-points.html#cb212-13" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb212-14"><a href="match-ea-and-census-water-points.html#cb212-14" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb212-15"><a href="match-ea-and-census-water-points.html#cb212-15" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb213"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb213-1"><a href="match-ea-and-census-water-points.html#cb213-1" tabindex="-1"></a>matched_all <span class="ot">&lt;-</span></span>
+<span id="cb213-2"><a href="match-ea-and-census-water-points.html#cb213-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb213-3"><a href="match-ea-and-census-water-points.html#cb213-3" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb213-4"><a href="match-ea-and-census-water-points.html#cb213-4" tabindex="-1"></a>  <span class="fu">right_join</span>(matched_all) <span class="sc">%&gt;%</span></span>
+<span id="cb213-5"><a href="match-ea-and-census-water-points.html#cb213-5" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb213-6"><a href="match-ea-and-census-water-points.html#cb213-6" tabindex="-1"></a>    ea <span class="sc">%&gt;%</span></span>
+<span id="cb213-7"><a href="match-ea-and-census-water-points.html#cb213-7" tabindex="-1"></a>      <span class="fu">transmute</span>(</span>
+<span id="cb213-8"><a href="match-ea-and-census-water-points.html#cb213-8" tabindex="-1"></a>        <span class="at">ea_id =</span> wpt_id, </span>
+<span id="cb213-9"><a href="match-ea-and-census-water-points.html#cb213-9" tabindex="-1"></a>        <span class="at">ea_village_id =</span> villageid, </span>
+<span id="cb213-10"><a href="match-ea-and-census-water-points.html#cb213-10" tabindex="-1"></a>        <span class="at">ea_sourcetype =</span> sourcetype, </span>
+<span id="cb213-11"><a href="match-ea-and-census-water-points.html#cb213-11" tabindex="-1"></a>        <span class="at">ea_program =</span> program <span class="sc">%&gt;%</span> as.factor, </span>
+<span id="cb213-12"><a href="match-ea-and-census-water-points.html#cb213-12" tabindex="-1"></a>        date_installation</span>
+<span id="cb213-13"><a href="match-ea-and-census-water-points.html#cb213-13" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb213-14"><a href="match-ea-and-census-water-points.html#cb213-14" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>()</span>
+<span id="cb213-15"><a href="match-ea-and-census-water-points.html#cb213-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(wp_id)`
-## Joining with `by = join_by(ea_id)`</code></pre>
+<pre><code>## Joining with `by =
+## join_by(wp_id)`
+## Joining with `by =
+## join_by(ea_id)`</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="match-ea-and-census-water-points.html#cb214-1" tabindex="-1"></a>unmatched_ea <span class="ot">&lt;-</span></span>
-<span id="cb214-2"><a href="match-ea-and-census-water-points.html#cb214-2" tabindex="-1"></a>  ea <span class="sc">%&gt;%</span></span>
-<span id="cb214-3"><a href="match-ea-and-census-water-points.html#cb214-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb214-4"><a href="match-ea-and-census-water-points.html#cb214-4" tabindex="-1"></a>    villageid <span class="sc">%in%</span> wp<span class="sc">$</span>village_id,</span>
-<span id="cb214-5"><a href="match-ea-and-census-water-points.html#cb214-5" tabindex="-1"></a>    <span class="sc">!</span>(wpt_id <span class="sc">%in%</span> matched_all<span class="sc">$</span>ea_id)</span>
-<span id="cb214-6"><a href="match-ea-and-census-water-points.html#cb214-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb214-7"><a href="match-ea-and-census-water-points.html#cb214-7" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb214-8"><a href="match-ea-and-census-water-points.html#cb214-8" tabindex="-1"></a>    <span class="at">ea_id =</span> wpt_id, </span>
-<span id="cb214-9"><a href="match-ea-and-census-water-points.html#cb214-9" tabindex="-1"></a>    <span class="at">village_id =</span> villageid, </span>
-<span id="cb214-10"><a href="match-ea-and-census-water-points.html#cb214-10" tabindex="-1"></a>    <span class="at">ea_sourcetype =</span> sourcetype, </span>
-<span id="cb214-11"><a href="match-ea-and-census-water-points.html#cb214-11" tabindex="-1"></a>    <span class="at">ea_program =</span> program, date_installation,</span>
-<span id="cb214-12"><a href="match-ea-and-census-water-points.html#cb214-12" tabindex="-1"></a>    <span class="at">country =</span> countryid</span>
-<span id="cb214-13"><a href="match-ea-and-census-water-points.html#cb214-13" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb215"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb215-1"><a href="match-ea-and-census-water-points.html#cb215-1" tabindex="-1"></a>unmatched_ea <span class="ot">&lt;-</span></span>
+<span id="cb215-2"><a href="match-ea-and-census-water-points.html#cb215-2" tabindex="-1"></a>  ea <span class="sc">%&gt;%</span></span>
+<span id="cb215-3"><a href="match-ea-and-census-water-points.html#cb215-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb215-4"><a href="match-ea-and-census-water-points.html#cb215-4" tabindex="-1"></a>    villageid <span class="sc">%in%</span> wp<span class="sc">$</span>village_id,</span>
+<span id="cb215-5"><a href="match-ea-and-census-water-points.html#cb215-5" tabindex="-1"></a>    <span class="sc">!</span>(wpt_id <span class="sc">%in%</span> matched_all<span class="sc">$</span>ea_id)</span>
+<span id="cb215-6"><a href="match-ea-and-census-water-points.html#cb215-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb215-7"><a href="match-ea-and-census-water-points.html#cb215-7" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb215-8"><a href="match-ea-and-census-water-points.html#cb215-8" tabindex="-1"></a>    <span class="at">ea_id =</span> wpt_id, </span>
+<span id="cb215-9"><a href="match-ea-and-census-water-points.html#cb215-9" tabindex="-1"></a>    <span class="at">village_id =</span> villageid, </span>
+<span id="cb215-10"><a href="match-ea-and-census-water-points.html#cb215-10" tabindex="-1"></a>    <span class="at">ea_sourcetype =</span> sourcetype, </span>
+<span id="cb215-11"><a href="match-ea-and-census-water-points.html#cb215-11" tabindex="-1"></a>    <span class="at">ea_program =</span> program, date_installation,</span>
+<span id="cb215-12"><a href="match-ea-and-census-water-points.html#cb215-12" tabindex="-1"></a>    <span class="at">country =</span> countryid</span>
+<span id="cb215-13"><a href="match-ea-and-census-water-points.html#cb215-13" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb215"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb215-1"><a href="match-ea-and-census-water-points.html#cb215-1" tabindex="-1"></a>unmatched_ipa <span class="ot">&lt;-</span></span>
-<span id="cb215-2"><a href="match-ea-and-census-water-points.html#cb215-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
-<span id="cb215-3"><a href="match-ea-and-census-water-points.html#cb215-3" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb215-4"><a href="match-ea-and-census-water-points.html#cb215-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb215-5"><a href="match-ea-and-census-water-points.html#cb215-5" tabindex="-1"></a>    intervention_type <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span>,</span>
-<span id="cb215-6"><a href="match-ea-and-census-water-points.html#cb215-6" tabindex="-1"></a>    <span class="sc">!</span>(wp_id_c <span class="sc">%in%</span> matched_all<span class="sc">$</span>wp_id_c)</span>
-<span id="cb215-7"><a href="match-ea-and-census-water-points.html#cb215-7" tabindex="-1"></a>  ) </span></code></pre></div>
+<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb216-1"><a href="match-ea-and-census-water-points.html#cb216-1" tabindex="-1"></a>unmatched_ipa <span class="ot">&lt;-</span></span>
+<span id="cb216-2"><a href="match-ea-and-census-water-points.html#cb216-2" tabindex="-1"></a>  wp <span class="sc">%&gt;%</span></span>
+<span id="cb216-3"><a href="match-ea-and-census-water-points.html#cb216-3" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb216-4"><a href="match-ea-and-census-water-points.html#cb216-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb216-5"><a href="match-ea-and-census-water-points.html#cb216-5" tabindex="-1"></a>    intervention_type <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span>,</span>
+<span id="cb216-6"><a href="match-ea-and-census-water-points.html#cb216-6" tabindex="-1"></a>    <span class="sc">!</span>(wp_id_c <span class="sc">%in%</span> matched_all<span class="sc">$</span>wp_id_c)</span>
+<span id="cb216-7"><a href="match-ea-and-census-water-points.html#cb216-7" tabindex="-1"></a>  ) </span></code></pre></div>
 </details>
 <p>Identify water point serving water collection points:</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb216-1"><a href="match-ea-and-census-water-points.html#cb216-1" tabindex="-1"></a>all_wps <span class="ot">&lt;-</span></span>
-<span id="cb216-2"><a href="match-ea-and-census-water-points.html#cb216-2" tabindex="-1"></a>  matched_all <span class="sc">%&gt;%</span></span>
-<span id="cb216-3"><a href="match-ea-and-census-water-points.html#cb216-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(unmatched_ea) <span class="sc">%&gt;%</span></span>
-<span id="cb216-4"><a href="match-ea-and-census-water-points.html#cb216-4" tabindex="-1"></a>  <span class="fu">bind_rows</span>(unmatched_ipa) <span class="sc">%&gt;%</span></span>
-<span id="cb216-5"><a href="match-ea-and-census-water-points.html#cb216-5" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb216-6"><a href="match-ea-and-census-water-points.html#cb216-6" tabindex="-1"></a>    <span class="at">ea_ilc_wpt =</span> <span class="fu">case_when</span>(</span>
-<span id="cb216-7"><a href="match-ea-and-census-water-points.html#cb216-7" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(ilc_cluster_wp) <span class="sc">~</span> ilc_cluster_wp <span class="sc">%&gt;%</span> as.character,</span>
-<span id="cb216-8"><a href="match-ea-and-census-water-points.html#cb216-8" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(intervention_type, <span class="st">&quot;ILC&quot;</span>) <span class="sc">~</span> <span class="fu">str_sub</span>(ea_id, <span class="dv">1</span>, <span class="dv">8</span>)</span>
-<span id="cb216-9"><a href="match-ea-and-census-water-points.html#cb216-9" tabindex="-1"></a>    )</span>
-<span id="cb216-10"><a href="match-ea-and-census-water-points.html#cb216-10" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb217"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb217-1"><a href="match-ea-and-census-water-points.html#cb217-1" tabindex="-1"></a>all_wps <span class="ot">&lt;-</span></span>
+<span id="cb217-2"><a href="match-ea-and-census-water-points.html#cb217-2" tabindex="-1"></a>  matched_all <span class="sc">%&gt;%</span></span>
+<span id="cb217-3"><a href="match-ea-and-census-water-points.html#cb217-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(unmatched_ea) <span class="sc">%&gt;%</span></span>
+<span id="cb217-4"><a href="match-ea-and-census-water-points.html#cb217-4" tabindex="-1"></a>  <span class="fu">bind_rows</span>(unmatched_ipa) <span class="sc">%&gt;%</span></span>
+<span id="cb217-5"><a href="match-ea-and-census-water-points.html#cb217-5" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb217-6"><a href="match-ea-and-census-water-points.html#cb217-6" tabindex="-1"></a>    <span class="at">ea_ilc_wpt =</span> <span class="fu">case_when</span>(</span>
+<span id="cb217-7"><a href="match-ea-and-census-water-points.html#cb217-7" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(ilc_cluster_wp) <span class="sc">~</span> ilc_cluster_wp <span class="sc">%&gt;%</span> as.character,</span>
+<span id="cb217-8"><a href="match-ea-and-census-water-points.html#cb217-8" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(intervention_type, <span class="st">&quot;ILC&quot;</span>) <span class="sc">~</span> <span class="fu">str_sub</span>(ea_id, <span class="dv">1</span>, <span class="dv">8</span>)</span>
+<span id="cb217-9"><a href="match-ea-and-census-water-points.html#cb217-9" tabindex="-1"></a>    )</span>
+<span id="cb217-10"><a href="match-ea-and-census-water-points.html#cb217-10" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb217"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb217-1"><a href="match-ea-and-census-water-points.html#cb217-1" tabindex="-1"></a>all_wps <span class="ot">&lt;-</span></span>
-<span id="cb217-2"><a href="match-ea-and-census-water-points.html#cb217-2" tabindex="-1"></a>  all_wps <span class="sc">%&gt;%</span></span>
-<span id="cb217-3"><a href="match-ea-and-census-water-points.html#cb217-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb217-4"><a href="match-ea-and-census-water-points.html#cb217-4" tabindex="-1"></a>    country, district_id, village_id,</span>
-<span id="cb217-5"><a href="match-ea-and-census-water-points.html#cb217-5" tabindex="-1"></a>    wp_id_c, ea_id, ea_ilc_wpt,</span>
-<span id="cb217-6"><a href="match-ea-and-census-water-points.html#cb217-6" tabindex="-1"></a>    <span class="at">ipa_program =</span> intervention_type,</span>
-<span id="cb217-7"><a href="match-ea-and-census-water-points.html#cb217-7" tabindex="-1"></a>    ea_program,</span>
-<span id="cb217-8"><a href="match-ea-and-census-water-points.html#cb217-8" tabindex="-1"></a>    match, match_comments, </span>
-<span id="cb217-9"><a href="match-ea-and-census-water-points.html#cb217-9" tabindex="-1"></a>    <span class="at">ipa_visit =</span> date,</span>
-<span id="cb217-10"><a href="match-ea-and-census-water-points.html#cb217-10" tabindex="-1"></a>    <span class="at">ipa_sourcetype =</span> sourcetype, </span>
-<span id="cb217-11"><a href="match-ea-and-census-water-points.html#cb217-11" tabindex="-1"></a>    ea_sourcetype,</span>
-<span id="cb217-12"><a href="match-ea-and-census-water-points.html#cb217-12" tabindex="-1"></a>    date_installation</span>
-<span id="cb217-13"><a href="match-ea-and-census-water-points.html#cb217-13" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb217-14"><a href="match-ea-and-census-water-points.html#cb217-14" tabindex="-1"></a>  <span class="fu">arrange</span>(ea_id, wp_id_c) </span></code></pre></div>
+<div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb218-1"><a href="match-ea-and-census-water-points.html#cb218-1" tabindex="-1"></a>all_wps <span class="ot">&lt;-</span></span>
+<span id="cb218-2"><a href="match-ea-and-census-water-points.html#cb218-2" tabindex="-1"></a>  all_wps <span class="sc">%&gt;%</span></span>
+<span id="cb218-3"><a href="match-ea-and-census-water-points.html#cb218-3" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb218-4"><a href="match-ea-and-census-water-points.html#cb218-4" tabindex="-1"></a>    country, district_id, village_id,</span>
+<span id="cb218-5"><a href="match-ea-and-census-water-points.html#cb218-5" tabindex="-1"></a>    wp_id_c, ea_id, ea_ilc_wpt,</span>
+<span id="cb218-6"><a href="match-ea-and-census-water-points.html#cb218-6" tabindex="-1"></a>    <span class="at">ipa_program =</span> intervention_type,</span>
+<span id="cb218-7"><a href="match-ea-and-census-water-points.html#cb218-7" tabindex="-1"></a>    ea_program,</span>
+<span id="cb218-8"><a href="match-ea-and-census-water-points.html#cb218-8" tabindex="-1"></a>    match, match_comments, </span>
+<span id="cb218-9"><a href="match-ea-and-census-water-points.html#cb218-9" tabindex="-1"></a>    <span class="at">ipa_visit =</span> date,</span>
+<span id="cb218-10"><a href="match-ea-and-census-water-points.html#cb218-10" tabindex="-1"></a>    <span class="at">ipa_sourcetype =</span> sourcetype, </span>
+<span id="cb218-11"><a href="match-ea-and-census-water-points.html#cb218-11" tabindex="-1"></a>    ea_sourcetype,</span>
+<span id="cb218-12"><a href="match-ea-and-census-water-points.html#cb218-12" tabindex="-1"></a>    date_installation</span>
+<span id="cb218-13"><a href="match-ea-and-census-water-points.html#cb218-13" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb218-14"><a href="match-ea-and-census-water-points.html#cb218-14" tabindex="-1"></a>  <span class="fu">arrange</span>(ea_id, wp_id_c) </span></code></pre></div>
 </details>
 </div>
 </div>
 <div id="save-water-point-level-data" class="section level2 hasAnchor" number="11.4">
 <h2><span class="header-section-number">11.4</span> Save water-point level data<a href="match-ea-and-census-water-points.html#save-water-point-level-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb218-1"><a href="match-ea-and-census-water-points.html#cb218-1" tabindex="-1"></a>matched_final <span class="ot">&lt;-</span></span>
-<span id="cb218-2"><a href="match-ea-and-census-water-points.html#cb218-2" tabindex="-1"></a>  all_wps <span class="sc">%&gt;%</span></span>
-<span id="cb218-3"><a href="match-ea-and-census-water-points.html#cb218-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb218-4"><a href="match-ea-and-census-water-points.html#cb218-4" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(wp_id_c),</span>
-<span id="cb218-5"><a href="match-ea-and-census-water-points.html#cb218-5" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_ilc_wpt))</span>
-<span id="cb218-6"><a href="match-ea-and-census-water-points.html#cb218-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb218-7"><a href="match-ea-and-census-water-points.html#cb218-7" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb218-8"><a href="match-ea-and-census-water-points.html#cb218-8" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">c</span>(country, district_id, village_id)</span>
-<span id="cb218-9"><a href="match-ea-and-census-water-points.html#cb218-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb218-10"><a href="match-ea-and-census-water-points.html#cb218-10" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
-<span id="cb218-11"><a href="match-ea-and-census-water-points.html#cb218-11" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb218-12"><a href="match-ea-and-census-water-points.html#cb218-12" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> match <span class="sc">==</span> <span class="st">&quot;Manual&quot;</span>)</span>
-<span id="cb218-13"><a href="match-ea-and-census-water-points.html#cb218-13" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb219"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb219-1"><a href="match-ea-and-census-water-points.html#cb219-1" tabindex="-1"></a>matched_final <span class="ot">&lt;-</span></span>
+<span id="cb219-2"><a href="match-ea-and-census-water-points.html#cb219-2" tabindex="-1"></a>  all_wps <span class="sc">%&gt;%</span></span>
+<span id="cb219-3"><a href="match-ea-and-census-water-points.html#cb219-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb219-4"><a href="match-ea-and-census-water-points.html#cb219-4" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(wp_id_c),</span>
+<span id="cb219-5"><a href="match-ea-and-census-water-points.html#cb219-5" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_ilc_wpt))</span>
+<span id="cb219-6"><a href="match-ea-and-census-water-points.html#cb219-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb219-7"><a href="match-ea-and-census-water-points.html#cb219-7" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb219-8"><a href="match-ea-and-census-water-points.html#cb219-8" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">c</span>(country, district_id, village_id)</span>
+<span id="cb219-9"><a href="match-ea-and-census-water-points.html#cb219-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb219-10"><a href="match-ea-and-census-water-points.html#cb219-10" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
+<span id="cb219-11"><a href="match-ea-and-census-water-points.html#cb219-11" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb219-12"><a href="match-ea-and-census-water-points.html#cb219-12" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> match <span class="sc">==</span> <span class="st">&quot;Manual&quot;</span>)</span>
+<span id="cb219-13"><a href="match-ea-and-census-water-points.html#cb219-13" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb219"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb219-1"><a href="match-ea-and-census-water-points.html#cb219-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
-<span id="cb219-2"><a href="match-ea-and-census-water-points.html#cb219-2" tabindex="-1"></a>  <span class="fu">nrow</span>(matched_final) <span class="sc">==</span> <span class="fu">n_distinct</span>(matched_final<span class="sc">$</span>wp_id_c)</span>
-<span id="cb219-3"><a href="match-ea-and-census-water-points.html#cb219-3" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb220"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb220-1"><a href="match-ea-and-census-water-points.html#cb220-1" tabindex="-1"></a><span class="fu">assert_that</span>(</span>
+<span id="cb220-2"><a href="match-ea-and-census-water-points.html#cb220-2" tabindex="-1"></a>  <span class="fu">nrow</span>(matched_final) <span class="sc">==</span> <span class="fu">n_distinct</span>(matched_final<span class="sc">$</span>wp_id_c)</span>
+<span id="cb220-3"><a href="match-ea-and-census-water-points.html#cb220-3" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <pre><code>## [1] TRUE</code></pre>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb221"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb221-1"><a href="match-ea-and-census-water-points.html#cb221-1" tabindex="-1"></a>matched_final <span class="sc">%&gt;%</span></span>
-<span id="cb221-2"><a href="match-ea-and-census-water-points.html#cb221-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
-<span id="cb221-3"><a href="match-ea-and-census-water-points.html#cb221-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb221-4"><a href="match-ea-and-census-water-points.html#cb221-4" tabindex="-1"></a>  view</span></code></pre></div>
+<div class="sourceCode" id="cb222"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb222-1"><a href="match-ea-and-census-water-points.html#cb222-1" tabindex="-1"></a>matched_final <span class="sc">%&gt;%</span></span>
+<span id="cb222-2"><a href="match-ea-and-census-water-points.html#cb222-2" tabindex="-1"></a>  <span class="fu">group_by</span>(wp_id_c) <span class="sc">%&gt;%</span></span>
+<span id="cb222-3"><a href="match-ea-and-census-water-points.html#cb222-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb222-4"><a href="match-ea-and-census-water-points.html#cb222-4" tabindex="-1"></a>  view</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb222"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb222-1"><a href="match-ea-and-census-water-points.html#cb222-1" tabindex="-1"></a>path <span class="ot">&lt;-</span>  </span>
-<span id="cb222-2"><a href="match-ea-and-census-water-points.html#cb222-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
-<span id="cb222-3"><a href="match-ea-and-census-water-points.html#cb222-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb222-4"><a href="match-ea-and-census-water-points.html#cb222-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb222-5"><a href="match-ea-and-census-water-points.html#cb222-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb222-6"><a href="match-ea-and-census-water-points.html#cb222-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
-<span id="cb222-7"><a href="match-ea-and-census-water-points.html#cb222-7" tabindex="-1"></a>    <span class="st">&quot;wp-ea-matched&quot;</span></span>
-<span id="cb222-8"><a href="match-ea-and-census-water-points.html#cb222-8" tabindex="-1"></a>  )</span>
-<span id="cb222-9"><a href="match-ea-and-census-water-points.html#cb222-9" tabindex="-1"></a></span>
-<span id="cb222-10"><a href="match-ea-and-census-water-points.html#cb222-10" tabindex="-1"></a>matched_final <span class="sc">%&gt;%</span> </span>
-<span id="cb222-11"><a href="match-ea-and-census-water-points.html#cb222-11" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
-<span id="cb222-12"><a href="match-ea-and-census-water-points.html#cb222-12" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
-<span id="cb222-13"><a href="match-ea-and-census-water-points.html#cb222-13" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
-<span id="cb222-14"><a href="match-ea-and-census-water-points.html#cb222-14" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
-<span id="cb222-15"><a href="match-ea-and-census-water-points.html#cb222-15" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb223"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb223-1"><a href="match-ea-and-census-water-points.html#cb223-1" tabindex="-1"></a>path <span class="ot">&lt;-</span>  </span>
+<span id="cb223-2"><a href="match-ea-and-census-water-points.html#cb223-2" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb223-3"><a href="match-ea-and-census-water-points.html#cb223-3" tabindex="-1"></a>    <span class="st">&quot;Data&quot;</span>,</span>
+<span id="cb223-4"><a href="match-ea-and-census-water-points.html#cb223-4" tabindex="-1"></a>    <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
+<span id="cb223-5"><a href="match-ea-and-census-water-points.html#cb223-5" tabindex="-1"></a>    <span class="st">&quot;DataSets&quot;</span>,</span>
+<span id="cb223-6"><a href="match-ea-and-census-water-points.html#cb223-6" tabindex="-1"></a>    <span class="st">&quot;Constructed&quot;</span>,</span>
+<span id="cb223-7"><a href="match-ea-and-census-water-points.html#cb223-7" tabindex="-1"></a>    <span class="st">&quot;wp-ea-matched&quot;</span></span>
+<span id="cb223-8"><a href="match-ea-and-census-water-points.html#cb223-8" tabindex="-1"></a>  )</span>
+<span id="cb223-9"><a href="match-ea-and-census-water-points.html#cb223-9" tabindex="-1"></a></span>
+<span id="cb223-10"><a href="match-ea-and-census-water-points.html#cb223-10" tabindex="-1"></a>matched_final <span class="sc">%&gt;%</span> </span>
+<span id="cb223-11"><a href="match-ea-and-census-water-points.html#cb223-11" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
+<span id="cb223-12"><a href="match-ea-and-census-water-points.html#cb223-12" tabindex="-1"></a>  <span class="fu">write_meta</span>(</span>
+<span id="cb223-13"><a href="match-ea-and-census-water-points.html#cb223-13" tabindex="-1"></a>    <span class="at">path_data =</span> <span class="fu">file.path</span>(path_box, path),</span>
+<span id="cb223-14"><a href="match-ea-and-census-water-points.html#cb223-14" tabindex="-1"></a>    <span class="at">path_meta =</span> <span class="fu">file.path</span>(path_git, path)</span>
+<span id="cb223-15"><a href="match-ea-and-census-water-points.html#cb223-15" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Warning: There was 1 warning in `dplyr::summarize()`.
-## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
+<pre><code>## Warning: There was 1 warning in
+## `dplyr::summarize()`.
+## ℹ In argument:
+##   `dplyr::across(tidyselect::any_of(variable_names),
+##   mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in `dplyr::summarize()`.
+## ! There were 4 warnings in
+## `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
+## ℹ In argument:
+##   `dplyr::across(tidyselect::any_of(variable_names),
+##   mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.
-## There was 1 warning in `dplyr::summarize()`.
-## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
+## ℹ Run
+##   `dplyr::last_dplyr_warnings()`
+##   to see the 3 remaining
+##   warnings.
+## There was 1 warning in
+## `dplyr::summarize()`.
+## ℹ In argument:
+##   `dplyr::across(tidyselect::any_of(variable_names),
+##   mangled_skimmers$funs)`.
 ## ℹ In group 0: .
 ## Caused by warning:
-## ! There were 4 warnings in `dplyr::summarize()`.
+## ! There were 4 warnings in
+## `dplyr::summarize()`.
 ## The first warning was:
-## ℹ In argument: `dplyr::across(tidyselect::any_of(variable_names), mangled_skimmers$funs)`.
+## ℹ In argument:
+##   `dplyr::across(tidyselect::any_of(variable_names),
+##   mangled_skimmers$funs)`.
 ## Caused by warning in `grepl()`:
 ## ! unable to translate &#39;These should be matched. They&lt;d5&gt;re both DSW, are nearby, and are both boreholes.&#39; to a wide string
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
+## ℹ Run
+##   `dplyr::last_dplyr_warnings()`
+##   to see the 3 remaining
+##   warnings.</code></pre>
 <table>
-<caption><span id="tab:unnamed-chunk-154">Table 11.1: </span>Data summary</caption>
+<caption><span id="tab:unnamed-chunk-155">Table 11.1: </span>Data summary</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Name</td>
@@ -3101,29 +3126,29 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="share-matches-with-ea" class="section level2 hasAnchor" number="11.5">
 <h2><span class="header-section-number">11.5</span> Share matches with EA<a href="match-ea-and-census-water-points.html#share-matches-with-ea" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb224"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb224-1"><a href="match-ea-and-census-water-points.html#cb224-1" tabindex="-1"></a>forea <span class="ot">&lt;-</span></span>
-<span id="cb224-2"><a href="match-ea-and-census-water-points.html#cb224-2" tabindex="-1"></a>  matched_final <span class="sc">%&gt;%</span></span>
-<span id="cb224-3"><a href="match-ea-and-census-water-points.html#cb224-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(unmatched_ea)</span></code></pre></div>
+<div class="sourceCode" id="cb225"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb225-1"><a href="match-ea-and-census-water-points.html#cb225-1" tabindex="-1"></a>forea <span class="ot">&lt;-</span></span>
+<span id="cb225-2"><a href="match-ea-and-census-water-points.html#cb225-2" tabindex="-1"></a>  matched_final <span class="sc">%&gt;%</span></span>
+<span id="cb225-3"><a href="match-ea-and-census-water-points.html#cb225-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(unmatched_ea)</span></code></pre></div>
 </details>
 <p>We want to make a spreadsheet of the water point IDs and relevant DSW and EA information.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb225"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb225-1"><a href="match-ea-and-census-water-points.html#cb225-1" tabindex="-1"></a><span class="fu">map</span>(</span>
-<span id="cb225-2"><a href="match-ea-and-census-water-points.html#cb225-2" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;Malawi&quot;</span>), </span>
-<span id="cb225-3"><a href="match-ea-and-census-water-points.html#cb225-3" tabindex="-1"></a>  <span class="sc">~</span> all_wps <span class="sc">%&gt;%</span></span>
-<span id="cb225-4"><a href="match-ea-and-census-water-points.html#cb225-4" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> .x) <span class="sc">%&gt;%</span></span>
-<span id="cb225-5"><a href="match-ea-and-census-water-points.html#cb225-5" tabindex="-1"></a>    <span class="fu">write_sheet</span>(</span>
-<span id="cb225-6"><a href="match-ea-and-census-water-points.html#cb225-6" tabindex="-1"></a>      <span class="at">ss =</span> <span class="st">&quot;1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4&quot;</span>,</span>
-<span id="cb225-7"><a href="match-ea-and-census-water-points.html#cb225-7" tabindex="-1"></a>      <span class="at">sheet =</span> <span class="fu">paste</span>(.x, <span class="fu">today</span>())</span>
-<span id="cb225-8"><a href="match-ea-and-census-water-points.html#cb225-8" tabindex="-1"></a>    )</span>
-<span id="cb225-9"><a href="match-ea-and-census-water-points.html#cb225-9" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb226"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb226-1"><a href="match-ea-and-census-water-points.html#cb226-1" tabindex="-1"></a><span class="fu">map</span>(</span>
+<span id="cb226-2"><a href="match-ea-and-census-water-points.html#cb226-2" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;Malawi&quot;</span>), </span>
+<span id="cb226-3"><a href="match-ea-and-census-water-points.html#cb226-3" tabindex="-1"></a>  <span class="sc">~</span> all_wps <span class="sc">%&gt;%</span></span>
+<span id="cb226-4"><a href="match-ea-and-census-water-points.html#cb226-4" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> .x) <span class="sc">%&gt;%</span></span>
+<span id="cb226-5"><a href="match-ea-and-census-water-points.html#cb226-5" tabindex="-1"></a>    <span class="fu">write_sheet</span>(</span>
+<span id="cb226-6"><a href="match-ea-and-census-water-points.html#cb226-6" tabindex="-1"></a>      <span class="at">ss =</span> <span class="st">&quot;1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4&quot;</span>,</span>
+<span id="cb226-7"><a href="match-ea-and-census-water-points.html#cb226-7" tabindex="-1"></a>      <span class="at">sheet =</span> <span class="fu">paste</span>(.x, <span class="fu">today</span>())</span>
+<span id="cb226-8"><a href="match-ea-and-census-water-points.html#cb226-8" tabindex="-1"></a>    )</span>
+<span id="cb226-9"><a href="match-ea-and-census-water-points.html#cb226-9" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb226"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb226-1"><a href="match-ea-and-census-water-points.html#cb226-1" tabindex="-1"></a>all_wps <span class="sc">%&gt;%</span></span>
-<span id="cb226-2"><a href="match-ea-and-census-water-points.html#cb226-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, ipa_visit <span class="sc">&gt;</span> <span class="st">&quot;2025-08-19&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb226-3"><a href="match-ea-and-census-water-points.html#cb226-3" tabindex="-1"></a>  <span class="fu">write_sheet</span>(</span>
-<span id="cb226-4"><a href="match-ea-and-census-water-points.html#cb226-4" tabindex="-1"></a>    <span class="at">ss =</span> <span class="st">&quot;1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4&quot;</span>,</span>
-<span id="cb226-5"><a href="match-ea-and-census-water-points.html#cb226-5" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="fu">paste</span>(<span class="st">&quot;Uganda ILC&quot;</span>, <span class="fu">today</span>())</span>
-<span id="cb226-6"><a href="match-ea-and-census-water-points.html#cb226-6" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb227"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb227-1"><a href="match-ea-and-census-water-points.html#cb227-1" tabindex="-1"></a>all_wps <span class="sc">%&gt;%</span></span>
+<span id="cb227-2"><a href="match-ea-and-census-water-points.html#cb227-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, ipa_visit <span class="sc">&gt;</span> <span class="st">&quot;2025-08-19&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb227-3"><a href="match-ea-and-census-water-points.html#cb227-3" tabindex="-1"></a>  <span class="fu">write_sheet</span>(</span>
+<span id="cb227-4"><a href="match-ea-and-census-water-points.html#cb227-4" tabindex="-1"></a>    <span class="at">ss =</span> <span class="st">&quot;1E6q_myTvE322v1ZGb_hZAn0TphWoumYJKdzdEBwE4U4&quot;</span>,</span>
+<span id="cb227-5"><a href="match-ea-and-census-water-points.html#cb227-5" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="fu">paste</span>(<span class="st">&quot;Uganda ILC&quot;</span>, <span class="fu">today</span>())</span>
+<span id="cb227-6"><a href="match-ea-and-census-water-points.html#cb227-6" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
 
 </div>

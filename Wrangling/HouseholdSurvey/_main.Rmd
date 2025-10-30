@@ -1,0 +1,1691 @@
+---
+title: "Wrangle Household Survey"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+---
+
+# Introduction
+
+This document cleans and wrangles data from the household survey.
+
+<!--chapter:end:index.Rmd-->
+
+# Import household survey data 
+
+Note: change in protocol Aug 4th for Malawi, and around Aug 6th for Uganda.
+
+```{r 01-import-survey}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "haven",
+    "janitor"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load household survey dataset
+
+### Uganda DSW
+
+```{r}
+hh_raw_ug <- 
+  read_dta(
+    file.path(
+      path_box,
+      "DATA - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "3_HH Survey",
+      "DIL Household Survey_checked.dta"
+    )
+  ) %>%
+  haven::as_factor(levels = "labels") %>%
+  mutate(
+    size_ot = as.character(size_ot)
+  ) %>%
+  remove_empty %>%
+  select(
+    -contains("hr")
+  )
+```
+
+Some of the variables were exported after being removed from the survey form and were not included in the SurveyCTO import do-file. These are imported below.
+
+```{r}
+hh_raw_ug_reexport <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "UG-hh-survey-export-error.csv"
+    )
+  ) %>%
+  clean_names %>%
+  mutate(
+    gender_hhh =
+      factor(
+        gender_hhh,
+        levels = c(1, 2),
+        labels = c("Male", "Female")
+      ),
+    across(
+      hh_educ,
+      ~ case_when(
+        . == 0	  ~ "Never attended school / did not complete class",
+        . == 111	~ "Pre-Primary",
+        . == 1	  ~ "P1",
+        . == 2	  ~ "P2",
+        . == 3	  ~ "P3",
+        . == 4	  ~ "P4",
+        . == 5	  ~ "P5",
+        . == 6	  ~ "P6",
+        . == 7	  ~ "P7",
+        . == 8	  ~ "PLE",
+        . == 11	  ~ "S1",
+        . == 12	  ~ "S2",
+        . == 13	  ~ "S3",
+        . == 14	  ~ "S4",
+        . == 15	  ~ "O level",
+        . == 16	  ~ "S5",
+        . == 17	  ~ "S6",
+        . == 18	  ~ "A level",
+        . == 20	  ~ "Polytechnic",
+        . == 21	  ~ "Informal Training",
+        . == 22	  ~ "College (non-University)",
+        . == 30	  ~ "University",
+        . == -666	~ "Other",
+        . == -999	~ "Don't know"
+      ) %>% factor
+    )
+  ) %>%
+  select(-metertcrhr_error04) %>%
+  remove_empty()
+```
+ 
+```{r}
+hh_raw_ug <-
+  hh_raw_ug %>%
+  left_join(
+    hh_raw_ug_reexport,
+    by = "key"
+  ) %>%
+  mutate(
+    hh_educ = coalesce(hh_educ.x, hh_educ.y), 
+    gender_hhh = coalesce(gender_hhh.x, gender_hhh.y), 
+    hhh_age = coalesce(hhh_age.x, hhh_age.y)
+  ) %>%
+  select(-contains("."))
+```
+ 
+### Uganda ILC
+
+```{r}
+hh_raw_ug_ilc <- 
+  read_dta(
+    file.path(
+      path_box,
+      "DATA - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "3_HH Survey",
+      "DIL Household Survey_V3_checked.dta"
+    )
+  ) %>%
+  haven::as_factor(levels = "labels") %>%
+  mutate(
+    size_ot = as.character(size_ot)
+  ) %>%
+  remove_empty %>%
+  select(
+    -contains("hr")
+  )
+```
+
+### Malawi
+
+```{r}
+hh_raw_mw <- 
+  read_dta(
+    file.path(
+      path_box,
+      "DATA - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "3_post_hfc_data",
+      "3_household_survey",
+      "DIL_Household_checked_Malawi.dta"
+    )
+  ) %>%
+  haven::as_factor(levels = "labels") %>%
+  remove_empty() %>%
+  select(
+    -contains("hr")
+  ) %>%
+  mutate(
+    across(
+      c(int_promoter, int_warned),
+      ~ case_when(
+        . == 0 ~ "No",
+        . == 1 ~ "Yes"
+      )
+    ),
+    int_promoter_last = case_when(
+      int_promoter == 1 ~ "In the past 30 days",
+      int_promoter == 2 ~	"In the past 6 months",
+      int_promoter == 3	~	"In the past year",
+      int_promoter == 4	~	"It's been more than a year",
+      int_promoter == -999 ~ "Don't know"
+    ),
+    int_warned_who = case_when(
+      int_warned_who == 1 ~ "The promoter",
+      int_warned_who == 2 ~ "Someone from outside the village",
+      int_warned_who == 3 ~ "A neighbor",
+      int_warned_who == -666 ~ "Other"
+    )
+  )
+```
+
+Some of the variables were exported after being removed from the survey form and were not included in the SurveyCTO import do-file. These are imported below
+
+```{r}
+hh_raw_mw_reexport <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "MW-hh-survey-export-error.csv"
+    )
+  ) %>%
+  clean_names %>%
+  mutate(
+    hh_educ_mw = coalesce(hh_educ_mw_2, hh_educ_mw_6),
+    across(
+      hh_educ_mw,
+      ~ case_when(
+        . == 1	  ~ "No formal education / Never attended school",
+        . == 2	  ~ "Some Primary School (Did not complete Standard 8)",
+        . == 3	  ~ "Primary School Leaving Certificate (PSLCE) (Completed Standard 8)",
+        . == 4	  ~ "Some Secondary School (Did not complete Form 4 / MSCE)",
+        . == 5	  ~ "Junior Certificate of Education (JCE) (Completed Form 2)",
+        . == 6	  ~ "Malawi School Certificate of Education (MSCE) (Completed Form 4)",
+        . == 7	  ~ "Vocational/Technical Training (e.g., TEVETA certification)",
+        . == 8	  ~ "Diploma (e.g., teaching, nursing, other post-secondary diploma)",
+        . == 9	  ~ "Bachelor's Degree",
+        . == 10	  ~ "Postgraduate Degree (e.g., Master's, Doctorate)",
+        . == -666	~ "Other",
+        . == -999	~ "Don't know"
+      ) %>%
+        factor
+    ),
+    gender_hhh = coalesce(gender_hhh_3, gender_hhh_7) %>%
+      factor(
+        levels = c(1, 2),
+        labels = c("Male", "Female")
+      ),
+    hhh_age = coalesce(hhh_age_4, hhh_age_8)
+  ) %>%
+  select(key, hh_educ_mw, gender_hhh, hhh_age) %>%
+  remove_empty()
+
+hh_raw <- 
+  hh_raw_mw %>%
+  left_join(hh_raw_mw_reexport) %>%
+  bind_rows(hh_raw_ug) %>%
+  left_join(hh_raw_ug_reexport)
+# %>%
+#   bind_rows(hh_raw_ug_ilc)
+```
+
+## Save into R format
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Raw",
+    "hh-survey"
+  )
+
+hh_raw %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+
+```{r}
+hh_raw_deid <-
+  hh_raw %>%
+  select(
+    -c(
+      visit_landmarks_pl,
+      contains("name"),
+      enumerator,
+      contains("gps"),
+      contains("mobile"),
+      contains("phone")
+    )
+  )
+
+path <-
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Raw",
+    "hh-survey-deid"
+  )
+
+hh_raw_deid %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+
+hh_raw_deid %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  write_dta(
+    file.path(path_box, paste0(path, ".dta"))
+  )
+```
+
+<!--chapter:end:01-import-survey.Rmd-->
+
+# Clean Household Survey (clean-survey)
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "janitor",
+    "assertthat",
+    "str2str"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+```{r}
+hh_raw <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "hh-survey-deid.rds"
+      )
+  )
+```
+
+## Check unique ID
+
+```{r}
+hh_unique <-
+  hh_raw %>%
+  mutate(
+    household_id = coalesce(household_id, household_id_pl)
+  )
+```
+
+
+We check the uniqueness of the household ID variable, since the enumerators should only submit the form once the household will no longer be visited again.
+
+```{r eval = FALSE}
+assert_that(
+  n_distinct(hh_raw$household_id_pl) == nrow(hh_raw)
+)
+```
+
+Some duplicate entries are coming from non-responses
+
+```{r eval = FALSE}
+hh_unique %>%
+  group_by(household_id, survey_type) %>%
+  dplyr::filter(n() > 1) %>%
+  select(
+    key, household_id_pl, 
+    enumerator_id, village_id_pl, 
+    submissiondate, starttime,
+    full_names_pl, visit_landmarks_pl,
+    respo_availability, consent,
+    duration, complete, comment
+  ) %>%
+  arrange(household_id_pl) %>%
+  view
+
+hh_unique %>%
+  group_by(country_pl, household_id_pl) %>%
+  dplyr::filter(n() > 1, household_id_pl != "ZOU8362510MW2") %>%
+  summarise(
+    message = paste("Duplicate entries:", paste(key, collapse = ", "))
+  ) %>%
+  view
+```
+```{r}
+hh_unique %>%
+  tabyl(respo_availability, consent)
+```
+People with missing consent turned out not to be using the water point described
+
+```{r eval = FALSE}
+hh_unique %>%
+  dplyr::filter(respo_availability == "Yes", is.na(consent)) %>%
+  view
+```
+
+```{r}
+hh_consented <-
+  hh_unique %>%
+  dplyr::filter(consent == "Yes" & !is.na(consent))
+```
+
+These 
+```{r}
+hh_consented <-
+  hh_consented %>%
+  group_by(household_id, survey_type) %>%
+  dplyr::filter(
+    !((n() > 1) & (starttime == min(starttime)))
+  ) %>%
+  ungroup
+```
+
+```{r}
+assert_that(
+  hh_consented %>%
+  select(household_id, survey_type) %>%
+  unique %>%
+  nrow ==
+  nrow(hh_consented)
+)
+```
+
+## Corrections
+
+```{r}
+hh_corrected <-
+  hh_consented %>%
+  mutate(
+    across(
+      village_id_pl,
+      ~ case_when(
+        . == "1050304002" ~ "1050702004",
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+## Replace missing codes
+
+Some of the "don't know" and "unsure" values in the survey are coded differently, so we standardize them to 9999. -666 corresponds to "other," but we deal with this later.
+
+```{r}
+hh_clean <-
+  hh_corrected %>%
+  mutate(
+    across(
+      where(is.character) & !where(is.factor), 
+      ~ . %>%
+        str_replace_all("[.]", "") %>%
+        na_if("") %>%
+        na_if("-999") %>%
+        na_if("9999")
+    ),
+    across(
+      where(is.numeric),
+      ~ na_if(., -999) %>%
+        na_if(9999)
+    ),
+    across(
+      contains("timestamp"),
+      as.numeric
+    )
+  )
+```
+
+## Replace NAs from skip patterns
+
+```{r}
+hh_clean <-
+  hh_clean %>%
+  mutate(
+    across(
+      make_watersafe_1:make_watersafe_8,
+      ~ case_when(
+        do_anything == "No" ~ 0,
+        TRUE ~ .
+      )
+    )
+  )
+```
+
+
+## Clean text variables
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+   across(
+      c(ends_with("_pl"), matches("name"), matches("comment")),
+    ~ . %>% str_squish %>% str_to_upper
+    ),
+   across(
+     where(is.character), 
+     ~ ifelse(grepl("HTTP|photo|uuid|size_ot", .x), str_to_lower(.x), .x)
+   )
+  )
+```
+
+## Clean date of survey
+
+We have SubmissionDate, starttime, and endtime. 
+
+We will use "submissiondate" for the date.
+
+```{r}
+hh_clean <- 
+  hh_clean  %>% 
+  mutate(date = as.Date(substr(submissiondate, 1, 10)))
+```
+
+```{r}
+hh_clean %>%
+  tabyl(date, country_pl)
+```
+
+## Turn dummy vairables into logical
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+    across(
+      where(~ all(unique(.) %in% c(0, 1, NA))),
+      ~ as.logical(.)
+    ),
+    across(
+      where(is_dummy),
+      ~ (. == "Yes")
+    ),
+    across(
+      where(~ (is.factor(.) | is.character(.))
+            & all(levels(.) %in% c("Don’t Know", "Don’t Know", "Don't know", "No", "Yes", NA))),
+      ~ case_when(
+        . == "Yes" ~ TRUE,
+        . == "No" ~ FALSE
+      ),
+      .names = "{.col}_c"
+    )
+  ) 
+```
+
+
+## Merge variables
+
+### Education
+
+Options were different between countries
+
+```{r}
+hh_clean <-
+  hh_clean %>%
+  mutate(
+    # Uganda
+    across(
+      c(educ, hh_educ),
+      ~ case_when(
+        . %in% c("Never attended school / did not complete class", "Informal Training") ~ "None",
+        . %in% c("Pre-primary", "P1", "P2", "P3", "P4", "P5", "P6") ~ "Pre-primary",
+        . %in% c("P7", "PLE", "S1", "S2", "S3") ~ "Primary",
+        . %in% c("S4", "O level", "S5", "S6", "A level", "Polytechnic") ~ "Secondary",
+        . %in% c("College (non-University)", "University") ~ "Post-secondary"
+      )
+    ),
+    # Malawi
+    across(
+      c(educ_mw),
+      ~ case_when(
+        . == "No formal education / Never attended school" ~ "None",
+        . == "Some Primary School (Did not complete Standard 8)" ~ "Pre-primary",
+        . %in% c("Primary School Leaving Certificate (PSLCE) (Completed Standard 8)", "Junior Certificate of Education (JCE) (Completed Form 2)", "Some Secondary School (Did not complete Form 4 / MSCE)") ~ "Primary",
+        . %in% c("Malawi School Certificate of Education (MSCE) (Completed Form 4)", "Vocational/Technical Training (e.g., TEVETA certification)") ~ "Secondary",
+        . %in% c("Diploma (e.g., teaching, nursing, other post-secondary diploma)", "Bachelor's Degree") ~ "Post-secondary"
+      )
+    ),
+    # Combine both
+    resp_educ = coalesce(educ, educ_mw)
+  )
+```
+
+### Household head characteristics
+
+The questions related to characteristics of the household head were not asked if the respondent herself was the household head.
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+    hhh_educ = case_when(
+      !is.na(hh_educ) ~ hh_educ,
+      !is.na(hh_educ_mw) ~ hh_educ_mw,
+      relation == "Me/respondent is the HoH" & !is.na(resp_educ) ~ resp_educ
+    ),
+    hhh_gender = case_when(
+      !is.na(gender_hhh) ~ gender_hhh,
+      relation == "Me/respondent is the HoH" & !is.na(sex) ~ sex
+    ),
+    hhh_age = case_when(
+      !is.na(hhh_age) ~ hhh_age,
+      relation == "Me/respondent is the HoH" & !is.na(age_resp) ~ age_resp
+    )
+  )
+```
+
+## Drop surveycto coding variables
+
+```{r}
+hh_clean <-
+  hh_clean %>% 
+  dplyr::select(
+    -c(
+      hh_randtxt,
+      hh_randnum,
+      hh_randnum_int,
+      vil_id
+    ),
+    -matches("index")
+  )
+```
+
+## Combine household_id and household_id_pl
+
+```{r}
+hh_clean <- 
+  hh_clean %>%
+  mutate(
+    household_id = coalesce(household_id, household_id_pl)
+  ) %>%
+  select(-household_id_pl) %>%
+  ungroup
+```
+
+## Export data
+
+```{r}
+path <-
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Clean",
+    "hh-survey-clean"
+  )
+
+write_meta(
+  hh_clean,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:02-clean-survey.Rmd-->
+
+# Construct household location
+
+```{r construct-hh-location}
+packages <-
+  c(
+    "tidyverse",
+    "sf",
+    "skimr",
+    "janitor",
+    "haven",
+    "viridis",
+    "leaflet",
+    "randomcoloR"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+
+```{r, warning = FALSE, message = FALSE}
+hh_clean <-
+  read_rds(
+    here(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Raw",
+      "hh-survey.rds"
+    )
+  )
+```
+
+## Create spatial version of the data set
+
+We choose to project the coordinates to the [EPSG code](https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf) `4326`, which adds Greenwich as the starting point (prime meridian) for the longitude and sets the units to degrees. 
+
+Note that the spatial datasets include only households who gave consent for their GPS coordinates to be recorded.
+
+```{r}
+hh_sf <- 
+  hh_clean %>%
+  dplyr::filter(!is.na(gpslongitude) & !is.na(gpslatitude)) %>%
+  select(key, starts_with("gps")) %>%
+  st_as_sf(
+    coords = c("gpslongitude", "gpslatitude"), 
+    crs = 4326
+    )
+```
+
+## Save data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Spatial",
+    "hh-gps"
+  )
+
+hh_sf %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+<!--chapter:end:03-construct-hh-location.Rmd-->
+
+# Construct chlorine testing variables (construct-chlorine-tests)
+
+```{r}
+packages <-
+  c(
+    "tidyverse", 
+    "janitor",
+    "sf"
+  )
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+## Load data
+
+```{r}
+hh <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Clean",
+      "hh-survey-clean.rds"
+      )
+    )
+```
+
+### Manual corrections
+
+Observations with E-15 and very dark pink color: chlorine residual is too high for the colorimeter to read. We're assigning a high-value, which doesn't mean that's the exact reading.
+
+```{r}
+error15_fcr <-
+  c(
+    "uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb",
+    "uuid:8bd53cc5-7bd7-4682-834d-2999b6d27da4"
+  )
+error15_tcr <-
+  c(
+    "uuid:186780bf-c04f-4d10-a293-bb7fbb670cbb",
+    "uuid:4be915eb-a15d-48a0-bbfb-73fb65349e21"
+  )
+
+hh <-
+  hh %>%
+  mutate(
+    meterfcr_c = 
+      case_when(
+        key %in% error15_fcr ~ 2.4,
+        TRUE ~ meterfcr
+      ),
+    metertcr_c = 
+      case_when(
+        key %in% error15_tcr ~ 2.4,
+        TRUE ~ metertcr
+      )
+  )
+```
+
+## Create final chlorine variables
+
+```{r}
+hh <- 
+  hh %>%
+  mutate(
+    discfcr_c = discfcr,
+    disctcr_c = disctcr
+  ) %>%
+  mutate(
+    across(
+      ends_with("cr_c"),
+      ~ . >= 0.1,
+      .names = "{.col}_01"
+    ),
+    across(
+      ends_with("cr_c"),
+      ~ . >= 0.2,
+      .names = "{.col}_02"
+    )
+  ) %>%
+  select(
+    key, household_id,
+    matches("tcr"), matches("fcr"),
+    -where(~(levels(.) %>% n_distinct()) == 1)
+  )
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Constructed",
+    "hh-survey-chlorine"
+  ) 
+
+write_meta(
+  hh,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:04-construct-chlorine-tests.Rmd-->
+
+# Construct data quality flags (construct-sensitivity-flags)
+
+```{r}
+packages <- c(
+  "tidyverse",
+  "here",
+  "haven",
+  "skimr",
+  "janitor",
+  "googlesheets4"
+)
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+```{r}
+hh <- read_rds(
+  file.path(
+    path_box,
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Clean",
+    "hh-survey-clean.rds"
+  )
+)
+
+gsheet <-
+  gs4_get("https://docs.google.com/spreadsheets/d/1wLCxkLwPlxcfOH14ziLS5s4pqCHf2k4NaBYckLqUYew/edit?usp=sharing")
+
+gsheet_id <-
+  gsheet$spreadsheet_id
+```
+
+## Flag if data is marked on the issues log as low-quality
+
+```{r}
+flags_ug <- 
+  read_sheet(
+    ss = gsheet, 
+    sheet = "Uganda Household Survey"
+  ) %>%
+  mutate(
+    across(
+      everything(), 
+      as.character
+    ),
+    sheet_row = row_number() + 1L
+  )
+
+flags_mw <- 
+  read_sheet(
+    ss = gsheet, 
+    sheet = "Malawi Household Survey"
+  ) %>%
+  mutate(
+    across(
+      everything(), 
+      as.character
+    ),
+    sheet_row = row_number() + 1L
+  )
+
+flags <- 
+  bind_rows(
+    flags_ug, 
+    flags_mw
+  ) %>%
+  mutate(
+    `data team comments` = str_to_lower(`data team comments`)
+  )
+
+low_quality_ids <- 
+  flags %>%
+  dplyr::filter(
+    str_detect(
+      `data team comments`, "low-quality") | 
+      str_detect(`data team comments`, "low quality")
+  ) %>%
+  pull(household_id)
+
+hh <- 
+  hh %>%
+  mutate(
+    flag_low_quality = !is.na(household_id) & (household_id %in% low_quality_ids)
+  )
+```
+
+## Flag if there was Evidence Action/promoter interference
+
+```{r}
+interference_vil_ids <- c(
+  ### Uganda
+  "1070401003", # Buloke
+  "1101109006", # Saaka B
+  "1101308001", # Bukunya
+  "1050103005", # Buwenge Bunawale	
+  "1050901001", # Kaiti Kaiti
+
+  ### Malawi
+  "2030309037", # Mataka 2
+  "2041608019", # Saidi Mataka
+  "2030901003", # Likhomo
+  
+  ### Household respondents reported being warned
+  "1130904002",
+  "1101309001",
+  "1020306002",
+  "1130904002",
+  "1101309001",
+  "1160604001",
+  "1190401001",
+  "1130904002",
+  "1190401001",
+  "1090403006",
+  "1130904002",
+  "2020708036",
+  "2020317075",
+  "2030106036"
+
+  
+  
+)
+
+hh <- 
+  hh %>%
+  mutate(
+    flag_interference = !is.na(village_id_pl) & (village_id_pl %in% interference_vil_ids)
+  )
+```
+
+## Flag if the village had a low proportion of water come from the primary source
+
+```{r}
+low_primary_collection_vil_ids <- c(
+  ""
+)
+
+hh <- hh %>%
+  mutate(
+    flag_low_primary_collection = 
+      !is.na(village_id_pl) & (village_id_pl %in% low_primary_collection_vil_ids)
+  ) %>%
+  select(
+    household_id,
+    contains("flag")
+  )
+```
+
+## Export data
+
+```{r}
+path <- 
+   file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Constructed",
+    "hh-survey-constructed"
+  )
+
+write_meta(
+  hh,
+  path_data = file.path(path_box, path),
+  path_meta = file.path(path_git, path)
+)
+```
+
+<!--chapter:end:05-construct-sensitivity-flags.Rmd-->
+
+# Create final household survey data
+
+```{r}
+packages <-
+  c(
+    "tidyverse",
+    "here",
+    "haven",
+    "skimr",
+    "kableExtra",
+    "assertthat",
+    "janitor",
+    "sf"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+## Load data
+
+### Household survey
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Clean",
+      "hh-survey-clean.rds"
+      )
+    ) %>%
+  mutate(village_id = village_id_pl) %>%
+  rename(
+    hh_dsw = wp_dsw,
+    hh_ilc = wp_ilc
+  )
+```
+
+### Chlorine testing
+
+```{r}
+tests <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Constructed",
+      "hh-survey-chlorine.rds"
+    )
+  ) %>%
+  select(
+    key,
+    disctcr_c, disctcr_c_02,
+    discfcr_c, discfcr_c_02,
+    metertcr_c, metertcr_c_02, metertcr_c_01,
+    meterfcr_c, meterfcr_c_02, meterfcr_c_01,
+  )
+```
+
+### GPS
+
+```{r}
+gps <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Spatial",
+      "hh-gps.rds"
+    )
+  )
+```
+
+### Village-level data
+
+```{r}
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "Villages.rds"
+    )
+  ) %>%
+  select(
+    country, village_id, district_id,
+    sample_group, sample, vil_replaced, pre_expansion,
+    ea_program_vil,
+    team
+  ) %>%
+  mutate(
+    team = team %>% factor %>% as.numeric
+  )
+```
+
+### Household census
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Constructed",
+      "hh-census-constructed.rds"
+    )
+  ) 
+
+hh_census <- 
+  hh_census %>%
+  select(
+    household_id, wp_id = wp_id_c,
+    promoter_list,
+    wp_sec_notworking:vil_ilc_selfreport,
+    hhh_educ_hhc = hhh_educ, hhh_gender_hhc = hhh_gender, hhh_age_hhc = hhh_age,
+    hh_hhsincompound, hh_members, hh_adults, hh_males, hh_females, hh_pregnant,
+    hh_under5, hh_under2
+  )
+```
+
+### Water point census
+
+```{r}
+wp <-
+  read_rds(
+    file.path(
+      path_box, 
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Constructed",
+      "wp-constructed.rds"
+    )
+  ) %>%
+  transmute(
+    wp_id = wp_id_c,
+    promoter_surveyed,
+    pm_ea_list,
+    dsw, ilc, ilc_wp, ilc_wcp,
+    wp_dsw, wp_ilc, wp_ilc_device,
+    wp_func,
+    wp_intervention = intervention,
+    wp_intervention_type = intervention_type,
+    wp_sourcetype = sourcetype,
+    wp_turbidity,
+    wp_pay,
+    wp_dsw_valve = jc_valve, 
+    wp_dsw_chlorine = jc_chlorine, 
+    wp_dsw_dose = disp_dose,
+    wp_meterfcr = meterfcr,
+    wp_metertcr = metertcr,
+    wp_discfcr = discfcr,
+    wp_disctcr = disctcr,
+    wp_meterfcr_un = meterfcr_un,
+    wp_metertcr_un = metertcr_un,
+    wp_discfcr_un = discfcr_un,
+    wp_disctcr_un = disctcr_un,
+    wp_meterfcr_01 = meterfcr_c_01,
+    wp_metertcr_01 = metertcr_c_01,
+    wp_meterfcr_un_01 = meterfcr_un_c_01,
+    wp_metertcr_un_01 = metertcr_un_c_01,
+    wp_meterfcr_02 = meterfcr_c_02,
+    wp_metertcr_02 = metertcr_c_02,
+    wp_discfcr_02 = discfcr_c_02,
+    wp_disctcr_02 = disctcr_c_02,
+    wp_meterfcr_un_02 = meterfcr_un_c_02,
+    wp_metertcr_un_02 = metertcr_un_c_02,
+    wp_discfcr_un_02 = discfcr_un_c_02,
+    wp_disctcr_un_02 = disctcr_un_c_02
+  ) %>%
+  st_drop_geometry() %>%
+  unique
+```
+
+## Combine data
+
+We previously calculated the distances from households to various water points in the household census processing scripts. We merge this data to the household survey data by household ID, then only select analysis variables for the final dataset.
+
+### Chlorine tests
+
+```{r}
+assert_that(
+ all(tests$key %in% hh_survey$key)
+)
+
+hh_survey_joined <-
+  hh_survey %>%
+  left_join(
+    tests, 
+    relationship = "one-to-one",
+    unmatched = "error"
+  )
+```
+
+### Household census
+
+Not all households in the household survey are in the household census. It's not clear why!!
+
+```{r eval = FALSE}
+assert_that(
+ all(hh_survey$household_id %in% hh_census$household_id)
+)
+
+hh_survey %>% 
+  mutate(in_census = household_id %in% hh_census$household_id) %>%
+  view
+```
+
+```{r}
+hh_survey_joined <-
+  hh_survey_joined %>%
+  mutate(in_census = household_id %in% hh_census$household_id) %>%
+  left_join(
+    hh_census
+  )
+```
+
+### Water point data
+
+```{r}
+hh_survey_joined <-
+  hh_survey_joined %>%
+  mutate(
+    wp_id = case_when(
+      !is.na(wp_id) ~ wp_id,
+      !is.na(wp_id_pl) ~ paste0(village_id, str_sub(wp_id_pl, str_length(wp_id_pl) - 2, str_length(wp_id_pl)))
+    )
+  )
+```
+
+
+```{r}
+hh_survey_joined <-
+  hh_survey_joined %>%
+  left_join(
+    wp, 
+    by = "wp_id",
+    relationship = "many-to-one"
+  )
+```
+
+
+## Select final variables
+
+### ID variables
+
+```{r}
+ids <-
+  hh_survey_joined %>%
+  select(
+    key,
+    household_id,
+    village_id
+  ) %>%
+  left_join(villages)
+```
+
+### Meta data
+
+```{r}
+meta <-
+  hh_survey_joined %>%
+  transmute(
+    key,
+    date,
+    survey = survey_type %>%
+      fct_recode(
+        "Household Survey" = "Household Survey (HH Census Respondents)",
+        "Monitoring Survey" = "Monitoring Survey (Promoter Respondents)"
+      ),
+    formdef_version
+  )
+```
+
+### Household characteristics 
+
+```{r}
+household <-
+  hh_survey_joined %>%
+  rename(
+    resp_age = age_resp,
+    resp_hhh = relation
+  ) %>%
+  mutate(
+    resp_age = case_when(
+      !is.na(resp_age) ~ resp_age,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_age_hhc) ~ hhh_age_hhc,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_age) ~ hhh_age
+    ),
+    resp_sex = case_when(
+      !is.na(sex) ~ sex %>% as.character(),
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_gender_hhc) ~ hhh_gender_hhc %>% as.character(),
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_gender) ~ hhh_gender %>% as.character()
+    ) %>%
+      as.factor,
+    resp_educ = case_when(
+      !is.na(educ) ~ educ,
+      !is.na(educ_mw) ~ educ_mw,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_educ_hhc) ~ hhh_educ_hhc,
+      resp_hhh == "Me/respondent is the HoH" & !is.na(hhh_educ) ~ hhh_educ
+    ) %>%
+      as.factor,
+    hhh_age = coalesce(hhh_age, hhh_age_hhc),
+    hhh_sex = coalesce(hhh_gender, hhh_gender_hhc),
+    hhh_educ = coalesce(hhh_educ, hhh_educ_hhc) %>% factor,
+    hh_under2 = coalesce(hh_under2, hh_under2_pl %>% as.numeric),
+    hh_under5 = coalesce(hh_under5, hh_under5_pl %>% as.numeric),
+    across(
+      c(hh_under5, hh_under2),
+      ~ if_else(
+        hh_adults == hh_members,
+        0,
+        .
+      )
+    ),
+    hh_pregnant = if_else(
+      hh_females > 0,
+      hh_pregnant,
+      0
+    )
+  ) %>%
+  select(
+    key, date, in_census,
+    resp_age, resp_sex, resp_educ, resp_hhh,
+    hhh_age, hhh_sex, hhh_educ,
+    hh_females, hh_males,
+    hh_adults, hh_members, hh_pregnant,
+    hh_under5, hh_under2,
+    promoter_household, promoter_list
+  ) 
+```
+
+### Water point characteristics
+
+```{r}
+wp <-
+  hh_survey_joined %>%
+  mutate(
+    across(
+      c(hh_dsw, hh_ilc),
+      ~ . == "Yes"
+    )
+  ) %>%
+  select(
+    key,
+    all_of(names(wp)),
+    hh_dsw, hh_ilc
+  )
+```
+
+### Water sample
+
+```{r}
+water <-
+  hh_survey_joined %>%
+  mutate(
+    water_sample = coalesce(glass_water, give_water),
+    storage = case_when(
+      storage != "Other" ~ storage %>% as.character,
+      str_detect(other_cont, "Dish") ~ "Dish/basin",
+      str_detect(other_plastic, "Dish") ~ "Dish/basin",
+      str_detect(other_plastic, "dish") ~ "Dish/basin",
+      str_detect(other_plastic, "basin") ~ "Dish/basin",
+      str_detect(other_plastic, "Basin") ~ "Dish/basin",
+      str_detect(other_cont, "drum") ~ "Drum",
+      str_detect(other_plastic, "drum") ~ "Drum",
+      str_detect(other_plastic, "Drum") ~ "Drum",
+      str_detect(other_cont, "Bottle") ~ "Bottle",
+      str_detect(other_plastic, "bottle") ~ "Bottle",
+      str_detect(other_cont, "Flank") ~ "Flank",
+      str_detect(other_cont, "flank") ~ "Flank",
+    ) %>% factor,
+    cover_storage = 
+      case_when(
+        cover_storage != "Other" ~ cover_storage %>% as.character,
+        str_detect(str_to_lower(cover_storage_ot), "plate") ~ "Plate/cup",
+        str_detect(str_to_lower(cover_storage_ot), "cup") ~ "Plate/cup",
+        cover_storage_ot == "Nothing" ~ "Open"
+      ) %>% factor,
+    who_collected =
+      case_when(
+        who_collected != "Other" ~ who_collected,
+        household_id %in% c(
+          "CHET47407MW2", "CHB321206MW2", "CHN158362MW2", "CH03173610MW2", "CHXH58325MW2",
+          "CHQN45243MW2", "CHKA54451MW2", "MATX35044MW2", "CHBP37315MW2", "CHBK54151MW2",
+          "SIEA58412321", "ZOLZ17001MW2"
+        ) ~ "A child under the age of 18 years",
+        household_id %in% c(
+          "CHAG18155MW2", "NEKI27026MW2", "MA3K42285887", "CHJK44344MW2", "CHCO58353MW2",
+          "CH7R23269MW2", "ZO4A03555MW2", "MA4G33312513", "MA8S07569211", "MAPU09515762",
+          "BUJG14185225", "ZOW540534MW2", "NA22486111", "BUZH14335143", "BLXE24195MW2",
+          "CH7U52314MW2", "CHGH092910MW2", "MAT458073762", "BUWY212610513", "KA0L48554892",
+          "ZOKD31562MW2", "CH5C22257MW2", "CHRK391210MW2", "BURV45545887", "BU3C21345887",
+          "CH5Z18377MW2", "KA58112892", "CH8Z15101MW2", "CHY119352MW2", "TOUA44262333", 
+          "CHIO53465MW2", "MAY522097MW2", "NA67440410391", "BLMX16575MW2", "MADR37079111", 
+          "MAAD25241111", "NEEJ04559MW2", "BUHC21219513"
+        ) ~ "Another relative 18 years old or older"
+      ) %>% factor,
+    age_child = case_when(
+      !is.na(age_child) ~ age_child,
+      household_id == "CHBP37315MW2" ~ 11,
+      household_id %in% c("CH03173610MW2", "CHBK54151MW2", "SIEA58412321") ~ 13,
+      household_id %in% c("CHET47407MW2", "CHN158362MW2") ~ 14,
+      household_id == "MATX35044MW2" ~ 15,
+      household_id %in% c("CHB321206MW2", "CHQN45243MW2", "CHKA54451MW2") ~ 16,
+      household_id == "CHXH58325MW2" ~ 17,
+    ),
+    prep_different = case_when(
+      prep_different_0 & !prep_different_1 ~ FALSE,
+      TRUE ~ prepare_water_c
+    ),
+    size = case_when(
+      size != "Other (specify)" ~ parse_number(size %>% as.character),
+      size == "Other (specify)" ~ size_ot %>% as.numeric
+    ),
+    notgivewater = case_when(
+      notgivewater != "Other" ~ notgivewater %>% as.character,
+      notgivewater == "Other" & household_id != "SIWK01128700" ~ "Drinking water is finished and the respondent is yet to fetch.",
+      household_id == "SIWK01128700" ~ "Other"
+    ) %>% factor,
+    across(
+      c(int_warned_who, int_promoter_last),
+      ~ as.factor(.)
+    )
+  ) %>%
+  select(
+    key, wp_id,
+    prep_different,
+    prep_different_cl = prep_different_1,
+    prep_different_filter = prep_different_2,
+    prep_different_boil = prep_different_3,
+    prep_different_other = prep_different__666,
+    prep_different_specify = prep_different_ot,
+    water_sample,
+    notgivewater,
+    storage,
+    access_contain,
+    cover_storage,
+    howlong_waterprep, 
+    who_collected,
+    age_child, size,
+    watertreat_any = do_anything_c,
+    watertreat_boil = make_watersafe_1,
+    watertreat_dispcl = make_watersafe_2,
+    watertreat_othercl = make_watersafe_3,
+    watertreat_strain = make_watersafe_4,
+    watertreat_filter = make_watersafe_5,
+    watertreat_sand = make_watersafe_6,
+    watertreat_solar = make_watersafe_7,
+    watertreat_decant = make_watersafe_8,
+    watertreat_other = make_watersafe__666,
+    watertreat_dk = make_watersafe__999,
+    mix = mix_c, 
+    where_collect, 
+    #where_collect_ot, collect, collect_oth,
+    starts_with("int_")
+  ) %>%
+  select(
+    -c(int_promoter, int_warned)
+  )
+```
+
+### Water treatment
+
+```{r}
+water_treatment <-
+  hh_survey_joined %>%
+  mutate(
+    tmtever_none = !everdo_0,
+  ) %>%
+  rename(
+    tmtever_pretreated = everdo_22,
+    tmtever_boil = everdo_1,
+    tmtever_dispcl = everdo_2,
+    tmtever_othercl = everdo_3,
+    tmtever_strain = everdo_4,
+    tmtever_filter = everdo_5,
+    tmtever_sand = everdo_6,
+    tmtever_decant = everdo_8,
+    tmtever_other = everdo__666,
+    tmtever_specify = everdo_ot,
+    tmtever_dk = everdo__999,
+    notchlorinate_smell = reason_notchlorinate_1,
+    notchlorinate_taste = reason_notchlorinate_2,
+    notchlorinate_forget = reason_notchlorinate_3,
+    notchlorinate_clean = reason_notchlorinate_4,
+    notchlorinate_hh = reason_notchlorinate_5,
+    notchlorinate_empty = reason_notchlorinate_6,
+    notchlorinate_sick = reason_notchlorinate_7,
+    notchlorinate_access = reason_notchlorinate_8,
+    notchlorinate_other = reason_notchlorinate__666,
+    notchlorinate_specify = reason_notchlorinate_ot
+  ) %>%
+  # Recode 'other' values
+  mutate(
+    tmtever_othercl = if_else(household_id == "TOES50136413", TRUE, tmtever_othercl),
+    tmtever_solar = if_else(!tmtever_none, household_id == "NA3544277536", NA),
+    tmtever_pretreated = if_else(household_id == "BLLW59407MW2", TRUE, tmtever_pretreated),
+    tmtever_none = if_else(
+      !if_any(c(tmtever_pretreated:tmtever_decant, tmtever_dk, tmtever_solar), ~ .x), 
+      TRUE, 
+      tmtever_none
+    )
+  ) %>%
+  select(
+    key, 
+    starts_with("tmtever"), 
+    -c(tmtever_other, tmtever_specify),
+    starts_with("notchlorinate"),
+    often_chlorinate
+  )
+```
+
+### Data quality flags
+
+```{r}
+flags <-
+  hh_survey_joined %>%
+  select(
+    key,
+    starts_with("flag_")
+  )
+```
+
+
+### Combine all
+
+```{r}
+final <-
+  ids %>%
+  left_join(villages) %>%
+  left_join(meta) %>%
+  left_join(household) %>%
+  left_join(wp) %>%
+  left_join(water) %>%
+  left_join(water_treatment) %>%
+  left_join(tests) %>%
+  left_join(flags) %>%
+  dplyr::filter(!vil_replaced) %>%
+  remove_empty() %>%
+  remove_constant
+```
+
+
+```{r}
+hhs <-
+  hh_survey_joined %>% 
+  select(
+    key,
+    all_of(setdiff(names(.), names(final)))
+  ) %>%
+  right_join(final) %>%
+  remove_empty()
+```
+
+## Export data
+
+### Save constructed data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Constructed",
+    "hh-survey-constructed"
+  )
+
+hhs %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+### Save spatial data
+
+```{r}
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Spatial",
+    "hh-survey-constructed"
+  )
+
+gps %>%
+  left_join(hhs) %>% 
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+### Save analysis data
+
+```{r}
+final <-
+  final %>%
+  set_names(
+    names(.) %>% 
+      str_replace_all("cr_c$", "cr") %>%
+      str_replace_all("c_0", "0") %>%
+      str_remove_all("_c$")
+  )
+
+path <- 
+  file.path(
+    "Data",
+    "HouseholdSurvey",
+    "DataSets",
+    "Final",
+    "hh-survey"
+  )
+
+final %>%
+  write_meta(
+    path_data = file.path(path_box, path),
+    path_meta = file.path(path_git, path)
+  )
+```
+
+```{r}
+stata <-
+  final %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  )
+  
+stata %>% 
+  write_dta(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.dta"
+    )
+)
+```
+
+<!--chapter:end:06-create-final-hh-survey.Rmd-->
+

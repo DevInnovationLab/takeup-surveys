@@ -284,6 +284,7 @@ hh_clean <-
   mutate(
     hhh_educ = case_when(
       !is.na(hh_educ) ~ hh_educ,
+      !is.na(hh_educ_mw) ~ hh_educ_mw,
       relation == "Me/respondent is the HoH" & !is.na(resp_educ) ~ resp_educ
     ),
     hhh_gender = case_when(
