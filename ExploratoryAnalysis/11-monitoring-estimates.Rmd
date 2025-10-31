@@ -1805,7 +1805,7 @@ ggsave("output/waterfall_malawi.pdf",
        device = "pdf")
 ```
 
-# difference in means tests
+# tests
 ## test for difference between table 1 and 8
 Again, ideally table 1 numbers will automatically come from table 1 calculations file - I need to add this
 
@@ -1886,6 +1886,45 @@ p_value_malawi <- 2 * (1 - pnorm(abs(z_stat_malawi)))
 # p-values
 cat("Uganda p-value:", format(p_value_uganda, scientific = FALSE, digits = 10), "\n")
 cat("Malawi p-value:", format(p_value_malawi, scientific = FALSE, digits = 10), "\n")
+```
+
+## comparing CIs for estimates that differ by "dataset" - table 10 ex outside hhs vs table 14
+```{r}
+# prepare data from both tables
+table14_data <- country_estimates_table14 %>%
+  mutate(table = "Promoter & monitoring \n survey data",
+         estimate = total_indiv_access_popn,
+         ci_lower = ci_lower_total_access,
+         ci_upper = ci_upper_total_access)
+
+table10_data <- country_estimates_table10_exout %>%
+  mutate(table = "Household census & \n survey data",
+         estimate = total_indiv_access_popn,
+         ci_lower = ci_lower_total_access,
+         ci_upper = ci_upper_total_access)
+
+# combine the data
+plot_data <- bind_rows(table14_data, table10_data) %>%
+  dplyr::select(country, table, estimate, ci_lower, ci_upper)
+
+# create the plot
+ggplot(plot_data, aes(x = table, y = estimate, color = country)) +
+  geom_point(size = 3, position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), 
+                width = 0.2, 
+                position = position_dodge(width = 0.3),
+                linewidth = 1) +
+  facet_wrap(~ country, scales = "free_y") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Comparison of Individuals with Access Estimates",
+       subtitle = "95% Confidence Intervals shown; remaining difference is unexplained besides dataset: both \nestimates have same water point sample & exclude out-of-village and double-counted HHs",
+       x = NULL,
+       y = "Individuals with Access Estimates",
+       color = "Country") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom",
+        plot.title = element_text(face = "bold", size = 14))
 ```
 
 # balance tables
@@ -2482,6 +2521,7 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
 # exploratory: does the number of people per water point differ significantly by sample group?
 YES for promoter survey water points (and promoter survey user counts), NO for water point census water points (and hh census user counts) 
 ```{r}
+
 # method 1: convert to unordered factor, then relevel
 wp_users_pm <- wp_users_pm %>%
   mutate(sample_group = factor(sample_group, ordered = FALSE),
