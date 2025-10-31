@@ -373,18 +373,19 @@ uganda_ilc_wcp_count <- nrow(uganda_wcp)
 
 # create country totals table
 country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
-  count(country, sample_group, intervention, name = "country_total") %>%
+  # in the row below, change to sample_group to use village classification instead
+  count(country, wp_sample_group, intervention, name = "country_total") %>%
   # Add ILC water collection points to the ILC category
   mutate(
     country_total = case_when(
       country == "Malawi" & intervention == "ILC" ~ country_total + malawi_ilc_wcp_count,
       country == "Uganda" & intervention == "ILC" ~ country_total + uganda_ilc_wcp_count,
       TRUE ~ country_total
-    ))
-  # ) %>%
-  # arrange(country, wp_sample_group, intervention) %>%
-  # mutate(sample_group = wp_sample_group) %>%
-  # select(-wp_sample_group)
+    )
+  ) %>%
+  arrange(country, wp_sample_group, intervention) %>%
+  mutate(sample_group = wp_sample_group) %>%
+  select(-wp_sample_group)
 
 country_totals
 ```
@@ -2542,6 +2543,22 @@ ggplot(wp_distribution_census, aes(x = as.factor(total_wp_used), y = n, fill = a
 # exploratory: does the number of people per water point differ significantly by sample group?
 YES for promoter survey water points (and promoter survey user counts), NO for water point census water points (and hh census user counts) 
 ```{r}
+# create wp_users_pm from wp_census
+wp_users_pm <- wp_census %>%
+  dplyr::select(wp_id, pm_users, country, intervention, sample_group) %>%
+  dplyr::filter(!is.na(pm_users))
+
+# create wp_users_census from hh_census by counting distinct households per water point
+wp_users_census <- hh_census %>%
+  dplyr::group_by(wp_id) %>%
+  dplyr::summarise(hh_count = n_distinct(household_id)) %>%
+  dplyr::ungroup() %>%
+  # join back the water point characteristics
+  left_join(
+    wp_census %>% dplyr::select(wp_id, country, intervention, sample_group),
+    by = "wp_id"
+  ) %>%
+  dplyr::filter(!is.na(hh_count))
 
 # method 1: convert to unordered factor, then relevel
 wp_users_pm <- wp_users_pm %>%
