@@ -373,20 +373,41 @@ uganda_ilc_wcp_count <- nrow(uganda_wcp)
 
 # create country totals table
 country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
-  count(country, wp_sample_group, intervention, name = "country_total") %>%
+  count(country, sample_group, intervention, name = "country_total") %>%
   # Add ILC water collection points to the ILC category
   mutate(
     country_total = case_when(
       country == "Malawi" & intervention == "ILC" ~ country_total + malawi_ilc_wcp_count,
       country == "Uganda" & intervention == "ILC" ~ country_total + uganda_ilc_wcp_count,
       TRUE ~ country_total
-    )
-  ) %>%
-  arrange(country, wp_sample_group, intervention) %>%
-  mutate(sample_group = wp_sample_group) %>%
-  select(-wp_sample_group)
+    ))
+  # ) %>%
+  # arrange(country, wp_sample_group, intervention) %>%
+  # mutate(sample_group = wp_sample_group) %>%
+  # select(-wp_sample_group)
 
 country_totals
+```
+
+### looking into whether classifying as expansion/footprint by water point vs village makes a difference
+```{r}
+# malawi DSW classification table
+malawi_dsw_classification <- malawi_wp %>%
+  dplyr::filter(intervention == "DSW") %>%
+  count(wp_sample_group, sample_group) %>%
+  pivot_wider(names_from = sample_group, values_from = n, values_fill = 0)
+
+print("Malawi DSW Water Points: WP Classification (rows) vs Village Classification (cols)")
+print(malawi_dsw_classification)
+
+# uganda DSW classification table
+uganda_dsw_classification <- uganda_wp %>%
+  dplyr::filter(intervention == "DSW") %>%
+  count(wp_sample_group, sample_group) %>%
+  pivot_wider(names_from = sample_group, values_from = n, values_fill = 0)
+
+print("Uganda DSW Water Points: WP Classification (rows) vs Village Classification (cols)")
+print(uganda_dsw_classification)
 ```
 
 ## create function for SEs
