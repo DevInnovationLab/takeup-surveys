@@ -214,7 +214,7 @@ map <-
     label = ~label
   ) %>%
   addCircleMarkers(
-    data = wp_census %>% dplyr::filter(village_id == "1021602004"),
+    data = wp_census,
     radius = 8, 
     color = "lightblue",
     fillOpacity = 1,
@@ -254,4 +254,4 @@ map <-
     opacity = c(1, 1, 1, 0, 1, 1)
   )
 
-saveWidget(map, file = "G:/Shared drives/DIL Shared Drive/DIL/Projects/Water/GW EA take-up/Deliverables/v1/Data/Map.html")
+saveWidget(map, file = "G:/Shared drives/DIL Shared Drive/DIL/Projects/Water/GW EA take-up/Deliverables/v2/Data/Map.html")

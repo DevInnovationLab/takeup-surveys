@@ -2548,76 +2548,77 @@ Total
 <span id="cb16-3"><a href="primary-outcomes.html#cb16-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
 <span id="cb16-4"><a href="primary-outcomes.html#cb16-4" tabindex="-1"></a>    wp_intervention_type <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span>,</span>
 <span id="cb16-5"><a href="primary-outcomes.html#cb16-5" tabindex="-1"></a>    <span class="sc">!</span>(wp_intervention_type <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span> <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>),</span>
-<span id="cb16-6"><a href="primary-outcomes.html#cb16-6" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">str_detect</span>(wp_intervention_type, <span class="st">&quot;ILC&quot;</span>) <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>)</span>
-<span id="cb16-7"><a href="primary-outcomes.html#cb16-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-8"><a href="primary-outcomes.html#cb16-8" tabindex="-1"></a>  <span class="fu">group_by</span>(village_id) <span class="sc">%&gt;%</span></span>
-<span id="cb16-9"><a href="primary-outcomes.html#cb16-9" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb16-10"><a href="primary-outcomes.html#cb16-10" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
-<span id="cb16-11"><a href="primary-outcomes.html#cb16-11" tabindex="-1"></a>  group_split</span>
-<span id="cb16-12"><a href="primary-outcomes.html#cb16-12" tabindex="-1"></a>  </span>
-<span id="cb16-13"><a href="primary-outcomes.html#cb16-13" tabindex="-1"></a>treatment <span class="ot">&lt;-</span></span>
-<span id="cb16-14"><a href="primary-outcomes.html#cb16-14" tabindex="-1"></a>  hh_survey_grouped <span class="sc">%&gt;%</span></span>
-<span id="cb16-15"><a href="primary-outcomes.html#cb16-15" tabindex="-1"></a>  <span class="fu">map</span>(</span>
-<span id="cb16-16"><a href="primary-outcomes.html#cb16-16" tabindex="-1"></a>    <span class="sc">~</span> <span class="fu">village_mean_ci</span>(</span>
-<span id="cb16-17"><a href="primary-outcomes.html#cb16-17" tabindex="-1"></a>      <span class="at">data =</span> .x,</span>
-<span id="cb16-18"><a href="primary-outcomes.html#cb16-18" tabindex="-1"></a>      <span class="at">outcomes =</span> <span class="fu">c</span>(<span class="st">&quot;make_watersafe_2&quot;</span>, test_vars),</span>
-<span id="cb16-19"><a href="primary-outcomes.html#cb16-19" tabindex="-1"></a>      <span class="at">dummy =</span> <span class="cn">TRUE</span></span>
-<span id="cb16-20"><a href="primary-outcomes.html#cb16-20" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-21"><a href="primary-outcomes.html#cb16-21" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
-<span id="cb16-22"><a href="primary-outcomes.html#cb16-22" tabindex="-1"></a>        <span class="at">country =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(country) <span class="sc">%&gt;%</span> unique,</span>
-<span id="cb16-23"><a href="primary-outcomes.html#cb16-23" tabindex="-1"></a>        <span class="at">sample_group =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(sample_group) <span class="sc">%&gt;%</span> unique</span>
-<span id="cb16-24"><a href="primary-outcomes.html#cb16-24" tabindex="-1"></a>      )</span>
-<span id="cb16-25"><a href="primary-outcomes.html#cb16-25" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-26"><a href="primary-outcomes.html#cb16-26" tabindex="-1"></a>  bind_rows <span class="sc">%&gt;%</span></span>
-<span id="cb16-27"><a href="primary-outcomes.html#cb16-27" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb16-28"><a href="primary-outcomes.html#cb16-28" tabindex="-1"></a>    <span class="at">outcome =</span> outcome <span class="sc">%&gt;%</span></span>
-<span id="cb16-29"><a href="primary-outcomes.html#cb16-29" tabindex="-1"></a>      <span class="fu">factor</span>(</span>
-<span id="cb16-30"><a href="primary-outcomes.html#cb16-30" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(</span>
-<span id="cb16-31"><a href="primary-outcomes.html#cb16-31" tabindex="-1"></a>          <span class="st">&quot;make_watersafe_2&quot;</span>,</span>
-<span id="cb16-32"><a href="primary-outcomes.html#cb16-32" tabindex="-1"></a>          <span class="st">&quot;disctcr_02&quot;</span>, <span class="st">&quot;metertcr_02&quot;</span>, <span class="st">&quot;metertcr_01&quot;</span>,</span>
-<span id="cb16-33"><a href="primary-outcomes.html#cb16-33" tabindex="-1"></a>          <span class="st">&quot;discfcr_02&quot;</span>, <span class="st">&quot;meterfcr_02&quot;</span>, <span class="st">&quot;meterfcr_01&quot;</span></span>
-<span id="cb16-34"><a href="primary-outcomes.html#cb16-34" tabindex="-1"></a>        ),</span>
-<span id="cb16-35"><a href="primary-outcomes.html#cb16-35" tabindex="-1"></a>        <span class="at">ordered =</span> <span class="cn">TRUE</span></span>
-<span id="cb16-36"><a href="primary-outcomes.html#cb16-36" tabindex="-1"></a>      )</span>
-<span id="cb16-37"><a href="primary-outcomes.html#cb16-37" tabindex="-1"></a>  )</span>
-<span id="cb16-38"><a href="primary-outcomes.html#cb16-38" tabindex="-1"></a></span>
-<span id="cb16-39"><a href="primary-outcomes.html#cb16-39" tabindex="-1"></a>treatment <span class="sc">%&gt;%</span></span>
-<span id="cb16-40"><a href="primary-outcomes.html#cb16-40" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb16-41"><a href="primary-outcomes.html#cb16-41" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">round</span>(mean <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>) <span class="sc">%&gt;%</span> as.character,</span>
-<span id="cb16-42"><a href="primary-outcomes.html#cb16-42" tabindex="-1"></a>    <span class="at">ci =</span> <span class="fu">paste0</span>(<span class="st">&quot;(&quot;</span>, <span class="fu">round</span>(lb <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),<span class="st">&quot;, &quot;</span>, <span class="fu">round</span>(ub <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">&quot;)&quot;</span>)</span>
-<span id="cb16-43"><a href="primary-outcomes.html#cb16-43" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-44"><a href="primary-outcomes.html#cb16-44" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
-<span id="cb16-45"><a href="primary-outcomes.html#cb16-45" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(mean, ci)</span>
-<span id="cb16-46"><a href="primary-outcomes.html#cb16-46" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-47"><a href="primary-outcomes.html#cb16-47" tabindex="-1"></a>  <span class="fu">select</span>(country, outcome, sample_group, name, value) <span class="sc">%&gt;%</span></span>
-<span id="cb16-48"><a href="primary-outcomes.html#cb16-48" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
-<span id="cb16-49"><a href="primary-outcomes.html#cb16-49" tabindex="-1"></a>    <span class="at">values_from =</span> value,</span>
-<span id="cb16-50"><a href="primary-outcomes.html#cb16-50" tabindex="-1"></a>    <span class="at">names_from =</span> outcome</span>
-<span id="cb16-51"><a href="primary-outcomes.html#cb16-51" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-52"><a href="primary-outcomes.html#cb16-52" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sample_group =</span> <span class="fu">if_else</span>(name <span class="sc">==</span> <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;&quot;</span>, sample_group)) <span class="sc">%&gt;%</span></span>
-<span id="cb16-53"><a href="primary-outcomes.html#cb16-53" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb16-54"><a href="primary-outcomes.html#cb16-54" tabindex="-1"></a>    sample_group, </span>
-<span id="cb16-55"><a href="primary-outcomes.html#cb16-55" tabindex="-1"></a>    make_watersafe_2,</span>
-<span id="cb16-56"><a href="primary-outcomes.html#cb16-56" tabindex="-1"></a>    disctcr_02, discfcr_02,</span>
-<span id="cb16-57"><a href="primary-outcomes.html#cb16-57" tabindex="-1"></a>    metertcr_02, meterfcr_02,</span>
-<span id="cb16-58"><a href="primary-outcomes.html#cb16-58" tabindex="-1"></a>    metertcr_01, meterfcr_01</span>
-<span id="cb16-59"><a href="primary-outcomes.html#cb16-59" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-60"><a href="primary-outcomes.html#cb16-60" tabindex="-1"></a>  <span class="fu">kable</span>(</span>
-<span id="cb16-61"><a href="primary-outcomes.html#cb16-61" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(</span>
-<span id="cb16-62"><a href="primary-outcomes.html#cb16-62" tabindex="-1"></a>      <span class="st">&quot;Village group&quot;</span>,</span>
-<span id="cb16-63"><a href="primary-outcomes.html#cb16-63" tabindex="-1"></a>      <span class="st">&quot;Self-report&quot;</span>,</span>
-<span id="cb16-64"><a href="primary-outcomes.html#cb16-64" tabindex="-1"></a>      <span class="st">&quot;TCR &gt;= 0.2 ppm&quot;</span>, <span class="st">&quot;FCR &gt;= 0.2 ppm&quot;</span>,</span>
+<span id="cb16-6"><a href="primary-outcomes.html#cb16-6" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">str_detect</span>(wp_intervention_type, <span class="st">&quot;ILC&quot;</span>) <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;DSW&quot;</span>),</span>
+<span id="cb16-7"><a href="primary-outcomes.html#cb16-7" tabindex="-1"></a>    sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span></span>
+<span id="cb16-8"><a href="primary-outcomes.html#cb16-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-9"><a href="primary-outcomes.html#cb16-9" tabindex="-1"></a>  <span class="fu">group_by</span>(village_id) <span class="sc">%&gt;%</span></span>
+<span id="cb16-10"><a href="primary-outcomes.html#cb16-10" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-11"><a href="primary-outcomes.html#cb16-11" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb16-12"><a href="primary-outcomes.html#cb16-12" tabindex="-1"></a>  group_split</span>
+<span id="cb16-13"><a href="primary-outcomes.html#cb16-13" tabindex="-1"></a>  </span>
+<span id="cb16-14"><a href="primary-outcomes.html#cb16-14" tabindex="-1"></a>treatment <span class="ot">&lt;-</span></span>
+<span id="cb16-15"><a href="primary-outcomes.html#cb16-15" tabindex="-1"></a>  hh_survey_grouped <span class="sc">%&gt;%</span></span>
+<span id="cb16-16"><a href="primary-outcomes.html#cb16-16" tabindex="-1"></a>  <span class="fu">map</span>(</span>
+<span id="cb16-17"><a href="primary-outcomes.html#cb16-17" tabindex="-1"></a>    <span class="sc">~</span> <span class="fu">village_mean_ci</span>(</span>
+<span id="cb16-18"><a href="primary-outcomes.html#cb16-18" tabindex="-1"></a>      <span class="at">data =</span> .x,</span>
+<span id="cb16-19"><a href="primary-outcomes.html#cb16-19" tabindex="-1"></a>      <span class="at">outcomes =</span> <span class="fu">c</span>(<span class="st">&quot;make_watersafe_2&quot;</span>, test_vars),</span>
+<span id="cb16-20"><a href="primary-outcomes.html#cb16-20" tabindex="-1"></a>      <span class="at">dummy =</span> <span class="cn">TRUE</span></span>
+<span id="cb16-21"><a href="primary-outcomes.html#cb16-21" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-22"><a href="primary-outcomes.html#cb16-22" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb16-23"><a href="primary-outcomes.html#cb16-23" tabindex="-1"></a>        <span class="at">country =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(country) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb16-24"><a href="primary-outcomes.html#cb16-24" tabindex="-1"></a>        <span class="at">sample_group =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(sample_group) <span class="sc">%&gt;%</span> unique</span>
+<span id="cb16-25"><a href="primary-outcomes.html#cb16-25" tabindex="-1"></a>      )</span>
+<span id="cb16-26"><a href="primary-outcomes.html#cb16-26" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-27"><a href="primary-outcomes.html#cb16-27" tabindex="-1"></a>  bind_rows <span class="sc">%&gt;%</span></span>
+<span id="cb16-28"><a href="primary-outcomes.html#cb16-28" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-29"><a href="primary-outcomes.html#cb16-29" tabindex="-1"></a>    <span class="at">outcome =</span> outcome <span class="sc">%&gt;%</span></span>
+<span id="cb16-30"><a href="primary-outcomes.html#cb16-30" tabindex="-1"></a>      <span class="fu">factor</span>(</span>
+<span id="cb16-31"><a href="primary-outcomes.html#cb16-31" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(</span>
+<span id="cb16-32"><a href="primary-outcomes.html#cb16-32" tabindex="-1"></a>          <span class="st">&quot;make_watersafe_2&quot;</span>,</span>
+<span id="cb16-33"><a href="primary-outcomes.html#cb16-33" tabindex="-1"></a>          <span class="st">&quot;disctcr_02&quot;</span>, <span class="st">&quot;metertcr_02&quot;</span>, <span class="st">&quot;metertcr_01&quot;</span>,</span>
+<span id="cb16-34"><a href="primary-outcomes.html#cb16-34" tabindex="-1"></a>          <span class="st">&quot;discfcr_02&quot;</span>, <span class="st">&quot;meterfcr_02&quot;</span>, <span class="st">&quot;meterfcr_01&quot;</span></span>
+<span id="cb16-35"><a href="primary-outcomes.html#cb16-35" tabindex="-1"></a>        ),</span>
+<span id="cb16-36"><a href="primary-outcomes.html#cb16-36" tabindex="-1"></a>        <span class="at">ordered =</span> <span class="cn">TRUE</span></span>
+<span id="cb16-37"><a href="primary-outcomes.html#cb16-37" tabindex="-1"></a>      )</span>
+<span id="cb16-38"><a href="primary-outcomes.html#cb16-38" tabindex="-1"></a>  )</span>
+<span id="cb16-39"><a href="primary-outcomes.html#cb16-39" tabindex="-1"></a></span>
+<span id="cb16-40"><a href="primary-outcomes.html#cb16-40" tabindex="-1"></a>treatment <span class="sc">%&gt;%</span></span>
+<span id="cb16-41"><a href="primary-outcomes.html#cb16-41" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-42"><a href="primary-outcomes.html#cb16-42" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">round</span>(mean <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>) <span class="sc">%&gt;%</span> as.character,</span>
+<span id="cb16-43"><a href="primary-outcomes.html#cb16-43" tabindex="-1"></a>    <span class="at">ci =</span> <span class="fu">paste0</span>(<span class="st">&quot;(&quot;</span>, <span class="fu">round</span>(lb <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),<span class="st">&quot;, &quot;</span>, <span class="fu">round</span>(ub <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">&quot;)&quot;</span>)</span>
+<span id="cb16-44"><a href="primary-outcomes.html#cb16-44" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-45"><a href="primary-outcomes.html#cb16-45" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb16-46"><a href="primary-outcomes.html#cb16-46" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(mean, ci)</span>
+<span id="cb16-47"><a href="primary-outcomes.html#cb16-47" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-48"><a href="primary-outcomes.html#cb16-48" tabindex="-1"></a>  <span class="fu">select</span>(country, outcome, sample_group, name, value) <span class="sc">%&gt;%</span></span>
+<span id="cb16-49"><a href="primary-outcomes.html#cb16-49" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb16-50"><a href="primary-outcomes.html#cb16-50" tabindex="-1"></a>    <span class="at">values_from =</span> value,</span>
+<span id="cb16-51"><a href="primary-outcomes.html#cb16-51" tabindex="-1"></a>    <span class="at">names_from =</span> outcome</span>
+<span id="cb16-52"><a href="primary-outcomes.html#cb16-52" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-53"><a href="primary-outcomes.html#cb16-53" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sample_group =</span> <span class="fu">if_else</span>(name <span class="sc">==</span> <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;&quot;</span>, sample_group)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-54"><a href="primary-outcomes.html#cb16-54" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb16-55"><a href="primary-outcomes.html#cb16-55" tabindex="-1"></a>    sample_group, </span>
+<span id="cb16-56"><a href="primary-outcomes.html#cb16-56" tabindex="-1"></a>    make_watersafe_2,</span>
+<span id="cb16-57"><a href="primary-outcomes.html#cb16-57" tabindex="-1"></a>    disctcr_02, discfcr_02,</span>
+<span id="cb16-58"><a href="primary-outcomes.html#cb16-58" tabindex="-1"></a>    metertcr_02, meterfcr_02,</span>
+<span id="cb16-59"><a href="primary-outcomes.html#cb16-59" tabindex="-1"></a>    metertcr_01, meterfcr_01</span>
+<span id="cb16-60"><a href="primary-outcomes.html#cb16-60" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-61"><a href="primary-outcomes.html#cb16-61" tabindex="-1"></a>  <span class="fu">kable</span>(</span>
+<span id="cb16-62"><a href="primary-outcomes.html#cb16-62" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(</span>
+<span id="cb16-63"><a href="primary-outcomes.html#cb16-63" tabindex="-1"></a>      <span class="st">&quot;Village group&quot;</span>,</span>
+<span id="cb16-64"><a href="primary-outcomes.html#cb16-64" tabindex="-1"></a>      <span class="st">&quot;Self-report&quot;</span>,</span>
 <span id="cb16-65"><a href="primary-outcomes.html#cb16-65" tabindex="-1"></a>      <span class="st">&quot;TCR &gt;= 0.2 ppm&quot;</span>, <span class="st">&quot;FCR &gt;= 0.2 ppm&quot;</span>,</span>
-<span id="cb16-66"><a href="primary-outcomes.html#cb16-66" tabindex="-1"></a>      <span class="st">&quot;TCR &gt;= 0.1 ppm&quot;</span>, <span class="st">&quot;FCR &gt;= 0.1 ppm&quot;</span></span>
-<span id="cb16-67"><a href="primary-outcomes.html#cb16-67" tabindex="-1"></a>    ),</span>
-<span id="cb16-68"><a href="primary-outcomes.html#cb16-68" tabindex="-1"></a>    <span class="at">format =</span> <span class="st">&quot;html&quot;</span>,</span>
-<span id="cb16-69"><a href="primary-outcomes.html#cb16-69" tabindex="-1"></a>    <span class="at">align =</span> <span class="st">&quot;c&quot;</span></span>
-<span id="cb16-70"><a href="primary-outcomes.html#cb16-70" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-71"><a href="primary-outcomes.html#cb16-71" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Malawi&quot;</span>, <span class="dv">1</span>, <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb16-72"><a href="primary-outcomes.html#cb16-72" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="dv">7</span>, <span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb16-73"><a href="primary-outcomes.html#cb16-73" tabindex="-1"></a>  <span class="fu">add_header_above</span>(<span class="fu">c</span>(<span class="st">&quot; &quot;</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">&quot;Color disc&quot;</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">&quot;Colorimeter&quot;</span> <span class="ot">=</span> <span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb16-74"><a href="primary-outcomes.html#cb16-74" tabindex="-1"></a>  <span class="fu">kable_paper</span>(<span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> F) <span class="sc">%&gt;%</span></span>
-<span id="cb16-75"><a href="primary-outcomes.html#cb16-75" tabindex="-1"></a>  <span class="fu">footnote</span>(<span class="at">general =</span> <span class="st">&quot;Sample considers only households using water points with DSW as their primary water points in Expansion and Footprint villages, and only households using water points with ILC as their primary water points in ILC villages.&quot;</span>)</span></code></pre></div>
+<span id="cb16-66"><a href="primary-outcomes.html#cb16-66" tabindex="-1"></a>      <span class="st">&quot;TCR &gt;= 0.2 ppm&quot;</span>, <span class="st">&quot;FCR &gt;= 0.2 ppm&quot;</span>,</span>
+<span id="cb16-67"><a href="primary-outcomes.html#cb16-67" tabindex="-1"></a>      <span class="st">&quot;TCR &gt;= 0.1 ppm&quot;</span>, <span class="st">&quot;FCR &gt;= 0.1 ppm&quot;</span></span>
+<span id="cb16-68"><a href="primary-outcomes.html#cb16-68" tabindex="-1"></a>    ),</span>
+<span id="cb16-69"><a href="primary-outcomes.html#cb16-69" tabindex="-1"></a>    <span class="at">format =</span> <span class="st">&quot;html&quot;</span>,</span>
+<span id="cb16-70"><a href="primary-outcomes.html#cb16-70" tabindex="-1"></a>    <span class="at">align =</span> <span class="st">&quot;c&quot;</span></span>
+<span id="cb16-71"><a href="primary-outcomes.html#cb16-71" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-72"><a href="primary-outcomes.html#cb16-72" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Malawi&quot;</span>, <span class="dv">1</span>, <span class="dv">4</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-73"><a href="primary-outcomes.html#cb16-73" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="dv">5</span>, <span class="dv">8</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-74"><a href="primary-outcomes.html#cb16-74" tabindex="-1"></a>  <span class="fu">add_header_above</span>(<span class="fu">c</span>(<span class="st">&quot; &quot;</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">&quot;Color disc&quot;</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">&quot;Colorimeter&quot;</span> <span class="ot">=</span> <span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-75"><a href="primary-outcomes.html#cb16-75" tabindex="-1"></a>  <span class="fu">kable_paper</span>(<span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> F) <span class="sc">%&gt;%</span></span>
+<span id="cb16-76"><a href="primary-outcomes.html#cb16-76" tabindex="-1"></a>  <span class="fu">footnote</span>(<span class="at">general =</span> <span class="st">&quot;Sample considers only households using water points with DSW as their primary water points in Expansion and Footprint villages, and only households using water points with ILC as their primary water points in ILC villages.&quot;</span>)</span></code></pre></div>
 </details>
 <table class=" lightable-paper lightable-striped" style="font-family: &quot;Arial Narrow&quot;, arial, helvetica, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
 <thead>
@@ -2663,7 +2664,7 @@ FCR &gt;= 0.1 ppm
 </tr>
 </thead>
 <tbody>
-<tr grouplength="6">
+<tr grouplength="4">
 <td colspan="8" style="border-bottom: 1px solid;">
 <strong>Malawi</strong>
 </td>
@@ -2768,57 +2769,6 @@ Footprint
 </td>
 <td style="text-align:center;">
 (20.3, 32.2)
-</td>
-</tr>
-<tr>
-<td style="text-align:center;padding-left: 2em;" indentlevel="1">
-ILC
-</td>
-<td style="text-align:center;">
-1.4
-</td>
-<td style="text-align:center;">
-26.8
-</td>
-<td style="text-align:center;">
-12.4
-</td>
-<td style="text-align:center;">
-17.9
-</td>
-<td style="text-align:center;">
-10.6
-</td>
-<td style="text-align:center;">
-32.7
-</td>
-<td style="text-align:center;">
-18
-</td>
-</tr>
-<tr>
-<td style="text-align:center;padding-left: 2em;" indentlevel="1">
-</td>
-<td style="text-align:center;">
-(0.2, 2.6)
-</td>
-<td style="text-align:center;">
-(22.6, 30.9)
-</td>
-<td style="text-align:center;">
-(9.2, 15.6)
-</td>
-<td style="text-align:center;">
-(12.5, 23.3)
-</td>
-<td style="text-align:center;">
-(6.1, 15)
-</td>
-<td style="text-align:center;">
-(25.8, 39.6)
-</td>
-<td style="text-align:center;">
-(12.5, 23.5)
 </td>
 </tr>
 <tr grouplength="4">

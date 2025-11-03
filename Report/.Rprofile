@@ -62,12 +62,12 @@ theme <-
 weights <-
   tribble(
     ~ country, ~ sample_group, ~ pop,
-    "Uganda", "ILC", 651, 
-    "Uganda", "Footprint", 3171,
-    "Uganda", "Expansion", 4012,
-    "Malawi", "Footprint", 1161,
-    "Malawi", "Expansion", 4812, 
-    "Malawi", "ILC", 633
+    "Uganda" , "ILC"         , 651, 
+    "Uganda" , "Footprint"   , 3171,
+    "Uganda" , "Expansion"   , 4012,
+    "Malawi" , "Footprint"   , 1161,
+    "Malawi" , "Expansion"   , 4812, 
+    "Malawi" , "ILC"         , 633
   )
 
 test_vars <-

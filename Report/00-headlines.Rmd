@@ -18,7 +18,72 @@ pacman::p_load(
 
 To calculate the number of people using water points with DSW or ILC, we use self-reported data from the household census on what is the household's primary water point. This information is combined with data from the water point census to determine whether these water points are served by DSW or ILC.
 
-We start by restricting the household census data to households using water points with DSW or ILC located inside the sampled villages.
+We start by restricting the household census data to households using water points with DSW or ILC located inside the sampled villages. We also exclude households using ILC in Uganda because we did not design the survey to be representative of this population.
+
+```{r}
+sample_sizes <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    sampled_villages = n_distinct(village_id)
+  ) %>%
+  mutate(sampled_villages = if_else(sample_group == "ILC", sampled_villages + 4, sampled_villages))
+```
+
+```{r}
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  select(village_id, country, sample_group) %>%
+  unique
+```
+
+
+```{r}
+ilc_villages <- 
+  villages %>%
+  dplyr::filter(sample_group == "ILC") %>%
+  pull(village_id) %>%
+  c(
+    ., 
+    "2030413108",
+    "2030413109",
+    "2041201001",
+    "2050602013"
+  )
+
+wp_intervention <-
+  c("DSW", "ILC")
+
+ilc_villages <-
+  crossing(village_id = ilc_villages, wp_intervention) %>%
+  mutate(
+    country = "Malawi",
+    sample_group = "ILC"
+  )
+
+ villages <-
+   ilc_villages %>%
+   full_join(villages, relationship = "many-to-many") %>%
+   mutate(wp_intervention = replace_na(wp_intervention, "DSW"))
+```
 
 ```{r}
 hh_census <-
@@ -35,7 +100,8 @@ hh_census <-
   st_drop_geometry() %>%
   dplyr::filter(
     wp_intervention_type != "Non-program",
-    wp_invillage
+    wp_invillage,
+    !(sample_group != "ILC" & wp_intervention == "ILC")
   ) 
 ```
 
@@ -73,48 +139,62 @@ hh_census_imputed <-
   )
 ```
 
-Since the unit of reference for our analysis is the village, we calculate the number of households whose primary water source has DSW or ILC by adding the number of household members across all such households in a village.
+Since the unit of reference for our analysis is the village, we calculate the number of people whose primary water source has DSW or ILC by adding the number of household members across all such households in a village.
 
 ```{r}
 users_village <-
   hh_census_imputed %>%
-  group_by(village_id, country, sample_group) %>%
+  group_by(village_id, country, sample_group, wp_intervention) %>%
   summarise(
     hhs = n(),
     users = sum(hh_members)
   ) %>%
+  full_join(villages) %>%
+  mutate(across(c(hhs, users), ~replace_na(., 0))) %>%
   left_join(weights) %>%
-  dplyr::filter(n() > 1) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = pop/n()
+    weight = pop/n_distinct(village_id)
   ) %>%
   ungroup
 ```
-```{r}
-users_village <-
-  hh_census_imputed %>%
-  group_by(village_id, country, sample_group) %>%
-  summarise(
-    hhs = n(),
-    users = sum(hh_members)
-  ) %>%
-  left_join(weights) %>%
-  group_by(country, sample_group) %>%
-  dplyr::filter(n() > 1) %>%
-  mutate(
-    weight = pop/n()
-  ) %>%
-  ungroup
-```
+
+There is one village in Malawi with only one household using ILC:
+
 ```{r}
 users_village %>%
-  group_by(country, sample_group) %>%
+  dplyr::filter(hhs == 1)
+```
+
+To simplify the calculation of standard errors, we remove it from the estimates. Below we estimate the crude total number of users to see how much of a difference this decision makes:
+
+```{r}
+users_village %>%
+  left_join(sample_sizes) %>%
+  group_by(country, sample_group, wp_intervention) %>%
   summarise(
+    n = n_distinct(village_id),
     hhs = mean(hhs),
-    people = mean(users)
+    av_people = mean(users),
+    sampled_villages = unique(sampled_villages),
+    vil_weight = n/sampled_villages,
+    group_weight = unique(pop)
+  ) %>%
+  mutate(total_people = round(av_people * group_weight * vil_weight))
+```
+
+```{r}
+users_village <-
+  users_village %>%
+  dplyr::filter(
+    hhs > 1,
+    !(sample_group == "Expansion" & wp_intervention == "ILC")
   )
 ```
+
+To account for the villages where all the water points with ILC were out of order, we add them to the data, but with zero households using water points with ILC.
+
+
 
 We then calculate the total number of users per sample group and the confidence intervals around this number. We use the package `survey` to account for the survey design when calculating standard errors and to weigh each sample group according to the number of villages in this group across the entire country.
 
@@ -122,15 +202,15 @@ We then calculate the total number of users per sample group and the confidence 
 group_total <-
   map(
   users_village %>%
-    group_by(country, sample_group) %>%
+    group_by(country, sample_group, wp_intervention) %>%
     group_split(),
   ~ total_cis(data = ., var = "users")
 ) %>% 
   bind_rows() %>%
   bind_cols(
     users_village %>% 
-      select(country, sample_group) %>% 
-      arrange(country, sample_group) %>%
+      select(country, sample_group, wp_intervention) %>% 
+      arrange(country, sample_group, wp_intervention) %>%
       unique
   )
 
@@ -148,7 +228,10 @@ country_total <-
       arrange(country) %>%
       unique
   ) %>% 
-  mutate(sample_group = "Total")
+  mutate(
+    sample_group = "Total",
+    wp_intervention = ""
+  )
 ```
 
 ```{r}
@@ -166,21 +249,22 @@ group_total %>%
         ordered = TRUE
       )
   ) %>%
-  arrange(country, sample_group) %>%
+  arrange(country, sample_group, wp_intervention) %>%
   select(
-    sample_group, total, ci
+    sample_group, wp_intervention, total, ci
   ) %>%
   kable(
     col.names = c(
       "Village group",
+      "Intervention",
       "Country estimate",
       "95% CI"
     ),
     format = "html",
     align = "c"
   ) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 7)  %>%
+  pack_rows("Malawi", 1, 5) %>%
+  pack_rows("Uganda", 6, 8)  %>%
   kable_paper("striped", full_width = F)
 ```
 
@@ -204,9 +288,37 @@ hh_survey <-
     survey == "Household Survey"
   ) %>%
   group_by(village_id) %>%
-  dplyr::filter(n() > 1) %>%
   ungroup
 ```
+
+```{r}
+hh_survey_grouped <-
+  hh_survey %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  ) %>%
+  group_by(village_id, wp_intervention) %>%
+  dplyr::filter(n() > 1) %>%
+  group_by(country, wp_intervention) %>%
+  group_split
+  
+treatment <-
+  hh_survey_grouped %>%
+  map(
+    ~ village_mean_ci(
+      data = .x,
+      outcomes = c("disctcr_02", "discfcr_02"),
+      dummy = TRUE
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>%
+  bind_rows
+```
+
 
 
 ```{r warning = FALSE}
@@ -214,8 +326,171 @@ hh_survey_grouped <-
   hh_survey %>%
   dplyr::filter(
     wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  ) %>%
+  group_by(village_id, wp_intervention) %>%
+  dplyr::filter(n() > 1) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  group_split
+  
+treatment <-
+  hh_survey_grouped %>%
+  map(
+    ~ village_mean_ci(
+      data = .x,
+      outcomes = c("watertreat_dispcl", test_vars),
+      dummy = TRUE
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    outcome = outcome %>%
+      factor(
+        levels = c(
+          "watertreat_dispcl",
+          "disctcr_02", "metertcr_02", "metertcr_01",
+          "discfcr_02", "meterfcr_02", "meterfcr_01"
+        ),
+        ordered = TRUE
+      )
+  )
+
+treatment %>%
+  mutate(
+    mean = round(mean * 100, 1) %>% as.character,
+    ci = paste0("(", round(lb * 100, 1),", ", round(ub * 100, 1), ")")
+  ) %>%
+  pivot_longer(
+    cols = c(mean, ci)
+  ) %>%
+  select(country, outcome, sample_group, wp_intervention, name, value) %>%
+  pivot_wider(
+    values_from = value,
+    names_from = outcome
+  ) %>%
+  mutate(
+    across(
+      c(sample_group, wp_intervention),
+      ~ if_else(name == "ci", "", .)
+    )
+  ) %>%
+  select(
+    sample_group, 
+    wp_intervention,
+    watertreat_dispcl,
+    disctcr_02, discfcr_02,
+    metertcr_02, meterfcr_02,
+    metertcr_01, meterfcr_01
+  ) %>%
+  kable(
+    col.names = c(
+      "Village group",
+      "Intervention",
+      "Self-report",
+      "TCR >= 0.2 ppm", "FCR >= 0.2 ppm",
+      "TCR >= 0.2 ppm", "FCR >= 0.2 ppm",
+      "TCR >= 0.1 ppm", "FCR >= 0.1 ppm"
+    ),
+    format = "html",
+    align = "c"
+  ) %>%
+  pack_rows("Malawi", 1, 8) %>%
+  pack_rows("Uganda", 9, 12) %>%
+  add_header_above(c(" " = 3, "Color disc" = 2, "Colorimeter" = 4)) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  footnote(general = "Sample considers only households using water points with DSW as their primary water points in Expansion and Footprint villages, and only households using water points with ILC as their primary water points in ILC villages.")
+```
+
+```{r warning = FALSE}
+hh_survey_grouped <-
+  hh_survey %>%
+  dplyr::filter(
+    wp_intervention != "Non-program",
+    !(wp_intervention == "ILC" & sample_group != "ILC")
+  ) %>%
+  group_by(village_id, wp_intervention) %>%
+  dplyr::filter(n() > 1) %>%
+  group_by(country, wp_intervention) %>%
+  group_split
+  
+treatment <-
+  hh_survey_grouped %>%
+  map(
+    ~ village_mean_ci(
+      data = .x,
+      outcomes = c("watertreat_dispcl", test_vars),
+      dummy = TRUE
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    outcome = outcome %>%
+      factor(
+        levels = c(
+          "watertreat_dispcl",
+          "disctcr_02", "metertcr_02", "metertcr_01",
+          "discfcr_02", "meterfcr_02", "meterfcr_01"
+        ),
+        ordered = TRUE
+      )
+  )
+
+treatment %>%
+  mutate(
+    mean = round(mean * 100, 1) %>% as.character,
+    ci = paste0("(", round(lb * 100, 1),", ", round(ub * 100, 1), ")")
+  ) %>%
+  pivot_longer(
+    cols = c(mean, ci)
+  ) %>%
+  select(country, outcome, wp_intervention, name, value) %>%
+  pivot_wider(
+    values_from = value,
+    names_from = outcome
+  ) %>%
+  mutate(sample_group = if_else(name == "ci", "", wp_intervention)) %>%
+  select(
+    sample_group, 
+    watertreat_dispcl,
+    disctcr_02, discfcr_02,
+    metertcr_02, meterfcr_02,
+    metertcr_01, meterfcr_01
+  ) %>%
+  kable(
+    col.names = c(
+      "Village group",
+      "Self-report",
+      "TCR >= 0.2 ppm", "FCR >= 0.2 ppm",
+      "TCR >= 0.2 ppm", "FCR >= 0.2 ppm",
+      "TCR >= 0.1 ppm", "FCR >= 0.1 ppm"
+    ),
+    format = "html",
+    align = "c"
+  ) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 6) %>%
+  add_header_above(c(" " = 2, "Color disc" = 2, "Colorimeter" = 4)) %>%
+  kable_paper("striped", full_width = F) %>%
+  footnote(general = "Sample considers only households using water points with DSW as their primary water points in Expansion and Footprint villages, and only households using water points with ILC as their primary water points in ILC villages.")
+```
+
+```{r warning = FALSE}
+hh_survey_grouped <-
+  hh_survey %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
     !(wp_intervention_type == "DSW" & sample_group == "ILC"),
-    !(str_detect(wp_intervention_type, "ILC") & sample_group == "DSW")
+    !(str_detect(wp_intervention_type, "ILC") & sample_group == "DSW"),
+    sample_group != "ILC"
   ) %>%
   group_by(village_id) %>%
   dplyr::filter(n() > 1) %>%
@@ -227,7 +502,7 @@ treatment <-
   map(
     ~ village_mean_ci(
       data = .x,
-      outcomes = c("make_watersafe_2", test_vars),
+      outcomes = c("watertreat_dispcl", test_vars),
       dummy = TRUE
     ) %>%
       mutate(
@@ -240,7 +515,7 @@ treatment <-
     outcome = outcome %>%
       factor(
         levels = c(
-          "make_watersafe_2",
+          "watertreat_dispcl",
           "disctcr_02", "metertcr_02", "metertcr_01",
           "discfcr_02", "meterfcr_02", "meterfcr_01"
         ),
@@ -264,7 +539,7 @@ treatment %>%
   mutate(sample_group = if_else(name == "ci", "", sample_group)) %>%
   select(
     sample_group, 
-    make_watersafe_2,
+    watertreat_dispcl,
     disctcr_02, discfcr_02,
     metertcr_02, meterfcr_02,
     metertcr_01, meterfcr_01
@@ -280,8 +555,8 @@ treatment %>%
     format = "html",
     align = "c"
   ) %>%
-  pack_rows("Malawi", 1, 6) %>%
-  pack_rows("Uganda", 7, 10) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 8) %>%
   add_header_above(c(" " = 2, "Color disc" = 2, "Colorimeter" = 4)) %>%
   kable_paper("striped", full_width = F) %>%
   footnote(general = "Sample considers only households using water points with DSW as their primary water points in Expansion and Footprint villages, and only households using water points with ILC as their primary water points in ILC villages.")

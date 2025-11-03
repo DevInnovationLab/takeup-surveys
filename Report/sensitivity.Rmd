@@ -1,0 +1,158 @@
+# Sensitivity analysis
+
+```{r}
+pacman::p_load(
+  sf,
+  tidyverse,
+  viridis,
+  fixest,
+  janitor,
+  broom,
+  car,
+  modelsummary,
+  survey
+)
+```
+
+## People using DSW/ILC water points
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
+    !is.na(wp_intervention_type)
+  )
+```
+
+```{r}
+hh_census_imputed <-
+  hh_census %>%
+  # Impute at village-level if possible
+  group_by(village_id) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    )
+  ) %>%
+  # If still missing, impute at the sample group level
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    )
+  )
+```
+
+###
+
+```{r}
+hh_census_imputed %>%
+  group_by(country, village_id, sample_group, wp_intervention) %>%
+  summarise(users = sum(hh_members)) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(mean(users))
+```
+
+```{r}
+hh_census_imputed %>%
+  dplyr::filter(wp_invillage) %>%
+  group_by(country, village_id, sample_group, wp_intervention) %>%
+  summarise(users = sum(hh_members)) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(mean(users))
+```
+
+```{r}
+hh_census_imputed %>%
+  dplyr::filter(inclusion == "Within village boundaries") %>%
+  group_by(country, village_id, sample_group, wp_intervention) %>%
+  summarise(users = sum(hh_members)) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(mean(users))
+```
+
+### Chlorination rates
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    survey == "Household Survey",
+    !is.na(wp_intervention_type)
+  ) %>%
+  ungroup
+```
+
+```{r}
+hh_survey %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    n = n(),
+    mean = mean(disctcr_02, na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    n = sum(n),
+    mean = mean(mean, na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(wp_intervention  != "Non-program") %>%
+  group_by(country, sample_group, village_id, wp_intervention) %>%
+  summarise(
+    n = n(),
+    mean = mean(disctcr_02, na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(
+    n = sum(n),
+    mean = mean(mean, na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_survey %>%
+  mutate(
+    hh_intervention = 
+      case_when(
+        hh_dsw ~ "DSW",
+        hh_ilc ~ "ILC",
+        TRUE ~ "Non-program"
+      )
+  ) %>%
+  group_by(country, sample_group, village_id) %>%
+  summarise(
+    n = n(),
+    mean = mean(disctcr_02, na.rm = TRUE)
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    n = sum(n),
+    mean = mean(mean, na.rm = TRUE)
+  )
+```

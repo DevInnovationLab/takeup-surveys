@@ -144,6 +144,7 @@ counts %>%
     pct = av_net/av
   )
 ```
+
 ## Comparison of average number of households per water point
 
 ```{r}
@@ -175,6 +176,7 @@ counts %>%
     pct2 = av_net/av_self_report_pm
   )
 ```
+
 ## Households that we do not expect to match
 
 ```{r}
@@ -205,12 +207,30 @@ ea_promoters_malawi <-
 
  nrow(ea_promoters_malawi)
 ```
+
 Number of villages in EA list
 
 ```{r}
 ea_promoters_malawi %>%
   pull(i102_wpt_id) %>%
   n_distinct()
+```
+
+# ILC functionality reports
+
+```{r}
+pm_census %>% 
+  dplyr::filter(country == "MALAWI", sample_group == "ILC") %>%
+  group_by(intervention_type) %>%
+  summarise(
+    n = n(),
+    across(
+      c(
+        ilc_tablet, ilc_cover, ilc_clamped, ilc_present, ilc_func, ilc_connection, ilc_tabletn, ilc_problem
+      ),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
 ```
 
 

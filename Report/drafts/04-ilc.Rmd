@@ -1,0 +1,648 @@
+# ILC water points
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  sf,
+  janitor
+)
+```
+
+```{r}
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  st_drop_geometry 
+```
+
+## Villages
+
+```{r}
+wp_census %>%
+  dplyr::filter(sample_group == "ILC", country == "Malawi", ilc) %>%
+  pull(village_id) %>%
+  n_distinct()
+```
+
+```{r}
+ilc_villages <-
+  wp_census %>%
+  dplyr::filter(
+    country == "Malawi",
+    sample_group == "ILC"
+  ) %>%
+  group_by(village_id) %>%
+  dplyr::filter(
+    any(ilc_wp) | any(ilc_wcp)
+  ) %>%
+  ungroup %>%
+  mutate(
+    analysis = wp_multicompound & wp_drink & wp_func,
+    ilc_wp_func = ilc_wp & wp_func,
+    ilc_wcp_func = ilc_wcp & wp_func,
+    dsw_func = dsw & wp_func,
+  )
+```
+
+```{r}
+ilc_villages %>% tabyl(ilc_wp, ilc_wcp)
+```
+
+
+```{r}
+ilc_villages %>% 
+  group_by(village_id) %>%
+  summarise(
+    villages = n(),
+    across(
+      c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
+      ~ any(.)
+    )
+  ) %>%
+  summarise(
+    count = n(),
+    across(
+      c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
+      ~ sum(.)
+    )
+  )
+```
+
+## Clusters
+
+```{r}
+ilc_villages %>% 
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+```{r}
+ilc_villages %>% 
+  dplyr::filter(str_detect(intervention_type, "ILC"), !is.na(ea_ilc_wpt)) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(n = n()) %>% arrange(n) %>% view
+  skim
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    wp_func = max(wp_func * 1),
+    wp_multicompound = max(wp_multicompound * 1),
+    tested = max(!is.na(disctcr) * 1)
+  ) %>%
+  summarise(
+    n = n(),
+    across(
+      c(wp_func, wp_multicompound, tested),
+      ~ sum(.)
+    )
+  )
+```
+
+
+## Communal water points
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc) %>%
+  group_by(ilc_wp) %>%
+  summarise(
+    n = n(),
+    sum(wp_multicompound),
+    sum(ilc_wcp)
+  )
+```
+
+
+## Functionality 
+
+```{r}
+ilc_villages %>%
+  summarise(
+    count = n(),
+    across(
+      c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
+      ~ sum(.)
+    )
+  )
+```
+
+```{r}
+dsw <-
+  ilc_villages %>% 
+  dplyr::filter(dsw) %>%
+  summarise(
+    Type = "DSW",
+    Found = n(),
+    Functional = sum(wp_func),
+    `Functionality rate (%)` = Functional/Found,
+    Communal = sum(wp_multicompound),
+    Tested = sum(!is.na(disctcr))
+  )
+
+ilc_wp <-
+  ilc_villages %>% 
+  dplyr::filter(ilc_wp) %>%
+  summarise(
+    Type = "Water points with ILC device",
+    Found = n(),
+    Functional = sum(wp_func),
+    `Functionality rate (%)` = Functional/Found,
+    Communal = sum(wp_multicompound),
+    Tested = sum(!is.na(disctcr))
+  )
+
+ilc_wcp <-
+  ilc_villages %>% 
+  dplyr::filter(ilc_wcp) %>%
+  summarise(
+    Type = "Water collection points connected to ILC",
+    Found = n(),
+    Functional = sum(wp_func),
+    `Functionality rate (%)` = Functional/Found,
+    Communal = sum(wp_multicompound),
+    Tested = sum(!is.na(disctcr))
+  )
+
+dsw %>%
+  bind_rows(ilc_wp) %>%
+  bind_rows(ilc_wcp) %>%
+  mutate(
+    across(
+      `Functionality rate (%)`,
+      ~ round(. * 100, 1)
+    )
+  ) %>%
+  kable
+```
+
+
+```{r}
+ilc_villages %>% mutate(tested = !is.na(disctcr)) %>%
+  
+  group_by(intervention_type) %>%
+  summarise(
+    count = n(),
+    across(
+      c(wp_multicompound, wp_drink, wp_func, analysis, tested),
+      ~ sum(., na.rm = TRUE)
+    )
+  )
+```
+```{r}
+ilc_villages %>% 
+  dplyr::filter(ilc_wcp) %>%
+  summarise(
+    count = n(),
+    across(
+      c(wp_multicompound, wp_drink, wp_func, analysis),
+      ~ sum(., na.rm = TRUE)
+    )
+  )
+```
+
+## Expected sample
+
+```{r}
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  )
+```
+
+```{r}
+villages %>%
+  dplyr::filter(village_id %in% ilc_villages$village_id) %>%
+  summarise(
+    n = n(),
+    across(
+      c(dsw_wpt, ilc_wpt, ilc_wcp),
+      ~ sum(.)
+    )
+  )
+```
+
+## Number of WPs and WCPs
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(ea_ilc_wpt)) %>% tabyl(ilc_wp, ilc_wcp)
+  group_by(ea_ilc_wpt) %>%
+  summarise(n = n()) %>%
+  tabyl(n) %>%
+  adorn_totals()
+```
+
+
+
+## Water testing
+
+### Closest water collection point
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    across(
+      c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
+      list(
+        tests = ~ sum(!is.na(.)),
+        mean = ~ sum(., na.rm = TRUE),
+        ntested = ~ any(!is.na(.)),
+        anytested = ~ if_else(any(!is.na(.)), any(., na.rm = TRUE), NA),
+        alltested = ~ if_else(any(!is.na(.)), all(., na.rm = TRUE), NA),
+        any = ~ if_else(any(!is.na(.)), any(., na.rm = TRUE), FALSE),
+        all = ~ if_else(any(!is.na(.)), all(., na.rm = TRUE), FALSE)
+      )
+    )
+  ) %>%
+  pivot_longer(
+    cols = -ea_ilc_wpt,
+    names_pattern = "(.*)_(.*)_(.*)",
+    names_to = c("measure", "threshold", ".value")
+  ) %>%
+  group_by(measure, threshold) %>%
+  summarise(
+    tests = sum(tests),
+    mean = sum(mean)/tests,
+    ntested = sum(ntested),
+    anytested = mean(anytested, na.rm = TRUE),
+    alltested = mean(alltested, na.rm = TRUE),
+    n = n(),
+    any = mean(any, na.rm = TRUE),
+    all = mean(all, na.rm = TRUE)
+  ) %>%
+  ungroup %>%
+  arrange(desc(threshold), measure) %>%
+  mutate(
+    across(
+      c(mean, contains("any"), contains("all")),
+      ~ round(. * 100, 1)
+    ),
+    label = c(
+      "Color wheel FCR >= 0.2 mg/L",
+      "Color wheel TCR >= 0.2 mg/L",
+      "Meter FCR >= 0.2 mg/L",
+      "Meter TCR >= 0.2 mg/L",
+      "Meter FCR >= 0.1 mg/L",
+      "Meter TCR >= 0.1 mg/L"
+    )
+  ) %>%
+  select(-c(threshold, measure)) %>%
+  select(label, everything()) %>%
+  kable(
+    col.names = c(
+      "Detection criterion",
+      "N", "Detected (%)",
+      "N", "Detected at closest water collection point (%)", "Detected at all water collection points (%)",
+      "N", "Detected at closest water collection point (%)", "Detected at all water collection points (%)"
+    ),
+    format = "html",
+    align = "c"
+  ) %>%
+  #add_row(c("", "(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)", "(8)")) %>%
+  add_header_above(c(" " = 1, "Tests" = 2, "Working ILC devices" = 3, "All ILC devices" = 3)) %>%
+  kable_paper("striped", full_width = F) %>%
+  footnote(general = "Columns 4 to 8 group tests based on the ILC device they are connected. Detection rates in columns 5 and 6 use the number of water points with ILC that were functional (and therefore tested) as the denominator. Detection rates in columns 7 and 8 use the number of water points with ILC that serve water collection points in the census (including those that were not functioning at the time of the visit) as the denominator.")
+  
+```
+
+### All water collection points
+
+```{r}
+all <-
+  ilc_villages %>%
+  dplyr::filter(ilc) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    across(
+      c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
+      list(
+        n = ~ any(!is.na(.)),
+        all = ~ if_else(any(!is.na(.)), all(., na.rm = TRUE), NA)
+      )
+    )
+  ) %>%
+  pivot_longer(
+    cols = -ea_ilc_wpt,
+    names_pattern = "(.*)_(.*)_(.*)",
+    names_to = c("measure", "threshold", ".value")
+  ) %>%
+  group_by(measure, threshold) %>%
+  summarise(
+    n = sum(n),
+    all_tested = mean(all, na.rm = TRUE)
+  )
+```
+
+
+Individual water points
+
+```{r}
+ind <-
+  ilc_villages %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>%
+  summarise(
+    across(
+      c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
+      list(
+        n = ~ sum(!is.na(.)),
+        mean = ~ mean(., na.rm = TRUE)
+      )
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_pattern = "(.*)_(.*)_(.*)",
+    names_to = c("measure", "threshold", ".value")
+  ) %>%
+  arrange(desc(threshold), measure) %>%
+  mutate(mean = round(mean * 100, 1))
+```
+
+Tested clusters
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(str_detect(intervention_type, "ILC"), !is.na(disctcr)) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    across(
+      c(meterfcr, metertcr, discfcr, disctcr),
+      ~ mean(., na.rm = TRUE)
+    ),
+    across(
+      c(
+        meterfcr_01, metertcr_01, 
+        meterfcr_02, metertcr_02, 
+        discfcr_02, disctcr_02
+      ),
+      ~ any(., na.rm = TRUE)
+    )
+  ) %>%
+  mutate(
+    across(
+      c(meterfcr, metertcr, discfcr, disctcr),
+      list(
+        `mean01` = ~ . > 0.1,
+        `mean02` = ~ . > 0.2
+      )
+    )
+  ) %>%
+  select(
+    -c(meterfcr, metertcr, discfcr, disctcr, ea_ilc_wpt)
+  ) %>%
+  summarise(
+    across(
+      everything(),
+      list(
+        n = ~ sum(!is.na(.)),
+        mean = ~ mean(., na.rm = TRUE)
+      ),
+      .names = "{.col}.{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_pattern = "(.*)[.](.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  mutate(
+    type = str_detect(measure, "mean"),
+    measure = measure %>%
+      str_remove_all("mean")
+  ) %>%
+  pivot_wider(
+    values_from = c(n, mean),
+    names_from = type
+  ) %>%
+  mutate(
+    threshold = str_sub(measure, -2),
+    across(
+      contains("mean"),
+      ~ round(. * 100, 1)
+    )
+  ) %>%
+  dplyr::filter(!is.na(n_FALSE)) %>%
+  select(measure,n_FALSE, mean_FALSE, everything()) %>%
+  arrange(desc(threshold), measure)
+```
+
+
+All clusters
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    across(
+      c(meterfcr, metertcr, discfcr, disctcr),
+      ~ mean(., na.rm = TRUE)
+    ),
+    across(
+      c(
+        meterfcr_01, metertcr_01, 
+        meterfcr_02, metertcr_02, 
+        discfcr_02, disctcr_02
+      ),
+      ~ any(., na.rm = TRUE)
+    )
+  ) %>%
+  mutate(
+    across(
+      c(meterfcr, metertcr, discfcr, disctcr),
+      list(
+        `mean01` = ~ . > 0.1,
+        `mean02` = ~ . > 0.2
+      )
+    )
+  ) %>%
+  select(
+    -c(meterfcr, metertcr, discfcr, disctcr, ea_ilc_wpt)
+  ) %>%
+  summarise(
+    n = n(),
+    across(
+      everything(),
+      list(
+        mean = ~ sum(., na.rm = TRUE)/n
+      ),
+      .names = "{.col}.{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = contains("mean"),
+    names_pattern = "(.*)[.](.*)",
+    names_to = c("measure", ".value")
+  ) %>%
+  mutate(
+    type = str_detect(measure, "mean"),
+    measure = measure %>%
+      str_remove_all("mean")
+  ) %>%
+  pivot_wider(
+    values_from = mean,
+    names_from = type
+  ) %>%
+  mutate(
+    threshold = str_sub(measure, -2),
+    across(
+      c(`FALSE`, `TRUE`),
+      ~ round(. * 100, 1)
+    )
+  ) %>%
+  dplyr::filter(!is.na(`FALSE`), !is.na(`TRUE`)) %>%
+  arrange(desc(threshold), measure)
+```
+
+## donté now
+
+
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc_wp) %>%
+  select(wp_id, village_id, wp_drink, wp_multicompound, wp_func, meterfcr_01, metertcr_01, discfcr_02, disctcr_02, contains("comments")) %>%
+  view
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc_wp, analysis) %>%
+  select(wp_id, village) %>%
+  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
+  select(wp_id, ea_id, ea_ilc_wpt, village_id, wp_drink, wp_multicompound, wp_func, wp_ilc_device_c, wp_ilc_evac ,contains("comments")) %>%
+  view
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(meterfcr) | !is.na(metertcr) | !is.na(discfcr) | !is.na(disctcr)) %>% 
+  select(wp_id, village) %>%
+  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
+  summarise(
+    count = n(),
+    wps = n_distinct(ea_ilc_wpt)
+  )
+```
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(meterfcr) | !is.na(metertcr) | !is.na(discfcr) | !is.na(disctcr)) %>% 
+  select(wp_id, village) %>%
+  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
+  summarise(
+    count = n(),
+    wps = n_distinct(ea_ilc_wpt)
+  )
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(meterfcr) | !is.na(metertcr) | !is.na(discfcr) | !is.na(disctcr), intervention_type != "DSW") %>% 
+  select(wp_id, village) %>%
+  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
+  select(wp_id, ea_id, ea_ilc_wpt, village_id, meterfcr, metertcr, discfcr, disctcr, contains("comments")) %>%
+  write_csv(
+    "C:/Users/luizaandrade/Downloads/ilc.csv"
+  )
+```
+
+```{r}
+cluster_level <-
+  ilc_villages %>%
+  dplyr::filter(str_detect(intervention_type, "ILC")) %>% 
+  group_by(ea_ilc_wpt) %>%
+  mutate(
+    across(
+      c(wp_func, wp_drink, wp_multicompound),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  skim(meterfcr, metertcr, discfcr, disctcr, wp_func, wp_drink, wp_multicompound)
+
+    found = n(),
+    across(
+      c(meterfcr, metertcr, discfcr, disctcr),
+      list(
+        tests = ~sum(!is.na(.)),
+        min = ~ min(.),
+        max = ~ max(.),
+        mean = ~ mean(., na.rm = TRUE),
+        var = ~ var(., na.rm = TRUE)
+      )
+    )
+  )
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(intervention_type != "DSW") %>% 
+  summarise(
+    across(
+      c()
+    )
+  ) select(wp_id, ea_id, ea_ilc_wpt, village_id, meterfcr, metertcr, discfcr, disctcr, contains("comments")) %>%
+  write_csv(
+    "C:/Users/luizaandrade/Downloads/ilc.csv"
+  )
+```
+
+
+```{r}
+ilc %>%
+  dplyr::filter(
+    country == "Malawi",
+    str_detect(intervention_type, "ILC water point"),
+    sample_group == "ILC",
+  ) %>%
+  select(wp_id, village_id, intervention_type, ea_id, ea_ilc_wpt, wp_func, everything()) %>%
+  view
+```
+
+
+
+
+## Number of tests
+
+```{r}
+ilc %>%
+  group_by(intervention_type) %>%
+  summarise(
+    found = n(),
+    functional = sum(wp_func),
+    across(
+      c(disctcr, discfcr, metertcr, meterfcr),
+      ~ sum(!is.na(.))
+    )
+  )
+```
+
+
+```{r}
+ilc %>%
+  dplyr::filter(intervention_type == "ILC water point", wp_func) %>%
+  view
+```
+
+
+

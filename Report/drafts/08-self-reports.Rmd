@@ -1,0 +1,140 @@
+# Adoption estimates
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  )
+```
+
+
+```{r}
+methods <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "ever-do.rds"
+    )
+  )
+```
+
+
+
+## Water treatment methods
+
+```{r}
+methods %>%
+  mutate(wp_intervention_type = if_else(
+    str_detect(wp_intervention_type, "ILC"),
+    "ILC",
+    wp_intervention_type
+  )) %>%
+  dplyr::filter(
+    !(country == "Uganda" & wp_intervention_type == "ILC"),
+    !(sample_group == "ILC" & !str_detect(wp_intervention_type, "ILC")),
+    !(method %in% c("Don't know", "Solar disinfection", "Sand/composite")),
+    (wp_intervention_type %in% c("DSW", "ILC"))
+  ) %>%
+  group_by(country, wp_intervention_type, method) %>%
+  summarise(
+    pct = mean(adopted) * 100
+  ) %>%
+  ggplot(
+    aes(
+      x = pct,
+      y = method,
+      label = round(pct, 1) %>% paste0("%")
+    )
+  ) +
+  geom_col() +
+  geom_text(hjust = -.1, size = 3) +
+  facet_grid(country ~ wp_intervention_type) +
+  labs(
+    x = "Percent of households in the household survey",
+    y = NULL,
+    title = "Self-reported adoption of water treatment methods",
+    caption = "Note: the sample excludes households using ILC in DSW villages and households using DSW in ILC villages." %>% str_wrap(80)
+  ) +
+  theme +
+  xlim(0, 75)
+```
+
+
+
+```{r}
+whynot <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "why-not-chlorinate.rds"
+    )
+  )
+```
+
+```{r}
+whynot %>%
+  mutate(wp_intervention_type = if_else(
+    str_detect(wp_intervention_type, "ILC"),
+    "ILC",
+    wp_intervention_type
+  )) %>%
+  group_by(method) %>%
+  summarise(
+    adopted = sum(adopted)
+  ) %>%
+  arrange(adopted)
+```
+
+
+```{r}
+whynot %>%
+  mutate(wp_intervention_type = if_else(
+    str_detect(wp_intervention_type, "ILC"),
+    "ILC",
+    wp_intervention_type
+  )) %>%
+  dplyr::filter(
+    !(country == "Uganda" & wp_intervention_type == "ILC"),
+    !(sample_group == "ILC" & !str_detect(wp_intervention_type, "ILC")),
+    !(method %in% c("Don't know", "Solar disinfection", "Sand/composite")),
+    (wp_intervention_type %in% c("DSW", "ILC"))
+  ) %>%
+  group_by(country, wp_intervention_type, method) %>%
+  remove_constant %>%
+  summarise(
+    total = sum(adopted, na.rm = TRUE)/n() * 100
+  ) %>%
+  ggplot(
+    aes(
+      x = total,
+      y = method,
+      label = round(total, 1) %>% paste0("%")
+    )
+  ) +
+  geom_col() +
+  geom_text(hjust = -.1, size = 3) +
+  facet_grid(country ~ wp_intervention_type) +
+  labs(
+    x = "Percent of households in the household survey",
+    y = NULL,
+    title = "Self-reported adoption of water treatment methods",
+    caption = "Note: the sample excludes households using ILC in DSW villages and households using DSW in ILC villages." %>% str_wrap(60)
+  ) +
+  theme +
+  xlim(0, 75)
+```

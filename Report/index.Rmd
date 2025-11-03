@@ -6,4 +6,4 @@ site: bookdown::bookdown_site
 
 # Introduction
 
-This notebook presents the code used for analaysis in the report to GiveWell. To see the code used to create each exhibit, click on the `Code` button.
+This notebook presents the code used for analysis in the report to GiveWell. To see the code used to create each exhibit, click on the `Code` button.
