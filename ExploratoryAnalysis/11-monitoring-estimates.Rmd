@@ -2318,10 +2318,12 @@ stargazer(model1, model2, model3, model4, model5, model6,
 
 ## household selection
 association is positive, but only significant if we regress disctcr. if the dependent variable is disctcr_02, then it is not
+(I clustered SEs by water point)
 ```{r}
+library(estimatr)
+
 promoter_wp_households <- hh_survey %>%
   dplyr::filter(promoter_surveyed == 1) 
-  # mutate(promoter_list = replace_na(promoter_list, FALSE))
 
 uganda_promoter_wp <- promoter_wp_households %>%
   dplyr::filter(country == "Uganda")
@@ -2329,17 +2331,29 @@ uganda_promoter_wp <- promoter_wp_households %>%
 malawi_promoter_wp <- promoter_wp_households %>%
   dplyr::filter(country == "Malawi")
 
-uganda_model <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
-malawi_model <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
+uganda_model <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
 
-stargazer(uganda_model, malawi_model,
+malawi_model <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
           type = "text",
           title = "Association between Being Listed by Promoter and Chlorination",
           dep.var.labels = "disctcr_02",
           covariate.labels = c("Listed by Promoter"),
           column.labels = c("Uganda", "Malawi"),
           model.numbers = FALSE,
-          keep.stat = c("n", "rsq", "adj.rsq"))
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
 ```
 
 # statistics referenced in-text
