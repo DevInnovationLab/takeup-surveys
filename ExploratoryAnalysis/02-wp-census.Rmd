@@ -47,13 +47,7 @@ wp_census <-
       "wp-census.rds"
     )
   ) %>%
-<<<<<<< Updated upstream
-  st_drop_geometry %>%
-  # Calculate which WPs will be included in analysis -- this is being moved to the processing code
-  mutate(analysis = wp_multicompound & wp_drink)
-=======
   st_drop_geometry 
->>>>>>> Stashed changes
 
 wp_analysis <-
   wp_census %>%
@@ -1091,6 +1085,65 @@ wp_census %>%
 
 ## ILC water points
 
+### Chlorination
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    str_detect(intervention_type, "ILC"), 
+    country == "Malawi",
+    !is.na(ea_id),
+    !is.na(disctcr)
+  ) %>% select(ea_id, intervention_type, ends_with("cr")) %>% view
+  group_by(intervention_type) %>%
+  summarise(
+    meter = sum(!is.na(meter_enum), na.rm = TRUE),
+    across(
+      c(
+        meterfcr,
+        metertcr
+      ),
+      ~ mean(., na.rm = TRUE) %>% round(2)
+    ),
+    across(
+        c(
+        meterfcr_01,
+        metertcr_01,
+        meterfcr_02,
+        metertcr_02
+      ),
+      ~ mean(. * 100, na.rm = TRUE) %>% round(1)
+    )
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    str_detect(intervention_type, "ILC"), 
+    country == "Malawi",
+    !is.na(ea_id)
+  ) %>%
+  group_by(intervention_type) %>%
+  summarise(
+    meter = sum(!is.na(meter_enum), na.rm = TRUE),
+    across(
+      c(
+        discfcr,
+        disctcr
+      ),
+      ~ mean(., na.rm = TRUE) %>% round(2)
+    ),
+    across(
+      c(
+        discfcr_02,
+        disctcr_02
+      ),
+      ~ mean(. * 100, na.rm = TRUE) %>% round(1)
+    )
+  )
+```
+
 ```{r}
 wp_census %>%
   dplyr::filter(str_detect(intervention_type, "ILC"), country == "Malawi") %>%
@@ -1098,10 +1151,13 @@ wp_census %>%
   summarise(
     N = n_distinct(wp_id),
     Functional = sum(wp_func),
+    meter = sum(!is.na(meter_enum), na.rm = TRUE),
+    cw = sum(!is.na(cw_enum), na.rm = TRUE),
     across(
       c(
-        meterfcr_01,
         meterfcr,
+        discfcr_02,
+        meterfcr_01,
         discfcr_02,
         discfcr
       ),

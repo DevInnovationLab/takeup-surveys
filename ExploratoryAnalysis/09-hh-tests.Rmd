@@ -27,6 +27,7 @@ hh_survey <-
   st_drop_geometry() 
 ```
 
+
 ## Compare colors
 
 
@@ -478,3 +479,170 @@ adoption %>%
   )
 ```
 
+
+
+
+
+
+
+# All observations
+
+```{r}
+treatment <-
+  hh_survey_grouped %>%
+  map(
+    ~ village_mean_ci(
+      data = .x,
+      outcomes = test_vars,
+      dummy = TRUE
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    outcome = outcome %>%
+      factor(
+        levels = c(
+          "disctcr_02", "metertcr_02", "metertcr_01",
+          "discfcr_02", "meterfcr_02", "meterfcr_01"
+        ),
+        ordered = TRUE
+      )
+  )
+```
+
+```{r}
+treatment %>%
+  ggplot(
+    aes(
+      x =  mean,
+      xmin = lb,
+      xmax = ub,
+      y = outcome
+    )
+  ) +
+  geom_errorbarh() +
+  geom_point() +
+  facet_grid(sample_group ~ country)
+```
+# If clear, no chlorination
+
+```{r warning = FALSE}
+treatment <-
+  hh_survey_grouped %>%
+  map(
+    ~ village_mean_ci(
+      data = .x %>% 
+        mutate(
+          across(
+            starts_with("disctcr_"),
+            ~ case_when(disctcr_color == "1 - Clear" ~ 0, TRUE ~ . * 1)
+          ),
+          across(
+            starts_with("discfcr_"),
+            ~ case_when(discfcr_color == "1 - Clear" ~ 0, TRUE ~ . * 1)
+          ),
+          across(
+            starts_with("metertcr_"),
+            ~ case_when(metertcr_color == "1 - Clear" ~ 0, TRUE ~ . * 1)
+          ),
+          across(
+            starts_with("meterfcr_"),
+            ~ case_when(meterfcr_color == "1 - Clear" ~ 0, TRUE ~ . * 1)
+          ),
+          across(
+            contains("cr_0"),
+            ~ as.logical(.)
+          )
+      ),
+      outcomes = test_vars,
+      dummy = TRUE
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    outcome = outcome %>%
+      factor(
+        levels = c(
+          "disctcr_02", "metertcr_02", "metertcr_01",
+          "discfcr_02", "meterfcr_02", "meterfcr_01"
+        ),
+        ordered = TRUE
+      )
+  )
+```
+
+```{r}
+treatment %>%
+  ggplot(
+    aes(
+      x =  mean,
+      xmin = lb,
+      xmax = ub,
+      y = outcome
+    )
+  ) +
+  geom_errorbarh() +
+  geom_point() +
+  facet_grid(sample_group ~ country)
+```
+# If no self-report, no chlorination
+
+```{r warning = FALSE}
+treatment <-
+  hh_survey_grouped %>%
+  map(
+    ~ village_mean_ci(
+      data = .x %>% 
+        mutate(
+          across(
+            contains("cr_0"),
+            ~ case_when(
+              wp_intervention_type == "DSW" & is.na(make_watersafe_2) ~ 0,
+              wp_intervention_type == "DSW" & !make_watersafe_2 ~ 0,
+              TRUE ~ . * 1
+            ) %>% as.logical
+          )
+        ),
+      outcomes = test_vars,
+      dummy = TRUE
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    outcome = outcome %>%
+      factor(
+        levels = c(
+          "disctcr_02", "metertcr_02", "metertcr_01",
+          "discfcr_02", "meterfcr_02", "meterfcr_01"
+        ),
+        ordered = TRUE
+      )
+  )
+```
+
+```{r}
+treatment %>%
+  ggplot(
+    aes(
+      x =  mean,
+      xmin = lb,
+      xmax = ub,
+      y = outcome
+    )
+  ) +
+  geom_errorbarh() +
+  geom_point() +
+  facet_grid(sample_group ~ country)
+```

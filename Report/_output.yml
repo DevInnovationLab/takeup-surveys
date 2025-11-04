@@ -1,0 +1,10 @@
+bookdown::gitbook:
+  css: style.css
+  config:
+    toc:
+      collapse: section
+      before: |
+        <li><a href="./">GiveWell report</a></li>
+  code_folding: hide
+  self_contained: true
+

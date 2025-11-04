@@ -1,0 +1,119 @@
+# Village sample representativeness
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  janitor,
+  vtable
+)
+```
+
+## Load data
+
+```{r}
+villages <-
+  read_rds(
+    file.path(
+      path_box,
+      "data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  )
+```
+
+## Uganda
+
+### Footprint
+
+```{r}
+villages %>%
+  group_by(district_id) %>%
+  dplyr::filter(
+    any(pre_expansion == 1), 
+    dsw, 
+    country == "Uganda"
+  )  %>%
+  group_by(country) %>%
+  sumtable(
+    vars = c("ilc_d", "dsw_d", "dsw_wpt", "ilc_wpt"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+### Expansion
+
+```{r}
+villages %>%
+  group_by(district_id) %>%
+  dplyr::filter(
+    !any(pre_expansion == 1), 
+    dsw, 
+    country == "Uganda"
+  )  %>%
+  group_by(country) %>%
+  sumtable(
+    vars = c("ilc_d", "dsw_d", "dsw_wpt", "ilc_wpt"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+## Malawi
+
+### Footprint
+
+```{r}
+villages %>%
+  group_by(district_id) %>%
+  dplyr::filter(
+    any(pre_expansion == 1), 
+    !ilc, 
+    country == "Malawi"
+  )  %>%
+  group_by(country) %>%
+  sumtable(
+    vars = c("ilc_d", "dsw_d", "dsw_wpt", "ilc_wpt"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+### Expansion
+
+```{r}
+villages %>%
+  group_by(district_id) %>%
+  dplyr::filter(
+    any(pre_expansion == 1), 
+    !ilc, 
+    country == "Malawi"
+  )  %>%
+  group_by(country) %>%
+  sumtable(
+    vars = c("ilc_d", "dsw_d", "dsw_wpt", "ilc_wpt"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+
+### ILC
+
+```{r}
+villages %>%
+  group_by(district_id) %>%
+  dplyr::filter(
+    ilc, 
+    country == "Malawi"
+  )  %>%
+  group_by(country) %>%
+  sumtable(
+    vars = c("ilc_d", "dsw_d", "dsw_wpt", "ilc_wpt"),
+    group = "visited",
+    group.test = TRUE
+  )
+```
+

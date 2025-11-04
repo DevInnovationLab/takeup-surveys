@@ -1,0 +1,58 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-10-28"
+---
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    survey == "Household Survey"
+  ) %>%
+  mutate(
+    sample_group = factor(sample_group, ordered = FALSE)
+  )
+```
+
+```{r}
+feols(
+  disctcr_02 ~ sample_group,
+  data = hh_survey %>% dplyr::filter(country == "Uganda"),
+  cluster = ~ village_id
+)
+```
+
+```{r}
+feols(
+  discfcr_02 ~ sample_group,
+  data = hh_survey %>% dplyr::filter(country == "Uganda"),
+  cluster = ~ village_id
+)
+```
+
+```{r}
+feols(
+  disctcr_02 ~ sample_group,
+  data = hh_survey %>% dplyr::filter(country == "Malawi", wp_intervention == "DSW"),
+  cluster = ~ village_id
+)
+```
+
+```{r}
+feols(
+  discfcr_02 ~ sample_group,
+  data = hh_survey %>% dplyr::filter(country == "Malawi", wp_intervention == "DSW"),
+  cluster = ~ village_id
+)
+```
+
