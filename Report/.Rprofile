@@ -59,17 +59,6 @@ theme <-
 
 # Inputs -----------------------------------------------------------------------
 
-weights <-
-  tribble(
-    ~ country, ~ sample_group, ~ pop,
-    "Uganda" , "ILC"         , 651, 
-    "Uganda" , "Footprint"   , 3171,
-    "Uganda" , "Expansion"   , 4012,
-    "Malawi" , "Footprint"   , 1161,
-    "Malawi" , "Expansion"   , 4812, 
-    "Malawi" , "ILC"         , 633
-  )
-
 test_vars <-
   c(
     "discfcr_02", "disctcr_02", 
@@ -80,14 +69,7 @@ test_vars <-
 
 # Functions --------------------------------------------------------------------
 
-mean_ci <- function(data, var, dummy) {
-  design <- 
-    svydesign(
-      id = ~ household_id,      # PSU (here: villages)
-      strata = ~ village_id,    # stratification
-      data = data,
-      nest = TRUE
-    )
+mean_ci <- function(data, var, dummy, design) {
   
   formula <- paste("~", var) %>% as.formula()
   
@@ -128,18 +110,17 @@ village_mean_ci <-
       bind_rows
   }
 
+design <- 
+  svydesign(
+    id = ~ village_id,       # PSU (here: villages)
+    strata = ~ sample_group, # stratification
+    weights = ~ weight,
+    data = data,
+    nest = TRUE
+  )
 
 total_cis <-
-  function(data, var) {
-    
-    design <- 
-      svydesign(
-        id = ~ village_id,       # PSU (here: villages)
-        strata = ~ sample_group, # stratification
-        weights = ~ weight,
-        data = data,
-        nest = TRUE
-      )
+  function(data, var, design) {
     
     formula <- paste("~", var) %>% as.formula()
     
