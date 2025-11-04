@@ -314,80 +314,93 @@ pm_survey_households <- pm_survey_households %>%
 ```
 
 ## country totals
-Currently classifying by the sample group of the water point
+classifying by the sample group of the district
+```{r}
+country_totals <- tibble::tribble(
+  ~country, ~intervention, ~sample_group, ~country_total,
+  "Uganda", "DSW", "Footprint", 5456,
+  "Uganda", "DSW", "Expansion", 12262,
+  "Malawi", "DSW", "Footprint", 3844,
+  "Malawi", "DSW", "Expansion", 11292,
+  "Malawi", "DSW", "ILC", 1062,
+  "Malawi", "ILC", "ILC", 2024
+)
+```
+
+below, classifying by the sample group of the water point
 ```{r}
 # malawi 
-malawi_villages <- malawi_villages %>%
-  mutate(
-    sample_group = case_when(
-      ilc == 1 ~ "ILC",
-      ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
-      ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
-    )
-  )
-
-malawi_wp <- malawi_wp %>%
-  left_join(malawi_villages %>% select(villageid, sample_group, pre_expansion_village = pre_expansion, ilc, dsw), by = "villageid") %>%
-  mutate(
-    intervention = case_when(
-      program == 1 ~ "DSW",
-      program == 2 ~ "ILC",
-      TRUE ~ "Non-program" 
-    ),
-    wp_sample_group = case_when(
-      ilc == 1 ~ "ILC",
-      ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
-      ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
-    ), 
-    country = "Malawi"
-  )
-
-malawi_ilc_wcp_count <- nrow(malawi_wcp)
-
-# uganda
-uganda_villages <- uganda_villages %>%
-  mutate(
-    sample_group = case_when(
-      ilc == 1 ~ "ILC",
-      ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
-      ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
-    )
-  )
-
-uganda_wp <- uganda_wp %>%
-  left_join(uganda_villages %>% select(villageid, sample_group, pre_expansion_village = pre_expansion, ilc, dsw), by = "villageid") %>%
-  mutate(
-    intervention = case_when(
-      program == 1 ~ "DSW",
-      program == 2 ~ "ILC water point",
-      TRUE ~ "Non-program" 
-    ),
-     wp_sample_group = case_when(
-      ilc == 1 ~ "ILC",
-      ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
-      ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
-     ), 
-    country = "Uganda")
-
-uganda_ilc_wcp_count <- nrow(uganda_wcp)
-
-# create country totals table
-country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
-  # in the row below, change to sample_group to use village classification instead
-  count(country, wp_sample_group, intervention, name = "country_total") %>%
-  # Add ILC water collection points to the ILC category
-  mutate(
-    country_total = case_when(
-      country == "Malawi" & intervention == "ILC" ~ country_total + malawi_ilc_wcp_count,
-      country == "Uganda" & intervention == "ILC" ~ country_total + uganda_ilc_wcp_count,
-      TRUE ~ country_total
-    )
-  ) %>%
-  arrange(country, wp_sample_group, intervention) %>%
-  mutate(sample_group = wp_sample_group) %>%
-  select(-wp_sample_group)
-
-country_totals
+# malawi_villages <- malawi_villages %>%
+#   mutate(
+#     sample_group = case_when(
+#       ilc == 1 ~ "ILC",
+#       ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
+#       ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
+#     )
+#   )
+# 
+# malawi_wp <- malawi_wp %>%
+#   left_join(malawi_villages %>% select(villageid, sample_group, pre_expansion_village = pre_expansion, ilc, dsw), by = "villageid") %>%
+#   mutate(
+#     intervention = case_when(
+#       program == 1 ~ "DSW",
+#       program == 2 ~ "ILC",
+#       TRUE ~ "Non-program" 
+#     ),
+#     wp_sample_group = case_when(
+#       ilc == 1 ~ "ILC",
+#       ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
+#       ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
+#     ), 
+#     country = "Malawi"
+#   )
+# 
+# malawi_ilc_wcp_count <- nrow(malawi_wcp)
+# 
+# # uganda
+# uganda_villages <- uganda_villages %>%
+#   mutate(
+#     sample_group = case_when(
+#       ilc == 1 ~ "ILC",
+#       ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
+#       ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
+#     )
+#   )
+# 
+# uganda_wp <- uganda_wp %>%
+#   left_join(uganda_villages %>% select(villageid, sample_group, pre_expansion_village = pre_expansion, ilc, dsw), by = "villageid") %>%
+#   mutate(
+#     intervention = case_when(
+#       program == 1 ~ "DSW",
+#       program == 2 ~ "ILC water point",
+#       TRUE ~ "Non-program" 
+#     ),
+#      wp_sample_group = case_when(
+#       ilc == 1 ~ "ILC",
+#       ilc == 0 & dsw == 1 & pre_expansion == 1 ~ "Footprint",
+#       ilc == 0 & dsw == 1 & pre_expansion == 0 ~ "Expansion"
+#      ), 
+#     country = "Uganda")
+# 
+# uganda_ilc_wcp_count <- nrow(uganda_wcp)
+# 
+# # create country totals table
+# country_totals <- bind_rows(malawi_wp, uganda_wp) %>%
+#   # in the row below, change to sample_group to use village classification instead
+#   count(country, wp_sample_group, intervention, name = "country_total") %>%
+#   # Add ILC water collection points to the ILC category
+#   mutate(
+#     country_total = case_when(
+#       country == "Malawi" & intervention == "ILC" ~ country_total + malawi_ilc_wcp_count,
+#       country == "Uganda" & intervention == "ILC" ~ country_total + uganda_ilc_wcp_count,
+#       TRUE ~ country_total
+#     )
+#   ) %>%
+#   arrange(country, wp_sample_group, intervention) %>%
+#   mutate(sample_group = wp_sample_group) %>%
+#   select(-wp_sample_group)
+# 
+# country_totals
 ```
 
 ### looking into whether classifying as expansion/footprint by water point vs village makes a difference
