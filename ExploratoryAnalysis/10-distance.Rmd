@@ -246,12 +246,12 @@ ggplot(hh_filtered, aes(y = dist_to_primary_m)) +
 
 # export to dta
 ```{r}
-library(haven)
-library(sf)
-
-hh_without_geom <- st_drop_geometry(hh_with_primary)
-
-write_dta(hh_without_geom, "hh_with_primary.dta")
+# library(haven)
+# library(sf)
+# 
+# hh_without_geom <- st_drop_geometry(hh_with_primary)
+# 
+# write_dta(hh_without_geom, "hh_with_primary.dta")
 ```
 
 # summary table
