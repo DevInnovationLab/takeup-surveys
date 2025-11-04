@@ -2665,17 +2665,20 @@ malawi_lm <- lm(disctcr_02 ~ survey, data = malawi_promoter_wp)
 
 stargazer(uganda_lm, malawi_lm,
           type = "text",
-          title = "Association between monitoring survey and Chlorination",
-          dep.var.labels = "disctcr_02",
-          covariate.labels = c("Listed by Promoter"),
+          title = "Association between survey and Chlorination",
+          dep.var.labels = "disctcr 02",
           column.labels = c("Uganda", "Malawi"),
           model.numbers = FALSE,
-          keep.stat = c("n", "rsq", "adj.rsq"))
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
 ```
+
 
 ## Does the same hold when we add the households that should have been in the monitoring survey? YES
 ```{r}
-promoter_wp_households_sensitivity <- hh_survey %>%
+promoter_wp_households_adjusted <- hh_survey %>%
   dplyr::filter(promoter_surveyed == 1) %>%
   mutate(
     rank = as.numeric(rank),
@@ -2683,14 +2686,36 @@ promoter_wp_households_sensitivity <- hh_survey %>%
     survey = ifelse(survey == "Household Survey" & !is.na(rank) & rank <= 4,
                     "Monitoring Survey",
                     survey)
-  ) %>%
-  group_by(country, survey) %>%
-  summarize(
-    chlorination_fcr = mean(discfcr_02, na.rm = TRUE),
-    chlorination_tcr = mean(disctcr_02, na.rm = TRUE)
   )
 
-promoter_wp_households_sensitivity
+uganda_promoter_wp <- promoter_wp_households_adjusted %>%
+  dplyr::filter(country == "Uganda")
+
+malawi_promoter_wp <- promoter_wp_households_adjusted %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model <- lm_robust(disctcr_02 ~ survey, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
+
+malawi_model <- lm_robust(disctcr_02 ~ survey, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ survey, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr_02 ~ survey, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
+          type = "text",
+          title = "Association between survey and Chlorination",
+          dep.var.labels = "disctcr 02",
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
 ```
 
 ## What about if we combine HHs from both surveys, but compare by WP presence in promoter survey?
