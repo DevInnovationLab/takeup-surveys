@@ -2260,23 +2260,23 @@ malawi_hh_survey <- hh_survey %>%
 
 # run models
 # column 1: promoter survey, Uganda
-model1 <- lm(disctcr ~ promoter_surveyed, data = uganda_hh_survey)
+model1 <- lm(disctcr_02 ~ promoter_surveyed, data = uganda_hh_survey)
 # column 2: EA list, Uganda
-model2 <- lm(disctcr ~ pm_ea_list, data = uganda_hh_survey)
+model2 <- lm(disctcr_02 ~ pm_ea_list, data = uganda_hh_survey)
 # column 3: both, Uganda
-model3 <- lm(disctcr ~ pm_ea_list + promoter_surveyed, data = uganda_hh_survey)
+model3 <- lm(disctcr_02 ~ pm_ea_list + promoter_surveyed, data = uganda_hh_survey)
 # column 4: promoter survey, Malawi
-model4 <- lm(disctcr ~ promoter_surveyed, data = malawi_hh_survey)
+model4 <- lm(disctcr_02 ~ promoter_surveyed, data = malawi_hh_survey)
 # column 5: EA list, malawi
-model5 <- lm(disctcr ~ pm_ea_list, data = malawi_hh_survey)
+model5 <- lm(disctcr_02 ~ pm_ea_list, data = malawi_hh_survey)
 # column 6: both, Malawi
-model6 <- lm(disctcr ~ pm_ea_list + promoter_surveyed, data = malawi_hh_survey)
+model6 <- lm(disctcr_02 ~ pm_ea_list + promoter_surveyed, data = malawi_hh_survey)
 
 # view in R
 stargazer(model1, model2, model3, model4, model5, model6,
           type = "text",
           title = "Association between Promoter Survey, EA List and Chlorination",
-          dep.var.labels = "TCR (Colorwheel)",
+          dep.var.labels = "TCR >0.2 (Colorwheel)",
           covariate.labels = c("Promoter Survey", "EA list"),
           keep.stat = c("n", "rsq", "adj.rsq"))
 
@@ -2285,7 +2285,7 @@ stargazer(model1, model2, model3, model4, model5, model6,
           type = "latex",
           title = "Association between Promoter Survey, EA List and Chlorination",
           label = "tab:regression_results",
-          dep.var.labels = "TCR (Colorwheel)",
+          dep.var.labels = "TCR >0.2ppm (Colorwheel)",
           covariate.labels = c("Promoter Survey", "EA list"),
           column.labels = c("(1)", "(2)", "(3)", "(4)", "(5)", "(6)"),
           column.separate = c(3, 3),
@@ -2304,7 +2304,7 @@ stargazer(model1, model2, model3, model4, model5, model6,
 ```
 
 ## household selection
-I regress chlorination on household presence in the promoter lists, limiting the sample to households using water points in the promoter survey. We find a significant positive association between these for both Uganda and Malawi.
+association is positive, but only significant if we regress disctcr. if the dependent variable is disctcr_02, then it is not
 ```{r}
 promoter_wp_households <- hh_survey %>%
   dplyr::filter(promoter_surveyed == 1) 
@@ -2316,13 +2316,13 @@ uganda_promoter_wp <- promoter_wp_households %>%
 malawi_promoter_wp <- promoter_wp_households %>%
   dplyr::filter(country == "Malawi")
 
-uganda_model <- lm(disctcr ~ promoter_list, data = uganda_promoter_wp)
-malawi_model <- lm(disctcr ~ promoter_list, data = malawi_promoter_wp)
+uganda_model <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
+malawi_model <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
 
 stargazer(uganda_model, malawi_model,
           type = "text",
           title = "Association between Being Listed by Promoter and Chlorination",
-          dep.var.labels = "DISCTCR",
+          dep.var.labels = "disctcr_02",
           covariate.labels = c("Listed by Promoter"),
           column.labels = c("Uganda", "Malawi"),
           model.numbers = FALSE,
@@ -2599,4 +2599,85 @@ stargazer(model_census_malawi_dsw, model_census_uganda_dsw,
           dep.var.labels = "Census HH Count",
           covariate.labels = c("Footprint", "ILC"),
           keep.stat = c("n", "rsq"))
+```
+
+# exploratory: For how many water points do we have less than 4 households in the monitoring? 
+```{r}
+wp_monitoring_counts <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  group_by(wp_id) %>%
+  summarise(n_households = n()) %>%
+  summarise(share_under_4 = mean(n_households < 4))
+
+wp_monitoring_counts
+```
+
+# exploratory: Among households that self report using a promoter survey water point, do those that are in the monitoring survey have higher chlorination? YES
+```{r}
+promoter_wp_households <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == 1) %>%
+  group_by(country, survey) %>%
+  summarize(
+    chlorination_fcr = mean(discfcr_02, na.rm = TRUE),
+    chlorination_tcr = mean(disctcr_02, na.rm = TRUE)
+  )
+
+promoter_wp_households
+
+promoter_wp_households <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == 1) 
+
+uganda_promoter_wp <- promoter_wp_households %>%
+  dplyr::filter(country == "Uganda")
+
+malawi_promoter_wp <- promoter_wp_households %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model <- lm(disctcr_02 ~ survey, data = uganda_promoter_wp)
+malawi_model <- lm(disctcr_02 ~ survey, data = malawi_promoter_wp)
+
+stargazer(uganda_model, malawi_model,
+          type = "text",
+          title = "Association between monitoring survey and Chlorination",
+          dep.var.labels = "disctcr_02",
+          covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          keep.stat = c("n", "rsq", "adj.rsq"))
+```
+
+## Does the same hold when we add the households that should have been in the monitoring survey? YES
+```{r}
+promoter_wp_households_sensitivity <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == 1) %>%
+  mutate(
+    rank = as.numeric(rank),
+    survey = as.character(survey),  # Convert to character first
+    survey = ifelse(survey == "Household Survey" & !is.na(rank) & rank <= 4,
+                    "Monitoring Survey",
+                    survey)
+  ) %>%
+  group_by(country, survey) %>%
+  summarize(
+    chlorination_fcr = mean(discfcr_02, na.rm = TRUE),
+    chlorination_tcr = mean(disctcr_02, na.rm = TRUE)
+  )
+
+promoter_wp_households_sensitivity
+```
+
+## What about if we combine HHs from both surveys, but compare by WP presence in promoter survey?
+This is the same as the regression 
+```{r}
+chlor_tests <- hh_survey %>%
+  group_by(country, promoter_surveyed) %>%
+  dplyr::filter(!is.na(promoter_surveyed)) %>%
+  summarize(
+    chlorination_fcr = mean(discfcr_02, na.rm = TRUE),
+    chlorination_tcr = mean(disctcr_02, na.rm = TRUE),
+    n = n()
+  )
+
+chlor_tests
 ```
