@@ -4,6 +4,7 @@ output: html_document
 date: "2025-10-13"
 ---
 
+# load packages
 ```{r}
 packages <-
   c(
@@ -22,7 +23,9 @@ packages <-
     "ggplot2",
     "haven",
     "estimatr",
-    "geosphere"
+    "geosphere",
+    "lmtest",
+    "sandwich"
   )
 
 pacman::p_load(
@@ -235,7 +238,17 @@ hh_filtered <- hh_with_primary %>%
   mutate(
     dist_to_primary_m = as.numeric(dist_to_primary_m)
   ) %>%
-  dplyr::filter(dist_to_primary_m < 10000 & dist_to_primary_m > 0)
+# winsorize
+  mutate(
+    dist_to_primary_m = as.numeric(dist_to_primary_m),
+    dist_to_primary_m = case_when(
+      dist_to_primary_m < quantile(dist_to_primary_m, 0.05, na.rm = TRUE) ~ 
+        quantile(dist_to_primary_m, 0.05, na.rm = TRUE),
+      dist_to_primary_m > quantile(dist_to_primary_m, 0.95, na.rm = TRUE) ~ 
+        quantile(dist_to_primary_m, 0.95, na.rm = TRUE),
+      TRUE ~ dist_to_primary_m
+    )
+  )
 
 ggplot(hh_filtered, aes(y = dist_to_primary_m)) +
   geom_boxplot(fill = "lightblue") +
@@ -255,52 +268,76 @@ ggplot(hh_filtered, aes(y = dist_to_primary_m)) +
 ```
 
 # summary table
-
 ```{r}
-table <- hh_filtered %>%
+hh_filtered <- hh_filtered %>%
   mutate(
     dist_to_primary_km = dist_to_primary_m / 1000,
     dist_to_nearest_ea_km = dist_to_nearest_ea_m / 1000,
-    ea_minus_nearest_km = dist_to_nearest_ea_km - dist_to_primary_km
-  ) %>%
+    ea_minus_primary_m = dist_to_nearest_ea_m - dist_to_primary_m
+  ) 
+
+table <- hh_filtered %>%
   group_by(disc_tcr_detected) %>%
   dplyr::filter(!is.na(dist_to_primary_m)) %>%
   summarize(
     mean_dist_primary = mean(dist_to_primary_m, na.rm = TRUE),
     mean_dist_ea = mean(dist_to_nearest_ea_m, na.rm = TRUE),
-    mean_diff_km = mean(ea_minus_nearest_km, na.rm = TRUE),
+    mean_ea_minus_primary_m = mean(ea_minus_primary_m, na.rm = TRUE),
     n = n()
   )
 
 print(table)
 ```
 
+# regressions
+controlling for distance to primary water point, distance to nearest EA water point is significantly (p<0.05) associated with lower probability of chlorination
+## OLS
 ```{r}
-hh_with_primary_reg <- hh_with_primary %>%
-  dplyr::filter(!is.na(dist_to_primary_m)) %>%
-  mutate(
-    dist_to_primary_km = dist_to_primary_m * 1000,
-    dist_to_nearest_ea_km = dist_to_nearest_ea_m * 1000,
-    ea_minus_nearest_km = dist_to_nearest_ea_km - dist_to_primary_km
-  )
-
-model <- lm_robust(disc_tcr_detected ~ ea_minus_nearest_km, 
-                   data = hh_with_primary_reg,
+# model with clustered SEs
+model <- lm_robust(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km, 
+                   data = hh_filtered,
                    clusters = village_id,
                    se_type = "stata")
 
-clustered_se <- model$std.error
+# run a regular lm (just for stargazer to recognize the object)
+model_lm <- lm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km, 
+               data = hh_filtered)
 
-# model_lm <- lm(disctcr ~ dist_to_primary_m + dist_to_nearest_ea_m, data = hh_with_primary_reg)
-
-model_lm <- lm(disc_tcr_detected ~ ea_minus_nearest_km, data = hh_with_primary_reg)
-
-stargazer(model_lm,  
-          type = "text",
-          se = list(clustered_se),  #  use the clustered SEs from lm_robust
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          notes = "Clustered standard errors (by village) in parentheses",
-          notes.append = FALSE)
+stargazer(model_lm,
+          type = "text",  # change to "latex" or "html" as needed
+          se = list(model$std.error),
+          title = "Regression Results",
+          dep.var.labels = "Disc TCR Detected",
+          covariate.labels = c("Distance to Nearest EA (km)", 
+                               "Distance to Primary WP (km)"),
+          notes = c("Standard errors clustered at village level in parentheses.",
+                    "*** p<0.01, ** p<0.05, * p<0.1"),
+          notes.align = "l",
+          omit.stat = c("f", "ser"))
 ```
 
+## logit
+```{r}
+# logit model with clustered standard errors
+model_logit <- glm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km, 
+                   data = hh_filtered,
+                   family = binomial(link = "logit"))
+
+coeftest(model_logit, vcov = vcovCL(model_logit, cluster = hh_filtered$village_id))
+
+# get the clustered standard errors
+clustered_se <- sqrt(diag(vcovCL(model_logit, cluster = hh_filtered$village_id)))
+
+# create the table
+stargazer(model_logit,
+          type = "text",  # change to "latex" or "html" as needed
+          se = list(clustered_se),
+          title = "Logit Regression Results",
+          dep.var.labels = "Disc TCR Detected",
+          covariate.labels = c("Distance to Nearest EA (km)", 
+                               "Distance to Primary WP (km)"),
+          notes = c("Standard errors clustered at village level in parentheses.",
+                    "*** p<0.01, ** p<0.05, * p<0.1"),
+          notes.align = "l",
+          omit.stat = c("aic", "ll"))
+```
