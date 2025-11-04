@@ -2643,16 +2643,6 @@ wp_monitoring_counts
 # exploratory: Among households that self report using a promoter survey water point, do those that are in the monitoring survey have higher chlorination? YES
 ```{r}
 promoter_wp_households <- hh_survey %>%
-  dplyr::filter(promoter_surveyed == 1) %>%
-  group_by(country, survey) %>%
-  summarize(
-    chlorination_fcr = mean(discfcr_02, na.rm = TRUE),
-    chlorination_tcr = mean(disctcr_02, na.rm = TRUE)
-  )
-
-promoter_wp_households
-
-promoter_wp_households <- hh_survey %>%
   dplyr::filter(promoter_surveyed == 1) 
 
 uganda_promoter_wp <- promoter_wp_households %>%
@@ -2661,10 +2651,19 @@ uganda_promoter_wp <- promoter_wp_households %>%
 malawi_promoter_wp <- promoter_wp_households %>%
   dplyr::filter(country == "Malawi")
 
-uganda_model <- lm(disctcr_02 ~ survey, data = uganda_promoter_wp)
-malawi_model <- lm(disctcr_02 ~ survey, data = malawi_promoter_wp)
+uganda_model <- lm_robust(disctcr_02 ~ survey, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
 
-stargazer(uganda_model, malawi_model,
+malawi_model <- lm_robust(disctcr_02 ~ survey, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ survey, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr_02 ~ survey, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
           type = "text",
           title = "Association between monitoring survey and Chlorination",
           dep.var.labels = "disctcr_02",
