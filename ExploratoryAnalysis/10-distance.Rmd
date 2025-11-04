@@ -95,7 +95,7 @@ hh_census_constructed <-
     served = (wp_intervention_type != "Non-program") * 100
   )
 
-wp_constructed <-
+wp_census_constructed <-
   read_rds(
     file.path(
       path_box,
@@ -103,7 +103,7 @@ wp_constructed <-
       "WaterPointCensus",
       "DataSets",
       "Spatial",
-      "wp-constructed.rds"
+      "wp-gps-constructed.rds"
     )
   )
 
@@ -139,7 +139,8 @@ hh_census_geom <- hh_census_geom %>%
 
 wp_census_geom <- wp_census %>%
   mutate(wp_id = paste0("WP", wp_id)) %>%
-  left_join(wp_constructed %>% select(geometry, wp_id, wp_gpsaccuracy = gps_accuracy),
+  left_join(wp_census_constructed %>% select(geometry, wp_id), 
+            # wp_gpsaccuracy = gps_accuracy),
             by = "wp_id")
 
 wp_census_geom <- wp_census_geom %>%
@@ -173,7 +174,8 @@ hh_with_primary <- hh_census_geom %>%
   left_join(
     wp_census_geom %>%
       mutate(wp_id = gsub("^WP", "", wp_id)) %>%  
-      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat, wp_gpsaccuracy),
+      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat), 
+    # wp_gpsaccuracy),
     by = "wp_id"
   )
 
@@ -184,9 +186,20 @@ hh_with_primary <- hh_with_primary %>%
       cbind(primary_wp_lon, primary_wp_lat)
     ))
 
-hh_with_primary <- hh_with_primary %>%
-  dplyr::filter(wp_gpsaccuracy < 10) %>%
-  dplyr::filter(gpsaccuracy < 10)
+# hh_with_primary <- hh_with_primary %>%
+#   dplyr::filter(wp_gpsaccuracy < 10) %>%
+#   dplyr::filter(gpsaccuracy < 10)
+```
+
+# generate dataset with households far from primary wp
+```{r}
+hh_with_primary_far <- hh_with_primary %>%
+  dplyr::filter(dist_to_primary_m > 1000) %>%
+  select(country, village_id, wp_id, household_id, primary_wp_lat, primary_wp_lon, dist_to_primary_m, hh_lat, hh_lon) 
+  # dplyr::distinct(wp_id)
+
+# export to csv
+write.csv(hh_with_primary_far, "hh_with_primary_far.csv", row.names = FALSE)
 ```
 
 # distance to nearest EA WP
