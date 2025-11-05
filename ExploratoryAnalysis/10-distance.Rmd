@@ -269,7 +269,8 @@ hh_filtered <- hh_filtered %>%
     dist_to_primary_km = dist_to_primary_m / 1000,
     dist_to_nearest_ea_km = dist_to_nearest_ea_m / 1000,
     ea_minus_primary_m = dist_to_nearest_ea_m - dist_to_primary_m,
-    ea_minus_primary_km = dist_to_nearest_ea_km - dist_to_primary_km
+    ea_minus_primary_km = dist_to_nearest_ea_km - dist_to_primary_km,
+    ea_minus_primary_100m = (dist_to_nearest_ea_m / 100) - (dist_to_primary_m / 100)
   ) 
 
 table <- hh_filtered %>%
@@ -313,12 +314,12 @@ stargazer(model_lm,
 ```
 
 ## logit
-As the Evidence Action water point becomes relatively farther compared to the primary water point (i.e., as the distance differential increases by 1 km), the probability of detecting chlorination in household water decreases by approximately 28 percentage points.
+A 100m increase in the distance differential is associated with approximately a 2.8 percentage point decrease in chlorination detection. This effect size is substantively relevant given that the average distance differential among households whose primary water point is not an EA water point is 74.6 meters. This suggests that even typical variations in relative distance are associated with meaningful changes in chlorination rates.
 ```{r}
 # logit model with clustered standard errors
 # model_logit <- glm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km + hh_under5yn + wp_secweek + dsw + ilc, 
 # model_logit <- glm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km, 
-model_logit <- glm(disc_tcr_detected ~ ea_minus_primary_km + hh_under5yn + wp_secweek + dsw + ilc, 
+model_logit <- glm(disc_tcr_detected ~ ea_minus_primary_100m + hh_under5yn + wp_secweek + dsw + ilc, 
                    data = hh_filtered,
                    family = binomial(link = "logit"))
 
@@ -342,4 +343,45 @@ stargazer(model_logit,
 library(margins)
 ames <- margins(model_logit, vcov = vcovCL(model_logit, cluster = hh_filtered$village_id))
 summary(ames)
+```
+
+## context for average effects: distribution of ea_minus_primary_m
+```{r}
+# hh_filtered_diff <- hh_filtered %>%
+#   dplyr::filter(dist_to_primary_m != dist_to_nearest_ea_m)
+
+# calculate mean 
+mean_diff <- hh_filtered %>%
+  summarise(mean_val = mean(ea_minus_primary_m, na.rm = TRUE)) %>%
+  pull(mean_val)
+
+# histogram with mean line
+hh_filtered %>%
+  dplyr::filter(ea_minus_primary_m != 0) %>%
+  ggplot(aes(x = ea_minus_primary_m)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  geom_vline(xintercept = mean_diff, linetype = "dashed", color = "red", size = 1) +
+  annotate("text", x = mean_diff, y = Inf, 
+           label = paste0("Mean = ", round(mean_diff, 1), "m"), 
+           vjust = 2, hjust = -0.1, color = "red") +
+  labs(
+    title = "Distribution of Distance Differential Between Nearest EA water point \nand primary water point",
+    x = "EA water point distance - Primary water point distance (meters)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```  
+
+## context for average effects: SD of chlorination
+```{r}
+# for binary outcome
+mean_chlorination <- mean(hh_filtered$disc_tcr_detected, na.rm = TRUE)
+sd_chlorination <- sqrt(mean_chlorination * (1 - mean_chlorination))
+
+sd_chlorination
+
+effect_per_100m <- 2.8
+effect_in_sds <- (effect_per_100m / 100) / sd_chlorination
+
+cat("Effect per 100m:", round(effect_in_sds, 3), "standard deviations")
 ```
