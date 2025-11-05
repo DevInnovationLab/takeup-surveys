@@ -443,7 +443,6 @@ chlorination_fo <-
 
 ### Sanity check
 
-
 ```{r}
 chlorination_data %>%
   group_by(wp_id, wp_intervention, sample_group, country) %>%
@@ -465,7 +464,42 @@ chlorination_data %>%
   )
 ```
 
-### Combining ILC WP and ILC WCP
+### Final numbers
+
+```{r}
+cl_wp <-
+  chlorination_data %>%
+  group_by(
+    country, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+      outcomes = c("disctcr_02", "discfcr_02"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        data = .x,
+        nest = TRUE
+      ) 
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+        households = .x %>% pull(household_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(desc(outcome))
+
+cl_wp %>%
+  write_csv(
+    here("../output/tables/chlorine-wp.csv")
+  )
+```
+
+### Sensitivity checks
 
 #### Sanity check
 
