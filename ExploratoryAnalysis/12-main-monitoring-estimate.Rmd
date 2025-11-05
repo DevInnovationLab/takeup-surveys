@@ -204,7 +204,7 @@ chlorination_data %>%
   ) 
 ```
 
-# with CIs
+# with CIs - weigh each WP equally
 ## function - svydesign
 ```{r}
 # function to calculate means with CIs for any variable
@@ -466,4 +466,249 @@ chlorination <- chlorination_tcr_ci %>%
   )
 
 chlorination
+```
+
+### weigh WP by number of users
+```{r}
+chlorination_data_wp_weighted <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%  
+  dplyr::filter(!is.na(intervention)) %>%  
+  dplyr::filter(intervention != "Non-program") %>%  
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%  
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  # join with wp_census to get pm_users
+  left_join(
+    wp_census %>% select(wp_id, pm_users),
+    by = "wp_id"
+  ) %>%
+  # filter out water points without pm_users data
+  dplyr::filter(!is.na(pm_users)) %>%
+  # weight by number of users per WP, normalized per WP
+  group_by(wp_id) %>%
+  mutate(
+    n_hh_per_wp = n(),
+    hh_weight_wp = pm_users / n_hh_per_wp  # each HH at a WP gets fraction of WP's total weight
+  ) %>%
+  ungroup()
+
+chlorination_tcr_ci_v2 <- calculate_mean_ci_logical(chlorination_data_wp_weighted, "disctcr_02", hh_weight_wp)
+chlorination_fcr_ci_v2 <- calculate_mean_ci_logical(chlorination_data_wp_weighted, "discfcr_02", hh_weight_wp)
+
+chlorination_v2 <- chlorination_fcr_ci_v2 %>%
+  select(country, sample_group, intervention, mean_tcr = mean) %>%
+  left_join(
+    chlorination_fcr_ci_v2 %>% select(country, sample_group, intervention, mean_fcr = mean),
+    by = c("country", "sample_group", "intervention")
+  )
+chlorination_v2
+```
+
+### weigh each HH equally
+```{r}
+chlorination_data_weighted <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%  
+  dplyr::filter(!is.na(intervention)) %>%  
+  dplyr::filter(intervention != "Non-program") %>%  
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%  
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%  
+  mutate(hh_weight = 1)
+
+# now recalculate
+chlorination_tcr_ci_v3 <- calculate_mean_ci_logical(chlorination_data_weighted, "disctcr_02", hh_weight)
+chlorination_fcr_ci_v3 <- calculate_mean_ci_logical(chlorination_data_weighted, "discfcr_02", hh_weight)
+
+chlorination_v3 <- chlorination_tcr_ci_v3 %>%
+  select(country, sample_group, intervention, mean_tcr = mean) %>%
+  left_join(
+    chlorination_fcr_ci_v3 %>% select(country, sample_group, intervention, mean_fcr = mean),
+    by = c("country", "sample_group", "intervention")
+  )
+
+chlorination_v3
+```
+
+### don't filter out unfunctional
+```{r}
+chlorination_data_weighted <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(!is.na(intervention)) %>%  
+  dplyr::filter(intervention != "Non-program") %>%  
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%  
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%  
+  # create weight = 1/n per water point
+  group_by(wp_id) %>%
+  mutate(n_hh_per_wp = n()) %>%
+  ungroup() %>%
+  mutate(hh_weight = 1 / n_hh_per_wp)
+
+# now recalculate
+chlorination_tcr_ci_v4 <- calculate_mean_ci_logical(chlorination_data_weighted, "disctcr_02", hh_weight)
+chlorination_fcr_ci_v4 <- calculate_mean_ci_logical(chlorination_data_weighted, "discfcr_02", hh_weight)
+
+chlorination_v4 <- chlorination_tcr_ci_v4 %>%
+  select(country, sample_group, intervention, mean_tcr = mean) %>%
+  left_join(
+    chlorination_fcr_ci_v4 %>% select(country, sample_group, intervention, mean_fcr = mean),
+    by = c("country", "sample_group", "intervention")
+  )
+
+chlorination_v4
+```
+
+### coefficients plot
+```{r}
+# now combine all versions with SE data
+chlorination_all <- bind_rows(
+  chlorination_tcr_ci_v2 %>% mutate(method = "Weigh water points by number of users"),
+  chlorination_tcr_ci %>% mutate(method = "Weigh each water point equally"),
+  chlorination_tcr_ci_v3 %>% mutate(method = "Weigh each household equally"),
+  chlorination_tcr_ci_v4 %>% mutate(method = "Include non-functional water points")
+) %>%
+  mutate(
+    method = factor(method, levels = c(
+      "Weigh water points by number of users",
+      "Weigh each water point equally", 
+      "Weigh each household equally",
+      "Include non-functional water points"
+    )),
+    sample_group = factor(sample_group, levels = c("Expansion", "Footprint", "ILC")),
+    country = factor(country, levels = c("Malawi", "Uganda"))
+  )
+```
+
+### plot
+```{r}
+ggplot(chlorination_all, aes(x = mean * 100, y = method)) +
+  geom_errorbarh(aes(xmin = lb * 100, xmax = ub * 100, color = method), 
+                 height = 0.3, linewidth = 1.2) +
+  geom_point(aes(color = method), size = 5) +  # larger points to cover the error bar intersection
+  geom_text(aes(label = sprintf("%.1f%%", mean * 100)),
+            vjust = -1.2, size = 3.5, color = "black") +
+  facet_grid(country ~ sample_group + intervention, 
+             scales = "free_y", space = "free_y") +
+  scale_color_manual(values = c(
+    "Weigh water points by number of users" = "#DAA520",
+    "Weigh each water point equally" = "#2E8B57",
+    "Weigh each household equally" = "#6A5ACD",
+    "Include non-functional water points" = "#9370DB"
+  )) +
+  labs(
+    x = "Percent of tested households where color wheel\nTCR reading was at least 0.2 ppm",
+    y = NULL,
+    title = "Figure 4: Monitoring survey total chlorine residual detection rates \n using different weights"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold", size = 10),
+    panel.grid.major.y = element_blank(),
+    panel.spacing = unit(1, "lines"),
+    axis.text.y = element_text(size = 9, color = "gray50"),
+    plot.title = element_text(hjust = 0.5, size = 13)
+  ) +
+  coord_cartesian(xlim = c(15, 55))
+```
+
+# tables 
+## DSW separated
+## DSW combined
+
+```{r}
+# prepare data for regression - focusing on DSW only
+reg_data <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(intervention == "DSW") %>%
+  dplyr::filter(sample_group %in% c("Expansion", "Footprint", "ILC")) %>%
+  # make sample_group a factor with Expansion as reference
+  mutate(
+    sample_group = factor(sample_group, levels = c("Expansion", "Footprint", "ILC")),
+    disctcr_02_num = as.numeric(disctcr_02)  # convert logical to numeric for regression
+  )
+
+# Malawi regression
+model_malawi <- lm(
+  disctcr_02_num ~ sample_group,
+  data = reg_data %>% dplyr::filter(country == "Malawi")
+)
+
+# get clustered SEs
+library(sandwich)
+library(lmtest)
+
+coeftest(model_malawi, vcov = vcovCL(model_malawi, cluster = reg_data %>% dplyr::filter(country == "Malawi") %>% pull(wp_id)))
+
+# extract clustered SEs for stargazer
+clustered_se_malawi <- sqrt(diag(vcovCL(model_malawi, cluster = reg_data %>% dplyr::filter(country == "Malawi") %>% pull(wp_id))))
+
+# Uganda regression
+model_uganda <- lm(
+  disctcr_02_num ~ sample_group,
+  data = reg_data %>% dplyr::filter(country == "Uganda")
+)
+
+coeftest(model_uganda, vcov = vcovCL(model_uganda, cluster = reg_data %>% dplyr::filter(country == "Uganda") %>% pull(wp_id)))
+
+clustered_se_uganda <- sqrt(diag(vcovCL(model_uganda, cluster = reg_data %>% dplyr::filter(country == "Uganda") %>% pull(wp_id))))
+
+# stargazer with clustered SEs
+stargazer(
+  model_malawi, model_uganda,
+  type = "text",
+  se = list(clustered_se_malawi, clustered_se_uganda),
+  title = "Chlorination rates by sample group (DSW only)",
+  column.labels = c("Malawi", "Uganda"),
+  dep.var.labels = "TCR >= 0.2 ppm",
+  covariate.labels = c("Footprint", "ILC", "Constant (Expansion)"),
+  keep.stat = c("n", "adj.rsq"),
+  notes = c("Standard errors clustered at water point level in parentheses.",
+            "*** p<0.01, ** p<0.05, * p<0.1",
+            "Reference category: Expansion villages"),
+  notes.align = "l"
+)
+```
+
+# difference in chlorination between types of DSW
+```{r}
+chlorination_data <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(!is.na(intervention)) %>%  
+  dplyr::filter(intervention != "Non-program") %>%  
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%  
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC"))  
+
+uganda_chlorination_data_weighted <- chlorination_data %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(intervention == "DSW") 
+
+malawi_chlorination_data_weighted <- chlorination_data %>%
+  dplyr::filter(country == "Malawi") %>%
+  dplyr::filter(intervention == "DSW")
+
+# Malawi
+lm_robust(
+  disctcr_02 ~ sample_group, 
+  data = malawi_chlorination_data_weighted,
+  clusters = wp_id,
+  se_type = "stata"
+)
+
+# Uganda
+lm_robust(
+  disctcr_02 ~ sample_group, 
+  data = uganda_chlorination_data_weighted,
+  clusters = wp_id,
+  se_type = "stata"
+)
 ```
