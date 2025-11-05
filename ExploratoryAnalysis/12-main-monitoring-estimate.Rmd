@@ -457,4 +457,13 @@ chlorination_fcr_ci <- calculate_mean_ci_logical(chlorination_data_weighted, "di
 
 chlorination_tcr_ci
 chlorination_fcr_ci
+
+chlorination <- chlorination_tcr_ci %>%
+  select(country, sample_group, intervention, mean_tcr = mean) %>%
+  left_join(
+    chlorination_fcr_ci %>% select(country, sample_group, intervention, mean_fcr = mean),
+    by = c("country", "sample_group", "intervention")
+  )
+
+chlorination
 ```
