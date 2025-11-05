@@ -2,3 +2,9 @@ introduction
 primary-outcomes
 people-using-dswilc-water-points
 chlorine-detection-rates
+inputs
+prepare-data
+sanity-check
+with-cis
+sanity-check-1
+with-cis-1

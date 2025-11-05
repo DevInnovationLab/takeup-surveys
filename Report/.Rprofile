@@ -69,7 +69,7 @@ test_vars <-
 
 # Functions --------------------------------------------------------------------
 
-mean_ci <- function(data, var, dummy, design) {
+mean_ci <- function(var, design) {
   
   formula <- paste("~", var) %>% as.formula()
   
@@ -88,39 +88,25 @@ mean_ci <- function(data, var, dummy, design) {
   result <-
     bind_cols(mean, mean_ci) %>%
     mutate(outcome = var) %>%
-    select(outcome, everything())
-  
-  if (dummy) {
-    result <-
-      result %>%
-      dplyr::filter(str_detect(rownames(.), "TRUE"))
-  }
+    select(outcome, everything()) %>%
+    dplyr::filter(str_detect(rownames(.), "TRUE"))
   
   rownames(result) <- NULL
   
   result
 }
 
-village_mean_ci <-
-  function(data, dummy = TRUE, outcomes) {
+mean_cis <-
+  function(design, outcomes) {
     map(
       outcomes,
-      ~ mean_ci(data, var = ., dummy)
+      ~ mean_ci(design, var = .x)
     ) %>%
       bind_rows
   }
 
-design <- 
-  svydesign(
-    id = ~ village_id,       # PSU (here: villages)
-    strata = ~ sample_group, # stratification
-    weights = ~ weight,
-    data = data,
-    nest = TRUE
-  )
-
-total_cis <-
-  function(data, var, design) {
+total_ci <-
+  function(design, var) {
     
     formula <- paste("~", var) %>% as.formula()
     
@@ -137,11 +123,22 @@ total_cis <-
       set_names("lb", "ub")
     
     all <- 
-      bind_cols(total, total_ci)
+      bind_cols(total, total_ci) %>%
+      mutate(outcome = var) %>%
+      select(outcome, everything())
     
     rownames(all) <- NULL
   
     return(all)
     
+  }
+
+total_cis <-
+  function(design, outcomes) {
+    map(
+      outcomes,
+      ~ total_ci(design, var = .)
+    ) %>%
+      bind_rows
   }
   

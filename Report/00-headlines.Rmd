@@ -1,4 +1,4 @@
-# Primary outcomes
+# Inputs
 
 ```{r}
 pacman::p_load(
@@ -14,65 +14,17 @@ pacman::p_load(
 )
 ```
 
-## Calculate village weights
-
-```{r}
-villages <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "Villages",
-      "DataSets",
-      "Final",
-      "villages.rds"
-    )
-  ) 
-
-sampled_villages <-
-  villages %>%
-  dplyr::filter(
-    (sample_group == "ILC" & visited == "In sample") |
-    (sample_group != "ILC" & visited == "In sample" & !vil_replaced)
-  )
-
-sample_sizes <-
-  villages %>%
-  mutate(sampled_village = village_id %in% sampled_villages$village_id) %>%
-  group_by(country, sample_group) %>%
-  summarise(
-    n_villages = n_distinct(village_id),
-    visited_villages = sum(visited == "In sample" & !vil_replaced),
-    sampled_villages = sum(sampled_village)
-  )
-
-village_intervention <-
-  sampled_villages %>%
-  crossing(wp_intervention = c("DSW", "ILC")) %>%
-  dplyr::filter(!(wp_intervention == "ILC" & sample_group != "ILC")) 
-```
-
-
 ## People using DSW/ILC water points
+
+### Prepare data
 
 To calculate the number of people using water points with DSW or ILC, we use self-reported data from the household census on what is the household's primary water point. This information is combined with data from the water point census to determine whether these water points are served by DSW or ILC.
 
 We start by restricting the household census data to households using water points with DSW or ILC located inside the sampled villages. We also exclude households using ILC in Uganda because we did not design the survey to be representative of this population.
 
-
 ```{r}
-hh_census <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdCensus",
-      "DataSets",
-      "Final",
-      "hh-census.rds"
-    )
-  ) %>%
-  st_drop_geometry() %>%
+users_data <-
+  hh_census %>%
   dplyr::filter(
     wp_intervention_type != "Non-program",
     wp_invillage,
@@ -83,7 +35,7 @@ hh_census <-
 The relevant variable to calculate the number of people using water points with DSW or ILC is the number of people living in households that report their primary water source has DSW or ILC. Due to a coding mistake, this variable was not collected in the first few days of data collection in Uganda. Therefore, we need to impute values for the households where this information is missing.
 
 ```{r}
-hh_census %>% 
+users_data %>% 
   dplyr::filter(!is.na(wp_intervention_type), is.na(hh_members)) %>%
   tabyl(date, country) %>%
   adorn_totals()
@@ -92,8 +44,8 @@ hh_census %>%
 There are 8 villages in Uganda with no observations for this variable, so we cannot impute it as the village average. Therefore, we impute it are the sample group level. 
 
 ```{r}
-hh_census_imputed <-
-  hh_census %>%
+users_data <-
+  users_data %>%
   group_by(country, sample_group) %>%
   mutate(
     hh_members = if_else(
@@ -104,18 +56,41 @@ hh_census_imputed <-
   )
 ```
 
+To account for the villages where all the water points with ILC were out of order, we add them to the data, but with zero households using water points with ILC.
+
+```{r}
+users_data <-
+  users_data %>%
+  full_join(
+    village_intervention %>% 
+      select(village_id, country, sample_group, wp_intervention)
+  ) %>%
+  mutate(
+    hh_members = replace_na(hh_members, 0)
+  )
+```
+
 Since the unit of reference for our analysis is the village, we calculate the number of people whose primary water source has DSW or ILC by adding the number of household members across all such households in a village.
 
 ```{r}
 users_village <-
-  hh_census_imputed %>%
+  users_data %>%
   group_by(village_id, country, sample_group, wp_intervention) %>%
   summarise(
+    response_rate = unique(response_rate),
     hhs = n(),
     users = sum(hh_members)
   ) %>%
-  full_join(village_intervention) %>%
-  mutate(across(c(hhs, users), ~replace_na(., 0))) %>%
+  mutate(
+    users_increased = users/response_rate
+  )
+```
+
+To scale to the country level, we combine this data with the number of sampled villages and the number of villages in the admin data per group.
+
+```{r}
+users_village <-
+  users_village %>%
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
@@ -131,7 +106,17 @@ users_village %>%
   dplyr::filter(hhs == 1)
 ```
 
-To simplify the calculation of standard errors, we remove it from the estimates. Below we estimate the crude total number of users to see how much of a difference this decision makes:
+To simplify the calculation of standard errors, we remove it from the estimates. 
+
+```{r}
+users_village <-
+  users_village %>%
+  dplyr::filter(hhs > 1)
+```
+
+### Sanity check
+
+Here we just calculate the total number of people without CIs. The point estimate should be the same as the one calculated with a canned function.
 
 ```{r}
 users_village %>%
@@ -140,65 +125,142 @@ users_village %>%
     n = n_distinct(village_id),
     hhs = mean(hhs),
     av_people = mean(users),
+    av_people_non = mean(users_increased),
     sampled_villages = unique(sampled_villages),
     vil_weight = n/sampled_villages,
     group_weight = unique(n_villages)
   ) %>%
-  mutate(total_people = round(av_people * group_weight * vil_weight))
-```
-
-```{r}
-users_village <-
-  users_village %>%
-  dplyr::filter(
-    hhs > 1,
-    !(sample_group == "Expansion" & wp_intervention == "ILC")
+  mutate(
+    total_people = round(av_people * group_weight * vil_weight),
+    total_people_non = round(av_people_non * group_weight * vil_weight)
   )
 ```
 
-To account for the villages where all the water points with ILC were out of order, we add them to the data, but with zero households using water points with ILC.
+### With CIs
 
-We then calculate the total number of users per sample group and the confidence intervals around this number. We use the package `survey` to account for the survey design when calculating standard errors and to weigh each sample group according to the number of villages in this group across the entire country.
+We the total number of users per sample group and the confidence intervals around this number using the package `survey` to adjust standard errors for the survey design.
 
 ```{r}
-group_total <-
+people_per_group <-
   map(
-  users_village %>%
-    group_by(country, sample_group, wp_intervention) %>%
-    group_split(),
-  ~ total_cis(data = ., var = "users")
-) %>% 
+    users_village %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      group_split(),
+    ~ total_cis(
+        outcomes = c("users", "users_increased"),
+        design = svydesign(
+          id = ~ village_id,
+          data = .x, 
+          weights = ~ weight
+        )
+      ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        weight = .x %>% pull(weight) %>% unique
+      )
+  ) %>% 
   bind_rows() %>%
-  bind_cols(
-    users_village %>% 
-      select(country, sample_group, wp_intervention) %>% 
-      arrange(country, sample_group, wp_intervention) %>%
-      unique
-  )
+  select(
+    country, sample_group, wp_intervention, 
+    outcome, 
+    villages, weight, 
+    everything()
+  ) %>%
+  arrange(outcome)
+
+people_per_group
+```
+
+```{r}
+people_per_country <-
+  map(
+    users_village %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_cis(
+        outcomes = c("users", "users_increased"),
+        design = svydesign(
+          id = ~ village_id,
+          data = .x, 
+          weights = ~ weight
+        )
+      ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(
+    country, wp_intervention, 
+    outcome, 
+    villages,
+    everything()
+  ) %>%
+  arrange(outcome)
+
+people_per_country
+```
+
+group_total_increased <-
+  map(
+    users_village %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      group_split(),
+    ~ total_cis(
+        var = "users_increased",
+        design = svydesign(
+          id = ~ village_id,
+          data = ., 
+          weights = ~ weight
+        )
+      )
+  ) %>% 
+    bind_rows() 
 
 country_total <-
   map(
-  users_village %>%
-    group_by(country) %>%
-    group_split(),
-  ~ total_cis(data = ., var = "users")
-) %>% 
-  bind_rows() %>%
-  bind_cols(
-    users_village %>% 
-      select(country) %>% 
-      arrange(country) %>%
-      unique
+    users_village %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_cis(
+        var = "users",
+        design = svydesign(
+            id = ~ village_id,
+            data = ., 
+            weights = ~ weight
+          )
+      )
   ) %>% 
-  mutate(
-    sample_group = "Total",
-    wp_intervention = ""
-  )
+    bind_rows()
+
+country_total_increased <-
+  map(
+    users_village %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_cis(
+        var = "users_increased",
+        design = svydesign(
+            id = ~ village_id,
+            data = ., 
+            weights = ~ weight
+          )
+      )
+  ) %>% 
+    bind_rows()
 ```
 
 ```{r}
 group_total %>%
-  bind_rows(country_total) %>%
+  left_join(group_total_increased)
+  bind_rows(
+    country_total %>% left_join(country_total_increased)
+  ) %>%
   mutate(
     across(
       c(total, lb, ub),
@@ -230,8 +292,6 @@ group_total %>%
   kable_paper("striped", full_width = F)
 ```
 
-
-
 ## Chlorine detection rates
 
 ```{r}
@@ -252,21 +312,29 @@ hh_survey <-
     !(sample_group != "ILC" & wp_intervention == "ILC")
   ) %>%
   group_by(village_id) %>%
-  ungroup
+  ungroup %>%
+  left_join(
+    hh_census %>%
+      group_by(
+        village_id,
+        wp_intervention
+      ) %>%
+      summarise(pop_users = n_distinct(household_id))
+  )
 ```
 
 ### Sanity check
 
 ```{r}
 hh_survey %>%
-  group_by(village_id, sample_group, wp_intervention, country) %>%
+  group_by(village_id, sample_group, wp_intervention_type, country) %>%
   summarise(
     across(
       c("disctcr_02", "discfcr_02"),
       ~ mean(., na.rm = TRUE)
     )
   ) %>%
-  group_by(country, sample_group, wp_intervention) %>%
+  group_by(country, sample_group, wp_intervention_type) %>%
   summarise(
     across(
       c("disctcr_02", "discfcr_02"),
@@ -275,39 +343,101 @@ hh_survey %>%
   )
 ```
 
+```{r}
+hh_survey %>%
+  group_by(country, sample_group, wp_intervention_type) %>%
+  summarise(
+    across(
+      c("disctcr_02", "discfcr_02"),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+### With CIs
 
 ```{r}
 hh_survey_grouped <-
   hh_survey  %>%
-  group_by(village_id, wp_intervention) %>%
-  dplyr::filter(n() > 1) %>%
+  group_by(village_id) %>%
+  mutate(
+    weight_equal = n_distinct(household_id)/20,
+    weight_users = n_distinct(household_id)/pop_users,
+  ) %>%
   group_by(country, sample_group, wp_intervention) %>%
   group_split
-  
+```
+
+```{r}
 treatment <-
   hh_survey_grouped %>%
   map(
     ~ mean_ci(
-      data = .x,
-      var = "disctcr_02",
-      dummy = TRUE,
-      design = svydesign(
-          id = ~ household_id,      # PSU (here: villages)
-          strata = ~ village_id,    # stratification
+        var = "disctcr_02",
+        dummy = TRUE,
+        design = svydesign(
+          id = ~ village_id + household_id,      # PSU (here: villages)
           data = .x,
+          prob = ~ weight_equal,
           nest = TRUE
         )
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
       )
   ) %>%
   bind_rows %>%
-  select(country, sample_group, wp_intervention, everything())
+  select(country, sample_group, wp_intervention, mean, lb, ub)
 
 treatment
+```
+
+```{r}
+hh_survey_grouped %>%
+  map(
+    ~ mean_ci(
+        var = "disctcr_02",
+        dummy = TRUE,
+        design = svydesign(
+          id = ~ village_id + household_id,      # PSU (here: villages)
+          data = .x,
+          prob = ~ weight_users,
+          nest = TRUE
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  select(country, sample_group, wp_intervention, mean, lb, ub)
+```
+
+```{r}
+hh_survey_grouped %>%
+  map(
+    ~ mean_ci(
+        var = "disctcr_02",
+        dummy = TRUE,
+        design = svydesign(
+          id = ~ village_id + household_id,      # PSU (here: villages)
+          data = .x,
+          prob = ~ weight_users,
+          nest = TRUE
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention_type) %>% unique
+      )
+  ) %>%
+  bind_rows %>%
+  select(country, sample_group, wp_intervention, mean, lb, ub)
 ```
 
 
