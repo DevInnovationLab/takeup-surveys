@@ -1053,6 +1053,10 @@ cat("\\end{tabular}\n")
 cat("\\end{table}\n")
 ```
 
+# final table 8
+- should increase the number of users by 1 / response rate
+- 
+
 # estimates tables
 ## main monitoring estimates (8)
 ```{r}
@@ -1322,6 +1326,105 @@ generate_latex_table(
 )
 ```
 
+# diff method
+```{r}
+hh_census_imputed <-
+  hh_census %>%
+  dplyr::filter(!is.na(wp_id)) %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members),
+      hh_members,
+      mean(hh_members, na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country, sample_group, intervention)
+```
+
+```{r}
+# calculate total users per water point by summing hh_members
+users_per_wp <- hh_census_imputed %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarise(
+    total_users = sum(hh_members, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarise(
+    avg_users_per_wp = mean(total_users, na.rm = TRUE),
+    se_users_per_wp = sd(total_users, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  dplyr::filter(intervention %in% c("DSW", "ILC"))
+
+# calculate chlorination from hh_survey
+hh_stats_revised <- hh_survey %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  group_by(country, sample_group, intervention, wp_id) %>%
+  summarize(
+    chl_rate_tcr = mean(disctcr_02, na.rm = TRUE),
+    chl_rate_fcr = mean(discfcr_02, na.rm = TRUE),
+    se_chl_rate_tcr = sqrt(chl_rate_tcr * (1 - chl_rate_tcr) / n()),
+    se_chl_rate_fcr = sqrt(chl_rate_fcr * (1 - chl_rate_fcr) / n()),
+    .groups = "drop"
+  ) %>%
+  group_by(country, sample_group, intervention) %>%
+  summarize(
+    wp_rates_tcr = list(chl_rate_tcr[!is.na(chl_rate_tcr)]),
+    wp_rates_fcr = list(chl_rate_fcr[!is.na(chl_rate_fcr)]),
+    wp_ses_tcr = list(se_chl_rate_tcr[!is.na(se_chl_rate_tcr)]),
+    wp_ses_fcr = list(se_chl_rate_fcr[!is.na(se_chl_rate_fcr)]),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    chl_tmp_tcr = list(compute_se(wp_rates_tcr, wp_ses_tcr, include_within = TRUE)),
+    chl_tmp_fcr = list(compute_se(wp_rates_fcr, wp_ses_fcr, include_within = TRUE))
+  ) %>%
+  unnest_wider(chl_tmp_tcr, names_sep = "_") %>%
+  unnest_wider(chl_tmp_fcr, names_sep = "_") %>%
+  rename(
+    avg_chl_rate_tcr = chl_tmp_tcr_mean_val,
+    se_chl_rate_tcr = chl_tmp_tcr_se,
+    avg_chl_rate_fcr = chl_tmp_fcr_mean_val,
+    se_chl_rate_fcr = chl_tmp_fcr_se
+  ) %>%
+  select(country, sample_group, intervention, 
+         avg_chl_rate_tcr, se_chl_rate_tcr, avg_chl_rate_fcr, se_chl_rate_fcr)
+
+# join the two tables
+table12 <- users_per_wp %>%
+  left_join(hh_stats_revised, by = c("country", "sample_group", "intervention")) %>%
+  left_join(country_totals, by = c("country", "sample_group", "intervention")) %>%
+  mutate(
+    total_users = avg_users_per_wp * country_total,
+    se_total_users = se_users_per_wp * country_total,
+    total_beneficiaries_tcr = total_users * avg_chl_rate_tcr,
+    se_total_beneficiaries_tcr = total_beneficiaries_tcr * sqrt((se_users_per_wp/avg_users_per_wp)^2 + (se_chl_rate_tcr/avg_chl_rate_tcr)^2),
+    total_beneficiaries_fcr = total_users * avg_chl_rate_fcr,
+    se_total_beneficiaries_fcr = total_beneficiaries_fcr * sqrt((se_users_per_wp/avg_users_per_wp)^2 + (se_chl_rate_fcr/avg_chl_rate_fcr)^2)
+  )
+
+table12 %>% select(country, sample_group, intervention, avg_chl_rate_tcr, se_chl_rate_tcr)
+
+# create country estimates table directly
+country_estimates_table12 <- table12 %>%
+  group_by(country) %>%
+  summarise(
+    total_users = sum(total_users, na.rm = TRUE),
+    se_total_users = sqrt(sum(se_total_users^2, na.rm = TRUE)),
+    total_beneficiaries_tcr = sum(total_beneficiaries_tcr, na.rm = TRUE),
+    se_total_beneficiaries_tcr = sqrt(sum(se_total_beneficiaries_tcr^2, na.rm = TRUE)),
+    total_beneficiaries_fcr = sum(total_beneficiaries_fcr, na.rm = TRUE),
+    se_total_beneficiaries_fcr = sqrt(sum(se_total_beneficiaries_fcr^2, na.rm = TRUE)),
+    .groups = "drop"
+  )
+
+country_estimates_table12
+```
+
+>>>>>>> Stashed changes
 
 ## excluding HHs outside village (13)
 exactly like table 8, but subtract pm_users_outside from pm_users
