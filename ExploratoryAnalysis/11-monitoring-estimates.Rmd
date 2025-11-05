@@ -1424,8 +1424,6 @@ country_estimates_table12 <- table12 %>%
 country_estimates_table12
 ```
 
->>>>>>> Stashed changes
-
 ## excluding HHs outside village (13)
 exactly like table 8, but subtract pm_users_outside from pm_users
 ```{r}
