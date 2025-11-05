@@ -25,7 +25,8 @@ packages <-
     "estimatr",
     "geosphere",
     "lmtest",
-    "sandwich"
+    "sandwich",
+    "margins"
   )
 
 pacman::p_load(
@@ -125,6 +126,7 @@ wp_census <-
 
 # add geometry to hh census and wp census
 ```{r}
+# to hh census
 hh_census_geom <- hh_census %>%
   left_join(hh_census_constructed %>% select(geometry, household_id, gpsaccuracy),
             by = "household_id")
@@ -140,6 +142,7 @@ hh_census_geom <- hh_census_geom %>%
     disc_tcr_detected = as.numeric(disctcr > 0.2)
   )
 
+# to wp census
 wp_census_geom <- wp_census %>%
   mutate(wp_id = paste0("WP", wp_id)) %>%
   left_join(wp_census_constructed %>% select(geometry, wp_id), 
@@ -152,12 +155,14 @@ wp_census_geom <- wp_census_geom %>%
 
 # extracting household and water point longitude and latitude from geometry
 ```{r}
+# hh census
 hh_census_geom <- hh_census_geom %>%
   mutate(
     hh_lon = st_coordinates(geometry)[, 1],
     hh_lat = st_coordinates(geometry)[, 2]
   )
 
+# wp census
 wp_census_geom <- wp_census_geom %>%
   mutate(
     point_geom = st_collection_extract(geometry, type = "POINT")
@@ -177,8 +182,7 @@ hh_with_primary <- hh_census_geom %>%
   left_join(
     wp_census_geom %>%
       mutate(wp_id = gsub("^WP", "", wp_id)) %>%  
-      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat), 
-    # wp_gpsaccuracy),
+      select(wp_id, primary_wp_lon = wp_lon, primary_wp_lat = wp_lat),
     by = "wp_id"
   )
 
@@ -189,9 +193,9 @@ hh_with_primary <- hh_with_primary %>%
       cbind(primary_wp_lon, primary_wp_lat)
     ))
 
-# hh_with_primary <- hh_with_primary %>%
-#   dplyr::filter(wp_gpsaccuracy < 10) %>%
-#   dplyr::filter(gpsaccuracy < 10)
+hh_with_primary <- hh_with_primary %>%
+  # dplyr::filter(wp_gpsaccuracy < 10) %>%
+    dplyr::filter(gpsaccuracy < 10)
 ```
 
 # generate dataset with households far from primary wp
@@ -257,15 +261,6 @@ ggplot(hh_filtered, aes(y = dist_to_primary_m)) +
   theme_minimal()
 ```
 
-# export to dta
-```{r}
-# library(haven)
-# library(sf)
-# 
-# hh_without_geom <- st_drop_geometry(hh_with_primary)
-# 
-# write_dta(hh_without_geom, "hh_with_primary.dta")
-```
 
 # summary table
 ```{r}
@@ -273,7 +268,8 @@ hh_filtered <- hh_filtered %>%
   mutate(
     dist_to_primary_km = dist_to_primary_m / 1000,
     dist_to_nearest_ea_km = dist_to_nearest_ea_m / 1000,
-    ea_minus_primary_m = dist_to_nearest_ea_m - dist_to_primary_m
+    ea_minus_primary_m = dist_to_nearest_ea_m - dist_to_primary_m,
+    ea_minus_primary_km = dist_to_nearest_ea_km - dist_to_primary_km
   ) 
 
 table <- hh_filtered %>%
@@ -282,7 +278,7 @@ table <- hh_filtered %>%
   summarize(
     mean_dist_primary = mean(dist_to_primary_m, na.rm = TRUE),
     mean_dist_ea = mean(dist_to_nearest_ea_m, na.rm = TRUE),
-    mean_ea_minus_primary_m = mean(ea_minus_primary_m, na.rm = TRUE),
+    mean_ea_minus_primary_km = mean(ea_minus_primary_km, na.rm = TRUE),
     n = n()
   )
 
@@ -317,9 +313,12 @@ stargazer(model_lm,
 ```
 
 ## logit
+As the Evidence Action water point becomes relatively farther compared to the primary water point (i.e., as the distance differential increases by 1 km), the probability of detecting chlorination in household water decreases by approximately 28 percentage points.
 ```{r}
 # logit model with clustered standard errors
-model_logit <- glm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km, 
+# model_logit <- glm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km + hh_under5yn + wp_secweek + dsw + ilc, 
+# model_logit <- glm(disc_tcr_detected ~ dist_to_nearest_ea_km + dist_to_primary_km, 
+model_logit <- glm(disc_tcr_detected ~ ea_minus_primary_km + hh_under5yn + wp_secweek + dsw + ilc, 
                    data = hh_filtered,
                    family = binomial(link = "logit"))
 
@@ -334,10 +333,13 @@ stargazer(model_logit,
           se = list(clustered_se),
           title = "Logit Regression Results",
           dep.var.labels = "Disc TCR Detected",
-          covariate.labels = c("Distance to Nearest EA (km)", 
-                               "Distance to Primary WP (km)"),
           notes = c("Standard errors clustered at village level in parentheses.",
                     "*** p<0.01, ** p<0.05, * p<0.1"),
           notes.align = "l",
           omit.stat = c("aic", "ll"))
+
+# calculate average marginal effects (AMEs)
+library(margins)
+ames <- margins(model_logit, vcov = vcovCL(model_logit, cluster = hh_filtered$village_id))
+summary(ames)
 ```
