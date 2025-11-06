@@ -140,6 +140,8 @@ users_village %>%
 
 We the total number of users per sample group and the confidence intervals around this number using the package `survey` to adjust standard errors for the survey design.
 
+#### By program and sample group
+
 ```{r}
 people_per_group <-
   map(
@@ -173,6 +175,8 @@ people_per_group <-
 
 people_per_group
 ```
+
+#### By program 
 
 ```{r}
 people_per_country <-
@@ -466,9 +470,9 @@ users_vil_fo <-
 plot_data <-
   list(
     "Main estimate" = people_per_country,
-    "Include households using water points outside of sampled villages" = users_vil_outside,
+    "Including households using water points\noutside of sampled villages" = users_vil_outside,
     "Without correction for non-responses" = users_vil_responseonly,
-    "Ignoring admin data for DSW/ILC classification" = users_vil_fo,
+    "Without corrections to DSW/ILC status\nfrom admin data" = users_vil_fo,
     "Without correction for functionality rates" = users_vil_func
   ) %>%
     map(
@@ -488,17 +492,23 @@ plot_data %>%
       xmin = lb,
       xmax = ub,
       x = total,
-      color = label,
-      label = format(round(total), big.mark = ",")
+      label = format(round(total), big.mark = ","),
+      color = !main
     )
   ) +
-  geom_errorbar(width = .3, size = .7) +
+  geom_errorbar(width = .3) +
   geom_point(size = 2) +
-  geom_text(data = plot_data %>% dplyr::filter(!main), color = "black", size = 2.5, vjust = -1) +
-  geom_errorbar(data = plot_data %>% dplyr::filter(main), width = .3, size = 1) +
-  geom_point(data = plot_data %>% dplyr::filter(main), size = 3) +
-  geom_text(data = plot_data %>% dplyr::filter(main), color = "black", size = 2.5, vjust = -1, fontface = "bold")  +
-  facet_wrap(~ country + wp_intervention, scales = "free_x", ncol = 1) +
+  geom_text(
+    color = "black", 
+    size = 3,
+    vjust = -1
+  ) +
+  facet_grid(
+    country ~ wp_intervention,
+    scales = "free_x"
+  ) +
+  scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
+  scale_color_viridis_d() +
   theme +
   scale_color_viridis_d() +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
@@ -607,7 +617,7 @@ cl_village_noweights_ilc <-
   arrange(desc(outcome))
 ```
 
-#### By sample group
+#### By sample group and program
 
 ```{r}
 cl_village_noweights_samplegroup <-
@@ -636,7 +646,32 @@ cl_village_noweights_samplegroup <-
   arrange(desc(outcome))
 ```
 
-#### Country level
+#### Check program differences
+
+Before we combine observations in different sample groups, we want to make sure that chlorination rates are not different across them
+
+```{r}
+feols(
+  disctcr_02 ~ sample_group,
+  cluster = ~ village_id,
+  data = chlorination_data %>%
+    dplyr::filter(country == "Uganda")
+) %>% 
+  summary
+```
+
+```{r}
+feols(
+  disctcr_02 ~ sample_group,
+  cluster = ~ village_id,
+  data = chlorination_data %>%
+    dplyr::filter(country == "Malawi")
+) %>% 
+  summary
+```
+
+
+#### By program
 
 ```{r}
 cl_village_noweights_country <-
@@ -666,7 +701,7 @@ cl_village_noweights_country <-
 
 cl_village_noweights_country %>%
   write_csv(
-    here("../output/tables/chlorination-vil.csv")
+    here("../output/tables/chlorine-vil.csv")
   )
 ```
 
@@ -852,9 +887,11 @@ chlorination_all <-
   mutate(
     wp_intervention = case_when(
       !is.na(wp_intervention) ~ wp_intervention,
-      sample_group == "DSW" ~ "DSW",
-      sample_group == "ILC" ~ "ILC"
-    )) %>%
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC",
+      sample_group != "ILC" ~ "DSW"
+    )
+  ) %>%
   dplyr::filter(
     !(sample_group != "ILC" & wp_intervention == "ILC")
   ) %>%
@@ -910,12 +947,12 @@ cl_village_all <-
 ```{r warning = FALSE}
 plot_data <-
   list(
-    "Weigh each household equally" = cl_village_noweights_country,
-    "Weigh each village equally" = cl_village_vilweights,
-    "Weigh villages by number of users" = cl_village_userweights,
-    "Ignoring admin data for DSW/ILC classification" = cl_village_fo,
-    "Self-reported presence of DSW/ILC" = cl_village_self,
-    "All households surveyed" = cl_village_all
+    "Weighing each tested household equally" = cl_village_noweights_country,
+    "Weighing each village equally" = cl_village_vilweights,
+    "Weighing villages by number of users" = cl_village_userweights,
+    "Without corrections to DSW/ILC status\nfrom admin data" = cl_village_fo,
+    "Using self-report of DSW/ILC status" = cl_village_self,
+    "Including household with unconfirmed\nDSW/ILC status" = cl_village_all
   ) %>%
     map(
       ~ .x %>%
@@ -928,7 +965,7 @@ plot_data <-
         c(mean, ub, lb),
         ~ . * 100
       ),
-      main = label == "Weigh each household equally"
+      main = (label == "Weighing each tested household equally")
   ) %>%
   dplyr::filter(wp_intervention != "Non-program")
   
@@ -939,17 +976,23 @@ plot_data %>%
       xmin = lb,
       xmax = ub,
       x = mean,
-      color = label,
-      label = round(mean, 1) %>% paste0("%")
+      label = round(mean, 1) %>% paste0("%"),
+      color = !main
     )
   ) +
-  geom_errorbar(width = .3, size = .7) +
+  geom_errorbar(width = .3) +
   geom_point(size = 2) +
-  geom_text(data = plot_data %>% dplyr::filter(!main), color = "black", size = 2.5, vjust = -1) +
-  geom_errorbar(data = plot_data %>% dplyr::filter(main), width = .3, size = 1) +
-  geom_point(data = plot_data %>% dplyr::filter(main), size = 3) +
-  geom_text(data = plot_data %>% dplyr::filter(main), color = "black", size = 2.5, vjust = -1, fontface = "bold")  +
-  facet_grid(country ~ wp_intervention) +
+  geom_text(
+    color = "black", 
+    size = 3,
+    vjust = -1
+  ) +
+  facet_grid(
+    country ~ wp_intervention,
+    scales = "free_x"
+  ) +
+  scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
+  scale_color_viridis_d() +
   theme +
   scale_color_viridis_d() +
   theme(legend.position = "none") +

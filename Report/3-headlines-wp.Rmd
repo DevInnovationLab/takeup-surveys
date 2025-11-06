@@ -224,7 +224,7 @@ users_wp %>%
 ```
 
 
-### Comparisons
+### Sensitivty cehcks
 
 #### Disregarding non-responses
 
@@ -327,8 +327,8 @@ plot_data <-
   list(
     "Main estimate" = users_wp_country,
     "Without correction for non-responses" = users_wp_responseonly,
-    "Ignoring admin data for DSW/ILC classification" = users_wp_fo,
-    "Without correction for functionality rates" = users_wp_nofunc
+    "Without corrections to DSW/ILC status\nfrom admin data" = users_wp_fo,
+    "Without correction for functionality\nrates" = users_wp_nofunc
   ) %>%
     map(
       ~ .x %>%
@@ -346,20 +346,24 @@ plot_data %>%
       xmin = lb,
       xmax = ub,
       x = total,
-      color = label,
-      label = format(round(total), big.mark = ",")
+      label = format(round(total), big.mark = ","),
+      color = !main
     )
   ) +
-  geom_errorbar(width = .3, size = .7) +
+  geom_errorbar(width = .3) +
   geom_point(size = 2) +
-  geom_text(data = plot_data %>% dplyr::filter(!main), color = "black", size = 3, vjust = -1) +
-  geom_errorbar(data = plot_data %>% dplyr::filter(main), width = .3, size = 1) +
-  geom_point(data = plot_data %>% dplyr::filter(main), size = 3) +
-  geom_text(data = plot_data %>% dplyr::filter(main), color = "black", size = 3, vjust = -1, fontface = "bold")  +
-  facet_wrap(~ country + wp_intervention, scales = "free_x", ncol = 1) +
-  theme +
-  scale_color_viridis_d() +
+  geom_text(
+    color = "black", 
+    size = 3,
+    vjust = -1
+  ) +
+  facet_grid(
+    country ~ wp_intervention,
+    scales = "free_x"
+  ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
+  scale_color_viridis_d() +
+  theme +
   theme(legend.position = "none") +
   labs(
     y = NULL,
@@ -376,9 +380,6 @@ hh_survey_wp <-
   hh_survey %>%
   left_join(wp_sample_sizes)
 ```
-
-#### Main treatment variable
-
 ```{r}
 chlorination_data <-
   hh_survey_wp %>%
@@ -416,31 +417,6 @@ chlorination_data <-
     weight_wp = 1/n_cl
   )
 ```
-#### Use self-reported access to water points instead of verified access
-
-```{r}
-chlorination_self <-
-  hh_survey_wp %>%
-  dplyr::filter(
-    !is.na(wp_id),
-    !is.na(intervention_selfreport),
-    !(sample_group != "ILC" & intervention_selfreport == "ILC")
-  )
-```
-
-#### Use enumerator report of DSW/ILC
-
-```{r}
-chlorination_fo <-
-  hh_survey_wp %>%
-  dplyr::filter(
-    !is.na(wp_id),
-    !is.na(intervention_fo),
-    !(sample_group != "ILC" & intervention_fo == "ILC")
-  )
-```
-
-
 ### Sanity check
 
 ```{r}
@@ -466,8 +442,73 @@ chlorination_data %>%
 
 ### Final numbers
 
+#### By program and sample group
+
 ```{r}
-cl_wp <-
+cl_wp_sample <-
+  chlorination_data %>%
+  group_by(
+    country, wp_intervention, sample_group
+  ) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+      outcomes = c("disctcr_02", "discfcr_02"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        data = .x,
+        nest = TRUE
+      ) 
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+        households = .x %>% pull(household_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, sample_group, outcome, everything()) %>%
+  arrange(desc(outcome))
+``` 
+
+#### Separate ILC
+
+```{r}
+cl_wp_ilc <-
+  chlorination_data %>%
+  dplyr::filter(sample_group == "ILC") %>%
+  group_by(
+    country, wp_intervention_type
+  ) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+      outcomes = c("disctcr_02", "discfcr_02"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        data = .x,
+        nest = TRUE
+      ) 
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention_type) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+        households = .x %>% pull(household_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, sample_group, outcome, everything()) %>%
+  arrange(desc(outcome))
+``` 
+
+#### By program
+
+```{r}
+cl_wp_noweights <-
   chlorination_data %>%
   group_by(
     country, wp_intervention
@@ -492,8 +533,12 @@ cl_wp <-
   bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
+``` 
 
-cl_wp %>%
+```{r}
+cl_wp_noweights %>%
+  bind_rows(cl_wp_ilc) %>%
+  bind_rows(cl_wp_sample) %>%
   write_csv(
     here("../output/tables/chlorine-wp.csv")
   )
@@ -501,7 +546,7 @@ cl_wp %>%
 
 ### Sensitivity checks
 
-#### Sanity check
+#### Mean of means (no CI)
 
 ```{r}
 chlorination_data %>%
@@ -524,48 +569,13 @@ chlorination_data %>%
   )
 ```
 
-#### No weights
-
-Each observation has weight 1
-
-```{r}
-cl_wp_noweights <-
-  chlorination_data %>%
-  group_by(
-    country, sample_group, wp_intervention
-  ) %>%
-  group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        data = .x,
-        nest = TRUE
-      ) 
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-        households = .x %>% pull(household_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(desc(outcome))
-
-cl_wp_noweights
-```
-
 #### Weighing by number of users
 
 ```{r}
 cl_wp_weight_users <-
   chlorination_data %>%
   group_by(
-    country, sample_group, wp_intervention
+    country, wp_intervention
   ) %>%
   group_split %>%
   map(
@@ -580,14 +590,13 @@ cl_wp_weight_users <-
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         wps = .x %>% pull(wp_id) %>% n_distinct,
         households = .x %>% pull(household_id) %>% n_distinct,
       )
   ) %>% 
   bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 
 cl_wp_weight_users
@@ -600,7 +609,7 @@ cl_wp_weight_users
 cl_wp_weight_wp <-
   chlorination_data %>%
   group_by(
-    country, sample_group, wp_intervention
+    country, wp_intervention
   ) %>%
   group_split %>%
   map(
@@ -615,26 +624,33 @@ cl_wp_weight_wp <-
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         wps = .x %>% pull(wp_id) %>% n_distinct,
         households = .x %>% pull(household_id) %>% n_distinct,
       )
   ) %>% 
   bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
-
-cl_wp_weight_wp
 ```
 
 #### Using self-reports
 
 ```{r}
+chlorination_self <-
+  hh_survey_wp %>%
+  dplyr::filter(
+    !is.na(wp_id),
+    !is.na(intervention_selfreport),
+    !(sample_group != "ILC" & intervention_selfreport == "ILC")
+  )
+```
+
+```{r}
 cl_wp_self <-
   chlorination_self %>%
   group_by(
-    country, sample_group, intervention_selfreport
+    country, intervention_selfreport
   ) %>%
   group_split %>%
   map(
@@ -648,26 +664,34 @@ cl_wp_self <-
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(intervention_selfreport) %>% unique,
         wps = .x %>% pull(wp_id) %>% n_distinct,
         households = .x %>% pull(household_id) %>% n_distinct,
       )
   ) %>% 
   bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
-
-cl_wp_self
 ```
 
-#### Using enumerator
+#### Using raw intervention variable
+
+```{r}
+chlorination_fo <-
+  hh_survey_wp %>%
+  dplyr::filter(
+    !is.na(wp_id),
+    !is.na(intervention_fo),
+    !(sample_group != "ILC" & intervention_fo == "ILC")
+  )
+```
 
 ```{r}
 cl_wp_fo <-
   chlorination_fo %>%
+  mutate(wp_intervention = intervention_fo) %>%
   group_by(
-    country, sample_group, intervention_fo
+    country, wp_intervention
   ) %>%
   group_split %>%
   map(
@@ -681,32 +705,29 @@ cl_wp_fo <-
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(intervention_fo) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         wps = .x %>% pull(wp_id) %>% n_distinct,
         households = .x %>% pull(household_id) %>% n_distinct,
       )
   ) %>% 
   bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
-
-cl_wp_self
 ```
 
-#### Comparison
+#### Plot
 
 ```{r warning = FALSE}
 plot_data <-
   list(
-    "Weigh each household equally" = cl_wp_noweights,
-    "Weigh each water point equally" = cl_wp_weight_wp,
-    "Weigh water points by number of users" = cl_wp_weight_users
+    "Weighing each tested household equally" = cl_wp_noweights,
+    "Weighing each water point equally" = cl_wp_weight_wp,
+    "Weighing water points by number of users" = cl_wp_weight_users
   ) %>%
     map(
       ~ .x %>%
         dplyr::filter(outcome == "disctcr_02") %>%
-        select(country, sample_group, wp_intervention, outcome, mean, ub, lb)
+        select(country, wp_intervention, outcome, mean, ub, lb)
     ) %>%
     bind_rows(.id = "label") %>%
     mutate(
@@ -714,7 +735,7 @@ plot_data <-
         c(mean, ub, lb),
         ~ . * 100
       ),
-      main = label == "Weigh each household equally"
+      main = label == "Weighing each tested household equally"
   )
   
 plot_data %>%
@@ -724,17 +745,23 @@ plot_data %>%
       xmin = lb,
       xmax = ub,
       x = mean,
-      color = label,
-      label = round(mean, 1) %>% paste0("%")
+      label = round(mean, 1) %>% paste0("%"),
+      color = !main
     )
   ) +
-  geom_errorbar(width = .3, size = .7) +
+  geom_errorbar(width = .3) +
   geom_point(size = 2) +
-  geom_text(data = plot_data %>% dplyr::filter(!main), color = "black", size = 2.5, vjust = -1) +
-  geom_errorbar(data = plot_data %>% dplyr::filter(main), width = .3, size = 1) +
-  geom_point(data = plot_data %>% dplyr::filter(main), size = 3) +
-  geom_text(data = plot_data %>% dplyr::filter(main), color = "black", size = 2.5, vjust = -1, fontface = "bold")  +
-  facet_grid(country ~ sample_group + wp_intervention) +
+  geom_text(
+    color = "black", 
+    size = 3,
+    vjust = -1
+  ) +
+  facet_grid(
+    country ~ wp_intervention,
+    scales = "free_x"
+  ) +
+  scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
+  scale_color_viridis_d() +
   theme +
   scale_color_viridis_d() +
   theme(legend.position = "none") +
@@ -743,126 +770,5 @@ plot_data %>%
     x = "Percent of tested households where color wheel\nTCR reading was at least 0.2 ppm"
   )
   
-```
-
-
-### Separating ILC WP and ILC WCP
-
-#### Sanity check
-
-```{r}
-chlorination_data %>%
-  group_by(wp_id, wp_intervention_type, sample_group, country) %>%
-  summarise(
-    across(
-      c("disctcr_02", "discfcr_02"),
-      ~ mean(., na.rm = TRUE)
-    ),
-    hhs = n_distinct(household_id)
-  ) %>%
-  group_by(country, sample_group, wp_intervention_type) %>%
-  summarise(
-    across(
-      c("disctcr_02", "discfcr_02"),
-      ~ mean(., na.rm = TRUE)
-    ),
-    hhs = sum(hhs),
-    wp_id = n_distinct(wp_id)
-  )
-```
-
-#### No weights
-
-Each observation has weight 1
-
-```{r}
-chlorination_data %>%
-  group_by(
-    country, sample_group, wp_intervention_type
-  ) %>%
-  group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        data = .x,
-        nest = TRUE
-      ) 
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention_type) %>% unique,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-        households = .x %>% pull(household_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(desc(outcome))
-```
-
-#### Weighing by number of users
-
-```{r}
-chlorination_data %>%
-  group_by(
-    country, sample_group, wp_intervention_type
-  ) %>%
-  group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        data = .x,
-        weight = ~ weight_obs,
-        nest = TRUE
-      ) 
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention_type) %>% unique,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-        households = .x %>% pull(household_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(desc(outcome))
-```
-
-
-#### Weighing water points equally
-
-```{r}
-chlorination_data %>%
-  group_by(
-    country, sample_group, wp_intervention_type
-  ) %>%
-  group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        data = .x,
-        weight = ~ weight_wp,
-        nest = TRUE
-      ) 
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention_type) %>% unique,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-        households = .x %>% pull(household_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(desc(outcome))
 ```
 
