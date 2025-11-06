@@ -658,13 +658,12 @@ hh_sample <- hh_survey %>%
 hh_sample
 ```
 
-## DSW separated
+## table by sample group and intervention 
 ```{r}
 generate_table <- function(users_with_ci, chlorination_tcr_ci, chlorination_fcr_ci,
                            country_totals_with_ci, wp_sample, hh_sample,
                            caption = "User estimates",
-                           label = "beneficiaries",
-                           output = "both") {
+                           label = "beneficiaries") {
   
   # Prepare users data - rename columns to match expected format
   users_data <- users_with_ci %>%
@@ -737,248 +736,13 @@ generate_table <- function(users_with_ci, chlorination_tcr_ci, chlorination_fcr_
         sample_group == "DSW in ILC vill." ~ 3,
         sample_group == "ILC" ~ 4,
         TRUE ~ 5
+      ),
+      display_label = case_when(
+        sample_group == "DSW in ILC vill." ~ "DSW in ILC",
+        TRUE ~ sample_group
       )
     ) %>%
     arrange(country, order_var)
-  
-  # Get country totals
-  malawi_total <- country_totals_with_ci %>%
-    dplyr::filter(country == "Malawi") %>%
-    rename(
-      total_indiv_access_popn = total_users,
-      ci_lower_total_access = total_users_lb,
-      ci_upper_total_access = total_users_ub
-    )
-  
-  uganda_total <- country_totals_with_ci %>%
-    dplyr::filter(country == "Uganda") %>%
-    rename(
-      total_indiv_access_popn = total_users,
-      ci_lower_total_access = total_users_lb,
-      ci_upper_total_access = total_users_ub
-    )
-  
-  # Create formatted table for display
-  display_table <- table_data %>%
-    mutate(
-      `Sample Group` = sample_group,
-      `Avg # HH (SE)` = sprintf("%.2f (%.2f)", avg_hh_count, se_hh_count),
-      `Avg # Members (SE)` = sprintf("%.2f (%.2f)", avg_hh_size, se_hh_size),
-      `# people per WP (SE)` = sprintf("%.2f (%.2f)", indiv_access_sample, se_indiv_access_sample),
-      `Country #WP` = format(country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
-      `People using DSW/ILC (95% CI)` = sprintf("%s (%s, %s)",
-                                                 format(round(indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                                                 format(round(ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                                                 format(round(ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE)),
-      `TCR>0.2ppm (95% CI)` = sprintf("%.1f%% (%.1f%%, %.1f%%)", avg_chl_rate_tcr * 100, ci_lower_chl_rate_tcr * 100, ci_upper_chl_rate_tcr * 100),
-      `FCR>0.2ppm (95% CI)` = sprintf("%.1f%% (%.1f%%, %.1f%%)", avg_chl_rate_fcr * 100, ci_lower_chl_rate_fcr * 100, ci_upper_chl_rate_fcr * 100),
-      `# WP` = ifelse(is.na(n_wp), "-", n_wp),
-      `# HH` = ifelse(is.na(n_hh), "-", n_hh)
-    ) %>%
-    select(`Sample Group`, `Avg # HH (SE)`, `Avg # Members (SE)`, `# people per WP (SE)`,
-           `Country #WP`, `People using DSW/ILC (95% CI)`, `TCR>0.2ppm (95% CI)`, 
-           `FCR>0.2ppm (95% CI)`, `# WP`, `# HH`, country)
-  
-  if(output %in% c("kable", "both")) {
-    # Generate kable table
-    kable_output <- display_table %>%
-      knitr::kable(
-        format = "html",
-        caption = caption,
-        escape = FALSE
-      ) %>%
-      kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
-    
-    if(output == "kable") {
-      return(kable_output)
-    }
-  }
-  
-  if(output %in% c("latex", "both")) {
-    # Generate LaTeX table
-    cat("\\begin{sidewaystable}\\centering\n")
-    cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
-    cat(sprintf("\\caption{%s\\label{%s}}\n", caption, label))
-    cat("\\begin{tabular}{l*{9}{c}}\n")
-    cat("\\hline \\hline\n")
-    cat("& (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9)\\\\\n")
-    cat("& \\multicolumn{3}{c}{\\textbf{Sample}} & \\multicolumn{4}{c}{\\textbf{Country-level estimates}} & & \\\\\n")
-    cat("\\cmidrule(lr){2-4} \\cmidrule(lr){5-8}\n")
-    cat(" & \\shortstack{Avg \\# \\\\of HH \\\\ (SE)} &\\shortstack{Avg \\# of \\\\ Members\\\\ (SE)} & \\shortstack{\\# people \\\\ per WP\\\\ (SE)} & \\shortstack{Country \\\\\\#WP} & \\shortstack{People using\\\\ DSW/ILC \\\\ (95\\% CI)} & \\shortstack{TCR>0.2ppm \\\\ (95\\% CI)} & \\shortstack{FCR>0.2ppm \\\\ (95\\% CI)} & \\shortstack{\\# WP} & \\shortstack{\\# HH}\\\\\n")
-    cat("\\hline\n")
-    cat("\\textbf{Malawi} & & & & & & & & & \\\\\n")
-    cat("\\hline\n")
-    
-    # Malawi rows
-    malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
-    for(i in 1:nrow(malawi_data)) {
-      row <- malawi_data[i,]
-      cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & %s & %s\\\\\n",
-                  row$sample_group,
-                  row$avg_hh_count, row$se_hh_count,
-                  row$avg_hh_size, row$se_hh_size,
-                  row$indiv_access_sample, row$se_indiv_access_sample,
-                  format(row$country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
-                  format(round(row$indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                  format(round(row$ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                  format(round(row$ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                  row$avg_chl_rate_tcr * 100,
-                  row$ci_lower_chl_rate_tcr * 100,
-                  row$ci_upper_chl_rate_tcr * 100,
-                  row$avg_chl_rate_fcr * 100,
-                  row$ci_lower_chl_rate_fcr * 100,
-                  row$ci_upper_chl_rate_fcr * 100,
-                  ifelse(is.na(row$n_wp), "-", row$n_wp),
-                  ifelse(is.na(row$n_hh), "-", row$n_hh)))
-    }
-    
-    # Malawi total
-    cat(sprintf("\\textbf{Total} & - & - & - & - & \\shortstack{%s \\\\ (%s, %s)} & - & - & - & -\\\\\n",
-                format(round(malawi_total$total_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(malawi_total$ci_lower_total_access), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(malawi_total$ci_upper_total_access), big.mark = ",", scientific = FALSE, trim = TRUE)))
-    
-    cat("\\hline\n")
-    cat("\\textbf{Uganda} & & & & & & & & & \\\\\n")
-    cat("\\hline\n")
-    
-    # Uganda rows
-    uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
-    for(i in 1:nrow(uganda_data)) {
-      row <- uganda_data[i,]
-      cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & %s & %s\\\\\n",
-                  row$sample_group,
-                  row$avg_hh_count, row$se_hh_count,
-                  row$avg_hh_size, row$se_hh_size,
-                  row$indiv_access_sample, row$se_indiv_access_sample,
-                  format(row$country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
-                  format(round(row$indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                  format(round(row$ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                  format(round(row$ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                  row$avg_chl_rate_tcr * 100,
-                  row$ci_lower_chl_rate_tcr * 100,
-                  row$ci_upper_chl_rate_tcr * 100,
-                  row$avg_chl_rate_fcr * 100,
-                  row$ci_lower_chl_rate_fcr * 100,
-                  row$ci_upper_chl_rate_fcr * 100,
-                  ifelse(is.na(row$n_wp), "-", row$n_wp),
-                  ifelse(is.na(row$n_hh), "-", row$n_hh)))
-    }
-    
-    # Uganda total
-    cat(sprintf("\\textbf{Total} & - & - & - & - & \\shortstack{%s \\\\ (%s, %s)} & - & - & - & -\\\\\n",
-                format(round(uganda_total$total_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(uganda_total$ci_lower_total_access), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(uganda_total$ci_upper_total_access), big.mark = ",", scientific = FALSE, trim = TRUE)))
-    
-    cat("\\hline\\hline\n")
-    cat("\\multicolumn{9}{p{\\linewidth}}{\\footnotesize Notes:}\\\\\n")
-    cat("\\end{tabular}\n")
-    cat("\\end{sidewaystable}\n")
-  }
-}
-
-kable_tbl <- generate_table(
-  users_with_ci = users_with_ci,
-  chlorination_tcr_ci = chlorination_tcr_ci,
-  chlorination_fcr_ci = chlorination_fcr_ci,
-  country_totals_with_ci = country_totals_with_ci,
-  wp_sample = wp_sample,
-  hh_sample = hh_sample,
-  caption = "User estimates with confidence intervals",
-  label = "beneficiaries_ci",
-  output = "both"
-)
-
-kable_tbl
-```
-
-```{r}
-generate_latex_table <- function(users_with_ci, chlorination_tcr_ci, chlorination_fcr_ci,
-                                  country_totals_with_ci, wp_sample, hh_sample,
-                                  caption = "User estimates",
-                                  label = "beneficiaries") {
-  
-  # Prepare users data - rename columns to match expected format
-  users_data <- users_with_ci %>%
-    rename(
-      country_total = pop_points,
-      indiv_access_sample = per_wp_users,
-      se_indiv_access_sample = se_per_wp_users,
-      indiv_access_popn = popn_users,
-      ci_lower_indiv_access_popn = popn_users_lb,
-      ci_upper_indiv_access_popn = popn_users_ub
-    ) %>%
-    select(country, sample_group, intervention, 
-           avg_hh_count = hh_count, se_hh_count,
-           avg_hh_size = hh_size, se_hh_size,
-           indiv_access_sample, se_indiv_access_sample,
-           country_total, indiv_access_popn,
-           ci_lower_indiv_access_popn, ci_upper_indiv_access_popn)
-  
-  # Prepare sample sizes from user-provided tables
-  wp_counts <- wp_sample %>%
-    mutate(
-      sample_group = case_when(
-        sample_group == "ILC" & intervention == "DSW" ~ "DSW in ILC vill.",
-        TRUE ~ sample_group
-      )
-    )
-  
-  hh_counts <- hh_sample %>%
-    mutate(
-      sample_group = case_when(
-        sample_group == "ILC" & intervention == "DSW" ~ "DSW in ILC vill.",
-        TRUE ~ sample_group
-      )
-    )
-  
-  # Prepare chlorination data
-  chlorination_data <- chlorination_tcr_ci %>%
-    rename(
-      avg_chl_rate_tcr = mean,
-      ci_lower_chl_rate_tcr = lb,
-      ci_upper_chl_rate_tcr = ub
-    ) %>%
-    select(country, sample_group, intervention, 
-           avg_chl_rate_tcr, ci_lower_chl_rate_tcr, ci_upper_chl_rate_tcr) %>%
-    left_join(
-      chlorination_fcr_ci %>%
-        rename(
-          avg_chl_rate_fcr = mean,
-          ci_lower_chl_rate_fcr = lb,
-          ci_upper_chl_rate_fcr = ub
-        ) %>%
-        select(country, sample_group, intervention,
-               avg_chl_rate_fcr, ci_lower_chl_rate_fcr, ci_upper_chl_rate_fcr),
-      by = c("country", "sample_group", "intervention")
-    )
-  
-  # Combine all data
-  table_data <- users_data %>%
-    left_join(chlorination_data, 
-              by = c("country", "sample_group", "intervention")) %>%
-    left_join(wp_counts,
-              by = c("country", "sample_group", "intervention")) %>%
-    left_join(hh_counts,
-              by = c("country", "sample_group", "intervention")) %>%
-    mutate(
-      order_var = case_when(
-        sample_group == "Footprint" ~ 1,
-        sample_group == "Expansion" ~ 2,
-        sample_group == "DSW in ILC vill." ~ 3,
-        sample_group == "ILC" ~ 4,
-        TRUE ~ 5
-      )
-    ) %>%
-    arrange(country, order_var)
-  
-  # Separate by country
-  malawi_data <- table_data %>%
-    dplyr::filter(country == "Malawi")
-  
-  uganda_data <- table_data %>%
-    dplyr::filter(country == "Uganda")
   
   # Get country totals
   malawi_total <- country_totals_with_ci %>%
@@ -998,7 +762,7 @@ generate_latex_table <- function(users_with_ci, chlorination_tcr_ci, chlorinatio
     )
   
   # Start generating LaTeX
-  cat("\\begin{table}[htbp]\\centering\n")
+  cat("\\begin{sidewaystable}\\centering\n")
   cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
   cat(sprintf("\\caption{%s\\label{%s}}\n", caption, label))
   cat("\\begin{tabular}{l*{9}{c}}\n")
@@ -1012,10 +776,11 @@ generate_latex_table <- function(users_with_ci, chlorination_tcr_ci, chlorinatio
   cat("\\hline\n")
   
   # Malawi rows
+  malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
   for(i in 1:nrow(malawi_data)) {
     row <- malawi_data[i,]
     cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & %s & %s\\\\\n",
-                row$sample_group,
+                row$display_label,
                 row$avg_hh_count, row$se_hh_count,
                 row$avg_hh_size, row$se_hh_size,
                 row$indiv_access_sample, row$se_indiv_access_sample,
@@ -1044,10 +809,11 @@ generate_latex_table <- function(users_with_ci, chlorination_tcr_ci, chlorinatio
   cat("\\hline\n")
   
   # Uganda rows
+  uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
   for(i in 1:nrow(uganda_data)) {
     row <- uganda_data[i,]
     cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & %s & %s\\\\\n",
-                row$sample_group,
+                row$display_label,
                 row$avg_hh_count, row$se_hh_count,
                 row$avg_hh_size, row$se_hh_size,
                 row$indiv_access_sample, row$se_indiv_access_sample,
@@ -1074,11 +840,11 @@ generate_latex_table <- function(users_with_ci, chlorination_tcr_ci, chlorinatio
   cat("\\hline\\hline\n")
   cat("\\multicolumn{9}{p{\\linewidth}}{\\footnotesize Notes:}\\\\\n")
   cat("\\end{tabular}\n")
-  cat("\\end{table}\n")
+  cat("\\end{sidewaystable}\n")
 }
 
 # Usage:
-generate_latex_table(
+generate_table(
   users_with_ci = users_with_ci,
   chlorination_tcr_ci = chlorination_tcr_ci,
   chlorination_fcr_ci = chlorination_fcr_ci,
@@ -1090,174 +856,6 @@ generate_latex_table(
 )
 ```
 
-```{r}
-generate_latex_table <- function(users_with_ci, chlorination_tcr_ci, chlorination_fcr_ci,
-                                  country_totals_with_ci,
-                                  caption = "User estimates",
-                                  label = "beneficiaries") {
-  
-  # Prepare users data - rename columns to match expected format
-  users_data <- users_with_ci %>%
-    rename(
-      country_total = pop_points,
-      indiv_access_sample = per_wp_users,
-      se_indiv_access_sample = se_per_wp_users,
-      indiv_access_popn = popn_users,
-      ci_lower_indiv_access_popn = popn_users_lb,
-      ci_upper_indiv_access_popn = popn_users_ub
-    ) %>%
-    select(country, sample_group, intervention, 
-           avg_hh_count = hh_count, se_hh_count,
-           avg_hh_size = hh_size, se_hh_size,
-           indiv_access_sample, se_indiv_access_sample,
-           country_total, indiv_access_popn,
-           ci_lower_indiv_access_popn, ci_upper_indiv_access_popn)
-  
-  # Prepare chlorination data
-  chlorination_data <- chlorination_tcr_ci %>%
-    rename(
-      avg_chl_rate_tcr = mean,
-      ci_lower_chl_rate_tcr = lb,
-      ci_upper_chl_rate_tcr = ub
-    ) %>%
-    select(country, sample_group, intervention, 
-           avg_chl_rate_tcr, ci_lower_chl_rate_tcr, ci_upper_chl_rate_tcr) %>%
-    left_join(
-      chlorination_fcr_ci %>%
-        rename(
-          avg_chl_rate_fcr = mean,
-          ci_lower_chl_rate_fcr = lb,
-          ci_upper_chl_rate_fcr = ub
-        ) %>%
-        select(country, sample_group, intervention,
-               avg_chl_rate_fcr, ci_lower_chl_rate_fcr, ci_upper_chl_rate_fcr),
-      by = c("country", "sample_group", "intervention")
-    )
-  
-  # Combine all data
-  table_data <- users_data %>%
-    left_join(chlorination_data, 
-              by = c("country", "sample_group", "intervention")) %>%
-    mutate(
-      order_var = case_when(
-        sample_group == "Footprint" ~ 1,
-        sample_group == "Expansion" ~ 2,
-        sample_group == "ILC" ~ 3,
-        TRUE ~ 5
-      )
-    ) %>%
-    arrange(country, order_var)
-  
-  # Separate by country
-  malawi_data <- table_data %>%
-    dplyr::filter(country == "Malawi")
-  
-  uganda_data <- table_data %>%
-    dplyr::filter(country == "Uganda")
-  
-  # Get country totals
-  malawi_total <- country_totals_with_ci %>%
-    dplyr::filter(country == "Malawi") %>%
-    rename(
-      total_indiv_access_popn = total_users,
-      ci_lower_total_access = total_users_lb,
-      ci_upper_total_access = total_users_ub
-    )
-  
-  uganda_total <- country_totals_with_ci %>%
-    dplyr::filter(country == "Uganda") %>%
-    rename(
-      total_indiv_access_popn = total_users,
-      ci_lower_total_access = total_users_lb,
-      ci_upper_total_access = total_users_ub
-    )
-  
-  # Start generating LaTeX
-  cat("\\begin{table}[htbp]\\centering\n")
-  cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
-  cat(sprintf("\\caption{%s\\label{%s}}\n", caption, label))
-  cat("\\begin{tabular}{l*{7}{c}}\n")
-  cat("\\hline \\hline\n")
-  cat("& (1) & (2) & (3) & (4) & (5) & (6) & (7)\\\\\n")
-  cat("& \\multicolumn{3}{c}{\\textbf{Sample}} & \\multicolumn{2}{c}{\\textbf{Country-level estimates}} & & \\\\\n")
-  cat("\\cmidrule(lr){2-4} \\cmidrule(lr){5-6}\n")
-  cat(" & \\shortstack{Avg \\# \\\\of HH \\\\ (SE)} &\\shortstack{Avg \\# of \\\\ Members\\\\ (SE)} & \\shortstack{\\# people \\\\ per WP\\\\ (SE)} & \\shortstack{Country \\\\\\#WP} & \\shortstack{People using\\\\ DSW/ILC \\\\ (95\\% CI)} & \\shortstack{TCR>0.2ppm \\\\ (95\\% CI)} & \\shortstack{FCR>0.2ppm \\\\ (95\\% CI)}\\\\\n")
-  cat("\\hline\n")
-  cat("\\textbf{Malawi} & & & & & & & \\\\\n")
-  cat("\\hline\n")
-  
-  # Malawi rows
-  for(i in 1:nrow(malawi_data)) {
-    row <- malawi_data[i,]
-    cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)}\\\\\n",
-                row$sample_group,
-                row$avg_hh_count, row$se_hh_count,
-                row$avg_hh_size, row$se_hh_size,
-                row$indiv_access_sample, row$se_indiv_access_sample,
-                format(row$country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(row$indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(row$ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(row$ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                row$avg_chl_rate_tcr * 100,
-                row$ci_lower_chl_rate_tcr * 100,
-                row$ci_upper_chl_rate_tcr * 100,
-                row$avg_chl_rate_fcr * 100,
-                row$ci_lower_chl_rate_fcr * 100,
-                row$ci_upper_chl_rate_fcr * 100))
-  }
-  
-  # Malawi total
-  cat(sprintf("\\textbf{Total} & - & - & - & - & \\shortstack{%s \\\\ (%s, %s)} & - & -\\\\\n",
-              format(round(malawi_total$total_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-              format(round(malawi_total$ci_lower_total_access), big.mark = ",", scientific = FALSE, trim = TRUE),
-              format(round(malawi_total$ci_upper_total_access), big.mark = ",", scientific = FALSE, trim = TRUE)))
-  
-  cat("\\hline\n")
-  cat("\\textbf{Uganda} &  &   & &      & & & \\\\\n")
-  cat("\\hline\n")
-  
-  # Uganda rows
-  for(i in 1:nrow(uganda_data)) {
-    row <- uganda_data[i,]
-    cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)}\\\\\n",
-                row$sample_group,
-                row$avg_hh_count, row$se_hh_count,
-                row$avg_hh_size, row$se_hh_size,
-                row$indiv_access_sample, row$se_indiv_access_sample,
-                format(row$country_total, big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(row$indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(row$ci_lower_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                format(round(row$ci_upper_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-                row$avg_chl_rate_tcr * 100,
-                row$ci_lower_chl_rate_tcr * 100,
-                row$ci_upper_chl_rate_tcr * 100,
-                row$avg_chl_rate_fcr * 100,
-                row$ci_lower_chl_rate_fcr * 100,
-                row$ci_upper_chl_rate_fcr * 100))
-  }
-  
-  # Uganda total
-  cat(sprintf("\\textbf{Total} & - & - & - & - & \\shortstack{%s \\\\ (%s, %s)} & - & -\\\\\n",
-              format(round(uganda_total$total_indiv_access_popn), big.mark = ",", scientific = FALSE, trim = TRUE),
-              format(round(uganda_total$ci_lower_total_access), big.mark = ",", scientific = FALSE, trim = TRUE),
-              format(round(uganda_total$ci_upper_total_access), big.mark = ",", scientific = FALSE, trim = TRUE)))
-  
-  cat("\\hline\\hline\n")
-  cat("\\multicolumn{8}{p{\\linewidth}}{\\footnotesize Notes:}\\\\\n")
-  cat("\\end{tabular}\n")
-  cat("\\end{table}\n")
-}
-
-# Usage:
-generate_latex_table(
-  users_with_ci = users_with_ci,
-  chlorination_tcr_ci = chlorination_tcr_ci,
-  chlorination_fcr_ci = chlorination_fcr_ci,
-  country_totals_with_ci = country_totals_with_ci,
-  caption = "User estimates with confidence intervals",
-  label = "beneficiaries_ci"
-)
-```
 
 # totals by intervention
 ## function - svydesign
@@ -1413,7 +1011,7 @@ country_totals_with_ci_combined <- users_with_ci_combined %>%
 country_totals_with_ci_combined
 ```
 
-## chlorination rates (combined across sample_groups)
+## chlorination rates 
 ```{r}
 chlorination_data_weighted_combined <- hh_survey %>%
   mutate(intervention = wp_intervention) %>%
@@ -1484,6 +1082,47 @@ chlorination_tcr_ci_combined
 chlorination_fcr_ci_combined
 ```
 
+## sample size - water points
+```{r}
+wp_sample <- wp_census %>%
+  # only promoter survey water points
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  # only functional water points
+  dplyr::filter(wp_func == "TRUE") %>%
+  # filters for table
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  # number of users
+  group_by(country, intervention) %>%
+  summarise(
+    n_wp = n()) 
+
+wp_sample
+```
+
+## sample size - households
+```{r}
+hh_sample <- hh_survey %>%
+  # rename
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  # only monitoring survey households 
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  # only functional water points
+  dplyr::filter(wp_func == "TRUE") %>%
+  # filters for table
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  # avg household size per water point
+  group_by(country, intervention) %>%
+  summarise(
+    n_hh = n()
+  ) 
+
+hh_sample
+```
+
 ## table by intervention
 ```{r}
 table <- hh_count_ci_v1 %>%
@@ -1505,11 +1144,143 @@ table <- hh_count_ci_v1 %>%
     users_with_ci_combined %>%
       select(per_wp_users, se_per_wp_users, pop_points, popn_users, popn_users_lb, popn_users_ub, country, intervention),
     by = c("country", "intervention")
+  ) %>%
+  left_join(
+    wp_sample,
+    by = c("country", "intervention")) %>%
+  left_join(
+    hh_sample,
+    by = c("country", "intervention")) %>%
+  left_join(
+    chlorination_tcr_ci_combined %>%
+      rename(
+        tcr = mean,
+        tcr_lb = lb,
+        tcr_ub = ub
+      ) %>%
+      select(country, intervention, tcr, tcr_lb, tcr_ub),
+    by = c("country", "intervention")
+  ) %>%
+    left_join(
+    chlorination_fcr_ci_combined %>%
+      rename(
+        fcr = mean,
+        fcr_lb = lb,
+        fcr_ub = ub      
+      ) %>%
+      select(country, intervention, fcr, fcr_lb, fcr_ub),
+    by = c("country", "intervention")
   ) 
 
 table
 
 country_totals_with_ci_combined
+```
+
+## latex code
+```{r}
+generate_intervention_latex_table <- function(table,
+                                              caption = "Monitoring estimates by intervention (DSW and ILC combined across sample groups)",
+                                              label = "intervention_estimates") {
+  
+  # Prepare data
+  table_data <- table %>%
+    mutate(
+      order_var = case_when(
+        intervention == "DSW" ~ 1,
+        intervention == "ILC" ~ 2,
+        TRUE ~ 3
+      )
+    ) %>%
+    arrange(country, order_var)
+  
+  # Separate by country
+  malawi_data <- table_data %>%
+    dplyr::filter(country == "Malawi")
+  
+  uganda_data <- table_data %>%
+    dplyr::filter(country == "Uganda")
+  
+  # Start generating LaTeX
+  cat("\\begin{sidewaystable}\\centering\n")
+  cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
+  cat(sprintf("\\caption{%s\\label{%s}}\n", caption, label))
+  cat("\\begin{tabular}{l*{9}{c}}\n")
+  cat("\\hline \\hline\n")
+  cat("& (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) \\\\\n")
+  cat("& \\multicolumn{3}{c}{\\textbf{Sample}} & \\multicolumn{6}{c}{\\textbf{Country-level estimates}} \\\\\n")
+  cat("\\cmidrule(lr){2-4} \\cmidrule(lr){5-10}\n")
+  cat(" & \\shortstack{Avg \\# \\\\of HH \\\\ (SE)} &\\shortstack{Avg \\# of \\\\ Members\\\\ (SE)} & \\shortstack{\\# people \\\\ per WP\\\\ (SE)} & \\shortstack{Country \\\\\\#WP} & \\shortstack{People using\\\\ DSW/ILC \\\\ (95\\% CI)} & \\shortstack{\\# WP \\\\ for avg} & \\shortstack{\\# HH \\\\ for chlor} & \\shortstack{TCR>0.2ppm \\\\ (95\\% CI)} & \\shortstack{FCR>0.2ppm \\\\ (95\\% CI)} \\\\\n")
+  cat("\\hline\n")
+  cat("\\textbf{Malawi} & & & & & & & & & \\\\\n")
+  cat("\\hline\n")
+  
+  # Malawi rows
+  for(i in 1:nrow(malawi_data)) {
+    row <- malawi_data[i,]
+    cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & %s & %s & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} \\\\\n",
+                row$intervention,
+                row$hh_count, row$se_hh_count,
+                row$hh_size, row$se_hh_size,
+                row$per_wp_users, row$se_per_wp_users,
+                format(row$pop_points, big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$popn_users), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$popn_users_lb), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$popn_users_ub), big.mark = ",", scientific = FALSE, trim = TRUE),
+                row$n_wp,
+                row$n_hh,
+                row$tcr * 100,
+                row$tcr_lb * 100,
+                row$tcr_ub * 100,
+                row$fcr * 100,
+                row$fcr_lb * 100,
+                row$fcr_ub * 100))
+  }
+  
+  # Malawi total row (empty for manual entry)
+  cat("\\textbf{Total} & - & - & - & - & & - & - & - & - \\\\\n")
+  
+  cat("\\hline\n")
+  cat("\\textbf{Uganda} & & & & & & & & & \\\\\n")
+  cat("\\hline\n")
+  
+  # Uganda rows
+  for(i in 1:nrow(uganda_data)) {
+    row <- uganda_data[i,]
+    cat(sprintf("%s & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & \\shortstack{%.2f \\\\ (%.2f)} & %s & \\shortstack{%s \\\\ (%s, %s)} & %s & %s & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} & \\shortstack{%.1f\\%% \\\\ (%.1f\\%%, %.1f\\%%)} \\\\\n",
+                row$intervention,
+                row$hh_count, row$se_hh_count,
+                row$hh_size, row$se_hh_size,
+                row$per_wp_users, row$se_per_wp_users,
+                format(row$pop_points, big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$popn_users), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$popn_users_lb), big.mark = ",", scientific = FALSE, trim = TRUE),
+                format(round(row$popn_users_ub), big.mark = ",", scientific = FALSE, trim = TRUE),
+                row$n_wp,
+                row$n_hh,
+                row$tcr * 100,
+                row$tcr_lb * 100,
+                row$tcr_ub * 100,
+                row$fcr * 100,
+                row$fcr_lb * 100,
+                row$fcr_ub * 100))
+  }
+  
+  # Uganda total row (empty for manual entry)
+  cat("\\textbf{Total} & - & - & - & - & & - & - & - & - \\\\\n")
+  
+  cat("\\hline\\hline\n")
+  cat("\\multicolumn{10}{p{\\linewidth}}{\\footnotesize Notes:}\\\\\n")
+  cat("\\end{tabular}\n")
+  cat("\\end{sidewaystable}\n")
+}
+
+# Usage:
+generate_intervention_latex_table(
+  table = table,
+  caption = "Monitoring estimates by intervention (DSW and ILC combined across sample groups)",
+  label = "intervention_estimates"
+)
 ```
 
 # difference in chlorination between types of DSW
