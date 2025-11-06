@@ -175,6 +175,7 @@ users_wp <-
         sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
         wps = .x %>% pull(wp_id) %>% n_distinct,
       )
   ) %>% 
@@ -205,6 +206,7 @@ users_wp_country <-
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
         wps = .x %>% pull(wp_id) %>% n_distinct,
       )
   ) %>% 
@@ -222,7 +224,6 @@ users_wp %>%
     )
   )
 ```
-
 
 ### Sensitivty cehcks
 
@@ -527,7 +528,10 @@ cl_wp_noweights <-
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         wps = .x %>% pull(wp_id) %>% n_distinct,
-        households = .x %>% pull(household_id) %>% n_distinct,
+        households = .x %>% 
+          dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02)) %>%
+          pull(household_id) %>% 
+          n_distinct
       )
   ) %>% 
   bind_rows() %>%
@@ -771,4 +775,30 @@ plot_data %>%
   )
   
 ```
+
+## Table
+
+```{r}
+users_wp_country %>%
+  left_join(
+    wp_sample_sizes %>%
+      group_by(country, wp_intervention) %>%
+      summarise(pop = sum(pop_points))
+  ) %>%
+  mutate(
+    across(
+      c(total, lb, ub, pop, hhs),
+      ~ . %>% 
+        round %>% 
+        format(big.mark = ",") %>%
+        str_remove_all(" ")
+    ),
+    se = paste0("(", lb, ", ", ub, ")") 
+  ) %>%
+  select(
+    wp_intervention, sampled = wps, hhs, pop, total, se
+  ) %>%
+  kable()
+```
+
 

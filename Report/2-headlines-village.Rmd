@@ -161,6 +161,7 @@ people_per_group <-
         sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct,
+        households = .x %>% pull(hhs) %>% mean,
         weight = .x %>% pull(weight) %>% unique
       )
   ) %>% 
@@ -195,7 +196,9 @@ people_per_country <-
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(hhs) %>% sum,
+        pop = .x %>% pull(n_villages) %>% unique %>% sum
       )
   ) %>% 
   bind_rows() %>%
@@ -669,6 +672,31 @@ feols(
 ) %>% 
   summary
 ```
+```{r}
+feols(
+  disctcr_02 ~ wp_intervention_type,
+  cluster = ~ village_id,
+  data = chlorination_data %>%
+    dplyr::filter(
+      country == "Malawi",
+      wp_intervention == "ILC"
+    )
+) %>% 
+  summary
+```
+```{r}
+feols(
+  discfcr_02 ~ wp_intervention_type,
+  cluster = ~ village_id,
+  data = chlorination_data %>%
+    dplyr::filter(
+      country == "Malawi",
+      wp_intervention == "ILC"
+    )
+) %>% 
+  summary
+```
+
 
 
 #### By program
@@ -1000,8 +1028,45 @@ plot_data %>%
     y = NULL,
     x = "Percent of tested households where color wheel\nTCR reading was at least 0.2 ppm"
   )
-  
 ```
+
+## Table
+
+```{r}
+people_per_country %>%
+  left_join(
+    wp_sample_sizes %>%
+      group_by(country, wp_intervention) %>%
+      summarise(pop = sum(pop_points))
+  ) %>%
+  mutate(
+    across(
+      c(total, lb, ub, pop),
+      ~ . %>% 
+        round %>% 
+        format(big.mark = ",") %>%
+        str_remove_all(" ")
+    ),
+    se = paste0("(", lb, ", ", ub, ")") 
+  ) %>%
+  select(
+    wp_intervention, pop, total, se
+  )
+```
+
+```{r}
+cl_village_noweights_country %>%
+  mutate(
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% 
+        round(1) %>% 
+        str_remove_all(" ")
+    ),
+    se = paste0("(", lb, ", ", ub, ")") 
+  ) 
+```
+
 
 
 <!-- ## All chlorination measures -->
