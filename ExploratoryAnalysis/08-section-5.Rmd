@@ -52,8 +52,6 @@ registerS3method("knit_print", "data.frame", knit_print.data.frame)
 registerS3method("knit_print", "tbl_df", knit_print.data.frame)
 
 # import
-path_box <- "/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup"
-
 villages <-
   read_rds(
     file.path(
@@ -188,24 +186,52 @@ wp_census <-
   ) %>%
   mutate(ea_id = as.character(ea_id))
 
-malawi_wp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-water-points.dta") %>%
+malawi_wp <- read_dta(
+    file.path(
+      path_box, 
+      "Data/EvidenceAction/Final/malawi-water-points.dta"
+    )
+  ) %>%
   mutate(
     villageid = as.character(villageid)
   )
-malawi_villages <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-villages.dta") %>%
+  
+villages <- 
+  read_dta(
+    file.path(
+      path_box, 
+      "/Data/EvidenceAction/Final/ea-villages.dta"
+    ) 
+  ) %>%
   mutate(
     villageid = as.character(villageid)
   )
-uganda_wp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-points.dta") %>%
+
+uganda_wp <- 
+  read_dta(
+    file.path(
+      path_box, 
+      "Data/EvidenceAction/Final/uganda-water-points.dta"
+    ) 
+  ) %>%
   mutate(
     villageid = as.character(villageid)
   )
-uganda_villages <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-villages.dta") %>%
-    mutate(
-    villageid = as.character(villageid)
+
+malawi_wcp <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data/EvidenceAction/Final/malawi-water-collection-points.dta"
+    )
   )
-malawi_wcp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/malawi-water-collection-points.dta")
-uganda_wcp <- read_dta("/Users/lenawisniewska/Library/CloudStorage/Box-Box/i-h2o-takeup/Data/EvidenceAction/Final/uganda-water-collection-points.dta")
+uganda_wcp <- 
+  read_dta(
+    file.path(
+      path_box,
+      "Data/EvidenceAction/Final/uganda-water-collection-points.dta"
+    )
+  )
 ```
 
 

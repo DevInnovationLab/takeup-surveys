@@ -2,5 +2,7 @@ delete_merged_file: true
 output_dir: ../docs/
 rmd_files: [
   "index.Rmd",
-  "00-headlines.Rmd"
+  "1-input-data.Rmd",
+  "2-headlines-village.Rmd",
+  "3-headlines-wp.Rmd"
 ]

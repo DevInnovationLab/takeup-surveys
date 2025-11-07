@@ -59,17 +59,6 @@ theme <-
 
 # Inputs -----------------------------------------------------------------------
 
-weights <-
-  tribble(
-    ~ country, ~ sample_group, ~ pop,
-    "Uganda" , "ILC"         , 651, 
-    "Uganda" , "Footprint"   , 3171,
-    "Uganda" , "Expansion"   , 4012,
-    "Malawi" , "Footprint"   , 1161,
-    "Malawi" , "Expansion"   , 4812, 
-    "Malawi" , "ILC"         , 633
-  )
-
 test_vars <-
   c(
     "discfcr_02", "disctcr_02", 
@@ -80,14 +69,7 @@ test_vars <-
 
 # Functions --------------------------------------------------------------------
 
-mean_ci <- function(data, var, dummy) {
-  design <- 
-    svydesign(
-      id = ~ household_id,      # PSU (here: villages)
-      strata = ~ village_id,    # stratification
-      data = data,
-      nest = TRUE
-    )
+mean_ci <- function(var, design) {
   
   formula <- paste("~", var) %>% as.formula()
   
@@ -106,40 +88,25 @@ mean_ci <- function(data, var, dummy) {
   result <-
     bind_cols(mean, mean_ci) %>%
     mutate(outcome = var) %>%
-    select(outcome, everything())
-  
-  if (dummy) {
-    result <-
-      result %>%
-      dplyr::filter(str_detect(rownames(.), "TRUE"))
-  }
+    select(outcome, everything()) %>%
+    dplyr::filter(str_detect(rownames(.), "TRUE"))
   
   rownames(result) <- NULL
   
   result
 }
 
-village_mean_ci <-
-  function(data, dummy = TRUE, outcomes) {
+mean_cis <-
+  function(design, outcomes) {
     map(
       outcomes,
-      ~ mean_ci(data, var = ., dummy)
+      ~ mean_ci(design, var = .x)
     ) %>%
       bind_rows
   }
 
-
-total_cis <-
-  function(data, var) {
-    
-    design <- 
-      svydesign(
-        id = ~ village_id,       # PSU (here: villages)
-        strata = ~ sample_group, # stratification
-        weights = ~ weight,
-        data = data,
-        nest = TRUE
-      )
+total_ci <-
+  function(design, var) {
     
     formula <- paste("~", var) %>% as.formula()
     
@@ -156,11 +123,22 @@ total_cis <-
       set_names("lb", "ub")
     
     all <- 
-      bind_cols(total, total_ci)
+      bind_cols(total, total_ci) %>%
+      mutate(outcome = var) %>%
+      select(outcome, everything())
     
     rownames(all) <- NULL
   
     return(all)
     
+  }
+
+total_cis <-
+  function(design, outcomes) {
+    map(
+      outcomes,
+      ~ total_ci(design, var = .)
+    ) %>%
+      bind_rows
   }
   

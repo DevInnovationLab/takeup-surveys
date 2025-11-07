@@ -1,0 +1,284 @@
+## People using DSW/ILC water points
+
+```{r}
+wp_sample_sizes <-
+  tribble(
+    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_points,
+    "Uganda", "Expansion", "DSW", 12262,
+    "Uganda", "Footprint", "DSW", 5456,
+    "Malawi", "Expansion", "DSW", 11292,
+    "Malawi", "Footprint", "DSW", 3844,
+    "Malawi", "ILC", "DSW", 1062,
+    "Malawi", "ILC", "ILC", 2024
+  )
+```
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  st_drop_geometry() %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  ) 
+```
+
+```{r}
+hh_census_imputed <-
+  hh_census %>%
+  dplyr::filter(!is.na(wp_id)) %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    )
+  ) %>%
+  left_join(wp_sample_sizes) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(weight = n_distinct(wp_id)/pop_points)
+```
+
+### Sanity check
+
+```{r}
+hh_census_imputed %>%
+  group_by(
+    wp_id, wp_intervention, sample_group, country, pop_points
+  ) %>%
+  summarise(
+    total = sum(hh_members)
+  ) %>%
+  group_by(
+    country, sample_group, wp_intervention, pop_points
+  ) %>%
+  summarise(
+    mean = mean(total)
+  ) %>%
+  mutate(
+    contry = mean * pop_points
+  )
+```
+
+```{r}
+hh_census_imputed %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      data = ., 
+      var = "hh_members",
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, everything())
+```
+
+### With CIs
+
+```{r}
+hh_census_imputed %>%
+  group_by(
+    country, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      data = ., 
+      var = "hh_members",
+      design = svydesign(
+        id = ~ village_id + wp_id,    # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    )
+  ) %>% 
+  bind_rows() %>%
+  bind_cols(
+    hh_census_imputed %>%
+      ungroup %>%
+      select(country, wp_intervention) %>%
+      unique,
+    .
+  )
+```
+
+## Chlorination rates
+
+```{r}
+chlorination_data <-
+  hh_survey %>%
+  dplyr::filter(
+    survey == "Household Survey",
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  ) %>%
+  left_join(wp_sample_sizes) %>%
+  group_by(wp_id) %>%
+  mutate(
+    n_cl = n_distinct(household_id)
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(
+    n_cat = n_distinct(wp_id)
+  ) %>%
+  left_join(
+    hh_census %>%
+      group_by(wp_id) %>%
+      summarise(
+        n_users = n_distinct(household_id)
+      )
+  ) %>%
+  left_join(
+    wp_census %>%
+      dplyr::filter(dsw | ilc_wcp) %>%
+      rename(wp_intervention = intervention) %>%
+      group_by(sample_group, wp_intervention) %>%
+      summarise(
+        func_rate = mean(wp_func, na.rm = TRUE)
+      )
+  ) %>%
+  ungroup %>%
+  mutate(
+    # Number of households using this water point represented by the observation
+    weight_obs = n_users/n_cl,
+    # Number of water points represented by the water point
+    weight_cat = pop_points/n_cat,
+    weight_total = weight_obs * weight_cat
+  )
+```
+
+### Sanity check
+
+```{r}
+chlorination_data %>%
+  group_by(wp_id, wp_intervention, sample_group, country) %>%
+  summarise(
+    across(
+      c("disctcr_02", "discfcr_02"),
+      ~ mean(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(
+    across(
+      c("disctcr_02", "discfcr_02"),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+### With CIs
+
+```{r}
+chlorination_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ mean_ci(
+      data = ., 
+      dummy = TRUE,
+      var = "disctcr_02",
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight_total, # Number of households represented
+        data = .x,
+        nest = TRUE
+      ) 
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, mean, lb, ub)
+```
+
+```{r}
+chlorination_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ mean_ci(
+      data = ., 
+      dummy = TRUE,
+      var = "disctcr_02",
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight_obs, # Number of users
+        data = .x,
+        nest = TRUE
+      ) 
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, mean, lb, ub)
+```
+
+```{r}
+chlorination_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ mean_ci(
+      data = ., 
+      dummy = TRUE,
+      var = "disctcr_02",
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight_cat, # Number of water points represented
+        data = .x,
+        nest = TRUE
+      ) 
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, mean, lb, ub)
+```
