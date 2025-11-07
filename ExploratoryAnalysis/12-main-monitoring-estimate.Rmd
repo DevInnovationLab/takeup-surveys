@@ -418,7 +418,7 @@ table <- hh_count_ci_v1 %>%
     by = c("country", "intervention")
   ) 
 
-table %>% select(country, intervention, n_wp, n_hh_count, n_wp_chl, n_hh, pop_points, popn_users, popn_users_lb, popn_users_ub, tcr, tcr_ub, tcr_lb, fcr, fcr_ub, fcr_lb)
+table %>% select(country, intervention, n_wp, n_hh_count, n_wp_chl, n_hh, pop_points, popn_users, popn_users_lb, popn_users_ub, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
 
 country_totals_with_ci_combined
 ```
@@ -525,7 +525,7 @@ chlorination_data %>%
   ) 
 ```
 
-# with CIs - weigh each WP equally
+# TO DO with CIs - weigh each WP equally
 ## function - svydesign
 ```{r}
 # function to calculate means with CIs for any variable
@@ -709,7 +709,7 @@ country_totals_with_ci <- users_with_ci %>%
 country_totals_with_ci
 ```
 
-# tables 
+## tables 
 ## sample size - water points and households
 ```{r}
 wp_sample <- wp_census %>%
@@ -948,7 +948,7 @@ generate_table(
 )
 ```
 
-# exploratory: difference in chlorination between types of DSW
+# EXPLORATORY: difference in chlorination between types of DSW
 justification for combining expansion and footprint
 ```{r}
 chlorination_data <- hh_survey %>%
@@ -985,7 +985,7 @@ lm_robust(
 )
 ```
 
-# chlorination rates - different weighing approaches
+# SENSITIVITY: chlorination rates - different weighing approaches
 - CIs function adapted to work with logical variables
 ## weight 1 per water point
 ```{r}
