@@ -58,11 +58,12 @@ wp_sample_sizes <-
     "Malawi", "ILC", "ILC", 1720 # 2024 scaled by 0.85
   )
 
-wp_sample_sizes <- wp_sample_sizes %>%
+wp_sample_sizes_intervention <- wp_sample_sizes %>%
       group_by(country, intervention) %>%
       summarise(pop_points = sum(pop_points), .groups = "drop")
 
 wp_sample_sizes
+wp_sample_sizes_intervention
 ```
 
 # load datasets
@@ -112,7 +113,7 @@ hh_census <-
 calculate_mean_ci <- function(data, var_name, weight_var) {
   data %>%
     mutate(weight = {{weight_var}}) %>%
-    group_by(country, intervention) %>%
+    group_by(country, sample_group, intervention) %>%
     group_split() %>%
     map(
       ~ {
@@ -136,7 +137,7 @@ calculate_mean_ci <- function(data, var_name, weight_var) {
           set_names(c("lb", "ub"))
         
         bind_cols(
-          .x %>% select(country, intervention) %>% slice(1),
+          .x %>% select(country, sample_group, intervention) %>% slice(1),
           mean_val,
           ci_val
         )
@@ -179,7 +180,7 @@ hh_size_ci_weighted <- calculate_mean_ci(hh_size_data_weighted, "hh_members", hh
 hh_size_ci_weighted
 ```
 
-## users - by intervention (combined across sample_groups)
+## users 
 ```{r}
 # combine hh_count and hh_size CIs and calculate users with CIs
 users_with_ci_combined <- hh_count_ci_v1 %>%
@@ -199,7 +200,7 @@ users_with_ci_combined <- hh_count_ci_v1 %>%
         hh_size_lb = lb,
         hh_size_ub = ub
       ),
-    by = c("country", "intervention")
+    by = c("country", "sample_group", "intervention")
   ) %>%
   # calculate per_wp_users and its SE using delta method
   mutate(
@@ -216,8 +217,8 @@ users_with_ci_combined <- hh_count_ci_v1 %>%
   ) %>%
   # join with population water points - sum across sample_groups
   left_join(
-    wp_sample_sizes %>%
-    by = c("country", "intervention")
+    wp_sample_sizes,
+    by = c("country", "sample_group", "intervention")
   ) %>%
   # scale up to population
   mutate(
@@ -227,9 +228,27 @@ users_with_ci_combined <- hh_count_ci_v1 %>%
     # 95% CI for popn_users
     popn_users_lb = popn_users - 1.96 * se_popn_users,
     popn_users_ub = popn_users + 1.96 * se_popn_users
-  ) 
+  )
 
-users_with_ci_combined %>% select(country, intervention, per_wp_users, se_per_wp_users, pop_points,  popn_users, se_popn_users, popn_users_lb, popn_users_ub)
+users_with_ci_combined %>% select(country, sample_group, intervention, per_wp_users, se_per_wp_users, pop_points,  popn_users, se_popn_users, popn_users_lb, popn_users_ub)
+
+# group by intervention
+users_with_ci_combined_grouped <- users_with_ci_combined %>%
+  group_by(country, intervention) %>%
+  summarise(
+    pop_points = sum(pop_points),
+    popn_users = sum(popn_users),
+    # SE of sum: sqrt(sum of squared SEs) assuming independence
+    se_popn_users = sqrt(sum(se_popn_users^2, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  # CI
+  mutate(
+    popn_users_lb = popn_users - 1.96 * se_popn_users,
+    popn_users_ub = popn_users + 1.96 * se_popn_users
+  )
+
+users_with_ci_combined_grouped
 ```
 
 ## users - country totals (combined)
@@ -418,7 +437,7 @@ table <- hh_count_ci_v1 %>%
     by = c("country", "intervention")
   ) 
 
-table %>% select(country, intervention, n_wp, n_hh_count, n_wp_chl, n_hh, pop_points, popn_users, popn_users_lb, popn_users_ub, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
+table %>% select(country, intervention, per_wp_users, hh_size, n_wp, n_hh_count, n_wp_chl, n_hh, pop_points, popn_users, popn_users_lb, popn_users_ub, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
 
 country_totals_with_ci_combined
 ```
@@ -428,7 +447,7 @@ gives the same numbers as the main estimates above
 ## hh count
 ```{r}
 hh_count <- wp_census %>%
-  group_by(country, intervention) %>%
+  group_by(country, sample_group, intervention) %>%
   # only promoter survey water points
   dplyr::filter(promoter_surveyed == "TRUE") %>%
   # only functional water points
@@ -459,7 +478,7 @@ hh_size <- hh_survey %>%
   dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
   dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
   # average household size by type of water point
-  group_by(country, intervention) %>%
+  group_by(country, sample_group, intervention) %>%
   summarise(
     hh_size = mean(hh_members, na.rm = TRUE)
   ) 
@@ -470,16 +489,16 @@ hh_size
 ## users by category
 ```{r}
 users <- hh_count %>%
-  left_join(hh_size, by = c("country", "intervention")) %>%
+  left_join(hh_size, by = c("country", "sample_group", "intervention")) %>%
   mutate(
     per_wp_users = hh_count * hh_size
   ) %>%
-  left_join(wp_sample_sizes, by = c("country", "intervention")) %>%
+  left_join(wp_sample_sizes, by = c("country", "sample_group", "intervention")) %>%
   mutate(
     popn_users = per_wp_users * pop_points
   )
 
-users %>% select(country, intervention, popn_users)
+users %>% select(country, sample_group, intervention, popn_users)
 ```
 
 ## users - country totals
