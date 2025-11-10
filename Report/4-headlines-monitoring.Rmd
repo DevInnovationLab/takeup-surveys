@@ -1,0 +1,105 @@
+# Monitoring headline results
+
+
+## Setup
+### Packages
+```{r}
+packages <-
+  c(
+    "stringr",
+    "sf",
+    "tidyverse",
+    "viridis",
+    "glue",
+    "patchwork",
+    "tidyr",
+    "dplyr",
+    "knitr",
+    "kableExtra",
+    "vtable",
+    "stargazer",
+    "ggplot2",
+    "haven",
+    "estimatr",
+    "janitor",
+    "survey"
+  )
+
+pacman::p_load(
+  packages,
+  character.only = TRUE
+)
+```
+
+### Load country totals of water points
+```{r}
+wp_sample_sizes <-
+  tribble(
+    ~ country, ~ sample_group, ~ intervention, ~ pop_points,
+    "Uganda", "Expansion", "DSW", 12262,
+    "Uganda", "Footprint", "DSW", 5456,
+    "Malawi", "Expansion", "DSW", 11292,
+    "Malawi", "Footprint", "DSW", 3844,
+    "Malawi", "ILC", "DSW", 1062,
+    "Malawi", "ILC", "ILC", 1720 # 2024 scaled by 0.85
+  )
+
+wp_sample_sizes_intervention <- wp_sample_sizes %>%
+      group_by(country, intervention) %>%
+      summarise(pop_points = sum(pop_points), .groups = "drop")
+
+wp_sample_sizes
+wp_sample_sizes_intervention
+```
+
+### Load datasets
+```{r}
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  mutate(ea_id = as.character(ea_id))
+
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) 
+
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) 
+```
+
+## Number of people using DSW/ILC
+
+### Prepare data
+### Final numbers
+
+## Chlorination rates
+
+### Prepare data
+### Final numbers
+
+## Table
