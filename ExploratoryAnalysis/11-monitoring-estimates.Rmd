@@ -1053,10 +1053,6 @@ cat("\\end{tabular}\n")
 cat("\\end{table}\n")
 ```
 
-# final table 8
-- should increase the number of users by 1 / response rate
-- 
-
 # estimates tables
 ## main monitoring estimates (8)
 ```{r}
