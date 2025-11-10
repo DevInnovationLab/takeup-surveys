@@ -1,6 +1,5 @@
 # Monitoring headline results
 
-
 ## Setup
 ### Packages
 ```{r}
@@ -79,6 +78,18 @@ hh_survey <-
     )
   ) 
 
+# hh_census <-
+#   read_rds(
+#     file.path(
+#       path_box,
+#       "Data",
+#       "HouseholdCensus",
+#       "DataSets",
+#       "Final",
+#       "hh-census.rds"
+#     )
+#   ) 
+
 hh_census <-
   read_rds(
     file.path(
@@ -89,11 +100,21 @@ hh_census <-
       "Final",
       "hh-census.rds"
     )
-  ) 
+  ) %>%
+  st_drop_geometry() %>%
+  # To account for non-responses, we calculate the village-level non-response rate
+  group_by(village_id) %>%
+  mutate(
+    response_rate = mean(response),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  ) %>% 
+  ungroup
 ```
 
 ## Number of people using DSW/ILC
-
 ### Define function
 ```{r}
 # function to calculate means with CIs for any variable
@@ -138,7 +159,6 @@ calculate_mean_ci <- function(data, var_name, weight_var) {
 #### household count per water point
 each water point has weight 1
 ```{r}
-# prepare hh count data - combined across sample_groups
 hh_count_data <- wp_census %>%
   dplyr::filter(promoter_surveyed == "TRUE") %>%
   dplyr::filter(wp_func == "TRUE") %>%
@@ -153,7 +173,7 @@ hh_count_ci_v1
 #### average household size
 each household has weight 1
 ```{r}
-hh_size_data_weighted <- hh_survey %>%
+hh_size <- hh_survey %>%
   mutate(intervention = wp_intervention) %>%
   select(-wp_intervention) %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
@@ -165,7 +185,7 @@ hh_size_data_weighted <- hh_survey %>%
   mutate(hh_weight = 1)
 
 # calculate CIs
-hh_size_ci_weighted <- calculate_mean_ci(hh_size_data_weighted, "hh_members", hh_weight)
+hh_size_ci_weighted <- calculate_mean_ci(hh_size, "hh_members", hh_weight)
 hh_size_ci_weighted
 ```
 
@@ -294,6 +314,15 @@ users_table <- users_with_ci_combined %>%
   )
 
 users_table %>% select(-se_popn_users)
+
+# prep for waterfall chart
+table8 <- users_table %>%
+  select(country, intervention, popn_users, popn_users_lb, popn_users_ub) %>%
+  mutate(
+    indiv_access_popn = popn_users,
+    lb = popn_users_lb,
+    ub = popn_users_ub
+  )
 ```
 
 ## Chlorination rates
@@ -389,4 +418,956 @@ monitoring_table <- users_table %>%
   )
 
 monitoring_table %>% select(country, intervention, n_wp, n_hh_count, pop_points, popn_users, popn_users_lb, popn_users_ub, n_wp_chl, n_hh, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
+```
+
+## Alternative tables
+### Census data, census water points, village-level (table 1)
+```{r}
+users_data <-
+  hh_census %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
+    wp_invillage,
+    !(sample_group != "ILC" & wp_intervention == "ILC"))
+
+users_data <-
+  users_data %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    )
+  )
+
+users_data <-
+  users_data %>%
+  full_join(
+    village_intervention %>% 
+      select(village_id, country, sample_group, wp_intervention)
+  ) %>%
+  mutate(
+    hh_members = replace_na(hh_members, 0)
+  )
+
+users_village <-
+  users_data %>%
+  group_by(village_id, country, sample_group, wp_intervention) %>%
+  summarise(
+    response_rate = unique(response_rate),
+    hhs = n(),
+    users = sum(hh_members)
+  ) %>%
+  mutate(
+    users_increased = users/response_rate
+  )
+
+users_village <-
+  users_village %>%
+  left_join(sample_sizes) %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    weight = n_villages/n_distinct(village_id)
+  ) %>%
+  ungroup
+
+people_per_country <-
+  map(
+    users_village %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_ci(
+        var = "users_increased",
+        design = svydesign(
+          id = ~ village_id,
+          data = .x, 
+          weights = ~ weight
+        )
+      ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(hhs) %>% sum,
+        pop = .x %>% pull(n_villages) %>% unique %>% sum
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(
+    country, wp_intervention, 
+    outcome, 
+    villages,
+    everything()
+  ) %>%
+  arrange(outcome)
+
+table1 <- people_per_country %>%
+  select(country, wp_intervention, total, lb, ub) %>%
+  mutate(
+    intervention = wp_intervention,
+    indiv_access_popn = total
+  ) %>%
+  select(-total, -wp_intervention)
+
+table1
+```
+
+### Census data, census water points, water-point level (new table 2, old table 12)
+requires that you run 1-input-data and then 3-headlines-wp first
+```{r}
+users_data <-
+  hh_census_wp %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC"),
+    # These are households using water points outside of the village
+    # that were found to have DSW. Since we don't have a water point ID
+    # for them, we cannot used them fow water point-level estimtes
+    !is.na(wp_id)
+  ) %>%
+  left_join(
+    wp_census %>%
+      dplyr::filter(dsw | ilc_wcp) %>%
+      rename(wp_intervention = intervention) %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(
+        func_rate = mean(wp_func, na.rm = TRUE)
+      )
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(
+    func_points = func_rate * pop_points,
+    weight = n_distinct(wp_id)/func_points,
+    weight_nofunc = n_distinct(wp_id)/pop_points
+  ) %>% 
+  ungroup
+
+users_data <-
+  users_data %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    ),
+    hh_members_increased = hh_members/response_rate
+  )
+
+users_wp <-
+  users_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+users_wp_country <-
+  users_data %>%
+  group_by(
+    country, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+table2 <- users_wp_country %>%
+  select(country, wp_intervention, total, lb, ub) %>%
+  mutate(
+    intervention = wp_intervention,
+    indiv_access_popn = total
+  ) %>%
+  select(-total, -wp_intervention)
+
+table2
+```
+
+### Census data, census water points, village-level, excluding outside HHs
+```{r}
+users_data_exout <- users_data %>%
+  dplyr::filter(inclusion == "Within village boundaries")
+
+users_village <-
+  users_data_exout %>%
+  group_by(village_id, country, sample_group, wp_intervention) %>%
+  summarise(
+    response_rate = unique(response_rate),
+    hhs = n(),
+    users = sum(hh_members)
+  ) %>%
+  mutate(
+    users_increased = users/response_rate
+  )
+
+users_village <-
+  users_village %>%
+  left_join(sample_sizes) %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    weight = n_villages/n_distinct(village_id)
+  ) %>%
+  ungroup
+
+people_per_country <-
+  map(
+    users_village %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_ci(
+        var = "users_increased",
+        design = svydesign(
+          id = ~ village_id,
+          data = .x, 
+          weights = ~ weight
+        )
+      ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(hhs) %>% sum,
+        pop = .x %>% pull(n_villages) %>% unique %>% sum
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(
+    country, wp_intervention, 
+    outcome, 
+    villages,
+    everything()
+  ) %>%
+  arrange(outcome)
+
+table1_exout <- people_per_country %>%
+  mutate(
+    intervention = wp_intervention,
+    indiv_access_popn = total
+  ) %>%
+  select(country, intervention, indiv_access_popn, lb, ub)
+
+table1_exout
+```
+
+### Census data, census water points, water-point level, excluding outside HHs
+```{r}
+users_data <-
+  hh_census_wp %>%
+  dplyr::filter(
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC"),
+    # These are households using water points outside of the village
+    # that were found to have DSW. Since we don't have a water point ID
+    # for them, we cannot used them fow water point-level estimtes
+    !is.na(wp_id)
+  ) %>%
+  left_join(
+    wp_census %>%
+      dplyr::filter(dsw | ilc_wcp) %>%
+      rename(wp_intervention = intervention) %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(
+        func_rate = mean(wp_func, na.rm = TRUE)
+      )
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(
+    func_points = func_rate * pop_points,
+    weight = n_distinct(wp_id)/func_points,
+    weight_nofunc = n_distinct(wp_id)/pop_points
+  ) %>% 
+  ungroup
+
+# filter for in village 
+users_date_exout <- users_data %>%
+  dplyr::filter(inclusion == "Within village boundaries")
+
+users_data <-
+  users_data %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    ),
+    hh_members_increased = hh_members/response_rate
+  )
+
+users_wp <-
+  users_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+users_wp_country <-
+  users_data %>%
+  group_by(
+    country, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+table2_exout <- users_wp_country %>%
+  select(country, wp_intervention, total, lb, ub) %>%
+  mutate(
+    intervention = wp_intervention,
+    indiv_access_popn = total
+  ) %>%
+  select(-total, -wp_intervention)
+
+table2_exout
+```
+
+### Census data, but promoter survey water points (old table 10)
+```{r}
+users_data <-
+  hh_census_wp %>%
+  dplyr::filter(
+    # filter for promoter survey water points
+    promoter_surveyed == "TRUE",
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC"),
+    !is.na(wp_id)
+  ) %>%
+  left_join(
+    wp_census %>%
+      dplyr::filter(dsw | ilc_wcp) %>%
+      rename(wp_intervention = intervention) %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(
+        func_rate = mean(wp_func, na.rm = TRUE)
+      )
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(
+    func_points = func_rate * pop_points,
+    weight = n_distinct(wp_id)/func_points,
+    weight_nofunc = n_distinct(wp_id)/pop_points
+  ) %>% 
+  ungroup
+
+users_data <-
+  users_data %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    ),
+    hh_members_increased = hh_members/response_rate
+  ) 
+
+users_wp <-
+  users_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+users_wp_country <-
+  users_data %>%
+  group_by(
+    country, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+table10 <- users_wp_country %>%
+  mutate(
+    intervention = wp_intervention,
+    indiv_access_popn = total
+  ) %>%
+  select(country, intervention, indiv_access_popn, lb, ub)
+
+table10
+```
+
+### Census data, but promoter survey water points, excluding out of village
+```{r}
+users_data <-
+  hh_census_wp %>%
+  dplyr::filter(
+    # filter for promoter survey water points
+    promoter_surveyed == "TRUE",
+    # filter for inside village
+      inclusion == "Within village boundaries",
+    wp_intervention_type != "Non-program",
+    !(sample_group != "ILC" & wp_intervention == "ILC"),
+    !is.na(wp_id)
+  ) %>%
+  left_join(
+    wp_census %>%
+      dplyr::filter(dsw | ilc_wcp) %>%
+      rename(wp_intervention = intervention) %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(
+        func_rate = mean(wp_func, na.rm = TRUE)
+      )
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(
+    func_points = func_rate * pop_points,
+    weight = n_distinct(wp_id)/func_points,
+    weight_nofunc = n_distinct(wp_id)/pop_points
+  ) %>% 
+  ungroup
+
+users_data <-
+  users_data %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    ),
+    hh_members_increased = hh_members/response_rate
+  ) 
+
+users_wp <-
+  users_data %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+users_wp_country <-
+  users_data %>%
+  group_by(
+    country, wp_intervention
+  ) %>%
+  group_split %>%
+  map(
+    ~ total_cis(
+      outcomes = c("hh_members_increased"),
+      design = svydesign(
+        id = ~ village_id + wp_id, # cluster IDs
+        strata = ~ sample_group,
+        prob = ~ weight,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        wps = .x %>% pull(wp_id) %>% n_distinct,
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(outcome)
+
+table10_exout <- users_wp_country %>%
+  mutate(
+    intervention = wp_intervention,
+    indiv_access_popn = total
+  ) %>%
+  select(country, intervention, indiv_access_popn, lb, ub)
+
+table10_exout
+```
+
+### Monitoring data, promoter survey water points, exluding outside HHs (old table 13)
+```{r}
+hh_count_data <- wp_census %>%
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+  mutate(pm_users_adjusted = pm_users - pm_users_outside)
+
+hh_count <- calculate_mean_ci(hh_count_data, "pm_users_adjusted", 1)
+
+hh_size <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+  mutate(hh_weight = 1)
+
+# calculate CIs
+hh_size <- calculate_mean_ci(hh_size, "hh_members", hh_weight)
+
+# combine hh_count and hh_size CIs and calculate users with CIs
+users_with_ci_combined <- hh_count %>%
+  # rename columns to be clearer
+  rename(
+    hh_count = mean,
+    se_hh_count = se,
+    hh_count_lb = lb,
+    hh_count_ub = ub
+  ) %>%
+  # join with hh_size
+  left_join(
+    hh_size %>%
+      rename(
+        hh_size = mean,
+        se_hh_size = se,
+        hh_size_lb = lb,
+        hh_size_ub = ub
+      ),
+    by = c("country", "sample_group", "intervention")) %>%
+  # calculate per_wp_users and its SE using delta method
+  mutate(
+    per_wp_users = hh_count * hh_size,
+    # delta method: SE(X*Y) = sqrt((Y^2 * SE_X^2) + (X^2 * SE_Y^2))
+    # assuming X and Y are independent
+    se_per_wp_users = sqrt(
+      (hh_size^2) * (se_hh_count^2) + 
+      (hh_count^2) * (se_hh_size^2)
+    ),
+    # 95% CI for per_wp_users
+    per_wp_users_lb = per_wp_users - 1.96 * se_per_wp_users,
+    per_wp_users_ub = per_wp_users + 1.96 * se_per_wp_users
+  ) %>%
+  # join with population water points - sum across sample_groups
+  left_join(
+    wp_sample_sizes,
+    by = c("country", "sample_group", "intervention")
+  ) %>%
+  # scale up to population
+  mutate(
+    popn_users = per_wp_users * pop_points,
+    # SE scales linearly with constant: SE(c*X) = c * SE(X)
+    se_popn_users = se_per_wp_users * pop_points,
+    # 95% CI for popn_users
+    popn_users_lb = popn_users - 1.96 * se_popn_users,
+    popn_users_ub = popn_users + 1.96 * se_popn_users
+  )
+
+users_with_ci_combined %>% select(country, sample_group, intervention, popn_users, popn_users_lb, popn_users_ub)
+
+table13 <- users_with_ci_combined %>%
+  group_by(country, intervention) %>%
+  summarise(
+    se_popn_users = sqrt(sum(se_popn_users^2, na.rm = TRUE)),
+    popn_users = sum(popn_users)
+  )%>%
+  # CI
+  mutate(
+    lb = popn_users - 1.96 * se_popn_users,
+    ub = popn_users + 1.96 * se_popn_users
+  ) %>%
+  mutate(
+    indiv_access_popn = popn_users
+  ) %>%
+  select(-popn_users, -se_popn_users)
+
+table13
+```
+
+
+## Waterfall charts
+```{r}
+estimates <- table1 %>%
+  group_by(country) %>%
+  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
+  left_join(
+    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table2_exout %>% group_by(country) %>% summarise(table2_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  )
+
+# calculate differences for waterfall chart
+create_waterfall <- function(country_name, country_data) {
+  
+  df <- data.frame(
+  category = c("Table 1", 
+              "Exclude \ncensus\nout-of-village\nhouseholds", 
+              "Unit of\nobservation",
+              "Sample \nselection\nof water points",
+              "Dataset",
+              "Promoter\nsurvey\nout-of-village\nhouseholds",
+              "Table 8"),
+  amount = c(
+    country_data$table1,
+    country_data$table1_exout - country_data$table1,
+    country_data$table2_exout - country_data$table1_exout,
+    country_data$table10_exout - country_data$table2_exout,
+    country_data$table13 - country_data$table10_exout,
+    country_data$table8 - country_data$table13,
+    country_data$table8)
+  )
+  
+# round (to 20k)
+df <- df %>%
+    mutate(amount_rounded = round(amount / 20000) * 20000)
+  
+  df$category <- factor(df$category, levels = df$category)
+  
+# calculate positions
+  df <- df %>%
+    mutate(
+      id = row_number(),
+      type = case_when(
+        id == 1 | id == n() ~ "total",
+        id == 5 ~ "dataset",
+        amount_rounded < 0 ~ "decrease",
+        TRUE ~ "increase"
+      ),
+      end = cumsum(amount_rounded),
+      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
+    )  %>%
+    mutate(
+      start = ifelse(type == "total", 0, start),
+      end = ifelse(type == "total", amount_rounded, end)
+    )
+ 
+# create waterfall charts
+  ggplot(df, aes(x = category, fill = type)) +
+    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
+                  ymin = start, ymax = end)) +
+    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
+              vjust = -0.5, size = 4, fontface = "bold") +
+    scale_fill_manual(values = c("decrease" = "#d73027", 
+                                  "increase" = "#4575b4",
+                                  "dataset" = "#FDB462",
+                                  "total" = "#4575b4")) +   
+    labs(
+      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
+         y = "People with access",
+         x = NULL) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
+      # plot.title = element_text(size = 14, face = "bold"),
+      panel.grid.major.x = element_blank()
+    ) +
+    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
+                       labels = scales::comma)
+}
+
+# create plots for each country
+uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
+malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
+
+waterfall_uganda <- create_waterfall("Uganda", uganda_data)
+waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+
+ggsave("output/waterfall_uganda.pdf", 
+       plot = waterfall_uganda, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+
+ggsave("output/waterfall_malawi.pdf", 
+       plot = waterfall_malawi, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+```
+
+
+```{r}
+estimates <- table1 %>%
+  group_by(country) %>%
+  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
+  left_join(
+    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table2_exout %>% group_by(country) %>% summarise(table2_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table14 %>% group_by(country) %>% summarise(table14 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table2 %>% group_by(country) %>% summarise(table2 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10 %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) 
+
+estimates <- estimates%>%
+  mutate(
+    pm_to_census_ratio = table8 / table1
+  )
+
+# calculate differences for waterfall chart
+create_waterfall <- function(country_name, country_data) {
+  
+  df <- data.frame(
+  category = c("Table 1", 
+              "Exclude \ncensus\nout-of-village\nhouseholds", 
+              "Unit of\nobservation",
+              "Sample \nselection\nof water points",
+              "Dataset",
+              "Double \n-counting",
+              "Promoter\nsurvey\nout-of-village\nhouseholds",
+              "Table 8"),
+  amount = c(
+    country_data$table1,
+    country_data$table1_exout - country_data$table1,
+    country_data$table2_exout - country_data$table1_exout,
+    country_data$table10_exout - country_data$table2_exout,
+    country_data$table14 - country_data$table10_exout,
+    country_data$table13 - country_data$table14,
+    country_data$table8 - country_data$table13,
+    country_data$table8  )
+  )
+  
+# round (to 50k)
+df <- df %>%
+    mutate(amount_rounded = round(amount / 20000) * 20000)
+  
+  df$category <- factor(df$category, levels = df$category)
+  
+# calculate positions
+  df <- df %>%
+    mutate(
+      id = row_number(),
+      type = case_when(
+        id == 1 | id == n() ~ "total",
+        id == 5 ~ "dataset",                     
+        amount_rounded < 0 ~ "decrease",
+        TRUE ~ "increase"
+      ),
+      end = cumsum(amount_rounded),
+      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
+    )  %>%
+    mutate(
+      start = ifelse(type == "total", 0, start),
+      end = ifelse(type == "total", amount_rounded, end)
+    )
+ 
+# create waterfall charts
+  ggplot(df, aes(x = category, fill = type)) +
+    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
+                  ymin = start, ymax = end)) +
+    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
+              vjust = -0.5, size = 4, fontface = "bold") +
+    scale_fill_manual(values = c("decrease" = "#d73027", 
+                                  "increase" = "#4575b4",
+                                  "dataset" = "#FDB462",    # yellow for unexplained part
+                                  "total" = "#4575b4")) +   
+    labs(
+      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
+         y = "People with access",
+         x = NULL) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
+      # plot.title = element_text(size = 14, face = "bold"),
+      panel.grid.major.x = element_blank()
+    ) +
+    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
+                       labels = scales::comma)
+}
+
+# create plots for each country
+uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
+malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
+
+waterfall_uganda <- create_waterfall("Uganda", uganda_data)
+waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+
+ggsave("output/waterfall_uganda.pdf", 
+       plot = waterfall_uganda, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+
+ggsave("output/waterfall_malawi.pdf", 
+       plot = waterfall_malawi, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
 ```
