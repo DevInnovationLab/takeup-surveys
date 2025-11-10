@@ -94,12 +94,299 @@ hh_census <-
 
 ## Number of people using DSW/ILC
 
-### Prepare data
+### Define function
+```{r}
+# function to calculate means with CIs for any variable
+calculate_mean_ci <- function(data, var_name, weight_var) {
+  data %>%
+    mutate(weight = {{weight_var}}) %>%
+    group_by(country, sample_group, intervention) %>%
+    group_split() %>%
+    map(
+      ~ {
+        design <- svydesign(
+          id = ~ village_id,
+          strata = ~ sample_group,
+          weights = ~ weight,
+          data = .x,
+          nest = TRUE
+        )
+        
+        # create formula from variable name
+        formula <- as.formula(paste0("~ ", var_name))
+        
+        mean_val <- svymean(formula, na.rm = TRUE, design) %>%
+          as.data.frame() %>%
+          set_names(c("mean", "se"))
+        
+        ci_val <- confint(svymean(formula, na.rm = TRUE, design)) %>%
+          as.data.frame() %>%
+          set_names(c("lb", "ub"))
+        
+        bind_cols(
+          .x %>% select(country, sample_group, intervention) %>% slice(1),
+          mean_val,
+          ci_val
+        )
+      }
+    ) %>%
+    bind_rows()
+}
+```
+
+### Intermediate numbers
+#### household count per water point
+each water point has weight 1
+```{r}
+# prepare hh count data - combined across sample_groups
+hh_count_data <- wp_census %>%
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+hh_count_ci_v1 <- calculate_mean_ci(hh_count_data, "pm_users", 1)
+hh_count_ci_v1
+```
+
+#### average household size
+each household has weight 1
+```{r}
+hh_size_data_weighted <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+  mutate(hh_weight = 1)
+
+# calculate CIs
+hh_size_ci_weighted <- calculate_mean_ci(hh_size_data_weighted, "hh_members", hh_weight)
+hh_size_ci_weighted
+```
+
+#### sample size for water point data
+```{r}
+wp_sample <- wp_census %>%
+  # only promoter survey water points
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  # only functional water points
+  dplyr::filter(wp_func == "TRUE") %>%
+  # filters for table
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  # number of users
+  group_by(country, sample_group, intervention) %>%
+  summarise(
+    n_wp = n(),
+    n_hh_count = sum(pm_users, na.rm = TRUE))
+
+wp_sample
+```
+
+#### sample size for household data
+```{r}
+hh_sample <- hh_survey %>%
+  # rename
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  # only monitoring survey households 
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  # only functional water points
+  dplyr::filter(wp_func == "TRUE") %>%
+  # filters for table
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  # filter for chlorine test results
+  dplyr::filter(!is.na(disctcr_02)) %>%
+  dplyr::filter(!is.na(discfcr_02)) %>%
+  # avg household size per water point
+  group_by(country, sample_group, intervention) %>%
+  summarise(
+    n_hh = n(),
+    n_wp_chl = n_distinct(wp_id)
+  ) 
+
+hh_sample
+```
+
+#### users by sample group x intervention
+```{r}
+# combine hh_count and hh_size CIs and calculate users with CIs
+users_with_ci_combined <- hh_count_ci_v1 %>%
+  # rename columns to be clearer
+  rename(
+    hh_count = mean,
+    se_hh_count = se,
+    hh_count_lb = lb,
+    hh_count_ub = ub
+  ) %>%
+  # join with hh_size
+  left_join(
+    hh_size_ci_weighted %>%
+      rename(
+        hh_size = mean,
+        se_hh_size = se,
+        hh_size_lb = lb,
+        hh_size_ub = ub
+      ),
+    by = c("country", "sample_group", "intervention")
+  ) %>%
+  # calculate per_wp_users and its SE using delta method
+  mutate(
+    per_wp_users = hh_count * hh_size,
+    # delta method: SE(X*Y) = sqrt((Y^2 * SE_X^2) + (X^2 * SE_Y^2))
+    # assuming X and Y are independent
+    se_per_wp_users = sqrt(
+      (hh_size^2) * (se_hh_count^2) + 
+      (hh_count^2) * (se_hh_size^2)
+    ),
+    # 95% CI for per_wp_users
+    per_wp_users_lb = per_wp_users - 1.96 * se_per_wp_users,
+    per_wp_users_ub = per_wp_users + 1.96 * se_per_wp_users
+  ) %>%
+  # join with population water points - sum across sample_groups
+  left_join(
+    wp_sample_sizes,
+    by = c("country", "sample_group", "intervention")
+  ) %>%
+  # scale up to population
+  mutate(
+    popn_users = per_wp_users * pop_points,
+    # SE scales linearly with constant: SE(c*X) = c * SE(X)
+    se_popn_users = se_per_wp_users * pop_points,
+    # 95% CI for popn_users
+    popn_users_lb = popn_users - 1.96 * se_popn_users,
+    popn_users_ub = popn_users + 1.96 * se_popn_users
+  )
+
+users_with_ci_combined %>% select(country, sample_group, intervention, per_wp_users, se_per_wp_users, pop_points,  popn_users, se_popn_users, popn_users_lb, popn_users_ub)
+```
+
 ### Final numbers
+```{r}
+users_table <- users_with_ci_combined %>%
+  select(country, sample_group, intervention, pop_points, popn_users, se_popn_users) %>%
+  left_join(
+    wp_sample,
+    by = c("country", "sample_group", "intervention")
+  ) %>%
+  left_join(
+    hh_sample,
+    by = c("country", "sample_group", "intervention")
+  ) %>%
+  group_by(country, intervention) %>%
+  summarise(
+    across(where(is.numeric) & !se_popn_users, sum, na.rm = TRUE),
+    # SE of sum: sqrt(sum of squared SEs) assuming independence
+    se_popn_users = sqrt(sum(se_popn_users^2, na.rm = TRUE))
+  ) %>%
+  # CI
+  mutate(
+    popn_users_lb = popn_users - 1.96 * se_popn_users,
+    popn_users_ub = popn_users + 1.96 * se_popn_users
+  )
+
+users_table %>% select(-se_popn_users)
+```
 
 ## Chlorination rates
+### Define function
+```{r}
+# for chlorination - by intervention only, filters for TRUE
+calculate_mean_ci_chlorination <- function(data, var_name, weight_var) {
+  data %>%
+    mutate(weight = {{weight_var}}) %>%
+    group_by(country, intervention) %>%
+    group_split() %>%
+    map(
+      ~ {
+        design <- svydesign(
+          id = ~ village_id,
+          strata = ~ sample_group,
+          weights = ~ weight,
+          data = .x,
+          nest = TRUE
+        )
+        
+        # create formula from variable name
+        formula <- as.formula(paste0("~ ", var_name))
+        
+        mean_val <- svymean(formula, na.rm = TRUE, design) %>%
+          as.data.frame() %>%
+          set_names(c("mean", "se"))
+        
+        ci_val <- confint(svymean(formula, na.rm = TRUE, design)) %>%
+          as.data.frame() %>%
+          set_names(c("lb", "ub"))
+        
+        result <- bind_cols(
+          .x %>% select(country, intervention) %>% slice(1),
+          mean_val,
+          ci_val
+        )
+        
+        # filter for TRUE only
+        result <- result %>% dplyr::filter(str_detect(row.names(.), "TRUE"))
+        
+        rownames(result) <- NULL
+        result
+      }
+    ) %>%
+    bind_rows()
+}
+```
 
-### Prepare data
 ### Final numbers
+each household (observation) gets weight 1
+```{r}
+chlorination_data_weighted_combined <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%  
+  dplyr::filter(!is.na(intervention)) %>%  
+  dplyr::filter(intervention != "Non-program") %>%  
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%  
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%  
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+chlorination_tcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "disctcr_02", 1)
+chlorination_fcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "discfcr_02", 1)
+
+chlorination_tcr_ci_combined
+chlorination_fcr_ci_combined
+```
 
 ## Table
+```{r}
+monitoring_table <- users_table %>%
+  left_join(
+    chlorination_tcr_ci_combined %>%
+      mutate(
+        tcr = mean,
+        tcr_lb = lb,
+        tcr_ub = ub
+      ) %>%
+      select(tcr, tcr_lb, tcr_ub, country, intervention),
+      by = c("country", "intervention")
+  ) %>%
+  left_join(
+    chlorination_fcr_ci_combined %>%
+      mutate(
+        fcr = mean,
+        fcr_lb = lb,
+        fcr_ub = ub
+      ) %>%
+      select(fcr, fcr_lb, fcr_ub, country, intervention),
+      by = c("country", "intervention")
+  )
+
+monitoring_table %>% select(country, intervention, n_wp, n_hh_count, pop_points, popn_users, popn_users_lb, popn_users_ub, n_wp_chl, n_hh, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
+```
