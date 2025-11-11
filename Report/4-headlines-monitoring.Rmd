@@ -1125,6 +1125,147 @@ table13
 ```{r}
 estimates <- table1 %>%
   group_by(country) %>%
+  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE),
+            lb_table1 = sum(lb, na.rm = TRUE),
+            ub_table1 = sum(ub, na.rm = TRUE)) %>%
+  left_join(
+    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table2_exout %>% group_by(country) %>% summarise(table2_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE),
+                                                lb_table8 = sum(lb, na.rm = TRUE),
+                                                ub_table8 = sum(ub, na.rm = TRUE)),
+    by = "country"
+  )
+
+# calculate differences for waterfall chart
+create_waterfall <- function(country_name, country_data) {
+  
+  df <- data.frame(
+  category = c("Table 1", 
+              "Exclude \ncensus\nout-of-village\nhouseholds", 
+              "Unit of\nobservation",
+              "Sample \nselection\nof water points",
+              "Dataset",
+              "Promoter\nsurvey\nout-of-village\nhouseholds",
+              "Table 8"),
+  amount = c(
+    country_data$table1,
+    country_data$table1_exout - country_data$table1,
+    country_data$table2_exout - country_data$table1_exout,
+    country_data$table10_exout - country_data$table2_exout,
+    country_data$table13 - country_data$table10_exout,
+    country_data$table8 - country_data$table13,
+    country_data$table8),
+  lb = c(
+    country_data$lb_table1,
+    NA,
+    NA,
+    NA,
+    NA,
+    NA,
+    country_data$lb_table8),
+  ub = c(
+    country_data$ub_table1,
+    NA,
+    NA,
+    NA,
+    NA,
+    NA,
+    country_data$ub_table8)
+  )
+  
+# round (to 20k)
+df <- df %>%
+    mutate(amount_rounded = round(amount / 20000) * 20000,
+           lb_rounded = round(lb / 20000) * 20000,
+           ub_rounded = round(ub / 20000) * 20000)
+  
+  df$category <- factor(df$category, levels = df$category)
+  
+# calculate positions
+  df <- df %>%
+    mutate(
+      id = row_number(),
+      type = case_when(
+        id == 1 | id == n() ~ "total",
+        id == 5 ~ "dataset",
+        amount_rounded < 0 ~ "decrease",
+        TRUE ~ "increase"
+      ),
+      end = cumsum(amount_rounded),
+      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
+    )  %>%
+    mutate(
+      start = ifelse(type == "total", 0, start),
+      end = ifelse(type == "total", amount_rounded, end),
+      ci_lower = ifelse(id == 1 | id == n(), lb_rounded, NA),
+      ci_upper = ifelse(id == 1 | id == n(), ub_rounded, NA)
+    )
+ 
+# create waterfall charts
+  ggplot(df, aes(x = category, fill = type)) +
+    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
+                  ymin = start, ymax = end)) +
+    geom_errorbar(aes(x = id, ymin = ci_lower, ymax = ci_upper),
+                  width = 0.2, color = "black", linewidth = 0.5) +
+    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
+              vjust = -0.5, size = 4, fontface = "bold") +
+    scale_fill_manual(values = c("decrease" = "#d73027", 
+                                  "increase" = "#4575b4",
+                                  "dataset" = "#FDB462",
+                                  "total" = "#4575b4")) +   
+    labs(
+         y = "People with access",
+         x = NULL) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
+      panel.grid.major.x = element_blank()
+    ) +
+    scale_y_continuous(limits = c(0, max(df$ci_upper, na.rm = TRUE) * 1.1), 
+                       labels = scales::comma)
+}
+
+# create plots for each country
+uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
+malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
+
+waterfall_uganda <- create_waterfall("Uganda", uganda_data)
+waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+
+ggsave("output/waterfall_uganda.pdf", 
+       plot = waterfall_uganda, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+
+ggsave("output/waterfall_malawi.pdf", 
+       plot = waterfall_malawi, 
+       width = 8, 
+       height = 6, 
+       units = "in",
+       device = "pdf")
+```
+
+```{r}
+estimates <- table1 %>%
+  group_by(country) %>%
   summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
   left_join(
     table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
@@ -1136,6 +1277,10 @@ estimates <- table1 %>%
   ) %>%
   left_join(
     table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
   ) %>%
   left_join(
@@ -1235,139 +1380,190 @@ ggsave("output/waterfall_malawi.pdf",
        device = "pdf")
 ```
 
-
+## Regressions of chlorination on being listed by promoter
+###  tcr, control for promoter surveyed
 ```{r}
-estimates <- table1 %>%
-  group_by(country) %>%
-  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
-  left_join(
-    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table2_exout %>% group_by(country) %>% summarise(table2_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table14 %>% group_by(country) %>% summarise(table14 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table2 %>% group_by(country) %>% summarise(table2 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table10 %>% group_by(country) %>% summarise(table10 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) 
+library(estimatr)
 
-estimates <- estimates%>%
-  mutate(
-    pm_to_census_ratio = table8 / table1
-  )
+promoter_wp_households <- hh_survey #%>%
+  # dplyr::filter(promoter_surveyed == 1) 
 
-# calculate differences for waterfall chart
-create_waterfall <- function(country_name, country_data) {
-  
-  df <- data.frame(
-  category = c("Table 1", 
-              "Exclude \ncensus\nout-of-village\nhouseholds", 
-              "Unit of\nobservation",
-              "Sample \nselection\nof water points",
-              "Dataset",
-              "Double \n-counting",
-              "Promoter\nsurvey\nout-of-village\nhouseholds",
-              "Table 8"),
-  amount = c(
-    country_data$table1,
-    country_data$table1_exout - country_data$table1,
-    country_data$table2_exout - country_data$table1_exout,
-    country_data$table10_exout - country_data$table2_exout,
-    country_data$table14 - country_data$table10_exout,
-    country_data$table13 - country_data$table14,
-    country_data$table8 - country_data$table13,
-    country_data$table8  )
-  )
-  
-# round (to 50k)
-df <- df %>%
-    mutate(amount_rounded = round(amount / 20000) * 20000)
-  
-  df$category <- factor(df$category, levels = df$category)
-  
-# calculate positions
-  df <- df %>%
-    mutate(
-      id = row_number(),
-      type = case_when(
-        id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",                     
-        amount_rounded < 0 ~ "decrease",
-        TRUE ~ "increase"
-      ),
-      end = cumsum(amount_rounded),
-      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
-    )  %>%
-    mutate(
-      start = ifelse(type == "total", 0, start),
-      end = ifelse(type == "total", amount_rounded, end)
-    )
- 
-# create waterfall charts
-  ggplot(df, aes(x = category, fill = type)) +
-    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
-                  ymin = start, ymax = end)) +
-    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
-              vjust = -0.5, size = 4, fontface = "bold") +
-    scale_fill_manual(values = c("decrease" = "#d73027", 
-                                  "increase" = "#4575b4",
-                                  "dataset" = "#FDB462",    # yellow for unexplained part
-                                  "total" = "#4575b4")) +   
-    labs(
-      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
-         y = "People with access",
-         x = NULL) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      # plot.title = element_text(size = 14, face = "bold"),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
-                       labels = scales::comma)
-}
+uganda_promoter_wp <- hh_survey %>%
+  dplyr::filter(country == "Uganda")
 
-# create plots for each country
-uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
-malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
+malawi_promoter_wp <- hh_survey %>%
+  dplyr::filter(country == "Malawi")
 
-waterfall_uganda <- create_waterfall("Uganda", uganda_data)
-waterfall_malawi <- create_waterfall("Malawi", malawi_data)
+uganda_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
 
-ggsave("output/waterfall_uganda.pdf", 
-       plot = waterfall_uganda, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
+malawi_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
 
-ggsave("output/waterfall_malawi.pdf", 
-       plot = waterfall_malawi, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
+          type = "text",
+          title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination",
+          dep.var.labels = "disctcr 02",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
+```
+
+### fcr, control for promoter surveyed
+```{r}
+library(estimatr)
+
+promoter_wp_households <- hh_survey #%>%
+  # dplyr::filter(promoter_surveyed == 1) 
+
+uganda_promoter_wp <- hh_survey %>%
+  dplyr::filter(country == "Uganda")
+
+malawi_promoter_wp <- hh_survey %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
+
+malawi_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp)
+malawi_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
+          type = "text",
+          title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination",
+          dep.var.labels = "discfcr 02",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
+```
+
+### tcr, no controls
+```{r}
+library(estimatr)
+
+uganda_promoter_wp <- hh_survey %>%
+  dplyr::filter(country == "Uganda")
+
+malawi_promoter_wp <- hh_survey %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
+
+malawi_model <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
+          type = "text",
+          title = "Association between Being Listed by Promoter and Chlorination",
+          dep.var.labels = "disctcr 02",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
+```
+
+### tcr, limit sample to promoter surveyed
+```{r}
+library(estimatr)
+
+promoter_wp_households <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == 1)
+
+uganda_promoter_wp <- promoter_wp_households %>%
+  dplyr::filter(country == "Uganda")
+
+malawi_promoter_wp <- promoter_wp_households %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
+
+malawi_model <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
+          type = "text",
+          title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users",
+          dep.var.labels = "disctcr 02",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
+```
+
+### tcr continuous (as opposed to disctcr_02)
+```{r}
+library(estimatr)
+
+promoter_wp_households <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == 1)
+
+uganda_promoter_wp <- promoter_wp_households %>%
+  dplyr::filter(country == "Uganda")
+
+malawi_promoter_wp <- promoter_wp_households %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model <- lm_robust(disctcr ~ promoter_list, 
+                          data = uganda_promoter_wp,
+                          clusters = wp_id)
+
+malawi_model <- lm_robust(disctcr ~ promoter_list, 
+                          data = malawi_promoter_wp,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr ~ promoter_list, data = uganda_promoter_wp)
+malawi_lm <- lm(disctcr ~ promoter_list, data = malawi_promoter_wp)
+
+stargazer(uganda_lm, malawi_lm,
+          type = "text",
+          title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users",
+          dep.var.labels = "disctcr",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model$std.error),
+          p = list(uganda_model$p.value, malawi_model$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
 ```
