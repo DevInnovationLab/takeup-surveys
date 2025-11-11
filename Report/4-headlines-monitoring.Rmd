@@ -1161,7 +1161,7 @@ create_waterfall <- function(country_name, country_data) {
               "Sample \nselection\nof water points",
               "Dataset",
               "Promoter\nsurvey\nout-of-village\nhouseholds",
-              "Table 8"),
+              "Table 3"),
   amount = c(
     country_data$table1,
     country_data$table1_exout - country_data$table1,
@@ -1567,3 +1567,82 @@ stargazer(uganda_lm, malawi_lm,
           keep.stat = c("n", "rsq", "adj.rsq"),
           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
 ```
+
+## Do households surveyed after the promoter respond differently?
+### load rank dataset
+```{r}
+pm_survey_clean <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Clean",
+      "pm-survey-clean.rds"
+    )
+  )
+
+randomization <- pm_survey_clean %>% 
+  dplyr::select(
+    wp_id, village_id, country,
+    contains("rand_hh")
+  ) %>%
+  pivot_longer(
+    cols = starts_with("rand_hh"),
+    names_prefix = "rand_hh_",
+    names_to = "rank",
+    values_to = "household_name",
+    values_drop_na = TRUE
+  ) %>%
+  mutate(household_name = household_name %>% str_squish %>% str_trim)
+
+
+hhc <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Constructed",
+      "hh-census-constructed.rds"
+    )
+  ) %>%
+  select(village_id, household_id, household_name)
+
+randomization_id <-
+  randomization %>%
+  left_join(hhc)
+
+hh_survey <- hh_survey %>%
+  left_join(
+    randomization_id %>% select(household_id, rank),
+    by = "household_id"
+  )
+```
+
+### test
+```{r}
+chlor <- hh_survey %>%
+  dplyr::filter(!is.na(rank)) %>% # only HHs randomized into monitoring
+  dplyr::filter(survey == "Household Survey" & rank < 5 | survey == "Monitoring Survey") 
+  
+table <- chlor %>%
+  group_by(survey) %>%
+  summarize(
+    disctcr_02 = mean(disctcr_02, na.rm = TRUE),
+    discfcr_02 = mean(discfcr_02, na.rm = TRUE)
+  )
+  
+table
+
+lm_robust(disctcr_02 ~ survey,
+          data = chlor,
+          clusters = wp_id)
+
+lm_robust(discfcr_02 ~ survey,
+          data = chlor,
+          clusters = wp_id)
+```
+
