@@ -10,7 +10,8 @@ pacman::p_load(
   broom,
   car,
   modelsummary,
-  survey
+  survey,
+  here
 )
 ```
 
@@ -522,6 +523,20 @@ plot_data %>%
   )
 ```
 
+#### Save Plot
+```{r}
+#if (!dir.exists("graphs")) dir.create("graphs")
+#knitr::opts_chunk$set(fig.path = "graphs/")
+ggplot2::ggsave(
+  filename = "../output/graphs/users-vil.png",  
+  plot     = ggplot2::last_plot(),            
+  width    = 8,
+  height   = 4.5,
+  units    = "in",
+  dpi      = 300
+)
+```
+
 
 ## Chlorine detection rates
 
@@ -705,7 +720,7 @@ feols(
 cl_village_noweights_country <-
   chlorination_data %>%
   group_by(country, wp_intervention) %>%
-  group_split %>%
+  group_split() %>%
   map(
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
@@ -723,7 +738,7 @@ cl_village_noweights_country <-
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
   ) %>%
-  bind_rows %>%
+  bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 
@@ -1030,6 +1045,19 @@ plot_data %>%
   )
 ```
 
+#### Save Plot
+```{r}
+ggplot2::ggsave(
+  filename = "../output/graphs/chlorine-vil.png",  
+  plot     = ggplot2::last_plot(),            
+  width    = 8,
+  height   = 5,
+  units    = "in",
+  dpi      = 300
+)
+```
+
+
 ## Table
 
 ```{r}
@@ -1065,6 +1093,107 @@ cl_village_noweights_country %>%
     ),
     se = paste0("(", lb, ", ", ub, ")") 
   ) 
+```
+
+### Export Table
+
+```{r}
+cl_village_noweights_samplegroup
+```
+
+```{r make-headlines-vil-rows, message = FALSE, warning = FALSE}
+library(dplyr)
+library(readr)
+library(tidyr)
+library(glue)
+library(here)
+
+users_vil    <- read_csv(here("../output/tables/users-vil.csv"))
+chlorine_vil <- read_csv(here("../output/tables/chlorine-vil.csv"))
+
+users_sum <- users_vil %>%
+  group_by(country, wp_intervention) %>%
+  slice_max(order_by = villages, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  transmute(
+    country,
+    wp_intervention,
+    vil_hh      = villages,   
+    hhs_hh      = hhs,       
+    vil_country = pop,        
+    people_tot  = total,    
+    people_lb   = lb,       
+    people_ub   = ub       
+  )
+
+cl_sum <- chlorine_vil %>%
+  group_by(country, wp_intervention, outcome) %>%
+  summarise(
+    mean     = first(mean),
+    lb       = first(lb),
+    ub       = first(ub),
+    hhs      = sum(hhs,       na.rm = TRUE),
+    villages = sum(villages,  na.rm = TRUE),
+    .groups  = "drop"
+  ) %>%
+  mutate(
+    mean = round(100 * mean, 1),
+    lb   = round(100 * lb,   1),
+    ub   = round(100 * ub,   1)
+  ) %>%
+  mutate(ci = glue("({lb}, {ub})")) %>%
+  select(country, wp_intervention, outcome,
+         mean, ci, hhs, villages) %>%
+  pivot_wider(
+    id_cols     = c(country, wp_intervention),
+    names_from  = outcome,  
+    values_from = c(mean, ci, hhs, villages),
+    names_glue  = "{outcome}_{.value}"
+  )
+
+tab <- users_sum %>%
+  left_join(cl_sum, by = c("country", "wp_intervention")) %>%
+  arrange(factor(country, levels = c("Malawi", "Uganda")),
+          factor(wp_intervention, levels = c("DSW", "ILC")))
+
+fmt_int <- function(x) format(round(x), big.mark = ",", trim = TRUE)
+
+rows <- character()
+
+for (i in seq_len(nrow(tab))) {
+  r <- tab[i, ]
+
+  if (i == 1 || tab$country[i] != tab$country[i - 1]) {
+    if (i > 1) rows <- c(rows, "\\addlinespace")
+    rows <- c(
+      rows,
+      glue("\\textbf{{{r$country}}} &  &  &  &  &  &  &  & \\\\")
+    )
+  }
+
+  prog <- r$wp_intervention
+
+  tcr_mean <- r$disctcr_02_mean
+  tcr_ci   <- r$disctcr_02_ci
+  fcr_mean <- r$discfcr_02_mean
+  fcr_ci   <- r$discfcr_02_ci
+
+  line1 <- glue(
+"{prog} & {fmt_int(r$vil_hh)} & {fmt_int(r$hhs_hh)} & {fmt_int(r$vil_country)} & {fmt_int(r$people_tot)} & {fmt_int(r$disctcr_02_villages)} & {fmt_int(r$disctcr_02_hhs)} & {tcr_mean} & {fcr_mean}\\\\"
+  )
+
+  line2 <- glue(
+" &  &  &  & ({fmt_int(r$people_lb)}, {fmt_int(r$people_ub)}) &  &  & {tcr_ci} & {fcr_ci}\\\\"
+  )
+
+  rows <- c(rows, line1, line2)
+}
+
+writeLines(
+  rows,
+  here("../output/tables/headlines-vil-rows.tex")
+)
+
 ```
 
 

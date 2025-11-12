@@ -372,6 +372,19 @@ plot_data %>%
   )
 ```
 
+#### Save Plot
+```{r}
+ggplot2::ggsave(
+  filename = "../output/graphs/chlorine-vil.png",  
+  plot     = ggplot2::last_plot(),            
+  width    = 8,
+  height   = 5,
+  units    = "in",
+  dpi      = 300
+)
+```
+
+
 ## Chlorination rates
 
 ### Prepare data
