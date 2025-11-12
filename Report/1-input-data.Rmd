@@ -21,7 +21,14 @@ pacman::p_load(
 ```{r}
 villages <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/villages.rds")
+      file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
   ) 
 ```
 
@@ -78,7 +85,14 @@ wp_sample_sizes <-
 ```{r}
 hh_census <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/hh-census.rds")
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
   ) %>%
   st_drop_geometry() %>%
   # To account for non-responses, we calculate the village-level non-response rate
@@ -98,7 +112,14 @@ hh_census <-
 ```{r}
 hh_survey <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/hh-survey.rds")
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
   ) %>%
   dplyr::filter(
     survey == "Household Survey"
@@ -120,7 +141,14 @@ hh_survey <-
 ```{r}
 wp_census <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/wp-census.rds")
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
   ) %>%
   st_drop_geometry  %>%
   mutate(

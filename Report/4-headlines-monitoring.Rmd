@@ -55,13 +55,27 @@ wp_sample_sizes_intervention
 ```{r}
 wp_census <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/wp-census.rds")
+        file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
   ) %>%
   mutate(ea_id = as.character(ea_id))
 
 hh_survey <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/hh-survey.rds")
+        file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
   ) 
 
 # hh_census <-
@@ -78,7 +92,14 @@ hh_survey <-
 
 hh_census <-
   read_rds(
-    file.path("/Users/gowx/Desktop/Data/hh-census.rds")
+     file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
   ) %>%
   st_drop_geometry() %>%
   # To account for non-responses, we calculate the village-level non-response rate
