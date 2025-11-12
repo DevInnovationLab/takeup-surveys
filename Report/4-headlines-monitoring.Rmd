@@ -317,12 +317,29 @@ users_table %>% select(-se_popn_users)
 
 # prep for waterfall chart
 table8 <- users_table %>%
-  select(country, intervention, popn_users, popn_users_lb, popn_users_ub) %>%
+  select(country, intervention, popn_users, se_popn_users, popn_users_lb, popn_users_ub) %>%
   mutate(
     indiv_access_popn = popn_users,
     lb = popn_users_lb,
     ub = popn_users_ub
   )
+
+table8
+
+table8country <- table8 %>%
+  group_by(country) %>%
+  summarise(
+    indiv_access_popn = sum(indiv_access_popn),
+    # SE of sum: sqrt(sum of squared SEs) assuming independence
+    se_popn_users = sqrt(sum(se_popn_users^2, na.rm = TRUE))
+  ) %>%
+  # CI
+  mutate(
+    lb = indiv_access_popn - 1.96 * se_popn_users,
+    ub = indiv_access_popn + 1.96 * se_popn_users
+  )
+
+table8country
 ```
 
 ## Chlorination rates
@@ -503,7 +520,7 @@ people_per_country <-
   arrange(outcome)
 
 table1 <- people_per_country %>%
-  select(country, wp_intervention, total, lb, ub) %>%
+  select(country, wp_intervention, total, lb, ub, se) %>%
   mutate(
     intervention = wp_intervention,
     indiv_access_popn = total
@@ -511,6 +528,21 @@ table1 <- people_per_country %>%
   select(-total, -wp_intervention)
 
 table1
+
+table1country <- table1 %>%
+  group_by(country) %>%
+  summarise(
+    indiv_access_popn = sum(indiv_access_popn),
+    # SE of sum: sqrt(sum of squared SEs) assuming independence
+    se = sqrt(sum(se^2, na.rm = TRUE))
+  ) %>%
+  # CI
+  mutate(
+    lb = indiv_access_popn - 1.96 * se,
+    ub = indiv_access_popn + 1.96 * se
+  )
+
+table1country
 ```
 
 ### Census data, census water points, water-point level (new table 2, old table 12)
@@ -1122,12 +1154,23 @@ table13
 
 
 ## Waterfall charts
+### with CIs
 ```{r}
+# create CI bounds dataframe for table1 and table8
+ci_bounds <- table1country %>%
+  dplyr::select(country, lb, ub) %>%
+  mutate(
+    table = "table1"
+  ) %>%
+  rbind(
+    table8country %>%
+      dplyr::select(country, lb, ub) %>%
+      mutate(table = "table8")
+  )
+
 estimates <- table1 %>%
   group_by(country) %>%
-  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE),
-            lb_table1 = sum(lb, na.rm = TRUE),
-            ub_table1 = sum(ub, na.rm = TRUE)) %>%
+  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
   left_join(
     table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
     by = "country"
@@ -1145,9 +1188,15 @@ estimates <- table1 %>%
     by = "country"
   ) %>%
   left_join(
-    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE),
-                                                lb_table8 = sum(lb, na.rm = TRUE),
-                                                ub_table8 = sum(ub, na.rm = TRUE)),
+    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
+    by = "country"
+  ) %>%
+  left_join(
+    ci_bounds %>% dplyr::filter(table == "table1") %>% dplyr::select(country, lb_table1 = lb, ub_table1 = ub),
+    by = "country"
+  ) %>%
+  left_join(
+    ci_bounds %>% dplyr::filter(table == "table8") %>% dplyr::select(country, lb_table8 = lb, ub_table8 = ub),
     by = "country"
   )
 
@@ -1155,48 +1204,48 @@ estimates <- table1 %>%
 create_waterfall <- function(country_name, country_data) {
   
   df <- data.frame(
-  category = c("Table 1", 
-              "Exclude \ncensus\nout-of-village\nhouseholds", 
-              "Unit of\nobservation",
-              "Sample \nselection\nof water points",
-              "Dataset",
-              "Promoter\nsurvey\nout-of-village\nhouseholds",
-              "Table 3"),
-  amount = c(
-    country_data$table1,
-    country_data$table1_exout - country_data$table1,
-    country_data$table2_exout - country_data$table1_exout,
-    country_data$table10_exout - country_data$table2_exout,
-    country_data$table13 - country_data$table10_exout,
-    country_data$table8 - country_data$table13,
-    country_data$table8),
-  lb = c(
-    country_data$lb_table1,
-    NA,
-    NA,
-    NA,
-    NA,
-    NA,
-    country_data$lb_table8),
-  ub = c(
-    country_data$ub_table1,
-    NA,
-    NA,
-    NA,
-    NA,
-    NA,
-    country_data$ub_table8)
+    category = c("Table 1", 
+                "Exclude \ncensus\nout-of-village\nhouseholds", 
+                "Unit of\nobservation",
+                "Sample \nselection\nof water points",
+                "Dataset",
+                "Promoter\nsurvey\nout-of-village\nhouseholds",
+                "Table 3"),
+    amount = c(
+      country_data$table1,
+      country_data$table1_exout - country_data$table1,
+      country_data$table2_exout - country_data$table1_exout,
+      country_data$table10_exout - country_data$table2_exout,
+      country_data$table13 - country_data$table10_exout,
+      country_data$table8 - country_data$table13,
+      country_data$table8),
+    ci_lb = c(
+      country_data$lb_table1,
+      NA,
+      NA,
+      NA,
+      NA,
+      NA,
+      country_data$lb_table8),
+    ci_ub = c(
+      country_data$ub_table1,
+      NA,
+      NA,
+      NA,
+      NA,
+      NA,
+      country_data$ub_table8)
   )
   
-# round (to 20k)
-df <- df %>%
-    mutate(amount_rounded = round(amount / 20000) * 20000,
-           lb_rounded = round(lb / 20000) * 20000,
-           ub_rounded = round(ub / 20000) * 20000)
+  # round (to 20k)
+  df <- df %>%
+    mutate(
+      amount_rounded = round(amount / 20000) * 20000
+    )
   
   df$category <- factor(df$category, levels = df$category)
   
-# calculate positions
+  # calculate positions
   df <- df %>%
     mutate(
       id = row_number(),
@@ -1207,37 +1256,56 @@ df <- df %>%
         TRUE ~ "increase"
       ),
       end = cumsum(amount_rounded),
-      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
-    )  %>%
+      start = dplyr::lag(end, n = 1, default = 0, order_by = id)
+    ) %>%
     mutate(
       start = ifelse(type == "total", 0, start),
-      end = ifelse(type == "total", amount_rounded, end),
-      ci_lower = ifelse(id == 1 | id == n(), lb_rounded, NA),
-      ci_upper = ifelse(id == 1 | id == n(), ub_rounded, NA)
+      end = ifelse(type == "total", amount_rounded, end)
     )
- 
-# create waterfall charts
+  
+  # create waterfall charts
   ggplot(df, aes(x = category, fill = type)) +
     geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
                   ymin = start, ymax = end)) +
-    geom_errorbar(aes(x = id, ymin = ci_lower, ymax = ci_upper),
-                  width = 0.2, color = "black", linewidth = 0.5) +
+    # add CI error bars for table1 and table8
+    geom_segment(
+      data = df %>% dplyr::filter(!is.na(ci_lb)),
+      aes(x = id - 0.1, xend = id + 0.1, y = ci_lb, yend = ci_lb),
+      color = "black",
+      linewidth = 1,
+      inherit.aes = FALSE
+    ) +
+    geom_segment(
+      data = df %>% dplyr::filter(!is.na(ci_lb)),
+      aes(x = id - 0.1, xend = id + 0.1, y = ci_ub, yend = ci_ub),
+      color = "black",
+      linewidth = 1,
+      inherit.aes = FALSE
+    ) +
+    geom_segment(
+      data = df %>% dplyr::filter(!is.na(ci_lb)),
+      aes(x = id, xend = id, y = ci_lb, yend = ci_ub),
+      color = "black",
+      linewidth = 1,
+      inherit.aes = FALSE
+    ) +
     geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
               vjust = -0.5, size = 4, fontface = "bold") +
     scale_fill_manual(values = c("decrease" = "#d73027", 
                                   "increase" = "#4575b4",
                                   "dataset" = "#FDB462",
-                                  "total" = "#4575b4")) +   
+                                  "total" = "#4575b4"),
+                      na.value = NA) +   
     labs(
-         y = "People with access",
-         x = NULL) +
+      y = "People with access",
+      x = NULL) +
     theme_minimal() +
     theme(
       legend.position = "none",
       axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
       panel.grid.major.x = element_blank()
     ) +
-    scale_y_continuous(limits = c(0, max(df$ci_upper, na.rm = TRUE) * 1.1), 
+    scale_y_continuous(limits = c(0, max(c(df$end, df$ci_ub), na.rm = TRUE) * 1.1), 
                        labels = scales::comma)
 }
 
@@ -1254,7 +1322,6 @@ ggsave("output/waterfall_uganda.pdf",
        height = 6, 
        units = "in",
        device = "pdf")
-
 ggsave("output/waterfall_malawi.pdf", 
        plot = waterfall_malawi, 
        width = 8, 
@@ -1263,6 +1330,7 @@ ggsave("output/waterfall_malawi.pdf",
        device = "pdf")
 ```
 
+### without CIs
 ```{r}
 estimates <- table1 %>%
   group_by(country) %>%
@@ -1628,7 +1696,7 @@ chlor <- hh_survey %>%
   dplyr::filter(!is.na(rank)) %>% # only HHs randomized into monitoring
   dplyr::filter(survey == "Household Survey" & rank < 5 | survey == "Monitoring Survey") 
   
-table <- chlor %>%
+table <- chlor_uganda %>%
   group_by(survey) %>%
   summarize(
     disctcr_02 = mean(disctcr_02, na.rm = TRUE),
@@ -1637,12 +1705,36 @@ table <- chlor %>%
   
 table
 
-lm_robust(disctcr_02 ~ survey,
-          data = chlor,
-          clusters = wp_id)
+chlor_uganda <- chlor %>%
+  dplyr::filter(country == "Uganda")
 
-lm_robust(discfcr_02 ~ survey,
-          data = chlor,
-          clusters = wp_id)
+# run regressions
+model1 <- lm_robust(disctcr_02 ~ survey,
+                    data = chlor_uganda,
+                    clusters = wp_id)
+
+model2 <- lm_robust(discfcr_02 ~ survey,
+                    data = chlor_uganda,
+                    clusters = wp_id)
+
+# extract components from lm_robust objects
+coef1 <- model1$coefficients
+se1 <- model1$std.error
+coef2 <- model2$coefficients
+se2 <- model2$std.error
+
+# fit regular lm models (just for stargazer structure)
+model1_lm <- lm(disctcr_02 ~ survey, data = chlor_uganda)
+model2_lm <- lm(discfcr_02 ~ survey, data = chlor_uganda)
+
+# create stargazer table with clustered SEs from lm_robust
+stargazer(model1_lm, model2_lm,
+          se = list(se1, se2),
+          type = "text",
+          title = "Uganda Association between Survey and Chlorination (Monitoring vs Household Survey & Rank <=4)",
+          column.labels = c("DISCTCR", "DISCFCR"),
+          covariate.labels = c("Monitoring Survey"),
+          dep.var.labels = c(" ", " "))
+```
 ```
 
