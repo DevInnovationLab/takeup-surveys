@@ -375,10 +375,10 @@ plot_data %>%
 #### Save Plot
 ```{r}
 ggplot2::ggsave(
-  filename = "../output/graphs/chlorine-vil.png",  
+  filename = "../output/graphs/users-wp.png",  
   plot     = ggplot2::last_plot(),            
   width    = 8,
-  height   = 5,
+  height   = 4.5,
   units    = "in",
   dpi      = 300
 )
@@ -789,9 +789,18 @@ plot_data %>%
   
 ```
 
-## Table
-
+#### Save Plot
 ```{r}
+ggplot2::ggsave(
+  filename = "../output/graphs/chlorine-wp.png",  
+  plot     = ggplot2::last_plot(),            
+  width    = 8,
+  height   = 5,
+  units    = "in",
+  dpi      = 300
+)
+```
+
 users_wp_country %>%
   left_join(
     wp_sample_sizes %>%
