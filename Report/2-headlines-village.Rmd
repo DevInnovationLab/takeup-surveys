@@ -2,6 +2,10 @@
 
 ```{r}
 pacman::p_load(
+  dplyr,
+  readr,
+  tidyr,
+  glue,
   sf,
   tidyverse,
   viridis,
@@ -1101,13 +1105,7 @@ cl_village_noweights_country %>%
 cl_village_noweights_samplegroup
 ```
 
-```{r make-headlines-vil-rows, message = FALSE, warning = FALSE}
-library(dplyr)
-library(readr)
-library(tidyr)
-library(glue)
-library(here)
-
+```{r, message = FALSE, warning = FALSE}
 users_vil    <- read_csv(here("../output/tables/users-vil.csv"))
 chlorine_vil <- read_csv(here("../output/tables/chlorine-vil.csv"))
 
@@ -1191,7 +1189,7 @@ for (i in seq_len(nrow(tab))) {
 
 writeLines(
   rows,
-  here("../output/tables/headlines-vil-rows.tex")
+  here("../output/tables/headlines-vil.tex")
 )
 
 ```

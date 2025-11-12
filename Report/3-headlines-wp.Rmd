@@ -821,6 +821,93 @@ users_wp_country %>%
     wp_intervention, sampled = wps, hhs, pop, total, se
   ) %>%
   kable()
+
+## Export Table
+```{r, message=FALSE, warning=FALSE}
+users_wp    <- read_csv(here("../output/tables/users-wp.csv"))
+chlorine_wp <- read_csv(here("../output/tables/chlorine-wp.csv"))
+
+pick_hhs <- function(df) {
+  if ("households" %in% names(df)) df$households else df$hhs
+}
+
+users_sum <- users_wp %>%
+  group_by(country, wp_intervention) %>%
+  slice_max(order_by = wps, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(
+    hhs_any = pick_hhs(cur_data_all())
+  ) %>%
+  transmute(
+    country,
+    wp_intervention,
+    wps_hh      = wps,       
+    hhs_hh      = hhs_any,   
+    vil_country = villages,  
+    people_tot  = total,    
+    people_lb   = lb,    
+    people_ub   = ub    
+  )
+
+cl_sum <- chlorine_wp %>%
+  group_by(country, wp_intervention, outcome) %>%
+  summarise(
+    mean      = first(mean),
+    lb        = first(lb),
+    ub        = first(ub),
+    wps_chl   = first(wps),
+    hhs_chl   = first(households),
+    .groups   = "drop"
+  ) %>%
+  mutate(
+    mean = round(100*mean, 1),
+    lb   = round(100*lb,   1),
+    ub   = round(100*ub,   1),
+    ci   = glue("({lb}, {ub})")
+  ) %>%
+  select(country, wp_intervention, outcome, mean, ci, wps_chl, hhs_chl) %>%
+  pivot_wider(
+    id_cols     = c(country, wp_intervention),
+    names_from  = outcome,                 
+    values_from = c(mean, ci, wps_chl, hhs_chl),
+    names_glue  = "{outcome}_{.value}"
+  )
+
+tab <- users_sum %>%
+  left_join(cl_sum, by = c("country","wp_intervention")) %>%
+  arrange(factor(country, levels = c("Malawi","Uganda")),
+          factor(wp_intervention, levels = c("DSW","ILC")))
+
+fmt_int <- function(x) format(round(x), big.mark=",", trim=TRUE)
+
+rows <- character()
+for (i in seq_len(nrow(tab))) {
+  r <- tab[i,]
+  # country header when it changes
+  if (i==1 || tab$country[i] != tab$country[i-1]) {
+    if (i>1) rows <- c(rows, "\\addlinespace")
+    rows <- c(rows, glue("\\textbf{{{r$country}}} &&&&&&&& \\\\"))
+  }
+  prog <- r$wp_intervention
+
+  tcr_mean <- r$disctcr_02_mean
+  tcr_ci   <- r$disctcr_02_ci
+  fcr_mean <- r$discfcr_02_mean
+  fcr_ci   <- r$discfcr_02_ci
+
+  line1 <- glue(
+"\\hspace{{1em}}{prog} & {fmt_int(r$wps_hh)} & {fmt_int(r$hhs_hh)} & {fmt_int(r$vil_country)} & {fmt_int(r$people_tot)} & {fmt_int(r$disctcr_02_wps_chl)} & {fmt_int(r$disctcr_02_hhs_chl)} & {tcr_mean} & {fcr_mean} \\\\"
+  )
+  line2 <- glue(
+" &  &  &  & ({fmt_int(r$people_lb)}, {fmt_int(r$people_ub)}) &  &  & {tcr_ci} & {fcr_ci} \\\\"
+  )
+  rows <- c(rows, line1, line2)
+}
+
+writeLines(
+  rows,
+  here("../output/tables/headlines-wp.tex")
+)
 ```
 
 

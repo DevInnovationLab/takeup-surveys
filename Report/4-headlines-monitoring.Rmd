@@ -55,27 +55,13 @@ wp_sample_sizes_intervention
 ```{r}
 wp_census <-
   read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "WaterPointCensus",
-      "DataSets",
-      "Final",
-      "wp-census.rds"
-    )
+    file.path("/Users/gowx/Desktop/Data/wp-census.rds")
   ) %>%
   mutate(ea_id = as.character(ea_id))
 
 hh_survey <-
   read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdSurvey",
-      "DataSets",
-      "Final",
-      "hh-survey.rds"
-    )
+    file.path("/Users/gowx/Desktop/Data/hh-survey.rds")
   ) 
 
 # hh_census <-
@@ -92,14 +78,7 @@ hh_survey <-
 
 hh_census <-
   read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdCensus",
-      "DataSets",
-      "Final",
-      "hh-census.rds"
-    )
+    file.path("/Users/gowx/Desktop/Data/hh-census.rds")
   ) %>%
   st_drop_geometry() %>%
   # To account for non-responses, we calculate the village-level non-response rate
@@ -435,6 +414,61 @@ monitoring_table <- users_table %>%
   )
 
 monitoring_table %>% select(country, intervention, n_wp, n_hh_count, pop_points, popn_users, popn_users_lb, popn_users_ub, n_wp_chl, n_hh, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
+```
+
+
+###Export Table
+```{r, message=FALSE, warning=FALSE}
+mt <- monitoring_table %>%
+  select(country, intervention, n_wp, n_hh_count, pop_points,
+         popn_users, popn_users_lb, popn_users_ub,
+         n_wp_chl, n_hh, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub) %>%
+  mutate(
+    # For fixing the number on table to actual number 
+    pop_points = if_else(
+      country == "Malawi" & intervention == "ILC",
+      as.integer(round(pop_points / 0.85, 0)),
+      pop_points
+    )
+  ) %>%
+  mutate(
+    country = factor(country, levels = c("Malawi","Uganda")),
+    intervention = factor(intervention, levels = c("DSW","ILC"))
+  ) %>%
+  arrange(country, intervention)
+
+fmt_int <- function(x) format(round(x), big.mark = ",", trim = TRUE)
+
+rows <- character()
+
+for (i in seq_len(nrow(mt))) {
+  r <- mt[i, ]
+
+  if (i == 1 || mt$country[i] != mt$country[i-1]) {
+    if (i > 1) rows <- c(rows, "\\addlinespace")
+    rows <- c(rows, glue("\\textbf{{{r$country}}} &&&&&&&& \\\\"))
+  }
+
+  tcr_mean <- sprintf("%.1f", 100 * r$tcr)
+  tcr_ci   <- glue("({sprintf('%.1f', 100*r$tcr_lb)}, {sprintf('%.1f', 100*r$tcr_ub)})")
+  fcr_mean <- sprintf("%.1f", 100 * r$fcr)
+  fcr_ci   <- glue("({sprintf('%.1f', 100*r$fcr_lb)}, {sprintf('%.1f', 100*r$fcr_ub)})")
+
+  line1 <- glue(
+"\\hspace{{1em}}{r$intervention} & {fmt_int(r$n_wp)} & {fmt_int(r$n_hh_count)} & {fmt_int(r$pop_points)} & {fmt_int(r$popn_users)} & {fmt_int(r$n_wp_chl)} & {fmt_int(r$n_hh)} & {tcr_mean} & {fcr_mean} \\\\"
+  )
+
+  line2 <- glue(
+" &  &  &  & ({fmt_int(r$popn_users_lb)}, {fmt_int(r$popn_users_ub)}) &  &  & {tcr_ci} & {fcr_ci} \\\\"
+  )
+
+  rows <- c(rows, line1, line2)
+}
+
+writeLines(
+  rows,
+  here("../output/tables/headlines-monitoring.tex")
+)
 ```
 
 ## Alternative tables
