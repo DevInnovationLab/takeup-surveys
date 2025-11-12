@@ -529,8 +529,6 @@ plot_data %>%
 
 #### Save Plot
 ```{r}
-#if (!dir.exists("graphs")) dir.create("graphs")
-#knitr::opts_chunk$set(fig.path = "graphs/")
 ggplot2::ggsave(
   filename = "../output/graphs/users-vil.png",  
   plot     = ggplot2::last_plot(),            
