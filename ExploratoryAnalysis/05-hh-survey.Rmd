@@ -569,16 +569,16 @@ uganda:
 ```{r}
 # match to hh survey
 hh_survey_spotchecks_malawi <- hh_survey %>%
-  dplyr::filter(country == "MALAWI") %>%
+  dplyr::filter(country == "Malawi") %>%
   left_join(
     spotcheck_malawi %>% select(hh_id, tcr, fcr),
-    by = c("household_id" = "hh_id"))
+    by = c("household_id" = "hh_id")) 
 
 hh_survey_spotchecks_uganda <- hh_survey %>%
-  dplyr::filter(country == "UGANDA") %>%
+  dplyr::filter(country == "Uganda") %>%
   left_join(
     spotcheck_uganda %>% select(hh_id, tcr, fcr),
-    by = c("household_id" = "hh_id"))
+    by = c("household_id" = "hh_id")) 
 ```
 
 ```{r}
@@ -586,14 +586,25 @@ hh_survey_spotchecks_uganda <- hh_survey %>%
 test_comparison_malawi <- hh_survey_spotchecks_malawi %>%
   select(disctcr, discfcr, tcr, fcr) %>%
   mutate(
-    diff_tcr = disctcr - tcr, # if >0, then higher reading by enumerator than checker
-    diff_fcr = discfcr - fcr
+    diff_tcr = (disctcr - tcr), # if >0, then higher reading by enumerator than checker
+    diff_fcr = (discfcr - fcr)
   ) %>%
-  dplyr::filter(abs(fcr) < 100)%>% # to get rid of one really high result, clearly an error
-  dplyr::filter(abs(tcr) < 100) %>%  
+  mutate(
+    disctcr_hh_survey = disctcr,
+    disctcr_spotcheck = tcr,
+    discfcr_hh_survey = discfcr,
+    discfcr_spotcheck = fcr
+  ) %>%
+  select(-disctcr, -tcr, -discfcr, -fcr) %>%
+  dplyr::filter(abs(discfcr_spotcheck) < 100)%>% # to get rid of one really high result, clearly an error
+  dplyr::filter(abs(disctcr_spotcheck) < 100) %>%  
   summarize(
-    diff_tcr_mean = mean(diff_tcr, na.rm = TRUE),
-    diff_fcr_mean = mean(diff_fcr, na.rm = TRUE),
+    disctcr_hh_survey = mean(disctcr_hh_survey, na.rm = TRUE),
+    disctcr_spotcheck = mean(disctcr_spotcheck, na.rm = TRUE),
+    tcr_survey_minus_spotcheck = mean(diff_tcr, na.rm = TRUE),
+    discfcr_hh_survey = mean(discfcr_hh_survey, na.rm = TRUE), 
+    discfcr_spotcheck = mean(discfcr_spotcheck, na.rm = TRUE),
+    fcr_survey_minus_spotcheck = mean(diff_fcr, na.rm = TRUE),
     n = n()
   )
 
@@ -602,54 +613,66 @@ print(test_comparison_malawi)
 test_comparison_uganda <- hh_survey_spotchecks_uganda %>%
   select(disctcr, discfcr, tcr, fcr) %>%
   mutate(
-    diff_tcr = disctcr - tcr, # if >0, then higher reading by enumerator than checker
-    diff_fcr = discfcr - fcr
+    diff_tcr = (disctcr - tcr), # if >0, then higher reading by enumerator than checker
+    diff_fcr = (discfcr - fcr)
   ) %>%
-  dplyr::filter(fcr < 100) %>% # to get rid of one really high result, clearly an error
+  mutate(
+    disctcr_hh_survey = disctcr,
+    disctcr_spotcheck = tcr,
+    discfcr_hh_survey = discfcr,
+    discfcr_spotcheck = fcr
+  ) %>%
+  select(-disctcr, -tcr, -discfcr, -fcr) %>%
+  dplyr::filter(abs(discfcr_spotcheck) < 100)%>% # to get rid of one really high result, clearly an error
+  dplyr::filter(abs(disctcr_spotcheck) < 100) %>%  
   summarize(
-    diff_tcr_mean = mean(diff_tcr, na.rm = TRUE),
-    diff_fcr_mean = mean(diff_fcr, na.rm = TRUE),
+    disctcr_hh_survey = mean(disctcr_hh_survey, na.rm = TRUE),
+    disctcr_spotcheck = mean(disctcr_spotcheck, na.rm = TRUE),
+    tcr_survey_minus_spotcheck = mean(diff_tcr, na.rm = TRUE),
+    discfcr_hh_survey = mean(discfcr_hh_survey, na.rm = TRUE), 
+    discfcr_spotcheck = mean(discfcr_spotcheck, na.rm = TRUE),
+    fcr_survey_minus_spotcheck = mean(diff_fcr, na.rm = TRUE),
     n = n()
   )
 
 print(test_comparison_uganda)
 
-# # test for malawi
-# malawi_data <- hh_survey_spotchecks_malawi %>%
-#   select(disctcr, discfcr, tcr, fcr) %>%
-#   mutate(
-#     diff_tcr = disctcr - tcr,
-#     diff_fcr = discfcr - fcr
-#   ) %>%
-#   dplyr::filter(fcr < 100) %>%
-#   dplyr::filter(tcr < 100)
+# test for malawi
+malawi_data <- hh_survey_spotchecks_malawi %>%
+  select(disctcr, discfcr, tcr, fcr) %>%
+  mutate(
+    diff_tcr = disctcr - tcr,
+    diff_fcr = discfcr - fcr
+  ) %>%
+  dplyr::filter(fcr < 100) %>%
+  dplyr::filter(tcr < 100)
+
+tcr_test_malawi <- t.test(malawi_data$disctcr, malawi_data$tcr, paired = TRUE)
+fcr_test_malawi <- t.test(malawi_data$discfcr, malawi_data$fcr, paired = TRUE)
+
+cat("MALAWI RESULTS:\n")
+cat("TCR difference test:\n")
+cat("  p-value:", round(tcr_test_malawi$p.value, 4), "\n")
+cat("FCR difference test:\n")
+cat("  p-value:", round(fcr_test_malawi$p.value, 4), "\n")
 # 
-# tcr_test_malawi <- t.test(malawi_data$disctcr, malawi_data$tcr, paired = TRUE)
-# fcr_test_malawi <- t.test(malawi_data$discfcr, malawi_data$fcr, paired = TRUE)
-# 
-# cat("MALAWI RESULTS:\n")
-# cat("TCR difference test:\n")
-# cat("  p-value:", round(tcr_test_malawi$p.value, 4), "\n")
-# cat("FCR difference test:\n")
-# cat("  p-value:", round(fcr_test_malawi$p.value, 4), "\n")
-# 
-# # test for uganda
-# uganda_data <- hh_survey_spotchecks_uganda %>%
-#   select(disctcr, discfcr, tcr, fcr) %>%
-#   mutate(
-#     diff_tcr = disctcr - tcr,
-#     diff_fcr = discfcr - fcr
-#   ) %>%
-#   dplyr::filter(fcr < 100)
-# 
-# tcr_test_uganda <- t.test(uganda_data$disctcr, uganda_data$tcr, paired = TRUE)
-# fcr_test_uganda <- t.test(uganda_data$discfcr, uganda_data$fcr, paired = TRUE)
-# 
-# cat("UGANDA RESULTS:\n")
-# cat("TCR difference test:\n")
-# cat("  p-value:", round(tcr_test_uganda$p.value, 4), "\n")
-# cat("FCR difference test:\n")
-# cat("  p-value:", round(fcr_test_uganda$p.value, 4), "\n")
+# test for uganda
+uganda_data <- hh_survey_spotchecks_uganda %>%
+  select(disctcr, discfcr, tcr, fcr) %>%
+  mutate(
+    diff_tcr = disctcr - tcr,
+    diff_fcr = discfcr - fcr
+  ) %>%
+  dplyr::filter(fcr < 100)
+
+tcr_test_uganda <- t.test(uganda_data$disctcr, uganda_data$tcr, paired = TRUE)
+fcr_test_uganda <- t.test(uganda_data$discfcr, uganda_data$fcr, paired = TRUE)
+
+cat("UGANDA RESULTS:\n")
+cat("TCR difference test:\n")
+cat("  p-value:", round(tcr_test_uganda$p.value, 4), "\n")
+cat("FCR difference test:\n")
+cat("  p-value:", round(fcr_test_uganda$p.value, 4), "\n")
 ```
 
 ## analyzing backchecks - compare to hh survey
