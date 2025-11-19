@@ -494,12 +494,11 @@ backcheck_malawi <-
   rename(hh_id = caseid)
 ```
 
-## TO DO - cleaning duplicates
 ## analyze spotchecks
 Note the spotchecks concern all of 1) hh census, 2) hh survey, 3) monitoring survey, 4) promoter survey.
 
 COMMENTS
-- I don't see that there are separate chlorine tests in spot checks
+- I don't think there are separate chlorine tests in spot checks
 - chlorine test steps followed in c90% of cases in Malawi, with higher scores for color disc
 - chlorine test steps followed in almost 100% of cases in Uganda, but much smaller sample
 - readings for colorwheel are similar (not statistically different); indeed, on average the main enumerator's reading is higher than the checker's (exception: TCR in Uganda)
@@ -734,7 +733,7 @@ check consistency between hh survey and back check of:
 ```{r}
 ### merging hh survey and backchecks
 hh_survey_backcheck_uganda <- hh_survey %>%
-  dplyr::filter(country == "UGANDA") %>%
+  dplyr::filter(country == "Uganda") %>%
   left_join(
     backcheck_uganda %>% 
       select(hh_id, 
@@ -770,7 +769,7 @@ hh_survey_backcheck_uganda <- hh_survey %>%
   )
 
 hh_survey_backcheck_malawi <- hh_survey %>%
-  dplyr::filter(country == "MALAWI") %>%
+  dplyr::filter(country == "Malawi") %>%
   left_join(
     backcheck_malawi %>% 
       select(hh_id,
