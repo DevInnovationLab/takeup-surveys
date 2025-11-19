@@ -372,10 +372,14 @@ calculate_mean_ci_chlorination <- function(data, var_name, weight_var) {
           as.data.frame() %>%
           set_names(c("lb", "ub"))
         
+        n_val <- .x %>%
+          summarise(n = sum(!is.na(.data[[var_name]])))
+        
         result <- bind_cols(
           .x %>% select(country, intervention) %>% slice(1),
           mean_val,
-          ci_val
+          ci_val,
+          n_val
         )
         
         # filter for TRUE only
@@ -408,6 +412,287 @@ chlorination_fcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data
 
 chlorination_tcr_ci_combined
 chlorination_fcr_ci_combined
+```
+
+## Breaking down chlorination rates differences
+```{r}
+chlorination_data_weighted_combined <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(promoter_list == "TRUE") %>%
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(!is.na(intervention)) %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+chlorination_tcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "disctcr_02", 1)
+chlorination_fcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "discfcr_02", 1)
+
+chlorination_tcr_ci_combined
+```
+
+household survey: 26.6, 29.0, 30.1
+
+household survey & functional: 26.6, 27.1, 30.1 --> table 1 / 1
+
+both surveys & functional: 27.7, 25.3, 34.1
+
+------ WATER POINT SELECTION ------
+
+both surveys & functional & promoter survey water points: 28.1, 25.7, 37.5
+
+household survey & promoter survey water points: 27.4, 30.1, 33.8
+
+------ HOUSEHOLD SELECTION - PROMOTER LIST ------
+
+both surveys & functional & promoter survey water points & listed by promoter: 29.1, 20.9, 38.5
+
+household survey & functional & promoter survey water points & listed by promoter: 28.6, 23.2, 34.1
+
+------ HOUSEHOLD SELECTION - MONITORING SURVEY ------
+
+monitoring survey & promoter survey water points & listed by promoter: 30.3, 17.9, 46.6
+
+monitoring survey & functional: 30.8, 20.6, 46.0 --> table 3
+
+possible factors:
+1) selection of water points into promoter survey: TABLE 1 -> hh survey but only promoter survey water points
+2) selection of households into promoter list: hh survey but only households in promoter list (& water points in promoter survey)
+3) dataset (remainder) promoter list: only households in promoter list (& water points in promoter survey), but monitoring survey
+
+### 1) table 1
+```{r}
+table1 <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  # dplyr::filter(promoter_list == "TRUE") %>%
+  # dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(!is.na(intervention)) %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+table1_tcr <- calculate_mean_ci_chlorination(table1, "disctcr_02", 1)
+
+table1_tcr
+```
+
+### 2) only pm survey WPs 
+```{r}
+table1_pmsurvey <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  # dplyr::filter(promoter_list == "TRUE") %>%
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(!is.na(intervention)) %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+table1_tcr_pmsurvey <- calculate_mean_ci_chlorination(table1_pmsurvey, "disctcr_02", 1)
+table1_tcr_pmsurvey
+```
+
+### 3) only pm survey WPs & pm list households 
+```{r}
+table1_pmlist <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(promoter_list == "TRUE") %>%
+  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(!is.na(intervention)) %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+table1_tcr_pmlist <- calculate_mean_ci_chlorination(table1_pmlist, "disctcr_02", 1)
+table1_tcr_pmlist
+```
+
+### 4) monitoring survey, not hh survey
+30.9, 20.6, 46
+29.4, 27.4, 50.0 - rank < 5, monitoring survey
+32.5, 21.7, 48.2 - rank > 5, monitoring survey
+29.5, 24.2, 46.3 - rank < 5, survey - any
+
+monitoring
+```{r}
+table3 <- hh_survey %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  # dplyr::filter(survey == "Household Survey") %>%
+  # dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(survey == "Monitoring Survey" & !is.na(rank)) %>%
+  dplyr::filter(survey == "Monitoring Survey" & as.numeric(rank) >= 5) %>%
+  # dplyr::filter(as.numeric(rank) < 5) %>%
+  # dplyr::filter(survey == "Household Survey" & as.numeric(rank) < 5 | survey == "Monitoring Survey") %>%
+  # dplyr::filter(promoter_list == "TRUE") %>%
+  # dplyr::filter(promoter_surveyed == "TRUE") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(!is.na(intervention)) %>%
+  dplyr::filter(intervention != "Non-program") %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+
+table3_tcr <- calculate_mean_ci_chlorination(table3, "disctcr_02", 1)
+table3_tcr
+```
+
+### plot
+```{r}
+combined_tcr <- bind_rows(
+  table1_tcr %>% mutate(sample = "1) Table 1: HH survey, \n all WPs"),
+  table1_tcr_pmsurvey %>% mutate(sample = "2) HH survey, \n only HHs using \n PM survey WPs"),
+  table1_tcr_pmlist %>% mutate(sample = "3) HH survey, \n PM listed HHs \n using PM survey WPs"),
+  table3_tcr %>% mutate(sample = "4) Table 3: \n Monitoring survey")
+)
+
+ggplot(combined_tcr, aes(x = sample, y = mean, color = country, shape = intervention)) +
+  geom_point(size = 3, position = position_dodge(width = 0.5)) +
+  geom_errorbar(
+    aes(ymin = lb, ymax = ub),
+    width = 0.2,
+    position = position_dodge(width = 0.5)
+  ) +
+  geom_text(
+    aes(y= ub, label = paste0("n=", n)),
+    position = position_dodge(width = 0.5),
+    vjust = -0.5,
+    size = 3,
+    show.legend = FALSE
+  ) +
+  labs(
+    title = "TCR by Dataset & Sample Restriction",
+    x = "Sample & dataset",
+    y = "Proportion with TCR > 0.2",
+    color = "Country",
+    shape = "Intervention"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right"
+  ) +
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+###  regression on rank <5
+```{r}
+library(estimatr)
+
+uganda_hh_survey <- hh_survey %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(wp_intervention == "DSW") %>%
+  mutate(
+    rank_under5 = rank < 5)
+
+malawi_hh_survey_DSW <- hh_survey %>%
+  dplyr::filter(country == "Malawi")  %>%
+  dplyr::filter(wp_intervention == "DSW") %>%
+  mutate(
+    rank_under5 = rank < 5)
+
+malawi_hh_survey_ILC <- hh_survey %>%
+  dplyr::filter(country == "Malawi")  %>%
+  dplyr::filter(wp_intervention == "ILC") %>%
+  mutate(
+    rank_under5 = rank < 5)
+
+uganda_model <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
+                          data = uganda_hh_survey,
+                          clusters = wp_id)
+
+malawi_model_DSW <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
+                          data = malawi_hh_survey_DSW,
+                          clusters = wp_id)
+
+malawi_model_ILC <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
+                          data = malawi_hh_survey_ILC,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ rank_under5 + survey, data = uganda_hh_survey)
+malawi_lm_DSW <- lm(disctcr_02 ~ rank_under5 + survey, data = malawi_hh_survey_DSW)
+malawi_lm_ILC <- lm(disctcr_02 ~ rank_under5 + survey, data = malawi_hh_survey_ILC)
+
+stargazer(uganda_lm, malawi_lm_DSW, malawi_lm_ILC,
+          type = "text",
+          title = "Association between Rank < 5, Survey and Chlorination",
+          dep.var.labels = "disctcr 02",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi DSW", "Malawi ILC"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model_DSW$std.error, malawi_model_ILC$std.error),
+          p = list(uganda_model$p.value, malawi_model_DSW$p.value, malawi_model_ILC$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint","Waterpoint")))
+```
+
+```{r}
+uganda_hh_survey <- hh_survey %>%
+  dplyr::filter(country == "Uganda") %>%
+  dplyr::filter(wp_intervention == "DSW") %>%
+  mutate(
+    rank_under5 = rank < 5)
+
+malawi_hh_survey_DSW <- hh_survey %>%
+  dplyr::filter(country == "Malawi")  %>%
+  dplyr::filter(wp_intervention == "DSW") %>%
+  mutate(
+    rank_under5 = rank < 5)
+
+malawi_hh_survey_ILC <- hh_survey %>%
+  dplyr::filter(country == "Malawi")  %>%
+  dplyr::filter(wp_intervention == "ILC") %>%
+  mutate(
+    rank_under5 = rank < 5)
+
+uganda_model <- lm_robust(disctcr_02 ~ rank_under5, 
+                          data = uganda_hh_survey,
+                          clusters = wp_id)
+
+malawi_model_DSW <- lm_robust(disctcr_02 ~ rank_under5, 
+                          data = malawi_hh_survey_DSW,
+                          clusters = wp_id)
+
+malawi_model_ILC <- lm_robust(disctcr_02 ~ rank_under5, 
+                          data = malawi_hh_survey_ILC,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm <- lm(disctcr_02 ~ rank_under5, data = uganda_hh_survey)
+malawi_lm_DSW <- lm(disctcr_02 ~ rank_under5, data = malawi_hh_survey_DSW)
+malawi_lm_ILC <- lm(disctcr_02 ~ rank_under5, data = malawi_hh_survey_ILC)
+
+stargazer(uganda_lm, malawi_lm_DSW, malawi_lm_ILC,
+          type = "text",
+          title = "Association between Rank < 5 and Chlorination",
+          dep.var.labels = "disctcr 02",
+          # covariate.labels = c("Listed by Promoter"),
+          column.labels = c("Uganda", "Malawi DSW", "Malawi ILC"),
+          model.numbers = FALSE,
+          se = list(uganda_model$std.error, malawi_model_DSW$std.error, malawi_model_ILC$std.error),
+          p = list(uganda_model$p.value, malawi_model_DSW$p.value, malawi_model_ILC$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint", "Waterpoint")))
 ```
 
 ## Table
@@ -1745,6 +2030,10 @@ hh_survey <- hh_survey %>%
   )
 ```
 
+```{r}
+table(hh_survey$survey, hh_survey$rank, useNA = "always")
+```
+
 ### test
 ```{r}
 chlor <- hh_survey %>%
@@ -1790,6 +2079,5 @@ stargazer(model1_lm, model2_lm,
           column.labels = c("DISCTCR", "DISCFCR"),
           covariate.labels = c("Monitoring Survey"),
           dep.var.labels = c(" ", " "))
-```
 ```
 
