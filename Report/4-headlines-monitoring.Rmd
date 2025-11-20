@@ -538,9 +538,9 @@ table3 <- hh_survey %>%
   mutate(intervention = wp_intervention) %>%
   select(-wp_intervention) %>%
   # dplyr::filter(survey == "Household Survey") %>%
-  # dplyr::filter(survey == "Monitoring Survey") %>%
-  dplyr::filter(survey == "Monitoring Survey" & !is.na(rank)) %>%
-  dplyr::filter(survey == "Monitoring Survey" & as.numeric(rank) >= 5) %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  # dplyr::filter(survey == "Monitoring Survey" & !is.na(rank)) %>%
+  # dplyr::filter(survey == "Monitoring Survey" & as.numeric(rank) >= 5) %>%
   # dplyr::filter(as.numeric(rank) < 5) %>%
   # dplyr::filter(survey == "Household Survey" & as.numeric(rank) < 5 | survey == "Monitoring Survey") %>%
   # dplyr::filter(promoter_list == "TRUE") %>%
@@ -596,103 +596,103 @@ ggplot(combined_tcr, aes(x = sample, y = mean, color = country, shape = interven
 
 ###  regression on rank <5
 ```{r}
-library(estimatr)
-
-uganda_hh_survey <- hh_survey %>%
-  dplyr::filter(country == "Uganda") %>%
-  dplyr::filter(wp_intervention == "DSW") %>%
-  mutate(
-    rank_under5 = rank < 5)
-
-malawi_hh_survey_DSW <- hh_survey %>%
-  dplyr::filter(country == "Malawi")  %>%
-  dplyr::filter(wp_intervention == "DSW") %>%
-  mutate(
-    rank_under5 = rank < 5)
-
-malawi_hh_survey_ILC <- hh_survey %>%
-  dplyr::filter(country == "Malawi")  %>%
-  dplyr::filter(wp_intervention == "ILC") %>%
-  mutate(
-    rank_under5 = rank < 5)
-
-uganda_model <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
-                          data = uganda_hh_survey,
-                          clusters = wp_id)
-
-malawi_model_DSW <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
-                          data = malawi_hh_survey_DSW,
-                          clusters = wp_id)
-
-malawi_model_ILC <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
-                          data = malawi_hh_survey_ILC,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(disctcr_02 ~ rank_under5 + survey, data = uganda_hh_survey)
-malawi_lm_DSW <- lm(disctcr_02 ~ rank_under5 + survey, data = malawi_hh_survey_DSW)
-malawi_lm_ILC <- lm(disctcr_02 ~ rank_under5 + survey, data = malawi_hh_survey_ILC)
-
-stargazer(uganda_lm, malawi_lm_DSW, malawi_lm_ILC,
-          type = "text",
-          title = "Association between Rank < 5, Survey and Chlorination",
-          dep.var.labels = "disctcr 02",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi DSW", "Malawi ILC"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model_DSW$std.error, malawi_model_ILC$std.error),
-          p = list(uganda_model$p.value, malawi_model_DSW$p.value, malawi_model_ILC$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint","Waterpoint")))
+# library(estimatr)
+# 
+# uganda_hh_survey <- hh_survey %>%
+#   dplyr::filter(country == "Uganda") %>%
+#   dplyr::filter(wp_intervention == "DSW") %>%
+#   mutate(
+#     rank_under5 = rank < 5)
+# 
+# malawi_hh_survey_DSW <- hh_survey %>%
+#   dplyr::filter(country == "Malawi")  %>%
+#   dplyr::filter(wp_intervention == "DSW") %>%
+#   mutate(
+#     rank_under5 = rank < 5)
+# 
+# malawi_hh_survey_ILC <- hh_survey %>%
+#   dplyr::filter(country == "Malawi")  %>%
+#   dplyr::filter(wp_intervention == "ILC") %>%
+#   mutate(
+#     rank_under5 = rank < 5)
+# 
+# uganda_model <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
+#                           data = uganda_hh_survey,
+#                           clusters = wp_id)
+# 
+# malawi_model_DSW <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
+#                           data = malawi_hh_survey_DSW,
+#                           clusters = wp_id)
+# 
+# malawi_model_ILC <- lm_robust(disctcr_02 ~ rank_under5 + survey, 
+#                           data = malawi_hh_survey_ILC,
+#                           clusters = wp_id)
+# 
+# # convert to regular lm objects for stargazer
+# uganda_lm <- lm(disctcr_02 ~ rank_under5 + survey, data = uganda_hh_survey)
+# malawi_lm_DSW <- lm(disctcr_02 ~ rank_under5 + survey, data = malawi_hh_survey_DSW)
+# malawi_lm_ILC <- lm(disctcr_02 ~ rank_under5 + survey, data = malawi_hh_survey_ILC)
+# 
+# stargazer(uganda_lm, malawi_lm_DSW, malawi_lm_ILC,
+#           type = "text",
+#           title = "Association between Rank < 5, Survey and Chlorination",
+#           dep.var.labels = "disctcr 02",
+#           # covariate.labels = c("Listed by Promoter"),
+#           column.labels = c("Uganda", "Malawi DSW", "Malawi ILC"),
+#           model.numbers = FALSE,
+#           se = list(uganda_model$std.error, malawi_model_DSW$std.error, malawi_model_ILC$std.error),
+#           p = list(uganda_model$p.value, malawi_model_DSW$p.value, malawi_model_ILC$p.value),
+#           keep.stat = c("n", "rsq", "adj.rsq"),
+#           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint","Waterpoint")))
 ```
 
 ```{r}
-uganda_hh_survey <- hh_survey %>%
-  dplyr::filter(country == "Uganda") %>%
-  dplyr::filter(wp_intervention == "DSW") %>%
-  mutate(
-    rank_under5 = rank < 5)
-
-malawi_hh_survey_DSW <- hh_survey %>%
-  dplyr::filter(country == "Malawi")  %>%
-  dplyr::filter(wp_intervention == "DSW") %>%
-  mutate(
-    rank_under5 = rank < 5)
-
-malawi_hh_survey_ILC <- hh_survey %>%
-  dplyr::filter(country == "Malawi")  %>%
-  dplyr::filter(wp_intervention == "ILC") %>%
-  mutate(
-    rank_under5 = rank < 5)
-
-uganda_model <- lm_robust(disctcr_02 ~ rank_under5, 
-                          data = uganda_hh_survey,
-                          clusters = wp_id)
-
-malawi_model_DSW <- lm_robust(disctcr_02 ~ rank_under5, 
-                          data = malawi_hh_survey_DSW,
-                          clusters = wp_id)
-
-malawi_model_ILC <- lm_robust(disctcr_02 ~ rank_under5, 
-                          data = malawi_hh_survey_ILC,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(disctcr_02 ~ rank_under5, data = uganda_hh_survey)
-malawi_lm_DSW <- lm(disctcr_02 ~ rank_under5, data = malawi_hh_survey_DSW)
-malawi_lm_ILC <- lm(disctcr_02 ~ rank_under5, data = malawi_hh_survey_ILC)
-
-stargazer(uganda_lm, malawi_lm_DSW, malawi_lm_ILC,
-          type = "text",
-          title = "Association between Rank < 5 and Chlorination",
-          dep.var.labels = "disctcr 02",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi DSW", "Malawi ILC"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model_DSW$std.error, malawi_model_ILC$std.error),
-          p = list(uganda_model$p.value, malawi_model_DSW$p.value, malawi_model_ILC$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint", "Waterpoint")))
+# uganda_hh_survey <- hh_survey %>%
+#   dplyr::filter(country == "Uganda") %>%
+#   dplyr::filter(wp_intervention == "DSW") %>%
+#   mutate(
+#     rank_under5 = rank < 5)
+# 
+# malawi_hh_survey_DSW <- hh_survey %>%
+#   dplyr::filter(country == "Malawi")  %>%
+#   dplyr::filter(wp_intervention == "DSW") %>%
+#   mutate(
+#     rank_under5 = rank < 5)
+# 
+# malawi_hh_survey_ILC <- hh_survey %>%
+#   dplyr::filter(country == "Malawi")  %>%
+#   dplyr::filter(wp_intervention == "ILC") %>%
+#   mutate(
+#     rank_under5 = rank < 5)
+# 
+# uganda_model <- lm_robust(disctcr_02 ~ rank_under5, 
+#                           data = uganda_hh_survey,
+#                           clusters = wp_id)
+# 
+# malawi_model_DSW <- lm_robust(disctcr_02 ~ rank_under5, 
+#                           data = malawi_hh_survey_DSW,
+#                           clusters = wp_id)
+# 
+# malawi_model_ILC <- lm_robust(disctcr_02 ~ rank_under5, 
+#                           data = malawi_hh_survey_ILC,
+#                           clusters = wp_id)
+# 
+# # convert to regular lm objects for stargazer
+# uganda_lm <- lm(disctcr_02 ~ rank_under5, data = uganda_hh_survey)
+# malawi_lm_DSW <- lm(disctcr_02 ~ rank_under5, data = malawi_hh_survey_DSW)
+# malawi_lm_ILC <- lm(disctcr_02 ~ rank_under5, data = malawi_hh_survey_ILC)
+# 
+# stargazer(uganda_lm, malawi_lm_DSW, malawi_lm_ILC,
+#           type = "text",
+#           title = "Association between Rank < 5 and Chlorination",
+#           dep.var.labels = "disctcr 02",
+#           # covariate.labels = c("Listed by Promoter"),
+#           column.labels = c("Uganda", "Malawi DSW", "Malawi ILC"),
+#           model.numbers = FALSE,
+#           se = list(uganda_model$std.error, malawi_model_DSW$std.error, malawi_model_ILC$std.error),
+#           p = list(uganda_model$p.value, malawi_model_DSW$p.value, malawi_model_ILC$p.value),
+#           keep.stat = c("n", "rsq", "adj.rsq"),
+#           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint", "Waterpoint")))
 ```
 
 ## Table
