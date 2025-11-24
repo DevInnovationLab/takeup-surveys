@@ -467,7 +467,7 @@ cl_wp_sample <-
   group_split %>%
   map(
     ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
+      outcomes = c("watertreat_dispcl", "disctcr_02", "discfcr_02"),
       design = svydesign(
         id = ~ village_id + wp_id, # cluster IDs
         data = .x,
@@ -530,7 +530,7 @@ cl_wp_noweights <-
   group_split %>%
   map(
     ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
+      outcomes = c("watertreat_dispcl", "disctcr_02", "discfcr_02"),
       design = svydesign(
         id = ~ village_id + wp_id, # cluster IDs
         data = .x,

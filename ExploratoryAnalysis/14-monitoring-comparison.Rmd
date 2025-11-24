@@ -1,0 +1,626 @@
+# Water point chlorine residual tests
+
+```{r}
+pacman::p_load(
+  tidyverse, 
+  vtable,
+  viridis
+)
+```
+
+## Prepare data
+
+### Household survey 
+
+```{r}
+hhs <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  select(
+    household_id,
+    country, wp_intervention,
+    survey, promoter_list, promoter_surveyed,
+    village_id,
+    wp_func, wp_sourcetype,
+    ilc, dsw, ilc_wp, ilc_wcp, 
+    wp_dsw_dose, wp_dsw_chlorine, 
+    howlong_waterprep, where_collect, who_collected, 
+    int_warned, int_promoter,
+    storage, access_contain, cover_storage,
+    hhh_age, hhh_sex, hhh_educ, age_child,
+    hh_pregnant, hh_under5, hh_under2,
+    wp_turbidity, wp_pay,
+    hh_dsw, hh_ilc,
+    watertreat_any, watertreat_boil, watertreat_dispcl, watertreat_othercl,
+    disctcr_02, discfcr_02,
+    metertcr_02, meterfcr_02, sample_group,
+    starts_with("int_")
+  ) %>%
+  mutate(
+    listed = if_else(promoter_list, "Listed", "Not listed"),
+    cover_storage = cover_storage != "Open",
+    wp_sourcetype = case_when(
+        wp_sourcetype == "River, stream, or other flowing water source" ~ "Flowing water source",
+        wp_sourcetype ==  "Lake, pond, dam, or other standing water source" ~ "Standing water source",
+        TRUE ~ wp_sourcetype %>% 
+          str_replace_all("not powered by solar/electricity", "(not powered)") %>%
+          str_replace_all("powered by solar/electricity", "(powered)")
+      ),
+    hhh_educ = case_when(
+      hhh_educ %in% c("Don't know", "Other") ~ NA,
+      hhh_educ %in% c("None", "Pre-primary") ~ FALSE,
+      is.na(hhh_educ) ~ TRUE
+    ),
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  )
+```
+
+### Household census
+
+```{r}
+hhc <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  select(
+    country,
+    promoter_list, wp_intervention, promoter_surveyed,
+    hhh_resp:wp_freq, wp_invillage,
+    wp_secweek, wp_secweekno, wp_count_pastmonth,
+    vil_dsw_selfreport, vil_ilc_selfreport,
+    wtmt_none:wtmt_othercl, 
+    promoter_list_mentions, 
+    wp_match:wp_func, 
+    sample_group,
+    wp_sourcetype:wp_dsw_dose,
+    ends_with("02")
+  ) %>%
+  mutate(
+    listed = if_else(promoter_list, "Listed", "Not listed"),
+    wp_turbidity_clear = wp_turbidity == "1",
+    wp_sourcetype = case_when(
+        wp_sourcetype == "River, stream, or other flowing water source" ~ "Flowing water source",
+        wp_sourcetype ==  "Lake, pond, dam, or other standing water source" ~ "Standing water source",
+        TRUE ~ wp_sourcetype %>% 
+          str_replace_all("not powered by solar/electricity", "(not powered)") %>%
+          str_replace_all("powered by solar/electricity", "(powered)")
+      ),
+    hhh_educ = case_when(
+      hhh_educ %in% c("Don't know", "Other") ~ NA,
+      hhh_educ %in% c("None", "Pre-primary") ~ FALSE,
+      is.na(hhh_educ) ~ TRUE
+    ),
+    wp_freq_always = wp_freq == "Always",
+    hhh_fem = hhh_gender == "Female",
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  )
+```
+
+## How good are promoters at identifying people who use DSW/ILC?
+
+```{r}
+hhc %>% 
+  dplyr::filter(
+    sample_group != "ILC",
+    wp_invillage == 1,
+    dsw == 1
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(identified = mean(promoter_list == 1) * 100) %>%
+  ggplot(
+    aes(
+      x = sample_group,
+      y = identified,
+      label = identified %>% round(1) %>% paste0("%")
+    )
+  ) +
+  geom_col(fill = viridis(1)) +
+  geom_text(vjust = 1.3, color = "white", size = 3) +
+  facet_wrap(~ country) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "Percent of households using water points with DSW according to the household census who are in the promoter list" %>% str_wrap,
+    caption = "Sample includes households in the household census in DSW villages whose primary water point is inside village boundaries and has DSW." %>% str_wrap(110)
+  )
+```
+
+
+```{r}
+map(
+  hhc %>% 
+    dplyr::filter(
+      sample_group != "ILC",
+      wp_invillage == 1
+    ) %>%
+    mutate(promoter_list = promoter_list == 1) %>%
+    group_by(country, sample_group) %>% 
+    group_split,
+  ~ lm(
+    dsw ~ 0 + promoter_list,
+    data = .
+  ) %>%
+    broom::tidy(conf.int = TRUE) %>%
+    mutate(
+      sample_group = .x %>% pull(sample_group) %>% unique,
+      country = .x %>% pull(country) %>% unique,
+      term = case_when(
+        term == "promoter_listFALSE" ~ "Not listed",
+        term == "promoter_listTRUE" ~ "Listed",
+      )
+    )
+) %>%
+  bind_rows() %>%
+  ggplot(
+    aes(
+      y = estimate * 100,
+      ymin = conf.low * 100,
+      ymax = conf.high * 100,
+      x = term,
+      fill = term
+    )
+  ) +
+  geom_col(width = .5) +
+  geom_errorbar(width = .1, color = "gray50") +
+  facet_grid(sample_group ~ country) +
+  scale_fill_viridis_d() + 
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "Percent of households verified to be using water points with DSW, by presence in the promoter list" %>% str_wrap,
+    caption = "Sample includes households in the household census in DSW villages whose primary water point is inside village boundaries (and therefore can be verified to have DSW or not)." %>% str_wrap(110)
+  ) +
+  theme(
+    legend.position = "none"
+  )
+```
+
+```{r}
+hhc %>% 
+  dplyr::filter(
+    sample_group == "ILC",
+    country == "Malawi",
+    wp_invillage == 1
+  ) %>%
+  mutate(promoter_list = promoter_list == 1) %>%
+  lm(
+    ilc ~ 0 + promoter_list,
+    data = .
+  ) %>%
+    broom::tidy(conf.int = TRUE) %>%
+    mutate(
+      sample_group = "ILC",
+      country = "Malawi"
+    ) %>%
+  ggplot(
+    aes(
+      y = estimate,
+      ymin = conf.low,
+      ymax = conf.high,
+      x = term,
+      fill = term
+    )
+  ) +
+  geom_col(width = .5) +
+  geom_errorbar(width = .1) +
+  facet_grid(sample_group ~ country) +
+  scale_fill_viridis_d()
+```
+
+```{r}
+hhc %>% 
+  dplyr::filter(
+    sample_group == "ILC",
+    country == "Malawi",
+    wp_invillage == 1
+  ) %>%
+  lm(
+    promoter_list ~ ilc,
+    data = .
+  )
+```
+
+## How are the people in the promoter list different from those are not?
+
+### Chlorination rates
+
+```{r}
+hhs %>%
+  dplyr::filter(
+    survey == "Household Survey",
+    promoter_surveyed == 1
+  ) %>%
+  group_by(country) %>%
+  group_split %>%
+  map(
+    ~ feols(
+      disctcr_02 ~ promoter_list,
+      data = .
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!Num.Obs.)"
+  )
+```
+
+```{r}
+hhs %>%
+  dplyr::filter(
+    survey == "Household Survey",
+    promoter_surveyed == 1
+  ) %>%
+  group_by(country) %>%
+  group_split %>%
+  map(
+    ~ feols(
+      discfcr_02 ~ promoter_list,
+      data = .
+    )
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    gof_omit = "^(?!Num.Obs.)"
+  )
+```
+
+### Household census characteristics
+
+```{r}
+hhc %>% 
+  dplyr::filter(
+    country == "Uganda", 
+    dsw == 1,
+    promoter_surveyed == 1,
+    !is.na(promoter_list)
+  ) %>% 
+  select(
+    -c(
+      country,
+      dsw, 
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "listed",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhc %>% 
+  dplyr::filter(
+    country == "Malawi", 
+    dsw == 1,
+    promoter_surveyed == 1,
+    !is.na(promoter_list)
+  ) %>% 
+  select(
+    -c(
+      country,
+      dsw, 
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "listed",
+    group.test = TRUE
+)
+```
+
+### Households survey characteristics
+
+#### Using the same WPs
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Uganda", 
+    survey == "Household Survey",
+    promoter_surveyed == 1,
+    dsw == 1,
+    !is.na(promoter_list)
+  ) %>%
+  select(
+    -c(
+      country,
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "listed",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Malawi", 
+    sample_group != "ILC",
+    survey == "Household Survey",
+    promoter_surveyed == 1,
+    dsw == 1,
+    !is.na(promoter_list)
+  ) %>%
+  select(
+    -c(
+      country,
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "listed",
+    group.test = TRUE
+)
+```
+
+#### Using DSW
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Uganda", 
+    survey == "Household Survey",
+    dsw == 1,
+    !is.na(promoter_list)
+  ) %>%
+  select(
+    -c(
+      country,
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "listed",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Malawi", 
+    sample_group != "ILC",
+    survey == "Household Survey",
+    dsw == 1,
+    !is.na(promoter_list)
+  ) %>%
+  select(
+    -c(
+      country,
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "listed",
+    group.test = TRUE
+)
+```
+
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Malawi", 
+    survey == "Household Survey",
+    dsw == 1,
+    !is.na(promoter_list)
+  ) %>% 
+  select(
+    -c(
+      country,
+      survey,
+      wp_intervention
+    )
+  ) %>%
+  sumtable(
+    group = "promoter_list",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Malawi", 
+    survey == "Household Survey",
+    ilc == 1,
+    !is.na(promoter_list)
+  ) %>% 
+  select(
+    -c(
+      country,
+      survey,
+      wp_intervention
+    )
+  ) %>%
+  sumtable(
+    group = "promoter_list",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhs %>% 
+  dplyr::filter(country == "Malawi", survey == "Household census") %>% 
+  select(
+    -c(
+      country,
+      wp_func,
+      wp_dsw_chlorine,
+      where_collect,
+      who_collected,
+      int_warned,
+      access_contain,
+      cover_storage,
+      hhh_sex,
+      hhh_educ,
+      age_child,
+      hh_pregnant,
+      wp_pay,
+    )
+  ) %>%
+  sumtable(
+    group = "promoter_list",
+    group.test = TRUE
+)
+```
+
+## Do households in the monitoring survey respond differently from the household survey?
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Uganda", 
+    promoter_surveyed == 1,
+    dsw == 1
+  ) %>%
+  select(
+    -c(
+      country,
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "survey",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhs %>% 
+  dplyr::filter(
+    country == "Malawi", 
+    promoter_surveyed == 1,
+    dsw == 1
+  ) %>%
+  select(
+    -c(
+      country,
+      wp_intervention,
+      promoter_list,
+      promoter_surveyed
+    )
+  ) %>%
+  sumtable(
+    group = "survey",
+    group.test = TRUE
+)
+```
+
+
+# old
+
+```{r}
+hhc %>% 
+  dplyr::filter(country == "Uganda", wp_invillage == 1, dsw) %>% 
+  select(
+    -c(
+      country,
+      hhh_resp,
+      hhh_gender,
+      hhh_educ,
+      contains("under"),
+      contains("week"),
+      wp_count_pastmonth,
+      promoter_list_mentions,
+      contains("wtmt"),
+      wp_identified,
+      wp_freq, 
+  #     wp_match,
+      wp_invillage,
+      wp_source,
+      wp_func, wp_dsw, wp_ilc,
+      wp_dsw_valve,
+      hhh_fem
+    )
+  ) %>%
+  sumtable(
+    group = "promoter_list",
+    group.test = TRUE
+)
+```
+
+```{r}
+hhs %>% 
+  dplyr::filter(country == "Malawi", survey == "Household census") %>% 
+  select(
+    -c(
+      country,
+      wp_func,
+      wp_dsw_chlorine,
+      where_collect,
+      who_collected,
+      int_warned,
+      access_contain,
+      cover_storage,
+      hhh_sex,
+      hhh_educ,
+      age_child,
+      hh_pregnant,
+      wp_pay
+    )
+  ) %>%
+  sumtable(
+    group = "promoter_list",
+    group.test = TRUE
+)
+```
+
+## Households surveyed in household and monitoring surveys
+
+```{r}
+hhs %>%
+  group_by(household_id) %>%
+  dplyr::filter(
+    any(survey == "Household Survey") & any(survey == "Monitoring Survey")
+  ) %>%
+  sumtable(
+    vars = c("watertreat_any", "watertreat_dispcl", "disctcr_02", "discfcr_02"),
+    labels = c(
+      "Sampled water was treated", 
+      "Sampled water was treated with chlorine from dispenser", 
+      "Color wheel TCR >= 0.2 ppm", 
+      "Color wheel FCR >= 0.2 ppm"
+    ),
+    group = "survey",
+    group.test = TRUE
+  )
+```
+

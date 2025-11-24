@@ -1,0 +1,130 @@
+
+```{r}
+wp_census  %>%
+  dplyr::filter(intervention_type == "DSW") %>%
+  group_by(country, sample_group, disp_filled) %>%
+  summarise(
+    n()
+  )
+```
+
+
+```{r}
+hh_census %>%
+  dplyr::filter(dsw) %>%
+  group_by(
+    country, sample_group,
+    wp_disp_func, wp_id
+  ) %>%
+  summarise(
+    hhs = n_distinct(household_id)
+  ) %>%
+  group_by(
+    country, sample_group, wp_disp_func
+  ) %>%
+  summarise(
+    wps = n(),
+    hh_per_wp = mean(hhs) %>% round(1)
+  ) %>%
+  pivot_wider(
+    names_from = sample_group,
+    values_from = c(wps, hh_per_wp)
+  ) %>%
+  ungroup %>%
+  select(wp_disp_func, ends_with("Footprint"), ends_with("Expansion"), ends_with("ILC")) %>%
+  kable(
+    format = "html",
+    col.names = c(
+      "Dispenser functional",
+      "#WPs", "Av HHs/WP",
+      "#WPs", "Av HHs/WP",
+      "#WPs", "Av HHs/WP"
+    )
+  ) %>%
+  pack_rows("Malawi", 1, 3) %>%
+  pack_rows("Uganda", 4, 6) %>%
+  add_header_above(c(" " = 1, "Footprint" = 2, "Expansion" = 2, "ILC" = 2)) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 14
+  )
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(dsw) %>%
+  group_by(
+    country, sample_group,
+    wp_disp_filled, wp_id
+  ) %>%
+  summarise(
+    hhs = n_distinct(household_id)
+  ) %>%
+  group_by(
+    country, sample_group, wp_disp_filled
+  ) %>%
+  summarise(
+    wps = n(),
+    hh_per_wp = mean(hhs) %>% round(1)
+  ) %>%
+  pivot_wider(
+    names_from = sample_group,
+    values_from = c(wps, hh_per_wp)
+  ) %>%
+  ungroup %>%
+  select(wp_disp_filled, ends_with("Footprint"), ends_with("Expansion"), ends_with("ILC")) %>%
+  kable(
+    format = "html",
+    col.names = c(
+      "Dispenser filled",
+      "#WPs", "Av HHs/WP",
+      "#WPs", "Av HHs/WP",
+      "#WPs", "Av HHs/WP"
+    )
+  ) %>%
+  pack_rows("Malawi", 1, 3) %>%
+  pack_rows("Uganda", 4, 6) %>%
+  add_header_above(c(" " = 1, "Footprint" = 2, "Expansion" = 2, "ILC" = 2)) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 14
+  )
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(dsw) %>%
+  group_by(
+    country, sample_group, wp_dsw_chlorine
+  ) %>%
+  summarise(
+    wps = n_distinct(wp_id),
+    hhs = n()
+  ) %>%
+  pivot_wider(
+    names_from = sample_group,
+    values_from = c(wps, hhs)
+  ) %>%
+  ungroup %>%
+  select(wp_dsw_chlorine, ends_with("Footprint"), ends_with("Expansion"), ends_with("ILC")) %>%
+  kable(
+    format = "html",
+    col.names = c(
+      "Dispenser filled",
+      "#WPs", "#HHs",
+      "#WPs", "#HHs",
+      "#WPs", "#HHs"
+    )
+  ) %>%
+  pack_rows("Malawi", 1, 3) %>%
+  pack_rows("Uganda", 4, 6) %>%
+  add_header_above(c(" " = 1, "Footprint" = 2, "Expansion" = 2, "ILC" = 2)) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = TRUE,
+    font_size = 14
+  )
+```
+

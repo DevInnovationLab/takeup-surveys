@@ -407,6 +407,8 @@ chlorination_data_weighted_combined <- hh_survey %>%
   dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%  
   dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
 
+chlorination_sef_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "watertreat_dispcl", 1)
+
 chlorination_tcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "disctcr_02", 1)
 chlorination_fcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "discfcr_02", 1)
 

@@ -1,0 +1,88 @@
+# DSW water points
+
+
+## Sample
+
+```{r}
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  st_drop_geometry %>%
+  dplyr::filter(!(country == "Uganda" & sample_group == "ILC"))
+```
+
+### DSW
+
+```{r}
+dsw <-
+  wp_census  %>%
+  dplyr::filter(intervention_type == "DSW")
+```
+
+```{r}
+dsw %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    N = n_distinct(wp_id),
+    `Matched to EvAc data` = sum(!is.na(ea_id)),
+    `WP Functional` = sum(wp_func, na.rm = TRUE),
+    `Casing present` = sum(disp_casing_present, na.rm = TRUE),
+    `Tank present` = sum(disp_tank_present, na.rm = TRUE),
+    `Dispenser functional` = sum(disp_func, na.rm = TRUE),
+    `Dispenser filled` = sum(disp_filled, na.rm = TRUE)
+  ) %>%
+  mutate(
+    across(
+      `Matched to EvAc data`:`Dispenser filled`,
+      ~ round(. * 100/N, 1) %>% paste0("%")
+    )
+  ) %>%
+  rename(
+    Sample = sample_group
+  ) %>%
+  ungroup %>%
+  select(-country) %>%
+  kable(
+    format = "html"
+  ) %>%
+  pack_rows("Malawi", 1, 3) %>%
+  pack_rows("Uganda", 4, 5) %>%
+  kable_paper("striped", full_width = TRUE)
+```
+
+```{r}
+dsw %>%
+  group_by(country) %>%
+  summarise(
+    Villages = n_distinct(village_id),
+    N = n_distinct(wp_id),
+    `Matched to EvAc data` = sum(!is.na(ea_id)),
+    `WP Functional` = sum(wp_func, na.rm = TRUE),
+    `Casing present` = sum(disp_casing_present, na.rm = TRUE),
+    `Tank present` = sum(disp_tank_present, na.rm = TRUE),
+    `Dispenser functional` = sum(disp_func, na.rm = TRUE),
+    `Dispenser filled` = sum(disp_filled, na.rm = TRUE)
+  ) %>%
+  mutate(
+    across(
+      `Matched to EvAc data`:`Dispenser filled`,
+      ~ round(. * 100/N, 1) %>% paste0("%")
+    )
+  ) %>%
+  rename(Country = country) %>%
+  ungroup %>%
+  kable(
+    format = "html"
+  ) %>%
+  kable_paper("striped", full_width = TRUE)
+```
+
