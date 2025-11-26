@@ -86,3 +86,66 @@ dsw %>%
   kable_paper("striped", full_width = TRUE)
 ```
 
+```{r}
+library(dplyr)
+library(glue)
+
+tab <- dsw %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    Villages               = n_distinct(village_id),
+    N                      = n_distinct(wp_id),
+    `Matched to EvAc data` = sum(!is.na(ea_id)),
+    `WP Functional`        = sum(wp_func, na.rm = TRUE),
+    `Casing present`       = sum(disp_casing_present, na.rm = TRUE),
+    `Tank present`         = sum(disp_tank_present, na.rm = TRUE),
+    `Dispenser functional` = sum(disp_func, na.rm = TRUE),
+    `Dispenser filled`     = sum(disp_filled, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    across(
+      `Matched to EvAc data`:`Dispenser filled`,
+      ~ round(. * 100 / N, 1)
+    )
+  ) %>%
+  arrange(
+    factor(country,      levels = c("Malawi", "Uganda")),
+    factor(sample_group, levels = c("Footprint", "Expansion", "ILC"))
+  )
+
+fmt1 <- function(x) sub("\\.0$", "", format(x, nsmall = 1, trim = TRUE))
+
+rows <- character()
+current_country <- NULL
+
+for (i in seq_len(nrow(tab))) {
+  r <- tab[i, ]
+
+  if (is.null(current_country) || r$country != current_country) {
+    if (!is.null(current_country)) {
+      rows <- c(rows, "\\addlinespace[0pt]", "\\hline")
+    }
+    rows <- c(
+      rows,
+      glue("\\multicolumn{{9}}{{l}}{{\\textbf{{{r$country}}}}}\\\\"),
+      "\\hline"
+    )
+    current_country <- r$country
+  }
+
+  line <- glue(
+"\\hspace{{1em}}\\hspace{{1em}}{r$sample_group} & ",
+"{r$Villages} & {r$N} & ",
+"{fmt1(r$`Matched to EvAc data`)} & {fmt1(r$`WP Functional`)} & ",
+"{fmt1(r$`Casing present`)} & {fmt1(r$`Tank present`)} & ",
+"{fmt1(r$`Dispenser functional`)} & {fmt1(r$`Dispenser filled`)} \\\\"
+  )
+
+  rows <- c(rows, line)
+}
+
+writeLines(rows, "../output/tables/wp-summary.tex")
+
+```
+
