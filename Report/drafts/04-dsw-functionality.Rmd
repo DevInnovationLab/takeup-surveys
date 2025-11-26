@@ -59,6 +59,7 @@ dsw %>%
   kable_paper("striped", full_width = TRUE)
 ```
 
+#Table Export
 ```{r}
 dsw %>%
   group_by(country) %>%
@@ -146,6 +147,5 @@ for (i in seq_len(nrow(tab))) {
 }
 
 writeLines(rows, "../output/tables/wp-summary.tex")
-
 ```
 
