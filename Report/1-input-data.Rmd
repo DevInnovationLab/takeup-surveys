@@ -136,6 +136,35 @@ hh_survey <-
   )
 ```
 
+## Monitoring survey
+
+```{r}
+mon_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    survey == "Monitoring Survey"
+  ) %>%
+  mutate(
+    intervention_selfreport = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC"
+    ),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  )
+```
+
 ## Water point census
 
 ```{r}
