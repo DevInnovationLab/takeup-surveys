@@ -804,13 +804,14 @@ ggplot2::ggsave(
 
 ```{r, message = FALSE, warning = FALSE}
 obs <-
-  users_village %>%
+  users_data %>%
+  dplyr::filter(!is.na(wp_id)) %>%
     group_by(
       country, wp_intervention
     ) %>%
     summarise(
-      visited_villages = sum(hhs != 0),
-      census = sum(hhs) %>% format(big.mark = ",")
+      n_wps = n_distinct(wp_id),
+      census = n_distinct(household_id) %>% format(big.mark = ",")
     ) %>%
     mutate(
       name = "est"
@@ -920,13 +921,14 @@ writeLines(
 
 ```{r, message = FALSE, warning = FALSE}
 obs <-
-  users_village %>%
+  users_data %>%
+  dplyr::filter(!is.na(wp_id)) %>%
     group_by(
       country, wp_intervention, sample_group
     ) %>%
     summarise(
-      visited_villages = sum(hhs != 0),
-      census = sum(hhs) %>% format(big.mark = ",")
+      n_wps = n_distinct(wp_id),
+      census = n_distinct(household_id) %>% format(big.mark = ",")
     ) %>%
     mutate(
       name = "est"
@@ -1009,7 +1011,7 @@ table <-
     align = "c", 
     booktabs = T,
     col.names = linebreak(
-      c(" ", "Sample group", "\\#Vil", "\\#HHs", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      c(" ", "Sample group", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#WP", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     )
   ) %>%
