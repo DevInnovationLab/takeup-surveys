@@ -9,7 +9,8 @@
 \usepackage{graphicx}
 \usepackage{caption}   
 \usepackage{subcaption}    
-\usepackage{breqn}   
+\usepackage{breqn}
+\usepackage{makecell}
 \usepackage{booktabs}  
 \usepackage[toc,page]{appendix}  
 \usepackage{lscape} 
@@ -155,6 +156,11 @@
     \end{itemize}
 \end{itemize}
 
+
+\input{tables/headlines-vil}
+
+\input{tables/headlines-vil-bygroup}
+
 \newpage
 {\renewcommand\normalsize{}\singlespacing
 \begin{table}[]
@@ -169,7 +175,7 @@
 \cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5}  \cmidrule(l{3pt}r{3pt}){6-9}
 &\#Vil & \# HHs & \#Vil & \shortstack{People using\\DSW/ILC} & \#Vil & \# HHs & TCR & FCR \\
  & & & & (95\% CI) & & & (95\% CI) & (95\% CI) \\
-\input{tables/headlines-vil}
+
 \hline\hline
 \end{tabular}
 \begin{tablenotes}
