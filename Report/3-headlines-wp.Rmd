@@ -467,7 +467,7 @@ cl_wp_sample <-
   group_split %>%
   map(
     ~ mean_cis(
-      outcomes = c("watertreat_dispcl", "disctcr_02", "discfcr_02"),
+      outcomes = c("disctcr_02", "discfcr_02"),
       design = svydesign(
         id = ~ village_id + wp_id, # cluster IDs
         data = .x,
@@ -530,7 +530,7 @@ cl_wp_noweights <-
   group_split %>%
   map(
     ~ mean_cis(
-      outcomes = c("watertreat_dispcl", "disctcr_02", "discfcr_02"),
+      outcomes = c("disctcr_02", "discfcr_02"),
       design = svydesign(
         id = ~ village_id + wp_id, # cluster IDs
         data = .x,
@@ -615,8 +615,6 @@ cl_wp_weight_users <-
   bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
-
-cl_wp_weight_users
 ```
 
 
@@ -800,8 +798,26 @@ ggplot2::ggsave(
   dpi      = 300
 )
 ```
+## Table
 
-users_wp_country %>%
+### By program
+
+```{r, message = FALSE, warning = FALSE}
+obs <-
+  users_village %>%
+    group_by(
+      country, wp_intervention
+    ) %>%
+    summarise(
+      visited_villages = sum(hhs != 0),
+      census = sum(hhs) %>% format(big.mark = ",")
+    ) %>%
+    mutate(
+      name = "est"
+    )
+
+people <-
+  users_wp_country %>%
   left_join(
     wp_sample_sizes %>%
       group_by(country, wp_intervention) %>%
@@ -809,105 +825,210 @@ users_wp_country %>%
   ) %>%
   mutate(
     across(
-      c(total, lb, ub, pop, hhs),
+      c(total, lb, ub, pop),
       ~ . %>% 
         round %>% 
         format(big.mark = ",") %>%
         str_remove_all(" ")
     ),
-    se = paste0("(", lb, ", ", ub, ")") 
+    ci = paste0("(", lb, ", ", ub, ")") 
   ) %>%
   select(
-    wp_intervention, sampled = wps, hhs, pop, total, se
+    country, wp_intervention, pop, est = total, ci
   ) %>%
-  kable()
+  pivot_longer(
+    cols = c(est, ci),
+    values_to = "people"
+  ) 
 
-## Export Table
-```{r, message=FALSE, warning=FALSE}
-users_wp    <- read_csv(here("../output/tables/users-wp.csv"))
-chlorine_wp <- read_csv(here("../output/tables/chlorine-wp.csv"))
-
-pick_hhs <- function(df) {
-  if ("households" %in% names(df)) df$households else df$hhs
-}
-
-users_sum <- users_wp %>%
-  group_by(country, wp_intervention) %>%
-  slice_max(order_by = wps, n = 1, with_ties = FALSE) %>%
-  ungroup() %>%
+cl <-
+  cl_wp_noweights %>%
   mutate(
-    hhs_any = pick_hhs(cur_data_all())
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% 
+        round(1) %>% 
+        str_remove_all(" ")
+    ),
+    ci = paste0("(", lb, ", ", ub, ")") ,
+    hhs = households %>% format(big.mark = ",")
   ) %>%
-  transmute(
-    country,
-    wp_intervention,
-    wps_hh      = wps,       
-    hhs_hh      = hhs_any,   
-    vil_country = villages,  
-    people_tot  = total,    
-    people_lb   = lb,    
-    people_ub   = ub    
-  )
-
-cl_sum <- chlorine_wp %>%
-  group_by(country, wp_intervention, outcome) %>%
-  summarise(
-    mean      = first(mean),
-    lb        = first(lb),
-    ub        = first(ub),
-    wps_chl   = first(wps),
-    hhs_chl   = first(households),
-    .groups   = "drop"
-  ) %>%
-  mutate(
-    mean = round(100*mean, 1),
-    lb   = round(100*lb,   1),
-    ub   = round(100*ub,   1),
-    ci   = glue("({lb}, {ub})")
-  ) %>%
-  select(country, wp_intervention, outcome, mean, ci, wps_chl, hhs_chl) %>%
+  select(country, wp_intervention, outcome, wps, hhs, est = mean, ci) %>%
   pivot_wider(
-    id_cols     = c(country, wp_intervention),
-    names_from  = outcome,                 
-    values_from = c(mean, ci, wps_chl, hhs_chl),
-    names_glue  = "{outcome}_{.value}"
+    values_from = c(est, ci),
+    names_from = outcome
+  ) %>%
+  pivot_longer(
+    cols = ends_with("02"),
+    names_pattern = "(.*)_disc(.*)_02",
+    names_to = c("name", ".value")
   )
 
-tab <- users_sum %>%
-  left_join(cl_sum, by = c("country","wp_intervention")) %>%
-  arrange(factor(country, levels = c("Malawi","Uganda")),
-          factor(wp_intervention, levels = c("DSW","ILC")))
+tab <- 
+  obs %>%
+  full_join(people) %>%
+  left_join(cl) %>%
+  arrange(country, wp_intervention, desc(name)) %>%
+  mutate(
+    across(
+      everything(),
+      ~ as.character(.)
+    ),
+    across(
+      -c(people, tcr, fcr),
+      ~ case_when(
+        name == "est" ~ .,
+        TRUE ~ ""
+      )
+    )
+  ) %>%
+  ungroup %>%
+  select(-c(name, country))
 
-fmt_int <- function(x) format(round(x), big.mark=",", trim=TRUE)
-
-rows <- character()
-for (i in seq_len(nrow(tab))) {
-  r <- tab[i,]
-  # country header when it changes
-  if (i==1 || tab$country[i] != tab$country[i-1]) {
-    if (i>1) rows <- c(rows, "\\addlinespace")
-    rows <- c(rows, glue("\\textbf{{{r$country}}} &&&&&&&& \\\\"))
-  }
-  prog <- r$wp_intervention
-
-  tcr_mean <- r$disctcr_02_mean
-  tcr_ci   <- r$disctcr_02_ci
-  fcr_mean <- r$discfcr_02_mean
-  fcr_ci   <- r$discfcr_02_ci
-
-  line1 <- glue(
-"\\hspace{{1em}}{prog} & {fmt_int(r$wps_hh)} & {fmt_int(r$hhs_hh)} & {fmt_int(r$vil_country)} & {fmt_int(r$people_tot)} & {fmt_int(r$disctcr_02_wps_chl)} & {fmt_int(r$disctcr_02_hhs_chl)} & {tcr_mean} & {fcr_mean} \\\\"
-  )
-  line2 <- glue(
-" &  &  &  & ({fmt_int(r$people_lb)}, {fmt_int(r$people_ub)}) &  &  & {tcr_ci} & {fcr_ci} \\\\"
-  )
-  rows <- c(rows, line1, line2)
-}
+table <-
+  kable(
+    tab, 
+    format = "latex",
+    escape = F,
+    align = "c", 
+    booktabs = T,
+    col.names = linebreak(
+      c("Intervention", "\\#Vil", "\\#HHs", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      align = "c"
+    )
+  ) %>%
+  kable_styling(latex_options = c("scale_up")) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 6) %>%
+  add_header_above(
+    c(
+      " ", 
+      "Household census" = 2, 
+      "Country-level estimates" = 2, 
+      "Percent of color wheel readings ≥ 0.2 ppm" = 4
+    )
+  ) %>%
+  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE)
 
 writeLines(
-  rows,
-  here("../output/tables/headlines-wp.tex")
+  table, 
+  "output/tables/headlines-wp.tex"
 )
 ```
 
+### By program and sample group
+
+```{r, message = FALSE, warning = FALSE}
+obs <-
+  users_village %>%
+    group_by(
+      country, wp_intervention, sample_group
+    ) %>%
+    summarise(
+      visited_villages = sum(hhs != 0),
+      census = sum(hhs) %>% format(big.mark = ",")
+    ) %>%
+    mutate(
+      name = "est"
+    )
+
+people <-
+  users_wp %>%
+  left_join(
+    wp_sample_sizes %>%
+      group_by(country, wp_intervention, sample_group) %>%
+      summarise(pop = sum(pop_points))
+  ) %>%
+  mutate(
+    across(
+      c(total, lb, ub, pop),
+      ~ . %>% 
+        round %>% 
+        format(big.mark = ",") %>%
+        str_remove_all(" ")
+    ),
+    ci = paste0("(", lb, ", ", ub, ")") 
+  ) %>%
+  select(
+    country, wp_intervention, sample_group, pop, est = total, ci
+  ) %>%
+  pivot_longer(
+    cols = c(est, ci),
+    values_to = "people"
+  ) 
+
+cl <-
+  cl_wp_sample %>%
+  mutate(
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% 
+        round(1) %>% 
+        str_remove_all(" ")
+    ),
+    ci = paste0("(", lb, ", ", ub, ")") ,
+    hhs = households %>% format(big.mark = ",")
+  ) %>%
+  select(country, wp_intervention, sample_group, outcome, wps, hhs, est = mean, ci) %>%
+  pivot_wider(
+    values_from = c(est, ci),
+    names_from = outcome
+  ) %>%
+  pivot_longer(
+    cols = ends_with("02"),
+    names_pattern = "(.*)_disc(.*)_02",
+    names_to = c("name", ".value")
+  )
+
+tab <- 
+  obs %>%
+  full_join(people) %>%
+  left_join(cl) %>%
+  arrange(country, wp_intervention, sample_group, desc(name)) %>%
+  ungroup %>%
+  mutate(
+    across(
+      everything(),
+      ~ as.character(.)
+    ),
+    across(
+      -c(people, tcr, fcr),
+      ~ case_when(
+        name == "est" ~ .,
+        TRUE ~ ""
+      )
+    )
+  ) %>%
+  select(-c(name, country)) 
+
+table <-
+  kable(
+    tab, 
+    format = "latex",
+    escape = F,
+    align = "c", 
+    booktabs = T,
+    col.names = linebreak(
+      c(" ", "Sample group", "\\#Vil", "\\#HHs", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      align = "c"
+    )
+  ) %>%
+  kable_styling(latex_options = c("scale_down")) %>%
+  pack_rows("Malawi", 1, 8) %>%
+  pack_rows("Uganda", 9, 12) %>%
+  add_header_above(
+    c(
+      " " = 2, 
+      "Household census" = 2, 
+      "Country-level estimates" = 2, 
+      "Percent of color wheel readings ≥ 0.2 ppm" = 4
+    )
+  ) %>%
+  add_header_above(c(" ", " ", paste0("(", 1:8,")")), line = FALSE)
+
+writeLines(
+  table, 
+  "output/tables/headlines-wp-by-group.tex"
+)
+```
 
