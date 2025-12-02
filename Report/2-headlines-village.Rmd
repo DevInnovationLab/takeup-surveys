@@ -528,9 +528,10 @@ plot_data %>%
 ```
 
 #### Save Plot
+
 ```{r}
 ggplot2::ggsave(
-  filename = "../output/graphs/users-vil.png",  
+  filename = "output/graphs/users-vil.png",  
   plot     = ggplot2::last_plot(),            
   width    = 8,
   height   = 4.5,
@@ -1107,7 +1108,8 @@ cl_village_noweights_samplegroup
 users_vil    <- read_csv(here("../output/tables/users-vil.csv"))
 chlorine_vil <- read_csv(here("../output/tables/chlorine-vil.csv"))
 
-users_sum <- users_vil %>%
+users_sum <- 
+  users_vil %>%
   group_by(country, wp_intervention) %>%
   slice_max(order_by = villages, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
@@ -1187,7 +1189,7 @@ for (i in seq_len(nrow(tab))) {
 
 writeLines(
   rows,
-  here("../output/tables/headlines-vil.tex")
+  file.path("output/tables/headlines-vil.tex")
 )
 
 ```
