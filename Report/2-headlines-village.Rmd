@@ -1163,7 +1163,8 @@ table <-
       c("Intervention", "\\#Vil", "\\#HH", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     ),
-    caption = "Primary outcomes estimated using the village as the unit of reference"
+    caption = "Primary outcomes estimated using the village as the unit of reference",
+    label = "headlines-vil"
   ) %>%
   kable_styling(latex_options = c("scale_up")) %>%
   pack_rows("Malawi", 1, 4) %>%
@@ -1280,7 +1281,8 @@ table <-
       c(" ", "Sample group", "\\#Vil", "\\#HHs", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     ),
-    caption = "Primary outcomes estimated using the village as the unit of reference"
+    caption = "Primary outcomes estimated using the village as the unit of reference",
+    label = "headlines-vil-by-group"
   ) %>%
   kable_styling(latex_options = c("scale_down")) %>%
   pack_rows("Malawi", 1, 8) %>%
