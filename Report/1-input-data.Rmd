@@ -73,6 +73,8 @@ wp_sample_sizes <-
     ~ country, ~ sample_group, ~ wp_intervention, ~ pop_points,
     "Uganda", "Expansion", "DSW", 12262,
     "Uganda", "Footprint", "DSW", 5456,
+    "Uganda", "ILC", "DSW", 398,
+    "Uganda", "ILC", "ILC", 1229,
     "Malawi", "Expansion", "DSW", 11292,
     "Malawi", "Footprint", "DSW", 3844,
     "Malawi", "ILC", "DSW", 1062,
