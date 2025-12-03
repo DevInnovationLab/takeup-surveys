@@ -22,6 +22,7 @@
 \usepackage{adjustbox}
 \usepackage{pdfpages}    
 \usepackage{lastpage} % Required to determine the last page number for the footer
+\usepackage{float} 
 \usepackage{enumerate}
 \usepackage{amssymb}
 \usepackage{wrapfig}
@@ -56,13 +57,41 @@
 \usepackage{tabularx} 
 \usepackage{caption}
 
-\title{Independent chlorine coverage surveys\\Summary of headline results}
+\title{Independent chlorine coverage surveys\\Preliminary results including Uganda ILC villages}
 
 \begin{document}
 
 \maketitle
 \date{}
-\section{Primary outcomes}
+
+Results for Uganda ILC villages are preliminary and may change after further exploration. 
+
+\newpage
+
+\input{tables/headlines-vil}
+\input{tables/headlines-vil-by-group}
+
+\input{tables/headlines-wp}
+\input{tables/headlines-wp-by-group}
+
+\newpage
+
+\begin{figure}[H]
+    \centering
+    \caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
+    \includegraphics[width=\linewidth]{graphs/users-vil.png}
+    \label{fig:users-vil}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Sensitivity checks on Total Chlorine Residual detection rates}
+    \includegraphics[width=\linewidth]{graphs/chlorine-vil.png}
+    \label{fig:chlorine-vil}
+\end{figure}
+
+\end{document}
+
 
 \subsection{Uganda}
 
@@ -155,29 +184,3 @@
         \item Weighing observations by the number of households using water points with DSW or ILC in their respective villages is likely a better approximation of the share of households in each country that are drinking treated water. This estimate is included in Figure \ref{fig:chlorine-vil}.
     \end{itemize}
 \end{itemize}
-
-\newpage
-
-\input{tables/headlines-vil}
-\input{tables/headlines-wp}
-
-\input{tables/headlines-vil-by-group}
-\input{Report/output/tables/headlines-wp-by-group}
-
-\begin{figure}[h!]
-    \centering
-    \caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
-    \includegraphics[width=\linewidth]{output/graphs/users-vil.png}
-    \label{fig:users-vil}
-\end{figure}
-
-\begin{figure}[h!]
-    \centering
-    \caption{Sensitivity checks on Total Chlorine Residual detection rates}
-    \includegraphics[width=\linewidth]{output/graphs/chlorine-vil.png}
-    \label{fig:chlorine-vil}
-\end{figure}
-
-
-
-\end{document}
