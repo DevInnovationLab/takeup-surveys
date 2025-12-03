@@ -1168,7 +1168,7 @@ table <-
   ) %>%
   kable_styling(latex_options = c("scale_up")) %>%
   pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
+  pack_rows("Uganda", 5, 8) %>%
   add_header_above(
     c(
       " ", 
@@ -1286,7 +1286,7 @@ table <-
   ) %>%
   kable_styling(latex_options = c("scale_down")) %>%
   pack_rows("Malawi", 1, 8) %>%
-  pack_rows("Uganda", 9, 12) %>%
+  pack_rows("Uganda", 9, 16) %>%
   add_header_above(
     c(
       " " = 2, 
