@@ -1,6 +1,11 @@
 # Monitoring headline results
 
 ## Setup
+# source the .Rprofile to load custom functions
+```{r}
+source(".Rprofile")
+```
+
 ### Packages
 ```{r}
 packages <-
