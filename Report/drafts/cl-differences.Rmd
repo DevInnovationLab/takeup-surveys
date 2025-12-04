@@ -132,6 +132,18 @@ averages <- function(data, x, cluster) {
     set_names(c("TCR", "FCR"))
 }
 ```
+
+```{r}
+randomization_id <-
+  randomization %>%
+  left_join(hhc)
+
+hh_survey <- hh_survey %>%
+  left_join(
+    randomization_id %>% select(household_id, rank),
+    by = "household_id"
+  )
+```
 # Context
 
 - Our methods
