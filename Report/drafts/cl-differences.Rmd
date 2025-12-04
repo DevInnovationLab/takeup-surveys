@@ -84,6 +84,16 @@ promoter_survey <-
   mutate(pm_wp = wp_id_c) %>%
   select(household_id, pm_wp)
 
+randomization_id <-
+  randomization %>%
+  left_join(hhc)
+
+hh_survey <- hh_survey %>%
+  left_join(
+    randomization_id %>% select(household_id, rank),
+    by = "household_id"
+  )
+
 matched <-
   hh_survey %>%
   left_join(
@@ -105,7 +115,7 @@ matched <-
       survey == "Household Survey" ~ wp_intervention,
       survey == "Monitoring Survey" ~ pm_wp_intervention
     ),
-    rank = as.numeric(rank),
+    rank = as.numeric(.data$rank),
     replacement = rank > 4,
     replaced = !replacement & !in_monitoring
   ) %>%
@@ -133,17 +143,6 @@ averages <- function(data, x, cluster) {
 }
 ```
 
-```{r}
-randomization_id <-
-  randomization %>%
-  left_join(hhc)
-
-hh_survey <- hh_survey %>%
-  left_join(
-    randomization_id %>% select(household_id, rank),
-    by = "household_id"
-  )
-```
 # Context
 
 - Our methods
