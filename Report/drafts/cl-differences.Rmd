@@ -1,0 +1,496 @@
+---
+output: rmdformats::robobook
+title: "Chlorine testing spotchecks"
+---
+
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  broom,
+  fixest
+)
+```
+
+
+To-dos: 
+- write this more carefully
+- add sample sizes
+- polish graphs
+- think about right level to cluster SEs for each figure
+
+
+```{r}
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  st_drop_geometry  %>%
+  mutate(
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    ),
+    closer = (ilc_wcp & str_detect(ea_id, "001^")) | ilc_wp
+  )
+```
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    survey == "Household Survey"
+  ) %>%
+  mutate(
+    intervention_selfreport = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC"
+    ),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  )
+```
+
+```{r}
+promoter_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Constructed",
+      "pm-survey-households.rds"
+    )
+  ) %>%
+  mutate(pm_wp = wp_id_c) %>%
+  select(household_id, pm_wp)
+
+matched <-
+  hh_survey %>%
+  left_join(
+    promoter_survey,
+    relationship = "many-to-many"
+  ) %>%
+  left_join(
+    wp_census %>%
+      transmute(pm_wp = wp_id, pm_wp_intervention = intervention)
+  ) %>%
+  group_by(household_id) %>%
+  mutate(
+    in_monitoring = any(survey == "Monitoring Survey"),
+    in_household = any(survey == "Household Survey")
+  ) %>%
+  ungroup %>%
+  mutate(
+    program = case_when(
+      survey == "Household Survey" ~ wp_intervention,
+      survey == "Monitoring Survey" ~ pm_wp_intervention
+    ),
+    rank = as.numeric(rank),
+    replacement = rank > 4,
+    replaced = !replacement & !in_monitoring
+  ) %>%
+  dplyr::filter(
+    program == "DSW",
+    sample_group != "ILC"
+  )
+
+by_country <-
+  matched %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda"))
+
+averages <- function(data, x, cluster) {
+  c("disctcr_02", "discfcr_02") %>%
+    map(
+      ~ feols(
+        paste(., "~ 0 +", x) %>% as.formula,
+        cluster = paste("~ ", cluster),
+        data = data
+      )
+    ) %>%
+    set_names(c("TCR", "FCR"))
+}
+```
+# Context
+
+- Our methods
+- EvAc methods
+- EvAc Q3 monitoring numbers
+- What can explain differences, but that we can't test:
+  - Visiting different villages
+  - Our surveyors were more recently trained to use color wheels
+  - Are surveyors are idenpedent of EvAc
+
+# Are estimates from monitoring and household surveys different?
+
+```{r}
+hh_vs_monitoring <-
+  by_country %>%
+  map(
+    ~ averages(data = ., x = "survey", cluster = "village_id")
+  ) %>%
+  unlist(recursive = FALSE)
+
+hh_vs_monitoring_tidy <-
+  hh_vs_monitoring %>% 
+  map(
+    ~ tidy(., conf.int = TRUE)
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    term = str_remove_all(term, "survey"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )
+
+hh_vs_monitoring_tidy  %>%
+  ggplot(
+    aes(
+      x = term,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(test ~ country) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
+
+- These are slightly different from our final values in the report. Check why
+
+# Why are estimates different? 
+
+This could be a combination of a few factors: 
+
+1. Sample selection
+2. Priming (since the monitoring survey happened after the household survey)
+3. Replacements
+
+## Priming 
+
+To test for priming, we consider households that were included in both surveys and tested twice. 
+
+There are too few households to do this :(
+
+```{r}
+matched %>%
+  group_by(household_id) %>%
+  dplyr::filter(
+    n_distinct(survey) > 1
+  ) %>%
+  lm(formula = disctcr_02 ~ 0 + survey) %>% 
+  tidy(conf.int = TRUE) %>%
+  mutate(
+    term = str_remove_all(term, "survey"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  ) %>%
+  ggplot(
+    aes(
+      x = term,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
+
+## Replacements
+
+This would happen if the households who are easier to find are also more likely to chlorinate or more likely to have collected water more recently
+
+```{r}
+replacements <-
+  by_country %>%
+  map(
+    ~ averages(
+      data = .x %>% dplyr::filter(survey == "Monitoring Survey"), 
+      x = "replacement", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE)
+
+replacements_tidy <-
+  replacements %>% 
+  map(
+    ~ tidy(., conf.int = TRUE)
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    term = str_remove_all(term, "survey"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )
+
+replacements_tidy  %>%
+  ggplot(
+    aes(
+      x = term,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(test ~ country) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
+
+```{r}
+replacements <-
+  by_country %>%
+  map(
+    ~ averages(
+      data = .x %>% dplyr::filter(survey == "Household Survey"), 
+      x = "replaced", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE)
+
+replacements_tidy <-
+  replacements %>% 
+  map(
+    ~ tidy(., conf.int = TRUE)
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    term = str_remove_all(term, "survey"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )
+
+replacements_tidy  %>%
+  ggplot(
+    aes(
+      x = term,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(test ~ country) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
+
+## Sample selection of water points
+
+This is definitely happening, and likely explain all of the difference.
+
+However, this only explains the differences that we see in our HH and mon survey, not the differences between our surveys are EvAc's
+
+
+```{r}
+wp_selection <-
+  by_country %>%
+  map(
+    ~ averages(
+      data = .x %>% dplyr::filter(survey == "Household Survey"), 
+      x = "promoter_surveyed", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE)
+
+wp_selection_tidy <-
+  wp_selection %>% 
+  map(
+    ~ tidy(., conf.int = TRUE)
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    term = str_remove_all(term, "survey"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )
+
+wp_selection_tidy  %>%
+  ggplot(
+    aes(
+      x = term,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(test ~ country) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
+
+
+## Sample selection of households
+
+Promoters could be listing households that are more likely to be chlorinating.
+
+to-do: how often does the promoter get it right?
+
+```{r}
+hh_selection <-
+  by_country %>%
+  map(
+    ~ averages(
+      data = .x %>% 
+        dplyr::filter(
+          survey == "Household Survey",
+          promoter_surveyed
+        ), 
+      x = "promoter_list", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE)
+
+hh_selection_tidy <-
+  hh_selection %>% 
+  map(
+    ~ tidy(., conf.int = TRUE)
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    term = str_remove_all(term, "survey"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )
+
+hh_selection_tidy  %>%
+  ggplot(
+    aes(
+      x = term,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(test ~ country) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
+
+This doesn't seem to be super relevant. It seems to be more of a factor in Malawi.
+
+And would be less important for the EA regular monitoring, since they also survey non-rpomoters for the list of users
