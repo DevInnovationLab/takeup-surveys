@@ -593,3 +593,47 @@ stargazer(uganda_lm_tcr, malawi_lm_tcr, uganda_lm_fcr, malawi_lm_fcr,
           keep.stat = c("n", "rsq", "adj.rsq"),
           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint", "Waterpoint", "Waterpoint")))
 ```
+
+[ADDED] Among households that self report using a promoter survey water point, do those listed by a promoter have higher chlorination? No
+```{r}
+promoter_wp_households <- matched %>%
+  dplyr::filter(promoter_surveyed == TRUE)
+
+uganda <- promoter_wp_households %>%
+  dplyr::filter(country == "Uganda")
+
+malawi <- promoter_wp_households %>%
+  dplyr::filter(country == "Malawi")
+
+uganda_model_tcr <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = uganda,
+                          clusters = wp_id)
+
+malawi_model_tcr <- lm_robust(disctcr_02 ~ promoter_list, 
+                          data = malawi,
+                          clusters = wp_id)
+
+uganda_model_fcr <- lm_robust(discfcr_02 ~ promoter_list, 
+                          data = uganda,
+                          clusters = wp_id)
+
+malawi_model_fcr <- lm_robust(discfcr_02 ~ promoter_list, 
+                          data = malawi,
+                          clusters = wp_id)
+
+# convert to regular lm objects for stargazer
+uganda_lm_tcr <- lm(disctcr_02 ~ promoter_list, data = uganda)
+malawi_lm_tcr <- lm(disctcr_02 ~ promoter_list, data = malawi)
+uganda_lm_fcr <- lm(discfcr_02 ~ promoter_list, data = uganda)
+malawi_lm_fcr <- lm(discfcr_02 ~ promoter_list, data = malawi)
+
+stargazer(uganda_lm_tcr, malawi_lm_tcr, uganda_lm_fcr, malawi_lm_fcr,
+          type = "text",
+          title = "Association between promoter list and chlorination",
+          column.labels = c("Uganda", "Malawi", "Uganda", "Malawi"),
+          model.numbers = FALSE,
+          se = list(uganda_model_tcr$std.error, malawi_model_tcr$std.error, uganda_model_fcr$std.error, malawi_model_fcr$std.error),
+          p = list(uganda_model_tcr$p.value, malawi_model_tcr$p.value, uganda_model_fcr$p.value, malawi_model_fcr$p.value),
+          keep.stat = c("n", "rsq", "adj.rsq"),
+          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint", "Waterpoint", "Waterpoint")))
+```
