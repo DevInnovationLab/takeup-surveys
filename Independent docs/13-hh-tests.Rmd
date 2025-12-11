@@ -1,0 +1,592 @@
+---
+output: rmdformats::robobook
+title: "Chlorine testing spotchecks"
+---
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(stringr)
+library(sf)
+library(tidyverse)
+library(modelsummary)
+library(fixest)
+library(janitor)
+library(kableExtra)
+library(broom)
+library(vtable)
+library(haven)
+
+
+path_box <- file.path(Sys.getenv("BOX"), "i-h2o-takeup")
+path_git <- file.path(Sys.getenv("GITHUB"), "i-h2o-takeup")
+theme <-
+  theme_minimal() +
+  theme(
+    strip.background = element_rect(
+      fill = "gray90",
+      color = "gray90"
+    ),
+    plot.title = element_text(hjust = 0.5),
+    text = element_text(size = 11, family = "Times"),
+    plot.caption = element_text(
+      hjust = 0,
+      size = 10,
+      color = "gray40"
+    ),
+    legend.position = "bottom"
+  )
+```
+
+```{r}
+hh_final <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) 
+
+hh_test <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Constructed",
+      "hh-survey-chlorine.rds"
+    )
+  ) 
+
+hh_constructed <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Constructed",
+      "hh-survey-constructed.rds"
+    )
+  ) 
+
+hh <-
+  hh_final %>%
+  dplyr::filter(!is.na(country)) %>%
+  select(
+    key, survey, sample_group,
+    household_id, country, village_id, district_id, wp_id,
+    wp_intervention, wp_intervention_type, wp_func, wp_sourcetype,
+    ilc, dsw, ilc_wp, ilc_wcp, 
+    wp_dsw_dose, wp_dsw_chlorine, 
+    watertreat_any, watertreat_boil, watertreat_dispcl, watertreat_othercl,
+    howlong_waterprep, where_collect, who_collected, 
+    int_warned, int_promoter,
+    storage, access_contain, cover_storage,
+    hhh_age, hhh_sex, hhh_educ, age_child,
+    hh_pregnant, hh_under5, hh_under2,
+    wp_turbidity, wp_pay,
+    hh_dsw, hh_ilc,
+    contains("flag"), contains("photo"), contains("pic")
+  ) %>%
+  left_join(
+    hh_test, .,
+    relationship = "many-to-one"
+  ) 
+
+test_long <-
+  hh %>%
+  pivot_longer(
+    cols = c(matches("(*.)cr_c$"), matches("(*.)cr_color$")),
+    names_pattern = "(.*)(...)_(.*)",
+    names_to = c("instrument", "test", ".value")
+  ) %>%
+  rename(
+    value = c
+  ) %>%
+  mutate(
+    instrument = case_when(
+      instrument == "meter" ~ "Colorimeter",
+      instrument == "disc" ~ "Color wheel"
+    ),
+    test = test %>% str_to_upper,
+    sourcetype = 
+      case_when(
+        wp_sourcetype == "River, stream, or other flowing water source" ~ "Flowing water source",
+        wp_sourcetype ==  "Lake, pond, dam, or other standing water source" ~ "Standing water source",
+        TRUE ~ wp_sourcetype %>% 
+          str_replace_all("not powered by solar/electricity", "(not powered)") %>%
+          str_replace_all("powered by solar/electricity", "(powered)")
+      )
+  )
+```
+
+
+```{r}
+
+
+# 213 rows, hh_id is NA for 20
+spotcheck_uganda <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Uganda",
+      "02_Baseline",
+      "03_Data Cleaning",
+      "2_raw_data",
+      "6_Spot Check Survey",
+      "2_dta",
+      "Household Survey Spot Check.dta"
+    )
+  )
+
+# 
+spotcheck_malawi <-
+  read_dta(
+    file.path(
+      path_box,
+      "Data - SHARED WITH IPA",
+      "Malawi",
+      "02_Baseline",
+      "02_Data Management",
+      "4_data",
+      "4_monitoring",
+      "1_Spotchecks",
+      "Household Survey Spot Check.dta"
+    )
+  )
+```
+
+**COMMENTS**
+
+-   chlorine test steps followed in c90% of cases in Malawi, with higher scores for color disc
+-   chlorine test steps followed in almost 100% of cases in Uganda, but much smaller sample
+-   readings for colorwheel are similar (not statistically different); indeed, on average the main enumerator's reading is higher than the checker's (exception: TCR in Uganda)
+
+# 1 Chlorine test steps
+
+## 1.1 Malawi
+
+```{r}
+spotcheck_vars <- c(
+  "colordisc_rinse", "colordisc_fill", "colordisc_wip", "colordisc_dpd",
+  "colordisc_sachet", "colordisc_swirl", "colordisc_wait",
+  "colordisc_light", "colordisc_wash", "meter_rinse", "meter_fill",
+  "meter_blank", "meter_wipe", "meter_dpd", "meter_vials",
+  "meter_sachet", "meter_swirl", "meter_wait", "meter_wash"
+)
+
+spotcheck_malawi %>% 
+  select(all_of(spotcheck_vars)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  dplyr::filter(value %in% c(0, 1)) %>%
+  # group_by(variable) %>%
+  summarise(
+    n_ones = sum(value == 1),
+    n_zeros = sum(value == 0),
+    total = n(),
+    share_correct = mean(value == 1)
+  )  %>%
+  kable(format = "html")
+```
+
+## 1.2 Uganda
+
+```{r}
+spotcheck_uganda %>%  # Change this line
+  select(all_of(spotcheck_vars)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  dplyr::filter(value %in% c(0, 1)) %>%
+  # group_by(variable) %>%
+  summarise(
+    n_ones = sum(value == 1),
+    n_zeros = sum(value == 0),
+    total = n(),
+    share_correct = mean(value == 1)
+  )  %>%
+  kable(format = "html")
+```
+
+# 2 Chlorine residual readings
+
+## 2.1 Malawi
+
+```{r}
+spotcheck_malawi_test <-
+  spotcheck_malawi %>%
+  mutate(
+    across(
+      c(fcr, tcr),
+      ~ case_when(abs(.) < 100 ~ .)
+    )
+  ) %>%
+  select(hh_id, tcr, fcr) %>%
+  inner_join(
+    hh_final %>%
+      dplyr::filter(country == "Malawi"),
+    by = c("hh_id" = "household_id"),
+    relationship = "many-to-many"
+  ) %>%
+  mutate(
+    diff_tcr = disctcr - tcr, # if >0, then higher reading by enumerator than checker
+    diff_fcr = discfcr - fcr,
+    disctcr02 = tcr >= .2,
+    discfcr02 = fcr >= .2
+  ) 
+```
+
+```{r}
+tcr_count <- 
+  spotcheck_malawi_test %>%
+  dplyr::filter(!is.na(disctcr) & !is.na(tcr)) %>%
+  nrow
+
+fcr_count <- 
+  spotcheck_malawi_test %>%
+  dplyr::filter(!is.na(discfcr) & !is.na(fcr)) %>%
+  nrow
+```
+
+<!-- There are `r spotcheck_malawi_test %>% pull(hh_id) %>% n_distinct` households matched between spot check and survey data sets. `r tcr_count` have TCR readings with color wheel, and `r fcr_count` have FCR readings. -->
+
+```{r eval = FALSE}
+spotcheck_malawi_test %>%
+  summarize(
+    N = n(),
+    diff_tcr_mean = mean(diff_tcr, na.rm = TRUE),
+    diff_fcr_mean = mean(diff_fcr, na.rm = TRUE)
+  ) %>%
+  kable(format = "html")
+```
+
+```{r}
+tcr_test_malawi <- t.test(spotcheck_malawi_test$disctcr, spotcheck_malawi_test$tcr, paired = TRUE)
+fcr_test_malawi <- t.test(spotcheck_malawi_test$discfcr, spotcheck_malawi_test$fcr, paired = TRUE)
+```
+
+-   TCR difference test p-value: `r round(tcr_test_malawi$p.value, 4)`
+-   FCR difference test p-value: `r round(fcr_test_malawi$p.value, 4)`
+
+
+## 2.2 Uganda
+
+```{r}
+spotcheck_uganda_test <-
+  spotcheck_uganda %>%
+  mutate(
+    across(
+      c(fcr, tcr),
+      ~ case_when(abs(.) < 100 ~ .)
+    )
+  ) %>%
+  select(hh_id, tcr, fcr) %>%
+  mutate(source = "Team lead") %>%
+  inner_join(
+    hh_final %>%
+      dplyr::filter(country == "Uganda") %>%
+      mutate(source = "Enumerator"),
+    by = c("hh_id" = "household_id"),
+    relationship = "many-to-many"
+  ) %>%
+  mutate(
+    diff_tcr = disctcr - tcr, # if >0, then higher reading by enumerator than checker
+    diff_fcr = discfcr - fcr,
+    disctcr02 = tcr >= .2,
+    discfcr02 = fcr >= .2
+  ) 
+```
+
+```{r}
+tcr_count <- 
+  spotcheck_uganda_test %>%
+  dplyr::filter(!is.na(disctcr) & !is.na(tcr)) %>%
+  nrow
+
+fcr_count <- 
+  spotcheck_uganda_test %>%
+  dplyr::filter(!is.na(discfcr) & !is.na(fcr)) %>%
+  nrow
+```
+
+<!-- There are `r spotcheck_uganda_test %>% pull(hh_id) %>% n_distinct` households matched between spot check and survey data sets. `r tcr_count` have TCR readings with color wheel, and `r fcr_count` have FCR readings. -->
+
+
+```{r eval = FALSE}
+spotcheck_uganda_test %>%
+  summarize(
+    N = n(),
+    diff_tcr_mean = mean(diff_tcr, na.rm = TRUE),
+    diff_fcr_mean = mean(diff_fcr, na.rm = TRUE)
+  ) %>%
+  kable(format = "html")
+```
+
+```{r}
+tcr_test_uganda <- t.test(spotcheck_uganda_test$disctcr, spotcheck_uganda_test$tcr, paired = TRUE)
+fcr_test_uganda <- t.test(spotcheck_uganda_test$discfcr, spotcheck_uganda_test$fcr, paired = TRUE)
+```
+
+-   TCR difference test p-value: `r round(tcr_test_uganda$p.value, 4)`
+-   FCR difference test p-value: `r round(fcr_test_uganda$p.value, 4)`
+
+## 2.3 Pooled data
+
+
+```{r}
+tests <- 
+  spotcheck_uganda_test %>%
+  mutate(country = "Uganda") %>%
+  bind_rows(spotcheck_malawi_test %>% mutate(country = "Malawi")) %>%
+  select(disctcr, tcr, discfcr, fcr, country) %>%
+  mutate(spotfcr = fcr, spottcr = tcr) %>%
+  pivot_longer(
+    cols = ends_with("cr"),
+    names_pattern = "(....)(...)",
+    names_to = c(".value", "test")
+  ) %>%
+  mutate(test = str_to_upper(test))
+
+ggplot() +
+  geom_vline(xintercept = 0.2, color = "gray40", linetype = "dotted") +
+  geom_hline(yintercept = 0.2, color = "gray40", linetype = "dotted") +
+  geom_ribbon(
+    aes(
+      x = c(0, 3.6),
+      ymin = c(0, 3.6) - 0.2,
+      ymax = c(0, 3.6) + 0.2
+    ),
+    fill = "gray70",
+    alpha = 0.5
+  ) +
+  geom_abline(
+    slope = 1,
+    color = "gray40",
+    linetype = "dashed"
+  ) +
+  geom_point(
+    aes(
+      x = spot,
+      y = disc,
+      color = country
+    ),
+    data = tests %>% dplyr::filter(test == "TCR"),
+    position = "jitter",
+    alpha = .5,
+    size = 2
+  ) +
+  scale_color_brewer(palette = "Dark2") +
+  theme +
+  labs(
+    x = "Spot checker",
+    y = "Enumerator",
+    title = "TCR reading (ppm)",
+    color = NULL
+  ) 
+```
+
+```{r}
+tests %>%
+  dplyr::filter(!is.na(spot)) %>%
+  mutate(
+    Range = case_when(
+       disc < 0.2 ~ "[0-0.2)",
+       disc >= 0.2 | disc <= 1.2 ~ "[0.2-1.2]"
+    ),
+    match = disc == spot,
+    Test = test
+  ) %>%
+  group_by(Test, Range) %>%
+  summarise(
+    Count = n(),
+    `Percent same reading` = (round(mean(match, na.rm = TRUE), 3) * 100) %>% paste0("%")  
+  )
+```
+
+
+```{r}
+ggplot() +
+  geom_vline(xintercept = 0.2, color = "gray40", linetype = "dotted") +
+  geom_hline(yintercept = 0.2, color = "gray40", linetype = "dotted") +
+  geom_ribbon(
+    aes(
+      x = c(0, 3.6),
+      ymin = c(0, 3.6) - 0.2,
+      ymax = c(0, 3.6) + 0.2
+    ),
+    fill = "gray70",
+    alpha = 0.5
+  ) +
+  geom_abline(
+    slope = 1,
+    color = "gray40",
+    linetype = "dashed"
+  ) +
+  geom_point(
+    aes(
+      x = spot,
+      y = disc,
+      color = country
+    ),
+    data = tests %>% dplyr::filter(test == "FCR"),
+    position = "jitter",
+    alpha = .5,
+    size = 2
+  ) +
+  scale_color_brewer(palette = "Dark2") +
+  theme +
+  labs(
+    x = "Spot checker",
+    y = "Enumerator",
+    title = "FCR reading (ppm)",
+    color = NULL
+  ) 
+```
+ 
+*Full sample*
+
+```{r}
+tcr <- tests %>%
+  dplyr::filter(test == "TCR")
+
+t.test(tcr$disc, tcr$spot)
+```
+
+```{r}
+fcr <- tests %>%
+  dplyr::filter(test == "FCR")
+
+t.test(fcr$disc, fcr$spot)
+```
+
+*At least one reading is under 0.2*
+
+```{r}
+tcr <- tests %>%
+  dplyr::filter(test == "TCR", disc < 0.2 | spot < 0.2) 
+
+t.test(tcr$disc, tcr$spot)
+```
+
+```{r}
+fcr <- tests %>%
+  dplyr::filter(test == "FCR", disc < 0.2 | spot < 0.2)
+
+t.test(fcr$disc, fcr$spot)
+```
+*At least one reading is between 0.2 and 1.2*
+
+```{r}
+tcr <- tests %>%
+  dplyr::filter(test == "TCR", (disc >= 0.2 & disc <= 1.2) | (spot >= 0.2 & spot <= 1.2))
+
+t.test(tcr$disc, tcr$spot)
+```
+
+```{r}
+fcr <- tests %>%
+  dplyr::filter(test == "FCR", (disc >= 0.2 & disc <= 1.2) | (spot >= 0.2 & spot <= 1.2))
+
+t.test(fcr$disc, fcr$spot)
+```
+
+# 3 Chlorine detection rates
+
+```{r}
+mw_tcr <- 
+  map(
+  c("disctcr_02", "disctcr02"),
+  ~ lm(
+    paste(., "~ 1") %>% as.formula,
+    data = spotcheck_malawi_test %>%
+      dplyr::filter(!is.na(disctcr), !is.na(tcr))
+  ) %>% tidy(conf.int = TRUE)
+) %>% 
+  bind_rows() %>%
+  mutate(
+    source = c("Enumerator", "Spot checker"),
+    test = "TCR",
+    country = "Malawi"
+  )
+
+mw_fcr <- 
+  map(
+  c("discfcr_02", "discfcr02"),
+  ~ lm(
+    paste(., "~ 1") %>% as.formula,
+    data = spotcheck_malawi_test %>%
+      dplyr::filter(!is.na(disctcr), !is.na(tcr))
+  ) %>% tidy(conf.int = TRUE)
+) %>% 
+  bind_rows() %>%
+  mutate(
+    source = c("Enumerator", "Spot checker"),
+    test = "FCR",
+    country = "Malawi"
+  )
+
+ug_tcr <- 
+  map(
+  c("disctcr_02", "disctcr02"),
+  ~ lm(
+    paste(., "~ 1") %>% as.formula,
+    data = spotcheck_uganda_test %>%
+      dplyr::filter(!is.na(disctcr), !is.na(tcr))
+  ) %>% tidy(conf.int = TRUE)
+) %>% 
+  bind_rows() %>%
+  mutate(
+    source = c("Enumerator", "Spot checker"),
+    test = "TCR",
+    country = "Uganda"
+  )
+
+ug_fcr <- 
+  map(
+  c("discfcr_02", "discfcr02"),
+  ~ lm(
+    paste(., "~ 1") %>% as.formula,
+    data = spotcheck_uganda_test %>%
+      dplyr::filter(!is.na(disctcr), !is.na(tcr))
+  ) %>% tidy(conf.int = TRUE)
+) %>% 
+  bind_rows() %>%
+  mutate(
+    source = c("Enumerator", "Spot checker"),
+    test = "FCR",
+    country = "Uganda"
+  )
+```
+
+```{r}
+mw_tcr %>%
+  bind_rows(mw_fcr) %>%
+  bind_rows(ug_fcr) %>%
+  bind_rows(ug_tcr) %>%
+  ggplot(
+    aes(
+      x = estimate * 100,
+      xmin = conf.low * 100,
+      xmax = conf.high * 100,
+      y = source,
+      color = source
+    )
+  ) +
+  geom_errorbar(width = .3) +
+  geom_point(size = 2) +
+  facet_grid(test ~ country) +
+  theme +
+  labs(
+    y = NULL,
+    x = "Percent of readings >= 0.2 ppm"
+  )
+```
+
+

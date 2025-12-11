@@ -186,6 +186,7 @@ wp_census <-
     intervention_fo = case_when(
       wp_dsw ~ "DSW",
       wp_ilc ~ "ILC"
-    )
+    ),
+    closer = (ilc_wcp & str_detect(ea_id, "001^")) | ilc_wp
   )
 ```

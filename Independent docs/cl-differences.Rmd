@@ -8,6 +8,7 @@ title: "Comparison of chlorine adoption estimates"
 pacman::p_load(
   tidyverse,
   broom,
+  broom.helpers,
   fixest,
   estimatr,
   stargazer,
@@ -49,16 +50,10 @@ table.table-borderless {
 }
 </style>')
 ```
+# To-dos
 
-To-dos: 
-
-- write this more carefully
-- add sample sizes
-- polish graphs
-- think about right level to cluster SEs for each figure
-
-Other notes:
-- the small difference between TCR and FCR in EvAc data points to people haing chlorinated recently
+- the small difference between TCR and FCR in Evidence Action data points to people haing chlorinated recently
+- bring weights from main analysis so that numbers become the same
 
 ```{r}
 wp_census <-
@@ -83,47 +78,6 @@ wp_census <-
 ```
 
 ```{r}
-hh_survey <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdSurvey",
-      "DataSets",
-      "Final",
-      "hh-survey.rds"
-    )
-  ) %>%
-  group_by(household_id, survey) %>%
-  mutate(
-    intervention_selfreport = case_when(
-      hh_dsw ~ "DSW",
-      hh_ilc ~ "ILC"
-    ),
-    intervention_fo = case_when(
-      wp_dsw ~ "DSW",
-      wp_ilc ~ "ILC"
-    ),
-    resp_fem = resp_sex == "Female",
-    resp_primary_educ = resp_educ >= "Primary",
-    hhh_fem = hhh_sex == "Female",
-    hhh_primary_educ = hhh_educ >= "Primary",
-    collect_primary = where_collect == "From the water point primary water point (${wp_name_pl})",
-    waterprep_12minus = howlong_waterprep == "Less than 12 hrs ago [today]",
-    collect_child = str_detect(who_collected, "18"),
-    collect_resp = who_collected == "The respondent",
-    across(
-      c(hh_pregnant, hh_under2, hh_under5),
-      ~ . > 0
-    )
-  ) %>%
-  dplyr::filter(
-    wp_intervention == "DSW",
-    sample_group != "ILC"
-  )
-```
-
-```{r}
 promoter_survey <-
   read_rds(
     file.path(
@@ -135,35 +89,28 @@ promoter_survey <-
       "pm-survey-households.rds"
     )
   ) %>%
-  mutate(pm_wp = wp_id_c) %>%
-  select(household_id, pm_wp)
+  select(-village_id)
+```
 
-pm_survey_clean <-
+```{r}
+hh_census_all <-
   read_rds(
     file.path(
       path_box,
       "Data",
-      "PromoterSurvey",
+      "HouseholdCensus",
       "DataSets",
-      "Clean",
-      "pm-survey-clean.rds"
+      "Final",
+      "hh-census.rds"
     )
+  ) %>%
+  mutate(
+    hhh_fem = hhh_gender == "Female",
+    hhh_primary_educ = !(hhh_educ %in% c("No formal education / Never attended school", "None", "Pre-primary", "Some Primary School (Did not complete Standard 8)")),
+    inclusionyn = str_detect(inclusion, "Within"),
+    wp_source = wp_source == "From a water point in this village",
+    any_rank = household_id %in% (promoter_survey %>% dplyr::filter(!is.na(rank)) %>% pull(household_id))
   )
-
-randomization <- 
-  pm_survey_clean %>% 
-  dplyr::select(
-    wp_id, village_id, country,
-    contains("rand_hh")
-  ) %>%
-  pivot_longer(
-    cols = starts_with("rand_hh"),
-    names_prefix = "rand_hh_",
-    names_to = "rank",
-    values_to = "household_name",
-    values_drop_na = TRUE
-  ) %>%
-  mutate(household_name = household_name %>% str_squish %>% str_trim)
 
 hh_census <-
   read_rds(
@@ -178,8 +125,6 @@ hh_census <-
   ) %>%
   select(
     household_id,
-    promoter_surveyed,
-    promoter_list,
     inclusion,
     #visit,
     dsw,
@@ -187,31 +132,65 @@ hh_census <-
     wp_count_pastmonth
   )
 
-hh_names <-
+```
+
+
+```{r}
+hh_survey <-
   read_rds(
     file.path(
       path_box,
       "Data",
-      "HouseholdCensus",
+      "HouseholdSurvey",
       "DataSets",
-      "Constructed",
-      "hh-census-constructed.rds"
+      "Final",
+      "hh-survey.rds"
     )
   ) %>%
-  select(village_id, household_id, household_name, self_wp = wp_id_c) %>%
-  dplyr::filter(!is.na(household_name)) %>%
-  unique
+  group_by(village_id, survey) %>%
+  mutate(not_first_day = date > min(date)) %>%
+  group_by(household_id, survey) %>%
+  mutate(
+    intervention_selfreport = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC"
+    ),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    ),
+    resp_fem = resp_sex == "Female",
+    resp_primary_educ = resp_educ >= "Primary",
+    hhh_fem = hhh_sex == "Female",
+    hhh_primary_educ = !(hhh_educ %in% c("No formal education / Never attended school", "None", "Pre-primary", "Some Primary School (Did not complete Standard 8)")),
+    collect_primary = where_collect == "From the water point primary water point (${wp_name_pl})",
+    waterprep_12minus = howlong_waterprep == "Less than 12 hrs ago [today]",
+    collect_child = str_detect(who_collected, "18"),
+    collect_resp = who_collected == "The respondent",
+    across(
+      c(hh_pregnant, hh_under2, hh_under5),
+      ~ . > 0
+    ),
+    promoter_list = household_id %in% promoter_survey$household_id,
+    rank_u5 = household_id %in% (promoter_survey %>% dplyr::filter(rank <= 4) %>% pull(household_id)),
+    any_rank = household_id %in% (promoter_survey %>% dplyr::filter(!is.na(rank)) %>% pull(household_id)),
+    in_monitoring = any(survey == "Monitoring Survey"),
+    in_household = any(survey == "Household Survey")
+  ) %>%
+  left_join(hh_census) %>%
+  dplyr::filter(
+    !(survey == "Household Survey" & wp_intervention != "DSW"),
+    wp_intervention != "ILC",
+    sample_group != "ILC"
+  )
+```
 
-randomization_id <-
-  randomization %>%
-  left_join(hhc) %>%
-  mutate(pm_right = self_wp == wp_id)
+```{r}
 
-hh_survey_matched <- 
+matched <- 
   hh_survey %>%
   left_join(
-    randomization_id %>% 
-      select(household_id, rank),
+    promoter_survey,
     by = "household_id",
     relationship = "many-to-many"
   ) %>%
@@ -223,25 +202,16 @@ hh_survey_matched <-
       ),
     by = "household_id",
     relationship = "many-to-many"
-  )
-
-max_rank_surveyed <-
-  hh_survey_matched %>%
-  dplyr::filter(survey == "Monitoring Survey") %>%
-  group_by(village_id) %>%
-  summarise(max_rank = max(rank, na.rm = TRUE))
-
-matched <-
-  hh_survey_matched %>%
-  left_join(
-    promoter_survey,
-    relationship = "many-to-many"
   ) %>%
   left_join(
     wp_census %>%
-      transmute(pm_wp = wp_id, pm_wp_intervention = intervention)
+      transmute(
+        wp_pm = wp_id, 
+        wp_pm_intervention = intervention
+      )
   ) %>%
-  left_join(max_rank_surveyed) %>%
+  group_by(wp_pm) %>%
+  mutate(max_rank = max(rank, na.rm = TRUE)) %>%
   group_by(village_id, survey) %>%
   mutate(not_first_day = date > min(date)) %>%
   group_by(household_id) %>%
@@ -253,7 +223,7 @@ matched <-
   mutate(
     program = case_when(
       survey == "Household Survey" ~ wp_intervention,
-      survey == "Monitoring Survey" ~ pm_wp_intervention
+      survey == "Monitoring Survey" ~ wp_pm_intervention
     ),
     rank = as.numeric(rank),
     replacement = rank > 4,
@@ -262,7 +232,11 @@ matched <-
       replaced & !in_monitoring & survey == "Household Survey" ~  "Replaced",
       replacement & survey == "Monitoring Survey" ~  "Replacement",
     ),
-    promoter_right = pm_wp == wp_id
+    promoter_right = wp_pm == wp_id,
+    across(
+      c(hh_pregnant, hh_under2, hh_under5),
+      ~ . > 0
+    )
   ) 
 
 by_country <-
@@ -272,135 +246,141 @@ by_country <-
   set_names(c("Malawi", "Uganda"))
 
 averages <- function(data, x, cluster) {
-  c("disctcr_02", "discfcr_02") %>%
+  c("disctcr_02") %>%
     map(
       ~ feols(
         paste(., "~ 0 +", x) %>% as.formula,
         cluster = paste("~ ", cluster),
         data = data
       )
-    ) %>%
-    set_names(c("TCR", "FCR"))
+    ) 
 }
 
 marginal_effects <- function(data, x, cluster) {
-  c("disctcr_02", "discfcr_02") %>%
+  c("disctcr_02") %>%
     map(
       ~ feols(
         paste(., "~", x) %>% as.formula,
         cluster = paste("~ ", cluster),
         data = data
       )
-    ) %>%
-    set_names(c("TCR", "FCR"))
+    ) 
 }
 ```
 
 ```{r}
 balance_vars <-
   c(
-    "resp_age",
-    "resp_fem",
-    "resp_primary_educ",
-    "hhh_age", 
-    "hhh_fem", 
-    "hhh_primary_educ",
-    "hh_members", 
-    "hh_pregnant", 
-    "hh_under2",
-    "hh_under5",
-    "wp_dist", 
-    "evac_dist",
+    # "resp_age",
+    # "resp_fem",
+    # "resp_primary_educ",
+    "Age of household head (years)" = "hhh_age", 
+    "Household head is a woman" = "hhh_fem", 
+    "Household head completed primary education" = "hhh_primary_educ",
+    "Number of household members" = "hh_members", 
+    "At least one household member is pregnant" = "hh_pregnant", 
+    "At least one household member is under 2 yo" = "hh_under2",
+    "At least one household member is under 2 yo" = "hh_under5",
+    "Inclusion criterion" = "inclusion",
+    "Distance to primary source of drinkig water (m)" = "wp_dist", 
+    "Distance to nearest water point with DSW (m)" = "evac_dist",
     #"pm_dist",
-    "wp_pay",
+    "Household pays to use the primary source of drinking water" = "wp_pay",
     #"wp_func", 
-    "wp_dsw_chlorine", 
-    "wp_disctcr_02", 
-    "wp_discfcr_02",
-    "prep_different", 
-    "prep_different_cl",
-    "waterprep_12minus", 
-    "mix", 
-    "watertreat_any", 
-    "watertreat_boil", 
-    "watertreat_dispcl", 
-    "watertreat_othercl",
-    "collect_primary", 
-    "collect_resp", 
-    "collect_child",
-    "int_warned", 
-    "int_promoter",
-    "disctcr_02", 
-    "discfcr_02"
+    "Dispenser was filled" = "wp_dsw_chlorine", 
+    "Dispenser had TCR > 0.2 ppm" = "wp_disctcr_02", 
+    "Dispenser had FCR > 0.2 ppm" = "wp_discfcr_02",
+    "Water for children is prepared differently" = "prep_different", 
+    "Water was prepared less than 12h before testing" = "waterprep_12minus", 
+    "Water tested was combined with old or untreated water" = "mix", 
+    "Tested water was collected from primary water source" = "collect_primary", 
+    "Tested water was collected by the respondent" = "collect_resp", 
+    "Tested water was collected by a child" = "collect_child",
+    "Household was aware of upcoming data collection" = "int_warned", 
+    "Promoter informed the household of upcoming data collection" = "int_promoter"
   )
 ```
 
 
-# Summary
+```{r}
+balance_vars_census <-
+  c(
+    "Age of household head (years)" = "hhh_age", 
+    "Household head is a woman" = "hhh_fem", 
+    "Household head completed primary education" = "hhh_primary_educ",
+    "Number of household members" = "hh_members", 
+    "At least one household member is pregnant" = "hh_pregnant", 
+    "At least one household member is under 2 yo" = "hh_under2yn",
+    "At least one household member is under 2 yo" = "hh_under5yn",
+    "Within village boundaries" = "inclusionyn",
+    "Distance to primary source of drinkig water (m)" = "wp_dist", 
+    "Distance to nearest water point with DSW (m)" = "evac_dist",
+    #"pm_dist",
+    "Primary source of drinking water within village boundaries" = "wp_source",
+    "Uses more than one water source for drinking water" = "wp_secweek",
+    "Number of water sources used in the past month" = "wp_count_pastmonth",
+    "Household pays to use the primary source of drinking water" = "wp_pay",
+    "Primary water point is functional" = "wp_func", 
+    "Dispenser was filled" = "wp_disp_filled", 
+    "Dispenser had TCR > 0.2 ppm" = "wp_disctcr_02", 
+    "Dispenser had FCR > 0.2 ppm" = "wp_discfcr_02",
+    "Number of promoter lists mentioned" = "promoter_list_mentions"
+  )
+```
 
-This analysis aims to identify at least some of the factors leading to different estimates of chlorine adoption.
-  - In 2023, we identified that data from KSWTCS led to very different estimates of chlorine adoption rates than those presented by Evidence Action
-  - We investigated potential reasons for this and concluded that even after accounting for all of them, Evidence Action's estimates still led to estimates that were at least three times as high as those coming from KSWTCS data ([see report](https://drive.google.com/file/d/1Os9CRFzak8-3V0BKWoa66rfHfzIFPlDa/view))
-  - Evidence Action then collected more data in Kenya to estimate chlorination rates following the KSWTCS and Adoption Monitoring strategies. They found that
-    - Chlorine adoption estimates based on the monitoring methodology (36%) was around twice as high as those from the census methodlogy (16%)
-    - chlorine adoption estimates from the regular monitoring (44%) were around three times as high
-    - comparing the same hosueholds, independent surveyors found a chlorination rate of 21%, while EvAc staff found a chlorination rate of 38%. Discount = 55%
+This Section compares adoption estimates calculated using different methodologies and discusses potential reasons for the differences between them. This is an exploratory analysis of a descriptive nature meant to compare how likely different hypotheses are to explains the differences. It relies on comparisons of different subsamples that are often small in size. Although it is helpful in discarding some hypotheses, it cannot conclusively point to the causes behind the different estiamtes. 
 
-Between July and October 2025, DIL conducted a similar exercise in Uganda and Malawi.
-  - We collected data based on a census of households and based on the promoter's list. 
-  - The objective was to compare whether with independent surveyors the differences in methodology would lead to different estimates of chlorine adoption
+[Table 1](#tab:discount) compares the TCR detection rates as estimated based on the Household Survey and the Monitoring survey. It also includes the estimates from Evidence Action's Adoption Monitoring for the same period, as well as for the Simultaneous Census and Monitoring exercise conducted by Evidence Action in Kenya in 2024. [Figure 1](#fig:hh-vs-mon) includes confidence intervals for the Household and Monitoring Survey estimates.
+
+Evidence Action's Q3 monitoring estimates are roughly twice as high as DIL's Household Survey estimates (our preferred method). Section 1 discusses some hypotheses that may explain this difference. However, we lack the data to adequately test them. Based on the fact that our Household Survey estimates are equivalent to 52% and 58% of Q3 Monitoring estimates, a proportion consistent with the SCM that relying on measurements taken by independent surveyors results in chlorination rates that represented 55% of those calculated based on estimates by Evidence Action staff, we believe that a combination of sampling variation and surveyor incentives are the most likely explanation for these differences.
+
+The estimates from both DIL surveys are not statistically different in Malawi. This indicates that, although a few different factors may bias estimates obtained under the Monitoring methodology, a full census of the villages served may not be necessary to obtain reliable estimates of adoption. In Uganda, on the other hand, the estimates are significantly different. Section 2 discusses the different potential sources of bias. We believe a combination of sample selection, timing of surveys, and interactions with promoters are leading Monitoring estimates to be biasing Monitoring Survey estimates up in Uganda.
+
+- In 2024, Evidence Action conducted a new data collection in Kenya to estimate and compare chlorination rates obtained following the same methods as KSWTCS and and those obtained by following their regular Adoption Monitoring strategy in the same set of villages. They found that
+  - Chlorine adoption estimates based on their Adoption Monitoring methodology (36%) were around twice as high as those obtained following the same methods as KSWTCS (16%)
+  - When sampling the same households, independent surveyors found a chlorination rate of 21%, while Evidence Action staff found a chlorination rate of 38%
+  - Chlorine adoption estimates from the regular monitoring activities, outside of this data collection exercise, were around three times as high, at 44%
+
+## delete
+
+  - **Comparing census estimates with Evidence Action's regular adoption monitoring estimates for the same period, our findings are roughly consistent with those from the exercise conducted in Kenya**: the Household Survey estimates represent 52-58% of those from Evidence Action's Adoption Monitoring for the third quarter of 2025.
   
-The resulting chlorine detection rates are presented in [Table 1](#tab:discount).
-  - **Comparing census estimates with EvAc monitoring estimates for the same period are roughly consistent with those from EvAc's Kenya exercise**: Census methodology conducted independently are 52-58% lower than the monitoring estimates conducted by Evidence Action staff based on the promoter list.
-  - **Based on field observations of DSW use, we believe the lower numbers are more likely to be correct**. We asked field teams to observe the people using the water points while they were collecting data. Field teams remained around water points with filled dispensers for about an hour to conduct all the necessary testing
-    - In Malawi, the they observed people using 163 water points with dispensers, but only observed anyone using the dispenser in 14 of them
-    - In Uganda, they observed people using 155 water points with dispensers, but only observed people using the dispenser in 21 of them
+  <!-- - **Based on field observations of DSW use, we believe the lower numbers are more likely to be correct**. We asked field teams to observe the people using the water points while they were collecting data. Field teams remained around water points with filled dispensers for about an hour to conduct all the necessary testing -->
+  <!--   - In Malawi, the they observed people using 163 water points with dispensers, but only observed anyone using the dispenser in 14 of them -->
+  <!--   - In Uganda, they observed people using 155 water points with dispensers, but only observed people using the dispenser in 21 of them -->
     
-Within DIL's data, estimates obtained by following EvAc's protocol are higher than those obtained by DIL's protocol in Uganda, but not in Malawi ([Figure 1](#fig:hh-vs-mon), [Table 2](#tab:hh-vs-mon-tab))
+Within DIL's data, estimates from the Monitoring Survey are higher than those from the Household Survey in Uganda, but not in Malawi ([Figure 1](#fig:hh-vs-mon), [Table 2](#tab:hh-vs-mon-tab))
+
   - This is consistent with the fact that households included in the two surveys are comparable in Malawi ([Table 3](#tab:balance-mw)), but not in Uganda ([Table 4](#tab:balance-ug))
   - In Uganda, households included in the Monitoring Survey are more likely to pay to use their primary water point, and twice as likely to have been warned by the promoter about the upcoming survey than those in the Household Survey.
     
-The remainder of this document explores the differences between our monitoring and household survey estimates, indicating when these differences could also explain differences between DIL and EvAc estimates.
-  - These comparisons are speculative and often use small sample sizes.
-  - We believe differences are due to sample selection of water points and households being warned by promoters of the future surveys.
-  - Annecdotal evidence points to more interference from EvAc in Uganda
+The remainder of this document explores the differences between the estimates from the Household Survey and the Monitoring Survey, indicating when these differences could also explain differences between the Household Survey and Evidence Action's Q3 Monitoring estimates.
 
-
-# Methodology
-
-This Section describes the methodology followed for each of these estimates
-
-## Evidence Action
-
-- Evidence Action samples water points
-- They send their own staff to survey promoters
-- They get a list from the promoter
-- They randomly select households from this list to be surveyed
-- They measure four housheolds from this list
-
-## DIL
-
-- 60 DSW villages were sampled in Uganda, and 60 in Malawi
-- In each village, we conducted a census of all water points in the village and identified those with dispensers
-- In each village, we then conducted a census of all households in the village and asked them which of the water points mapped during the census they used
-- We then sampled 20 households that self-reported using water points with a DSW dispenser to be tested. This is what we call the "Household survey". Three attempts where made to survey each of this households, and if they could not be surveyed after that, they were replaced.
-- After all households sampled for the household survey were tested, we surveyed the promoter for each water point. Promoters were asked to provide a list of the households using the water points they are responsible for.
-- From each promoter list, four households were sampled for testing. This is what we call the "Monitoring survey". These households were only visited once, and if they were not available, they were replaced.
-- If a household was already surveyed in the household survey, they are not re-surveyed.
-
-# Potential explanations of differences between DIL and Evidence Action estimates
-
-## Surveyors' independence
-
-IPA (independent) vs EvAc (surveyor may have a relationship with the promoter, promoter wants to maintain a good relationship with EvAc, surveyor has more interest in EvAc succeeding). We would expect this to bias EvAc estimates upward. 
-
-In the Kenya exercise, Evidence Action found that even when considering the exact same households, estimates from the household survey (taken by independent surveyors), which indicated 21% of the households tested in both survey tested positive for chlorine residual, represented only 55% of those from the monitoring survey (taken by Evidence Action staff), which pointed to a chlorine detection rate of 38%.
-
-The comparison between the same estimates in Malawi and Uganda are consistent with these results  ([Table 1](#tab:discount)). In Malawi, the household survey estimate (XX%) represents 52% of that from Evidence Action monitoring (XX%). In Uganda, the household survey estimate (XX%) represents 58% of that from Evidence Action monitoring (YY%).
-
-**We believe this to be the main driver of the differences observed between Columns 1 and 3 of [Table 1](#tab:discount).**
+  - It is not selection on water points: Households using water points included in the promoter survey have higher chlorination rates (Figure 3). However, if we compare the monitoring estimates to household survey estimates among households using the same water points, the difference between the two surveys is large (Figure 4)
+  - It is not selection into the household list by promoters: Apart from using the same water points, they'd need to be listed by the promoter. In the household survey, households using the water points listed by the promoter have the same chlorination rates as those that don't (Table 6, Figure 5). 
+  - Is it because these households are being replaced?
+  - Is it because households that are easier to find are more likely to chlorinate?
   
-## Sampled water points
+  - We believe differences are due to sample selection of water points and households being warned by promoters of the future surveys.
+  - Annecdotal evidence points to more interference from Evidence Action in Uganda
+
+# 1 Potential explanations of differences between DIL and Evidence Action estimates
+
+## 1.1 Surveyors' independence
+
+A key methodological difference between DIL and Evidence Action protocols is that the data used for **DIL's estimates was collected by independent enumerators hired by IPA, while Evidence Action relies on their own local staff**. This means surveyors and promoters may be responding to different incentives. 
+
+  - Evidence Action surveyors may have existing relationships with the promoter or with the implementation teams, wishing to portray them in a positive light
+  - Promoters were chosen by their communities to be the point of contact with Evidence Action, and therefore may seek to maintain a positive relationship with Evidence Action
+  - Evidence Action staff may have an interest in the continuation of the program, which in turn depends on it having positive results
+ 
+ 
+All of these factors would create potential incentives for surveyors and promoters to seek outcomes favorable to program success, which **we would expect to bias Evidence Action estimates upward relative to independent surveys**.
+
+  - **Empirical evidence from Kenya supports this hypothesis**: when Evidence Action examined identical households using both measurement approaches, the independent household survey found that 21% of households tested positive for chlorine residual, while the Evidence Action monitoring survey reported 38%. This means the independent survey estimate represented only 55% of the Evidence Action figure.
+  - **Results from the DIL exercise in Malawi and Uganda are also consistent with this hypothesis** ([Table 1](#tab:discount)). In Malawi, the independent household survey estimate (26.6%) represents 52% of the Evidence Action monitoring figure (51%). Similarly, in Uganda, the independent estimate (30.1%) represents 58% of the Evidence Action monitoring result (52%).
+
+## 1.2 Represented water points
 
 ```{r}
 wp_counts <-
@@ -417,39 +397,53 @@ wp_counts <-
   )
 ```
 
-IPA only interviewed promoters, while EvAc interviews any village member who is knowledgeable.
+The water points included in Evidence Action's Adoption Monitoring Survey and the DIL Monitoring Survey estimates are also systematically different, due to who provided the list of users from which tested households were sampled. 
 
-In Malawi, we identified `r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(N)` water points with DSW, and conducted surveys with the promoters responsible for `r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(count)` (`r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(pct)`%) of them. 
+  - **DIL's protocol determined that only promoters who work with Evidence Action to refill dispensers, maintain them, and promote chlorine adoption in the village could provide a list of water point users**. When Evidence Action did not provide the contact information for a promoter or one could not be identified by asking villagers, no list of users was obtained and no households were included in the Monitoring Survey for that water point.
+  - **Evidence Action, on the other hand, surveys any village member who is knowlegdeable about a water point when the promoter cannot be found**.
+  - This difference in sampling strategy has implications for representativeness of DIL's Monitoring Survey and may bias estimates.
+  
+<!-- The coverage of water points included in DIL's Monitoring Surveys varied by country.  -->
 
-In Uganda, we identified `r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(N)` water points with DSW, and conducted surveys with the promoters responsible for `r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(count)` (`r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(pct)`%) of them. 
+<!--   - In Malawi, `r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(pct)`% (`r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(count)`) of the `r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(N)` water points with with DSW identified in sampled villages are represented. -->
+<!--   - In Uganda, `r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(pct)`% (`r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(count)`) of the `r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(N)` water points with DSW identified are included in the Monitoring Survey. -->
+  
+This difference should bias DIL estimates upward, thereby reducing rather than explaining the observed gap between the two surveys.
 
-Therefore, the Evidence Action estimate is likely to be more representative. However, this would bias DIL's monitoring estimates upward, since promoters are likely better at identifying households using the water points as well as households that chlorinate the water than other households, and also have more incentives to prioritize the latter.
+  - Evidence Action's broader respondent pool likely produces more representative estimates of overall program reach. 
+  - However, DIL's promoter-focused approach would be expected to introduce upward bias into monitoring estimates. Promoters are better positioned than typical village members to identify both households using the water points and households that chlorinate their water, and they may also be more motivated to prioritize these successfully adopting households when selecting survey respondents.
+  - Given that DIL's adoption estimates in the Monitoring Survey are lower than those in Evidence Action's Q3 Monitoring, and that in Malawi, where it is more representative, the Monitoring Survey estimates are closer to the Household Survey's, **the difference in water point representativeness is unlikely to explain the overall divergence in estimates**. 
 
-Taking all of these considerations into account, **the difference between water points included in DIL's Monitoring Survey and Evidence Action's Q3 Monitoring is unlikely to explain the difference in the resulting estimates, and any bias due to this factor should lead to a reduction in the difference between the two estimates.** 
+## 1.3 Survey timing and duration
 
-## Timing
+Both DIL and Evidence Action protocols stipulate that promoters should only be contacted upon surveyors' arrival in the village. However, the surveys differed substantially in duration: Evidence Action monitoring staff spent only one day in each village, while IPA teams remained for an average of five days, conducting monitoring surveys on the final day.
 
-In both cases, promoters are only supposed to be contacted when the surveyors arrive at the village. However, EvAc's monitoring staff is only in the village for a day, while IPA teams were in the village for on average five, with the monitoring surveys taking place in the very last day.
+**The extended presence of IPA field teams may bias chlorine adoption estimates in the Household and Monitoring Surveys upward**, as promoters have the opportunity to refill dispensers and remind households to add chlorine to their drinking water.
 
-There is some indication that households surveyed later are more likely to have chlorine detected. [Figure](#fig:timing) shows that, among households included in the Household Survey, those tested in the first day are less likely to have chlorine detected both in Malawi and in Uganda. However, this difference is only statistically significant in Uganda, and even so, only at the 90% confidence level (#tab:timing). Additionally, we do not observe the same in the Monitoring Survey [Figure](#fig:timing-mon).
+  - [Figure 2](#fig:timing) indicates that among households included in the Household Survey, those tested on the first day were show a higher rate of TCR detection both in Malawi and in Uganda.
+  - However, **there limited statistical support for this hypothesis**, as the difference is significant only in Uganda, and only at the 90% confidence level. 
+  - This pattern does not observed in the Monitoring Survey, but this may be explained by the fact that there were fewer interviews to be made, and therefore this activity may not have been extended for as many days.
 
-**As a result, we do not believe this factor to be causing meaningful bias in our estimates. Even if they were, they would bias the estimates in the direction of reducing the difference between DIL and Evidence Action estimates.**
-
-## Other factors
+## 1.4 Other factors
   
 The following factors may be leading part of the differences, but we are not able to test for them:
-- **Sampled villages**: We did not visit the same water points.
-- **Time since training**: IPA surveyors were trained between a week and four months before the interviews took place, but we don't know the last time EvAc staff was retrained. 
-- **State of the equipment**: Our equipment was procured for this data collection, and all of the reagents were new. We don't know about EvAc's. Discolored color wheel would bias estimates upward. Degraded DPD reagents would bias estimates downward.
-- **Deviations from the randomization protocol**: during DIL's surveys, the randomization of households into the testing sample was recorded in the data, and we can observe whether a sampled households was replaced or not. In EvAc's, it is recorded in a piece of paper, leaving more room for enumerators to choose who they are surveying (e.g. households closer to the promoter's house, household indicated by the promoter). **We cannot test if this happens in the EvAc data, but we may be able to test for this in our data. Add distance to promoter household.**
 
-# Protential explanations for differences between Household survey and Monitoring survey
+- **Sampled villages**: IPA and Evidence Action did not visit the same water points, and sampling variation may explain part of the difference.
+- **Time since training**: IPA surveyors were trained between a week and four months before the interviews took place, but we don't know the last time Evidence Action staff was retrained. This would introduce noise into the measurement, but it is unclear whether it was bias estimates.
+- **State of the equipment**: The equipment used during the Household and Monitoring Surveys was procured for this data collection, and all of the reagents were new. We do not have data about how long the equipment used by Evidence Action has been in use, or when reagents were procured. The direction of the bias introduced by this in unclear. For example, discolored color wheels would bias estimates upward, while degraded DPD reagents would bias estimates downward.
+- **Deviations from the randomization protocol**: during the Household and Monitoring surveys, the randomization of households into the testing sample was recorded in the data, and we can observe whether a sampled households was replaced or not. In Evidence Action's, it is recorded in a piece of paper, leaving more room for enumerators to choose who they are surveying (e.g. households closer to the promoter's house, household indicated by the promoter). 
 
-Differences in Uganda are large, as shown in [Figure](#fig:hh-vs-mon). YY percentage points.
+# 2 Potential explanations for differences between Household survey and Monitoring survey
 
-## Sample selection of water points
+This Section discusses potential explanations for the differences in the estimates shown in [Figure 2](#fig:hh-vs-mon). [Figure 3](#fig:decomposition) presents TCR detection rates in different subsamples of the households tested during the Household Survey in an attempt to decompose the sources of the differences.
 
-We had meant for the only difference between the water point and the monitoring surveys to be the methodology. However, we also observe that the water points included in both surveys are different, and **which water points are included in each survey explains a small part of the differences observed**.
+As expected given the similarities between estimates from the Moniotoring and the Household Survey in Malawi, there is no meaningful variation across subsamples in this country. In Uganda, although the estimates in [Figure 2](#fig:hh-vs-mon) are significantly different and the point estimates in the Household Survey subsamples become more similar to those from the Monitoring Survey as we apply similar sample selection criteria, there is considerable noise in the estimates across subsamples, and they are not significantly different from one another. As such, the discussion in this Section is inconclusive.
+
+## 2.1 Sample selection of water points
+
+When designing the survey protocols, we intended for both the Household Survey and the Monitoring Survey to be representative of all DSW water points in sampled villages. However, as discussed in Section 1.2, the field team was not able to identify promoters for all of the water points found, meaning that the water points covered by the Monitoring Survey are may be systematically different from and less representative than those in the Household Survey. 
+
+Tables [2](#tab:wp-balance-mw) and [3](#tab:wp-balance-ug) compares the characteristics of the water for which promoter were surveyed and those for which no promoter was found in Malawi and Uganda, respectively. Promoter surveys were conducted in `r round(11500/136, 1)`% of the water points with 136 DSW identified in Malawi, and in `r round(11600/185, 1)`% of the 185 water points in Uganda. In both countries, an F-test for joint orthogonality indicates that the water points left out of the promoter survey are not significantly different from those covered, however, there are imbalance in individual characteristics, particularly those linked to functionality of the dispensers.
 
 ```{r}
 wp_cl_counts <-
@@ -460,71 +454,34 @@ wp_cl_counts <-
     wps = n_distinct(wp_id)
   )
 ```
+The difference in water point characteristics could be translated into households included in the Monitoring Survey having more access to chlorine than those in the Household Survey. In fact, [Figure 4](#fig:wp-selection) shows that TCR detection rates are significantly higher among households using water points covered by the promoter survey.
 
-In **Malawi**, out of the `r wp_counts %>% dplyr::filter(country == "Malawi") %>% pull(N)` water points with DSW in our sample, `r wp_cl_counts %>% dplyr::filter(country == "Malawi", survey == "Household Survey") %>% pull(wps)` are represented in the Household Survey, and `r wp_cl_counts %>% dplyr::filter(country == "Malawi", survey == "Monitoring Survey") %>% pull(wps)` in the monitoring survey. However, only  `r wp_cl_counts %>% dplyr::filter(country == "Malawi", survey == "Household Survey") %>% pull(promoter_surveyed)`% of the households in the Household Survey sample are using water points not included in the promoter survey. 
+Although this difference is large and significant, the weight of theses households in the Household Survey estimates in Malawi is small (only `r wp_cl_counts %>% dplyr::filter(country == "Malawi", survey == "Household Survey") %>% pull(promoter_surveyed)`% of the households in the Household Survey sample are using water points not included in the promoter survey), and so are the differences between Household and Monitoring estimates. 
 
-In **Uganda**, out of the `r wp_counts %>% dplyr::filter(country == "Uganda") %>% pull(N)` water points with DSW in our sample, `r wp_cl_counts %>% dplyr::filter(country == "Uganda", survey == "Household Survey") %>% pull(wps)` are represented in the Household Survey, and `r wp_cl_counts %>% dplyr::filter(country == "Uganda", survey == "Monitoring Survey") %>% pull(wps)` in the monitoring survey. Additionally, `r wp_cl_counts %>% dplyr::filter(country == "Uganda", survey == "Household Survey") %>% pull(promoter_surveyed)`% of the households in the Household Survey sample are using water points not included in the promoter survey. 
-
-
-[Figure](#fig:wp-selection) shows that households using water points not included in the promoter survey are less likely to have chlorine detected in both countries. Although this difference is large and significant ([Table](#tab:wp-selection)), the weight of theses households in the Househodl Survey estimates in Malawi is small enough that the differences between Household and Monitoring estimates are also small. In Uganda, on the other hand, since the proportion of households in the Household Census is almost three times that of Malawi, the difference between the two estimates are notable.
-
-Nevertheless, as shown in [Figure](#fig:wp-promoter), this does not account for all of the difference between Household Survey and Monitoring Survey estimates in Uganda: even if we restrict the Household Survye sample to households using water points included in the promoter survey, there is still a difference of 12.8 percentage points in the chlorination rates.
+In Uganda, on the other hand, only `r wp_cl_counts %>% dplyr::filter(country == "Uganda", survey == "Household Survey") %>% pull(promoter_surveyed)`% of the households in the Household Survey sample are using water points included in the promoter survey. This also noticeable in the reduction in sample size between columns (1) and (2) in [Figure 3](#fig:decomposition). Nonetheless, restricting the Household Survey sample to households using water points included in the promoter survey does not increase the TCR detection rate by much.
 
 
-```{r eval = FALSE}
-hh_survey %>%
-  dplyr::filter(
-    !is.na(promoter_surveyed),
-    survey == "Household Survey"
-  ) %>%
-  group_by(country, promoter_surveyed) %>%
-  summarise(
-    hhs = n_distinct(household_id),
-    wps = n_distinct(wp_id)
-  )
-```
+## 2.2 Sample selection of households
+
 
 ```{r}
-hh_survey %>%
-  dplyr::filter(
-    !is.na(promoter_surveyed),
-    survey == "Household Survey"
+notlisted <-
+  hh_census_all %>%
+  dplyr:::filter(
+    sample_group != "ILC",
+    wp_intervention == "DSW",
+    promoter_surveyed
   ) %>%
   group_by(country) %>%
   summarise(
-    N = n(),
-    mean(promoter_surveyed)
+    hhs = n_distinct(household_id),
+    listed = mean(promoter_list, na.rm = TRUE) %>% round(3) * 100
   )
-```
-
-## Sample selection of households
-
-```{r}
-in_list <-
-  hh_census %>%
-  dplyr::filter(
-    promoter_surveyed
-  ) %>%
-  pull(promoter_list) %>%
-  mean(na.rm = TRUE) %>%
-  round(3)
-```
-
-```{r}
-self_report <-
-  hh_census %>%
-  dplyr::filter(
-    promoter_surveyed,
-    promoter_list
-  ) %>%
-  pull(dsw) %>%
-  mean(na.rm = TRUE) %>%
-  round(3)
 ```
 
 ```{r}
 using_dsw <-
-  hh_census %>%
+  hh_census_all %>%
   dplyr:::filter(promoter_list) %>%
   group_by(country) %>%
   summarise(
@@ -534,28 +491,40 @@ using_dsw <-
   )
 ```
 
-```{r}
-randomization_id %>%
-  pull(pm_right) %>%
-  mean(na.rm = TRUE) %>%
-  round(3)
-```
+The list of households using the water points provided by the promoter is another potential source of difference. Promoters are expected to be less knowledgeable than households about household's water point usage, and they also respond to incentives.
 
-The list of people included in the promoter survey is different from the list of people who self report using the water points. Promoters are good at identifying households using water points with a dispenser: among the households listed by the promoters as using a water point with a dispenser that were also included in the household census, `r self_report * 100`% also self-reported using a water point with DSW as their primary water point, **and Y% said they were using the exact same water point that the promoter indicated**.
+- Promoters reduced knowledge would introduce noise into the data. For example, in some cases promoters relied on lists of water point users that were recorded in previous years, dating back as far as of dispenser installation. 
+- If a households uses more than one water point, promoters may not know whether a water point is a household's primary source of drinking water or not, and including households whose primary source does not have DSW would bias estimates down.
+- If the promoter wishes to indicate that a water point is widely used and therefore should keep being treated, the list could also include households whose primary source does not have DSW.
+- If, on the other hand, the promoter remembers mostly people with whom they have a closer relationship, or to whom they talked about chlorination recently, the list could lead to an overestimation of chlorination rates.
+- If the promoter expects surveyors to talk to the households listed and wishes to show that they have been doing a good job, the list will more likely include households that the promoter know use chlorine, and therefore bias estimates up.
+- Finally, promoters would be expected to listt all households using the water point, regardless of where they live, while the household survey limits its sample to hosueholds living within or up to 200m outside of village boundaries.
 
-However, they are not good at identifying all of the users: among all households mapped in the household census who self-reported using the water points in the promoter survey as their primary source of drinking water, only `r in_list * 100`% are also included in the promoter list.
+The data shows that **Promoters are good at identifying households using water points with a dispenser**. In Malawi, out of the `r using_dsw %>% dplyr::filter(country == "Malawi") %>% pull(hhs)` households included in the promoter list who were identified in the household census, `r using_dsw %>% dplyr::filter(country == "Malawi") %>% pull(dsw)`% self-report using a water point with a dispenser as their primary source of drinking water. In Uganda, out of the `r using_dsw %>% dplyr::filter(country == "Uganda") %>% pull(hhs)` households included in the promoter list who were identified in the household census, `r  using_dsw %>% dplyr::filter(country == "Uganda") %>% pull(dsw)`% self-report using a water point with a dispenser as their primary source of drinking water
 
-Some of the households identified by the promoter would not be included in the Household Survey, since the promoter (1) lists households that use the water point, whether as their primary water source or not, and (2) lists households that use the water point regardless of whether they live in the village or not.
+**However, they are not as good at identifying all of the users**: among all households mapped in the household census who self-reported using the water points in the promoter survey as their primary source of drinking water in Malawi, `r notlisted %>% dplyr::filter(country == "Malawi") %>% pull(listed)`% are included in the promoter list, while in Uganda, only `r notlisted %>% dplyr::filter(country == "Uganda") %>% pull(listed)`% are.
 
-In Malawi, out of the `r using_dsw %>% dplyr::filter(country == "Malawi") %>% pull(hhs)` households included in the promoter list who were identified in the household census, `r  %>% dplyr::filter(country == "Malawi") %>% pull(dsw)`% self-report using a water point with a dispenser as their primary source of drinking water, and `r  %>% dplyr::filter(country == "Malawi") %>% pull(multiple_wps)`% report using more than one water points to collect drinking water in the past month.
+As a result, among the households that self-report using water points included in the promoter survey as their primary source of drinking water, those who are included in the promoter list are significatly different from those that aren't in both countries (Tables [4](#tab:hh-selection-mw) and [5](#tab:hh-selection-ug), including with regard to having more access to chlorine. However, when we further restrict the sample to households included in the household survey, these differences are not jointly significant, which is consistent with the results in Figures [3](#fig:decomposition) and [5](#fig:promoter-list). [Figure 3](#fig:decomposition) shows that restricting the Household Survey sample to households included in the pormoter list does not lead to different estimates of adoption, and [Figure 5](#fig:promoter-list) confirms this finding by showing that TCR detection is similar among households included and excluded from the list.
 
-In Uganda, out of the `r using_dsw %>% dplyr::filter(country == "Uganda") %>% pull(hhs)` households included in the promoter list who were identified in the household census, `r  %>% dplyr::filter(country == "Uganda") %>% pull(dsw)`% self-report using a water point with a dispenser as their primary source of drinking water, and `r  %>% dplyr::filter(country == "Uganda") %>% pull(multiple_wps)`% report using more than one water points to collect drinking water in the past month.
+**Although this does not point to differences between the Household Survey and Monitoring estimates, the fact that in the household census they are difference indicates that inclusion in the promoter list does play a factor and may explain EVac differinces**
 
-- **Source of report:** self-report vs promoter report. 
-  - They may only list people who are more socially connected to them (upward bias). **Test for this**
-  
-  
-## Replacements
+## 2.3 Interactions with the promoter
+
+- The analysis so far points to inclusion criteria into the mointoring survey not being relevant sources of differences.
+- however, we know from Fgure 1 that there are differences in Uganda.
+- therefore, these differences must be coming not from the eigibility to be included but from something observed among households actually included
+- in figure 2, we see that households randomized into the survey have a higher detection rate. but this is a small sample and the difference is not statistically different from the previous ones
+
+- nonetheless, a comparison of the listed households that were and were not randomly sampled shows that 
+- comparing households' characteristics, we see that more househorlds that were sampled say that they were aware of the upcoming data collection, and that it was the promoter who told them about it.
+- The same pattern emerges when we compare household survey and monitoring survey househorlds.
+- in both cases, the households are not signigicatly different overall, so this is not conclusive. 
+- however, we also see that in [Figure 6](#fig:int) household interacting with the promoter are more likely to chlorinate
+
+- the noise comes from the fact that we only added this variable after we saw this happening in Uganda, but annecdotal evidence point to it beiung a factor
+
+
+## 2.4 Other factors
 
 [Figure](#fig:inhh-replacement) compares the chlorine detection rates among households that were sampled for the Monitoring Survey and replaced because they had already been surveyed in the Household Survey and replacement households in the Monitoring Survey. These differences are not statistically significant [Table](#tab:inhh-replacement), but they are large in Uganda.
 
@@ -565,100 +534,201 @@ Note that households could be replaced for two reasons:
   
 - **Timing:** Because the monitoring surveys happened later and after surveying the promoters, there is higher potential for priming (upward bias). 
   - The ideal way to test for this would be to compare the same households surveyed in the household and the monitoring survey. However, given our protocol, there are too few such observations for the analysis to be meaningful.
-  - **Can we test this in some other way?**
-
-```{r}
-matched %>%
-  group_by(country, survey) %>%
-  summarise(
-    N = n(),
-    hhs = n_distinct(household_id),
-    within_N = sum(!is.na(inclusion)),
-    within = mean(inclusion == "Within village boundaries", na.rm = TRUE)
-  )
-```
+  - But we see this in [Figure ](#fig:timing)
 
 - **Village boundaries:** The household census only included people living inside village boundaries or within 200m of these boundaries, while the promoter survey included anyone using the water points, regardless of where they live. **This does not see to contribute to the differences we observe**.
   - Households living outside of the villages boundaries present lower chlorination rates in the Household Survey ([Table](#tab:boundaries-diff)). However, these households represent a higher proportion of households surveyed in the Household Survey than in the Monitoring Survey. There, if anything, this would bias estimates in the opposite direction than the one we observe.
   - The difference between estimates from the Household and the Monitoring Survey still persist if we restrict the comparison only to households living within village boundaries ([Table](#tab:boundaries-restric))
-
-- **Replacements:**
-  - do replaced households live closer to the water point?
-
-- **Reference unit:** household vs water point 
-  - **Think about this**
-
-## SCRAP
-
-```{r}
-p_vals <-
-  by_country %>% 
-  map(
-    ~ .x %>%
-      dplyr::filter(
-        (survey == "Household Survey" & replaced) |
-          (survey == "Monitoring Survey" & !is.na(rank))
-      )
-  ) %>%
-  map(
-    ~ marginal_effects(
-      .x,
-      x = "survey",
-      cluster = "wp_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE) %>%
-  map(~ bind_cols(tidy(.), "N" = nobs(.))) %>%
-  bind_rows(.id = "reg") %>%
-  dplyr::filter(str_detect(term, "survey")) %>%
-  mutate(p.value = p.value %>% round(3))
-```
-
+  
+  
 
 - **Timing and replacements:** 
   - [Figure 1](#fig:replacements) restricts the sample to households that were listed in both the household census and the promoter survey and randomly selected to be surveyed as part of the Monitoring Survey, comparing the chlorination rates among those surveyed earlier, as part of the Household Survey, and those that were surveyed later, as part of the Monitoring Survey.
-  - None of the differences shown are statistically significant (the minimum p-value observed is `r p_vals %>% pull(p.value) %>% min`), but the difference for TCR in Uganda, in particular (of `r p_vals[p_vals$reg == "Uganda.TCR" , "estimate"] %>% round(3) * 100` percentage points), is equivalent to more than half of the difference between Household and Monitoring Survey estimates.
-  - Our estimates cannot separate these effects from those of the difference in replacement protocol between the Household and Monitoring surveys. Note that timing could not explain the difference between our estimates and EvAc's, given the protocol.
+   - Our estimates cannot separate these effects from those of the difference in replacement protocol between the Household and Monitoring surveys. Note that timing could not explain the difference between our estimates and Evidence Action's, given the protocol.
   - Promoters were more active in Uganda villages, and more likely to talk to households after observing the presence of the field team, so we think this is pointed to priming over time. That said, in Malawi most of the replacements happened because households had already been surveyed in the Household Survey, while in Uganda around 40% of replacements happened because households weren't available
 
-> Use household census to see how easy it is to find someone in the household
+
+# 3 Conclusion
 
 
-
-
-
+- there are multiple potatnial sorces of bias
+- this is just indicative
+- sample selectio ninto the promoter list is a thing in the census, even if not refelcted in the household survey after randomization
+- we only see differences in monitoring and household in uganda, and this is where we know there was interference, so that's a likely cause
+- enumerator identify (bias plus training, plus equipmaent)
+- we don't have a definitive results to say that getting a list from the promoter should be avoided based on this data alone
+- but given that in kenya and uganda the estimates were higher than the hosuehold ones, there is also evidence in the other direction
 
 # Tables
 
-## Table 1 - Adoption estimates from difference sources {#discount}
+## Table 1 - Adoption estimates from difference sources {#tab:discount}
 
-| Country  | (1) Census | (2) Promoter | (3) Evidence Action | (4) Discount (1/3) |
-|----------|------------|--------------|---------------------|--------------------|
-| Malawi   | 26.6%      | 30.8%        | 51%                 | 52%                |
-| Uganda   | 30.1%      | 45.6%        | 52%                 | 58%                |
+| Country  | (1) Census | (2) Promoter | (3) Evidence Action |
+|----------|------------|--------------|---------------------|
+| Kenya    | 16%        | 36%          | 44%                 |
+| Malawi   | 26.6%      | 30.8%        | 51%                 |
+| Uganda   | 30.1%      | 45.6%        | 52%                 |
 
-
-## Table 2 - Difference in chlorine detections rates in Household and Monitoring surveys  {#hh-vs-mon-tab}
+## Table 2 - Characteristics of water points observed in the Household and Monitoring Survey {#tab:wp-balance-mw}
 
 ```{r}
-by_country %>%
-  map(
-    ~ marginal_effects(
-      data = ., 
-      x = "survey", 
-      cluster = "village_id"
-    )
-  ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("surveyMonitoring Survey" = "Monitoring Survey"),
-    notes = "Standard errors are clustered at the village level."
+balance_vars_wp <-
+  c(
+    "Water point is functional" = "wp_func",
+    "Dispenser tank is present" = "disp_tank_present",
+    "Dispenser is functional" = "disp_func",
+    "Dispenser is filled" = "disp_filled",
+    "Dose dispensed (mL)" = "disp_dose",
+    "TCR > 0.2 ppm" = "disctcr_02",
+    "FCR > 0.2 ppm" = "discfcr_02",
+    "Users pay to use water point" = "wp_pay"
   )
 ```
 
-## Table 3 - Comparison of households in Household and Monitoring surveys for Malawi {#balance-mw}
+```{r eval = FALSE}
+wp_census %>%
+  dplyr::filter(
+    country == "Malawi",
+    sample_group != "ILC",
+    intervention == "DSW"
+  ) %>%
+  feols(
+    paste("promoter_surveyed ~", paste(balance_vars_wp, collapse = "+")) %>% as.formula
+  ) %>%
+  fitstat(type = "f")
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    country == "Malawi",
+    sample_group != "ILC",
+    intervention == "DSW"
+  ) %>%
+  mutate(
+    promoter_surveyed = if_else(promoter_surveyed, "Promoter surveyed", "Promoter not surveyed"),
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = balance_vars_wp,
+    labels = names(balance_vars_wp),
+    group = "promoter_surveyed",
+    group.test = TRUE
+  )
+```
+
+## Table 3 - Characteristics of water points observed in the Household and Monitoring Survey {#tab:wp-balance-ug}
+
+```{r eval = FALSE}
+wp_census %>%
+  dplyr::filter(
+    country == "Uganda",
+    sample_group != "ILC",
+    intervention == "DSW"
+  ) %>%
+  feols(
+    paste("promoter_surveyed ~", paste(balance_vars_wp, collapse = "+")) %>% as.formula
+  ) %>%
+  fitstat(type = "f")
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    country == "Uganda",
+    sample_group != "ILC",
+    intervention == "DSW"
+  ) %>%
+  mutate(
+    promoter_surveyed = if_else(promoter_surveyed, "Promoter surveyed", "Promoter not surveyed"),
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = balance_vars_wp,
+    labels = names(balance_vars_wp),
+    group = "promoter_surveyed",
+    group.test = TRUE
+  )
+```
+
+## Table 4 - Comparison of households using water points included in the promoter list in Malawi {#tab:hh-selection-mw}
+
+```{r}
+hh_census_all %>%
+  dplyr::filter(
+    country == "Malawi",
+    wp_intervention == "DSW",
+    promoter_surveyed
+  )  %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = balance_vars_census,
+    labels = names(balance_vars_census),
+    group = "promoter_list",
+    group.test = TRUE
+  )
+
+
+hh_census_all %>%
+  dplyr::filter(
+   country == "Malawi",
+    wp_intervention == "DSW",
+    promoter_surveyed
+  ) %>%
+  feols(
+    paste("promoter_list ~", paste(balance_vars_census, collapse = "+")) %>% as.formula,
+    cluster = ~ village_id
+  ) %>%
+  fitstat(type = "f")
+```
+
+## Table 5 - Comparison of households using water points included in the promoter list in Uganda {#tab:hh-selection-ug}
+
+```{r}
+hh_census_all %>%
+  dplyr::filter(
+    country == "Uganda",
+    wp_intervention == "DSW",
+    promoter_surveyed
+  )  %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = balance_vars_census,
+    labels = names(balance_vars_census),
+    group = "promoter_list",
+    group.test = TRUE
+  )
+
+hh_census_all %>%
+  dplyr::filter(
+   country == "Uganda",
+    wp_intervention == "DSW",
+    promoter_surveyed
+  ) %>%
+  feols(
+    paste("promoter_list ~", paste(balance_vars_census, collapse = "+")) %>% as.formula,
+    cluster = ~ village_id
+  ) %>%
+  fitstat(type = "f")
+```
+
+## Table 3 - Comparison of households in Household and Monitoring surveys for Malawi {#tab:balance-mw}
 
 ```{r}
 matched %>%
@@ -671,67 +741,97 @@ matched %>%
   dplyr::filter(country == "Malawi") %>%
   sumtable(
     vars = balance_vars,
+    labels = names(balance_vars),
     group = "survey",
     group.test = TRUE
   )
 ```
 
-## Table 4 - Comparison of households in Household and Monitoring surveys for Malawi {#balance-ug}
+## Table 4 - Comparison of households in Household and Monitoring surveys for Malawi {#tab:balance-ug}
 
 ```{r}
-matched %>%
+hh_survey %>%
+  dplyr::filter(
+    country == "Uganda",
+    survey == "Monitoring Survey" | promoter_surveyed,
+  )  %>%
   mutate(
     across(
       where(is.logical),
       ~ as.numeric(.)
-    ),
+    )
   ) %>%
-  dplyr::filter(country == "Uganda") %>%
   sumtable(
     vars = balance_vars,
+    labels = names(balance_vars),
     group = "survey",
     group.test = TRUE
   )
-```
 
-> SELECTION ON WATER POINTS
-> Check why functionality is 1 
-> Investigate int_promoter variable
+hh_survey %>%
+  dplyr::filter(
+     country == "Uganda",
+     survey == "Monitoring Survey" | promoter_surveyed
+  ) %>%
+  mutate(survey = survey == "Monitoring Survey") %>%
+  feols(
+    paste("survey ~", paste(balance_vars, collapse = "+")) %>% as.formula
+  ) %>%
+  fitstat(type = "f")
+```
 
 # Figures 
 
-## Figure 1 - Chlorine detection rates in Household and Monitoring surveys {#hh-vs-mon}
+## Figure 1 - Chlorine detection rates in Household and Monitoring surveys {#fig:hh-vs-mon}
 
 ```{r}
-hh_vs_monitoring <-
-  by_country %>%
+p_vals <-
+  hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
   map(
-    ~ averages(data = ., x = "survey", cluster = "village_id")
+    ~ marginal_effects(
+      data = .x, 
+      x = "survey", 
+      cluster = "village_id"
+    )
   ) %>%
-  unlist(recursive = FALSE)
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
 
-hh_vs_monitoring_tidy <-
-  hh_vs_monitoring %>% 
+hh_survey %>%
+  group_by(country) %>%
+  group_split %>%
+  set_names(c("Malawi", "Uganda")) %>%
   map(
-    ~ tidy(., conf.int = TRUE)
+    ~ averages(
+      data = ., 
+      x = "survey", 
+      cluster = "village_id"
+    )
   ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>%
+      tidy_add_n
   ) %>%
+  bind_rows(.id = "country") %>%
   mutate(
-    term = str_remove_all(term, "survey"),
+    label = str_remove_all(term, "survey") %>%
+      paste0(" (N = ", n_obs, ")") %>%
+      str_wrap(18),
     across(
       c(estimate, contains("conf")),
       ~ (. * 100) %>% round(1)
     )
-  )
-
-hh_vs_monitoring_tidy  %>%
+  ) %>%
   ggplot(
     aes(
-      x = term,
+      x = label,
       y = estimate,
       label = estimate %>% paste0("%"),
       ymin = conf.low,
@@ -742,670 +842,63 @@ hh_vs_monitoring_tidy  %>%
   geom_col() +
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
+  facet_wrap(~ country, scales = "free_x") +
   scale_fill_brewer(palette = "Dark2") +
   theme(
     legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-## Figure - Chlorine detection rates among households sampled for Monitoring Survey {#replacement}
-
-```{r}
-mon_mw <-
-  matched %>%
-  dplyr::filter(
-    country == "Malawi",
-    survey == "Monitoring Survey",
-    !is.na(rank)
-  ) %>%
-  pull(household_id) %>%
-  n_distinct()
-
-replaced_mw <-
-  matched %>%
-  dplyr::filter(
-    country == "Malawi",
-    survey == "Household Survey",
-    replaced
-  ) %>%
-  pull(household_id) %>%
-  n_distinct()
-
-replaced_ug <-
-  matched %>%
-  dplyr::filter(
-    country == "Uganda",
-    survey == "Household Survey",
-    replaced
-  ) %>%
-  pull(household_id) %>%
-  n_distinct()
-
-mon_ug <-
-  matched %>%
-  dplyr::filter(
-    country == "Uganda",
-    survey == "Monitoring Survey",
-    !is.na(rank)
-  ) %>%
-  pull(household_id) %>%
-  n_distinct()
-
-replacement_mw <-
-  matched %>%
-  dplyr::filter(
-    country == "Malawi",
-    survey == "Monitoring Survey",
-    !is.na(rank),
-    replacement
-  ) %>%
-  pull(household_id) %>%
-  n_distinct()
-
-replacement_ug <-
-  matched %>%
-  dplyr::filter(
-    country == "Uganda",
-    survey == "Monitoring Survey",
-    !is.na(rank),
-    replacement
-  ) %>%
-  pull(household_id) %>%
-  n_distinct()
-
-randomized <-
-  matched %>%
-  dplyr::filter(
-    survey == "Household Survey",
-    replaced
-  ) %>%
-  averages( 
-    data = .,
-    x = "country", 
-    cluster = "village_id"
-  ) %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "test") %>%
-  mutate(survey = "Household Survey")
-
-monitoring <-
-  matched %>%
-  dplyr::filter(
-    survey == "Monitoring Survey",
-    !is.na(rank)
-  ) %>%
-  averages( 
-    data = .,
-    x = "country", 
-    cluster = "village_id"
-  ) %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "test")  %>%
-  mutate(survey = "Monitoring Survey")
-
-rank_tidy <-
-  randomized %>%
-  bind_rows(monitoring) %>%
-  mutate(
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    ),
-    term = str_remove_all(term, "country")
-  )
-
-rank_tidy  %>%
-  ggplot(
-    aes(
-      x = survey,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = survey
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ term) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none",
-    plot.caption = element_text(hjust = 0)
   ) + 
   labs(
     x = NULL,
     y = NULL,
-    caption = paste0(
-      "Notes:\n",
-      "1. In Malawi, the Monitoring Survey includes ", mon_mw, " households who were surveyed as part of the household census, ", replacement_mw, " of which are replacements. Of all the\n replacements,", replaced_mw, " happened because households had already being surveyed in the Household Survey.\n",
-      "2. In Uganda, the Monitoring Survey includes ", mon_ug, " households, ", replacement_ug, " of which are replacements. Of all the\n replacements, ", replaced_ug, " happened because households had already being surveyed in the Household Survey."
-    )
+    caption = "Note: standard errors are clustered at the village level. Sample includes all villages in the Expansion and Footprint sample groups. Household Survey sample is limited to households that self-report using water points with DSW. Monitoring Survey sample is limited to households listed by DSW promoters." %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
   )
 ```
 
-# Descriptives
-
-## Are promoters good at identifying households?
-
-## How are households in the promoter list different from other households using DSW/ILC water points?
-
-
-## Sample selection of water points
-
-```{r}
-matched %>% 
-  dplyr::filter(survey == "Household Survey") %>%
-  tabyl(country, promoter_surveyed)
-```
-
-
-This is definitely happening, and likely explain all of the difference.
-
-However, this only explains the differences that we see in our HH and mon survey, not the differences between our surveys are EvAc's
-
-## Figure - Sample selection of water points {#wp-selection}
-
-```{r}
-wp_selection <-
-  by_country %>%
-  map(
-    ~ averages(
-      data = .x %>% dplyr::filter(survey == "Household Survey"), 
-      x = "promoter_surveyed", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE)
-
-wp_selection_tidy <-
-  wp_selection %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = 
-      if_else(
-        str_detect(term, "TRUE"),
-        "In promoter survey",
-        "Not in promoter survey"
-      ),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-
-wp_selection_tidy  %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-## Figure - Comparison of chlorine detection rates among household using water points included in the promoter survey {#wp-promoter}
-
-```{r}
-hh_selection <-
-  by_country %>%
-  map(
-    ~ averages(
-      data = .x %>% 
-        dplyr::filter(
-          promoter_surveyed,
-        ), 
-      x = "survey", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE)
-
-hh_selection_tidy <-
-  hh_selection %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = str_remove_all(term, "survey"),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-
-hh_selection_tidy  %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-
-<!-- ## Priming  -->
-
-<!-- To test for priming, we consider households that were included in both surveys and tested twice.  -->
-
-```{r eval = FALSE}
-matched %>%
-  group_by(household_id) %>%
-  dplyr::filter(
-    n_distinct(survey) > 1
-  ) %>%
-  lm(formula = disctcr_02 ~ 0 + survey) %>% 
-  tidy(conf.int = TRUE) %>%
-  mutate(
-    term = str_remove_all(term, "survey"),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  ) %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-## Figure - Chlorine detection rates among replaced and replacement households {#fig:inhh-replacements}
-
-```{r}
-replacements <-
-  by_country %>%
-  map(
-    ~ averages(
-      data = .x, 
-      x = "replacement_status", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE)
-
-replacements_tidy <-
-  replacements %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = str_remove_all(term, "replacement_status"),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-
-replacements_tidy  %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
+## Figure 2 - Chlorine detection rates by timing of survey {#fig:timing}
 
 
 ```{r}
-matched %>%
-  dplyr::filter(
-    country == "Malawi"
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars,
-    group = "replacement_status",
-    group.test = TRUE
-  )
-```
-
-```{r}
-matched %>%
-  dplyr::filter(
-    country == "Uganda"
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars,
-    group = "replacement_status",
-    group.test = TRUE
-  )
-```
-
-
-### What is everyone who was randomized into monitoring was surveyed?
-
-Then the estimates are still pretty much the same as when it's just the monitoring 
-
-
-
-this also points to no priming, I think.
-
-## Sample selection of households
-
-Promoters could be listing households that are more likely to be chlorinating.
-
-to-do: how often does the promoter get it right?
-
-```{r}
-hh_selection <-
-  by_country %>%
-  map(
-    ~ averages(
-      data = .x %>% 
-        dplyr::filter(
-          promoter_surveyed
-        ), 
-      x = "promoter_list", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE)
-
-hh_selection_tidy <-
-  hh_selection %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = if_else(
-      str_detect(term, "TRUE"),
-      "In promoter list",
-      "Not in promoter list"
-    ),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-```
-
-```{r}
-hh_selection <-
-  by_country %>%
-  map(
-    ~ averages(
-      data = .x %>% 
-        dplyr::filter(
-          survey == "Household Survey",
-          promoter_surveyed
-        ), 
-      x = "promoter_list", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE)
-
-hh_selection_tidy <-
-  hh_selection %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = if_else(
-      str_detect(term, "TRUE"),
-      "In promoter list",
-      "Not in promoter list"
-    ),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-
-hh_selection_tidy  %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-This doesn't seem to be super relevant. It seems to be more of a factor in Malawi.
-And would be less important for the EA regular monitoring, since they also survey non-promoters for the list of users
-
-```{r}
-by_country %>%
-  map(
-    ~ marginal_effects(
-      data = .x %>% 
-        dplyr::filter(
-          survey == "Household Survey",
-          promoter_surveyed
-        ), 
-      x = "promoter_list",
-      cluster = "village_id"
-    )
-  ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("promoter_surveyedTRUE" = "In promoter survey"),
-    notes = "Standard errors are clustered at the village level."
-  )
-```
-
-
-## Source of information
-
-```{r}
-hh_census %>%
-  dplyr:::filter(
-    in_pm_list
-  ) %>%
+p_vals <-
+  hh_survey %>%
   group_by(country) %>%
-  summarise(mean(promoter_right, na.rm = TRUE))
-```
-
-## Figure - Chlorine detection rates by timing of survey {#fig:timing}
-
-```{r}
-hh_date <-
-  by_country %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
   map(
-    ~ averages(
-      data = .x %>% dplyr::filter(survey == "Household Survey"), 
+    ~ marginal_effects(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey"), 
       x = "not_first_day", 
       cluster = "village_id"
     )
   ) %>%
-  unlist(recursive = FALSE)
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
 
-hh_date_tidy <-
-  hh_date %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = factor(
-      term,
-      levels = c("not_first_dayFALSE", "not_first_dayTRUE"),
-      labels = c("Surveyed in the first day", "Surveyed after the first day"),
-      ordered = TRUE
-    ),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-
-hh_date_tidy  %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-## Figure - Chlorine detection rates by timing of survey {#timing-mon}
-
-```{r}
-hh_date <-
-  by_country %>%
+hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
   map(
     ~ averages(
-      data = .x %>% dplyr::filter(survey == "Monitoring Survey"), 
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey"), 
       x = "not_first_day", 
       cluster = "village_id"
     )
   ) %>%
-  unlist(recursive = FALSE)
-
-hh_date_tidy <-
-  hh_date %>% 
+  unlist(recursive = FALSE) %>% 
   map(
-    ~ tidy(., conf.int = TRUE)
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n
   ) %>%
   bind_rows(.id = "list") %>%
   separate(
@@ -1413,84 +906,20 @@ hh_date_tidy <-
     into = c("country", "test")
   ) %>%
   mutate(
-    term = factor(
-      term,
-      levels = c("not_first_dayFALSE", "not_first_dayTRUE"),
-      labels = c("Surveyed in the first day", "Surveyed after the first day"),
-      ordered = TRUE
-    ),
-    across(
-      c(estimate, contains("conf")),
-      ~ (. * 100) %>% round(1)
-    )
-  )
-
-hh_date_tidy  %>%
-  ggplot(
-    aes(
-      x = term,
-      y = estimate,
-      label = estimate %>% paste0("%"),
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = term
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(
-    legend.position = "none"
-  ) + 
-  labs(
-    x = NULL,
-    y = NULL
-  )
-```
-
-## Figure - Chlorine detection rates by contact with promoter
-
-```{r}
-pm_interference <-
-  by_country %>%
-  map(
-    ~ averages(
-      data = .x %>% dplyr::filter(survey == "Household Survey"), 
-      x = "int_promoter", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE)
-
-pm_interference_tidy <-
-  pm_interference %>% 
-  map(
-    ~ tidy(., conf.int = TRUE)
-  ) %>%
-  bind_rows(.id = "list") %>%
-  separate(
-    list,
-    into = c("country", "test")
-  ) %>%
-  mutate(
-    term = 
-      if_else(
+    label = if_else(
         str_detect(term, "TRUE"),
-        "Informed by promoter",
-        "Not informed by promoter"
-      ),
+        "Surveyed in the first day of the activity",
+        "Surveyed after the first day of the activity"
+      ) %>% 
+      paste0(" (N = ", n_obs, ")") %>% str_wrap(30),
     across(
       c(estimate, contains("conf")),
       ~ (. * 100) %>% round(1)
     )
-  )
-
-pm_interference_tidy  %>%
+  )  %>%
   ggplot(
     aes(
-      x = term,
+      x = label,
       y = estimate,
       label = estimate %>% paste0("%"),
       ymin = conf.low,
@@ -1501,95 +930,91 @@ pm_interference_tidy  %>%
   geom_col() +
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-  facet_grid(test ~ country) +
+  facet_grid(~ country, scale = "free_x") +
   scale_fill_brewer(palette = "Dark2") +
   theme(
     legend.position = "none"
   ) + 
   labs(
     x = NULL,
-    y = NULL
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level. Sample includes all households in the Household Survey that self-report using water points with DSW in all villages in the Expansion and Footprint sample groups." %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
   )
 ```
 
-```{r}
-by_country %>%
-  map(
-    ~ marginal_effects(
-      data = .x %>% 
-        dplyr::filter(
-          survey == "Household Survey"
-        ), 
-      x = "int_promoter",
-      cluster = "wp_id"
-    )
-  ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("int_promoterTRUE" = "Informed by promoter"),
-    notes = "Standard errors are clustered at the village level."
-  )
-```
-
-## Table - Differences in TCR {#discount}
-
-| Country  | (1) Census | (2) Promoter | (3) Diff |
-|----------|------------|--------------|----------|
-| Malawi   | 26.6%      | 30.8%        | 4.2 pp   |
-| Restricted to water points in the promoter survey | 30.8% | 31% | 0.2 pp |
-| Uganda   | 30.1%      | 45.6%        | 15.5 pp  |
-| Restricted to water points in the promoter survey | 33.8% | 46.6% | 12.8pp |
-
-
-
-
-## Table - Comparison of chlorine detection rates between replaced and replacement households {#tab:inhh-replacement}
+## Figure 3 - Chlorine detection rates in Household Survey by group of households {#fig:decomposition}
 
 ```{r}
-by_country %>%
+list(
+  "(1) All households" = hh_survey %>% dplyr::filter(survey == "Household Survey"),
+  "(2) Using water points in promoter survey" = hh_survey %>% dplyr::filter(survey == "Household Survey", promoter_surveyed),
+  "(3) In promoter list" = hh_survey %>% dplyr::filter(survey == "Household Survey", promoter_surveyed, promoter_list),
+  "(4) Randomized into monitoring" = hh_survey %>% dplyr::filter(survey == "Household Survey", promoter_surveyed, promoter_list, any_rank)
+) %>%
   map(
-    ~ marginal_effects(
-      data = .x, 
-      x = "replacement_status", 
+    ~ averages(
+      data = ., 
+      x = "country",
       cluster = "village_id"
     )
   ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("replacement_statusReplacement" = "Replacement household"),
-    notes = "Standard errors are clustered at the village level."
-  )
-```
-
-## Table - Comparison of chlorination rates among households using water points included the promoter survey {#wp-selection-tab}
-
-```{r}
-by_country %>%
+  unlist(recursive = FALSE) %>% 
   map(
-    ~ marginal_effects(
-      data = .x %>% 
-        dplyr::filter(promoter_surveyed), 
-      x = "survey", 
-      cluster = "village_id"
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n()
+  ) %>%
+  bind_rows(.id = "sample") %>%
+  mutate(
+    country = str_remove_all(term, "country"),
+    sample = sample %>% paste0(" (N = ", n_obs, ")") %>% str_wrap(29),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
     )
   ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("surveyMonitoring Survey" = "Monitoring Survey"),
-    notes = "Standard errors are clustered at the village level."
+  ggplot(
+    aes(
+      x = sample,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = country
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_wrap(
+    ~ country, 
+    ncol = 1,
+    scale = "free_x"
+  ) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level."
   )
 ```
 
-## Table - Comparison of chlorination rates among households using water points included and not included in the promoter survey {#wp-selection-tab}
+## Figure 4 - Sample selection of water points {#fig:wp-selection}
 
 ```{r}
-by_country %>%
+p_vals <-
+  hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
   map(
     ~ marginal_effects(
       data = .x %>% 
@@ -1598,201 +1023,507 @@ by_country %>%
       cluster = "village_id"
     )
   ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("promoter_surveyedTRUE" = "In promoter survey"),
-    notes = "Standard errors are clustered at the village level."
-  )
-```
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
 
-
-## Table - Comparision of chlorine detection rates in the Household Survey between households living inside and outside of village boundaries {#boundaries-diff}
-
-```{r}
-by_country %>%
+hh_survey %>%
+  group_by(country) %>%
+  group_split %>%
+  set_names(c("Malawi", "Uganda")) %>%
   map(
-    ~ marginal_effects(
+    ~ averages(
       data = .x %>% 
-        dplyr::filter(
-          survey == "Household Survey"
-        ), 
-      x = "inclusion",
-      cluster = "wp_id"
-    )
-  ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("inclusionUp to 200m outside of village boundaries" = "Up to 200m outside of village boundaries	"),
-    notes = "Standard errors are clustered at the village level."
-  )
-```
-
-## Table - Comparision of chlorine detection rates by survey among households living within village boundaries {#boundaries-restrict}
-
-```{r}
-by_country %>%
-  map(
-    ~ marginal_effects(
-      data = .x %>% 
-        dplyr::filter(
-          inclusion == "Within village boundaries"
-        ), 
-      x = "survey",
-      cluster = "wp_id"
-    )
-  ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("surveyMonitoring Survey" = "Monitoring Survey"),
-    notes = "Standard errors are clustered at the village level."
-  )
-```
-
-## Table - Comparison of households using water points included in the promoter survey in Household and Monitoring surveys for Malawi {#balance-mw-pm}
-
-```{r}
-matched %>%
-  dplyr::filter(
-    country == "Malawi",
-    promoter_surveyed
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars,
-    group = "survey",
-    group.test = TRUE
-  )
-```
-
-## Table - Comparison of households using water points included in the promoter survey {#balance-ug-pm}
-
-```{r}
-matched %>%
-  dplyr::filter(
-    country == "Uganda",
-    promoter_surveyed
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars,
-    group = "survey",
-    group.test = TRUE
-  )
-```
-
-## Table - Comparison of households using water points included in the promoter survey in Household and Monitoring surveys for Malawi {#balance-mw-pm}
-
-```{r eval = FALSE}
-hh_census %>%
-  dplyr::filter(
-    country == "Malawi",
-    promoter_surveyed
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = c(
-      "visit_outcome",
-      "response"               "inclusion"             
- [15] "hhh_resp"               "hhh_gender"            
- [17] "hhh_age"                "hhh_educ"              
- [19] "hh_hhsincompound"       "hh_members"            
- [21] "hh_adults"              "hh_males"              
- [23] "hh_females"             "any_children"          
- [25] "hh_pregnant"            "hh_under5n"            
- [27] "hh_under5yn"            "hh_under2n"            
- [29] "hh_under2yn"
-      "wp_source"             
- [31] "wp_freq"                "wp_sec_notworking"     
- [33] "wp_sec_inadequate"      "wp_sec_intermitent"    
- [35] "wp_sec_notfixed"        "wp_sec_crowded"        
- [37] "wp_sec_other"           "wp_sec_specify"        
- [39] "wp_secweek"             "wp_secweekno"          
- [41] "wp_count_pastmonth"     "vil_dsw_selfreport" 
-      "promoter_list_mentions"
-      "wp_func"
-      "wp_turbidity"  
-      "wp_dist"               
-[105] "nearest_dist"           "evac_dist" 
-      "wp_turbidity"           "wp_pay"                
- [79] "wp_disp_func"           "wp_disp_filled"        
- [81] "wp_dsw_dose"            "wp_meterfcr"           
- [83] "wp_metertcr"            "wp_discfcr"            
- [85] "wp_disctcr"             "wp_meterfcr_un"        
- [87] "wp_metertcr_un"         "wp_discfcr_un"         
- [89] "wp_disctcr_un"          "wp_meterfcr_01"        
- [91] "wp_metertcr_01"         "wp_meterfcr_un_01"     
- [93] "wp_metertcr_un_01"      "wp_meterfcr_02"        
- [95] "wp_metertcr_02"         "wp_discfcr_02"         
- [97] "wp_disctcr_02"          "wp_meterfcr_un_02"     
- [99] "wp_metertcr_un_02"      "wp_discfcr_un_02"      
-[101] "wp_disctcr_un_02" 
-    ),
-    group = "survey",
-    group.test = TRUE
-  )
-```
-
-## Table - Comparison of households using water points included in the promoter survey {#balance-ug-pm}
-
-```{r}
-matched %>%
-  dplyr::filter(
-    country == "Uganda",
-    promoter_surveyed
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars,
-    group = "survey",
-    group.test = TRUE
-  )
-```
-
-## Table - Comparision of chlorine detection rates in the Household Survey between households living inside and outside of village boundaries {#timing-tab}
-
-```{r}
-by_country %>%
-  map(
-    ~ marginal_effects(
-      data = .x %>% 
-        dplyr::filter(
-          survey == "Household Survey"
-        ), 
-      x = "not_first_day",
+        dplyr::filter(survey == "Household Survey"), 
+      x = "promoter_surveyed", 
       cluster = "village_id"
     )
   ) %>%
-  modelsummary(
-    stars = TRUE,
-    shape = "cbind",
-    gof_map = c("nobs", "r.squared", "adj.r.squared"),
-    coef_rename = c("not_first_dayTRUE" = "Household surveyed after the first day"),
-    notes = "Standard errors are clustered at the village level."
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>%
+      tidy_add_n
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    label = 
+      if_else(
+        str_detect(term, "TRUE"),
+        "In promoter survey",
+        "Not in promoter survey"
+      ) %>% 
+      paste0(" (N = ", n_obs, ")") %>% str_wrap(20),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  ) %>%
+  ggplot(
+    aes(
+      x = label,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(~ country, scale = "free_x") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level. Sample includes all villages in the Expansion and Footprint sample groups, and all households that self-report using water points with DSW." %>%
+      paste(
+        "The p-value of the difference between groups is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
+  )
+```
+
+## Figure 5 - Comparison of chlorine detection rates among household using water points included in the promoter survey {#fig:promoter-list}
+
+```{r}
+p_vals <-
+  hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ marginal_effects(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey", promoter_surveyed), 
+      x = "promoter_list", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
+
+hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ averages(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey", promoter_surveyed), 
+      x = "promoter_list", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    label = if_else(
+        str_detect(term, "TRUE"),
+        "Not promoter list",
+        "Not in promoter list"
+      ) %>% 
+      paste0(" (N = ", n_obs, ")") %>% str_wrap(18),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )  %>%
+  ggplot(
+    aes(
+      x = label,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(~ country, scale = "free_x") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level. Sample includes all villages in the Expansion and Footprint sample groups. Household Survey sample is limited to households that self-report using water points with DSW and whose primary water point is covered by the promoter survey" %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
+  )
+```
+## Figure 6 - Chlorine detection rates by contact with promoter {#fig:int}
+
+```{r}
+p_vals <-
+  hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ marginal_effects(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey", promoter_list), 
+      x = "int_promoter", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
+
+hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ averages(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey", promoter_list), 
+      x = "int_promoter", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    label = if_else(
+        str_detect(term, "TRUE"),
+        "Contacted by promoter",
+        "Not contacted by promoter"
+      ) %>% 
+      paste0(" (N = ", n_obs, ")") %>% str_wrap(18),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )  %>%
+  ggplot(
+    aes(
+      x = label,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(~ country, scale = "free_x") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level. Sample includes all households in the Household Survey that self-report using water points with DSW in all villages in the Expansion and Footprint sample groups and who are listed by the promoter as using that water point." %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
+  )
+```
+
+
+
+## Figure 7 - Chlorine detection rates among replaced and replacement households {#fig:inhh-replacements}
+
+```{r}
+p_vals <-
+  by_country %>%
+  map(
+    ~ marginal_effects(
+      data = .x %>%
+        group_by(survey, household_id, village_id) %>%
+        summarise(
+          across(
+            c(disctcr_02, replacement_status),
+            ~ max(., na.rm = TRUE)
+          )
+        ), 
+      x = "replacement_status",
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
+
+by_country %>%
+  map(
+    ~ averages(
+      data = .x %>%
+        group_by(survey, household_id, village_id) %>%
+        summarise(
+          across(
+            c(disctcr_02, replacement_status),
+            ~ max(., na.rm = TRUE)
+          )
+        ),
+      x = "replacement_status", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    label = term %>% 
+      str_remove_all("replacement_status") %>%
+      paste0(" (N = ", n_obs, ")"),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )  %>%
+  ggplot(
+    aes(
+      x = label,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(~ country, scale = "free_x") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = 'Note: standard errors are clustered at the village level. Sample includes all villages in the Expansion and Footprint sample groups. Household Survey sample ("replaced") is limited to households that self-report using water points with DSW, whose primary water point is covered by the promoter survey, and that were listed by the promoter as using the water point and sampled into the Monitoring Survey. Monitoring Survey sample ("replacement") includes households who are included in the survey as replacements.' %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
+  )
+```
+
+## Figure 8 - Comparision of chlorine detection rates in the Household Survey between households living inside and outside of village boundaries {#fig:boundaries-diff}
+
+```{r}
+p_vals <-
+  hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ marginal_effects(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey"), 
+      x = "inclusion", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
+
+hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ averages(
+      data = .x %>% 
+        dplyr::filter(survey == "Household Survey"), 
+      x = "inclusion", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    label = str_remove_all(term, "inclusion") %>% 
+      paste0(" (N = ", n_obs, ")") %>% 
+      str_wrap(20),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )  %>%
+  ggplot(
+    aes(
+      x = label,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(~ country, scale = "free_x") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level. Sample includes all households in the Household Survey that self-report using water points with DSW in all villages in the Expansion and Footprint sample groups." %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
+  )
+```
+
+## Figure 9 - Comparision of chlorine detection rates by survey among households living within village boundaries {#fig:boundaries-restrict}
+
+```{r}
+p_vals <-
+  hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ marginal_effects(
+      data = .x %>% 
+        dplyr::filter(str_detect(inclusion, "Within")), 
+      x = "survey", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>%
+  map(~ tidy(.)) %>%
+  bind_rows(.id = "country") %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  mutate(p.value = p.value %>% round(3))
+
+hh_survey %>%
+  group_by(country) %>%
+  group_split() %>%
+  set_names(c("Malawi", "Uganda")) %>%
+  map(
+    ~ averages(
+      data = .x %>% 
+        dplyr::filter(str_detect(inclusion, "Within")), 
+      x = "survey", 
+      cluster = "village_id"
+    )
+  ) %>%
+  unlist(recursive = FALSE) %>% 
+  map(
+    ~ tidy_and_attach(., conf.int = TRUE) %>% 
+      tidy_add_n
+  ) %>%
+  bind_rows(.id = "list") %>%
+  separate(
+    list,
+    into = c("country", "test")
+  ) %>%
+  mutate(
+    label = str_remove_all(term, "survey") %>% 
+      paste0(" (N = ", n_obs, ")") %>% 
+      str_wrap(18),
+    across(
+      c(estimate, contains("conf")),
+      ~ (. * 100) %>% round(1)
+    )
+  )  %>%
+  ggplot(
+    aes(
+      x = label,
+      y = estimate,
+      label = estimate %>% paste0("%"),
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = term
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid(~ country, scale = "free_x") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    legend.position = "none"
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL,
+    caption = "Note: standard errors are clustered at the village level. Sample includes all households in the Household Survey and Monitoring Surveys who live within village boundaries." %>%
+      paste(
+        "The p-value of the difference between survey is",
+        p_vals %>% dplyr::filter(country == "Malawi") %>% pull(p.value), "in Malawi and",
+        p_vals %>% dplyr::filter(country == "Uganda") %>% pull(p.value), "in Uganda."
+        ) %>% 
+      str_wrap(120)
   )
 ```

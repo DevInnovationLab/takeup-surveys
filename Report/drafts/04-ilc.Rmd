@@ -8,42 +8,25 @@ pacman::p_load(
 )
 ```
 
-```{r}
-wp_census <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "WaterPointCensus",
-      "DataSets",
-      "Final",
-      "wp-census.rds"
-    )
-  ) %>%
-  st_drop_geometry 
-```
-
 ## Villages
 
 ```{r}
 wp_census %>%
-  dplyr::filter(sample_group == "ILC", country == "Malawi", ilc) %>%
-  pull(village_id) %>%
-  n_distinct()
+  dplyr::filter(sample_group == "ILC", ilc) %>%
+  group_by(country) %>%
+  summarise(
+    villages = n_distinct(village_id)
+  )
 ```
 
 ```{r}
 ilc_villages <-
   wp_census %>%
-  dplyr::filter(
-    country == "Malawi",
-    sample_group == "ILC"
-  ) %>%
-  group_by(village_id) %>%
+  dplyr::filter(sample_group == "ILC", country == "Malawi") %>%
+  group_by(village_id,) %>%
   dplyr::filter(
     any(ilc_wp) | any(ilc_wcp)
   ) %>%
-  ungroup %>%
   mutate(
     analysis = wp_multicompound & wp_drink & wp_func,
     ilc_wp_func = ilc_wp & wp_func,
@@ -59,7 +42,7 @@ ilc_villages %>% tabyl(ilc_wp, ilc_wcp)
 
 ```{r}
 ilc_villages %>% 
-  group_by(village_id) %>%
+  group_by(village_id, country) %>%
   summarise(
     villages = n(),
     across(
@@ -67,6 +50,7 @@ ilc_villages %>%
       ~ any(.)
     )
   ) %>%
+  group_by(country) %>%
   summarise(
     count = n(),
     across(
@@ -95,7 +79,7 @@ ilc_villages %>%
 ```{r}
 ilc_villages %>%
   dplyr::filter(str_detect(intervention_type, "ILC")) %>%
-  group_by(ea_ilc_wpt) %>%
+  group_by(ea_ilc_wpt, country) %>%
   summarise(
     wp_func = max(wp_func * 1),
     wp_multicompound = max(wp_multicompound * 1),
@@ -129,8 +113,9 @@ ilc_villages %>%
 
 ```{r}
 ilc_villages %>%
+  group_by(country) %>%
   summarise(
-    count = n(),
+    wps = n(),
     across(
       c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
       ~ sum(.)
@@ -142,6 +127,7 @@ ilc_villages %>%
 dsw <-
   ilc_villages %>% 
   dplyr::filter(dsw) %>%
+  group_by(country) %>%
   summarise(
     Type = "DSW",
     Found = n(),
@@ -154,6 +140,7 @@ dsw <-
 ilc_wp <-
   ilc_villages %>% 
   dplyr::filter(ilc_wp) %>%
+  group_by(country) %>%
   summarise(
     Type = "Water points with ILC device",
     Found = n(),
@@ -166,13 +153,16 @@ ilc_wp <-
 ilc_wcp <-
   ilc_villages %>% 
   dplyr::filter(ilc_wcp) %>%
+  group_by(country, closer) %>%
   summarise(
     Type = "Water collection points connected to ILC",
     Found = n(),
     Functional = sum(wp_func),
     `Functionality rate (%)` = Functional/Found,
     Communal = sum(wp_multicompound),
-    Tested = sum(!is.na(disctcr))
+    Tested = sum(!is.na(disctcr)),
+    TCR = sum(disctcr_02, na.rm = TRUE),
+    FCR = sum(discfcr_02, na.rm = TRUE)
   )
 
 dsw %>%
@@ -244,7 +234,7 @@ villages %>%
 
 ```{r}
 ilc_villages %>%
-  dplyr::filter(!is.na(ea_ilc_wpt)) %>% tabyl(ilc_wp, ilc_wcp)
+  dplyr::filter(!is.na(ea_id)) %>% tabyl(ilc_wp, ilc_wcp) %>%
   group_by(ea_ilc_wpt) %>%
   summarise(n = n()) %>%
   tabyl(n) %>%
@@ -259,8 +249,8 @@ ilc_villages %>%
 
 ```{r}
 ilc_villages %>%
-  dplyr::filter(ilc) %>%
-  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(ilc_wp) %>%
+  group_by(ea_id) %>%
   summarise(
     across(
       c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
@@ -276,7 +266,7 @@ ilc_villages %>%
     )
   ) %>%
   pivot_longer(
-    cols = -ea_ilc_wpt,
+    cols = -ea_id,
     names_pattern = "(.*)_(.*)_(.*)",
     names_to = c("measure", "threshold", ".value")
   ) %>%
@@ -331,8 +321,8 @@ ilc_villages %>%
 ```{r}
 all <-
   ilc_villages %>%
-  dplyr::filter(ilc) %>%
-  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(ilc_wcp) %>%
+  group_by(ea_id) %>%
   summarise(
     across(
       c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
@@ -343,7 +333,7 @@ all <-
     )
   ) %>%
   pivot_longer(
-    cols = -ea_ilc_wpt,
+    cols = -ea_id,
     names_pattern = "(.*)_(.*)_(.*)",
     names_to = c("measure", "threshold", ".value")
   ) %>%

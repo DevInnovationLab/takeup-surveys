@@ -21,6 +21,7 @@ include-households-using-water-points-outside-of-the-village
 dont-correct-for-non-functional-ilc
 use-raw-fo-reports
 plot
+save-plot
 chlorine-detection-rates
 prepare-data-1
 sanity-check-1
@@ -36,6 +37,9 @@ fo-reports-of-intervention
 self-reported-users
 all-households-surveyed
 plot-1
+save-plot-1
+table
+export-table
 water-point-level-headline-results
 number-of-people-using-dswilc
 prepare-data-2
@@ -48,6 +52,7 @@ disregarding-non-responses
 not-adjusting-for-functionality-rates
 using-raw-intervention-data
 plot-2
+save-plot-2
 chlorination-rates
 prepare-data-3
 sanity-check-3
@@ -62,3 +67,11 @@ weighing-water-points-equally
 using-self-reports
 using-raw-intervention-variable
 plot-3
+save-plot-3
+export-table-1
+monitoring-survey
+by-program-and-sample-group-2
+by-program-3
+table-1
+by-program-4
+by-program-and-sample-group-3

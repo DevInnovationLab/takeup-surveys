@@ -15,8 +15,7 @@ wp_census <-
       "wp-census.rds"
     )
   ) %>%
-  st_drop_geometry %>%
-  dplyr::filter(!(country == "Uganda" & sample_group == "ILC"))
+  st_drop_geometry 
 ```
 
 ### DSW
@@ -55,7 +54,7 @@ dsw %>%
     format = "html"
   ) %>%
   pack_rows("Malawi", 1, 3) %>%
-  pack_rows("Uganda", 4, 5) %>%
+  pack_rows("Uganda", 4, 6) %>%
   kable_paper("striped", full_width = TRUE)
 ```
 
