@@ -682,32 +682,6 @@ table2
 ### Census data, census water points, village-level, excluding outside HHs
 I scale the estimates from Table 1 by the simple average share of households located within village boundaries for each intervention type in each country.
 ```{r}
-# hh_census <-
-#   read_rds(
-#      file.path(
-#       path_box,
-#       "Data",
-#       "HouseholdCensus",
-#       "DataSets",
-#       "Final",
-#       "hh-census.rds"
-#     )
-#   ) %>%
-#   st_drop_geometry() %>%
-#   # To account for non-responses, we calculate the village-level non-response rate
-#   group_by(village_id) %>%
-#   mutate(
-#     response_rate = mean(response),
-#     intervention_fo = case_when(
-#       wp_dsw ~ "DSW",
-#       wp_ilc ~ "ILC"
-#     )
-#   ) %>% 
-#   ungroup %>%
-#   dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC")) %>%
-#   dplyr::filter(!(country == "Uganda" & sample_group == "ILC"))
-
-
 in_village_share <- hh_census %>%
   dplyr::filter(
     wp_intervention_type != "Non-program",
@@ -1375,8 +1349,8 @@ ggsave("output/waterfall_malawi.pdf",
        device = "pdf")
 ```
 
-#----MENTIONED IN REPORT---------------
-## difference in estimates: table 1 vs table 3
+##----MENTIONED IN REPORT---------------
+### difference in estimates: table 1 vs table 3
 ```{r}
 # combine the two tables with an identifier
 comparison_data <- bind_rows(
