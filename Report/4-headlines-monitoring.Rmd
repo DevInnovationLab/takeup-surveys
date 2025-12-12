@@ -119,6 +119,72 @@ hh_census <-
   dplyr::filter(!(country == "Uganda" & sample_group == "ILC")) %>%
   dplyr::filter(!(sample_group == "Footprint" & wp_intervention == "ILC")) %>%
   dplyr::filter(!(sample_group == "Expansion" & wp_intervention == "ILC")) 
+
+ea_list_uganda <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_uganda.csv"
+    )
+  ) %>%
+  left_join(wp_census %>%
+            mutate(ea_id = as.numeric(ea_id)) %>%
+            select(ea_id, intervention_type, country, wp_intervention),
+          by = c("i102_wpt_id" = "ea_id"))
+
+ea_list_malawi <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_malawi.csv"
+    )
+  ) %>%
+  left_join(wp_census %>%
+            mutate(ea_id = as.numeric(ea_id)) %>%
+            select(ea_id, intervention_type, country, wp_intervention),
+          by = c("i102_wpt_id" = "ea_id"))
+
+pm_list_mw <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_malawi.csv"
+    )
+  )
+
+pm_list_ug <-
+  read_csv(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Raw",
+      "promoter_list_uganda.csv"
+    )
+  )
+
+ea_promoters_malawi <- pm_list_mw %>%
+  select(-any_of(c("country", "sample_group", "wp_intervention", "ea_id"))) %>%
+  mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
+  left_join(wp_census, by = c("i102_wpt_id" = "ea_id"))
+
+ea_promoters_uganda <- pm_list_ug %>%
+  select(-any_of(c("country", "sample_group", "wp_intervention", "ea_id"))) %>%
+  mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
+  left_join(wp_census, by = c("i102_wpt_id" = "ea_id"))
 ```
 
 ## Number of people using DSW/ILC
@@ -342,7 +408,7 @@ table8country
 calculate_mean_ci_chlorination <- function(data, var_name, weight_var) {
   data %>%
     mutate(weight = {{weight_var}}) %>%
-    group_by(country, wp_intervention) %>%
+    group_by(country, sample_group, wp_intervention) %>%
     group_split() %>%
     map(
       ~ {
@@ -369,7 +435,7 @@ calculate_mean_ci_chlorination <- function(data, var_name, weight_var) {
           summarise(n = sum(!is.na(.data[[var_name]])))
         
         result <- bind_cols(
-          .x %>% select(country, wp_intervention) %>% slice(1),
+          .x %>% select(country, sample_group, wp_intervention) %>% slice(1),
           mean_val,
           ci_val,
           n_val
@@ -1376,6 +1442,236 @@ comparison_data %>%
   )
 ```
 
+### WP sample
+#### table 4
+```{r}
+wp_table <- wp_census %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(
+    wp_census = n_distinct(wp_id),
+    wp_functional = n_distinct(wp_id[wp_func == TRUE]),
+    promoter_surveyed_f = n_distinct(wp_id[promoter_surveyed == TRUE & wp_func == TRUE]),
+    promoter_surveyed = n_distinct(wp_id[promoter_surveyed == TRUE]),
+    .groups = "drop"
+  )%>%
+  left_join(wp_sample_sizes, by = c("country", "sample_group", "wp_intervention")) %>%
+  left_join(
+    ea_list_malawi %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(ea_list_malawi_count = n_distinct(i102_wpt_id), .groups = "drop"),
+    by = c("country", "sample_group", "wp_intervention")
+  ) %>%
+  left_join(
+    ea_list_uganda %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(ea_list_uganda_count = n_distinct(i102_wpt_id), .groups = "drop"),
+    by = c("country", "sample_group", "wp_intervention")
+  )# %>%
+  #dplyr::filter(wp_intervention != "Non-program")
+
+wp_table
+
+# generate latex table
+wp_table_latex <- wp_table %>%
+  mutate(
+    ea_list_count = coalesce(ea_list_malawi_count, ea_list_uganda_count)
+  ) %>%
+  select(country, sample_group, wp_intervention, pop_points, wp_census, wp_functional, ea_list_count, promoter_surveyed, promoter_surveyed_f)
+
+malawi_footprint <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "Footprint", wp_intervention == "DSW") %>%
+  mutate(sample_group = "Footprint")
+
+malawi_expansion <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "Expansion", wp_intervention == "DSW") %>%
+  mutate(sample_group = "Expansion")
+
+malawi_dsw_ilc <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "DSW") %>%
+  mutate(sample_group = "DSW in ILC vill.")
+
+malawi_ilc <- wp_table_latex %>%
+  dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "ILC") %>%
+  mutate(sample_group = "ILC")
+
+malawi_data <- bind_rows(malawi_footprint, malawi_expansion, malawi_dsw_ilc, malawi_ilc) %>%
+  select(-country, -wp_intervention)
+
+uganda_footprint <- wp_table_latex %>%
+  dplyr::filter(country == "Uganda", sample_group == "Footprint", wp_intervention == "DSW") %>%
+  mutate(sample_group = "Footprint")
+
+uganda_expansion <- wp_table_latex %>%
+  dplyr::filter(country == "Uganda", sample_group == "Expansion", wp_intervention == "DSW") %>%
+  mutate(sample_group = "Expansion")
+
+uganda_data <- bind_rows(uganda_footprint, uganda_expansion) %>%
+  select(-country, -wp_intervention)
+
+malawi_total <- malawi_data %>%
+  summarise(
+    sample_group = "\\textbf{Total EA points}",
+    pop_points = sum(pop_points, na.rm = TRUE),
+    wp_census = sum(wp_census, na.rm = TRUE),
+    wp_functional = sum(wp_functional, na.rm = TRUE),
+    ea_list_count = sum(ea_list_count, na.rm = TRUE),
+    promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE),
+    promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE)
+  )
+
+uganda_total <- uganda_data %>%
+  summarise(
+    sample_group = "\\textbf{Total EA points}",
+    pop_points = sum(pop_points, na.rm = TRUE),
+    wp_census = sum(wp_census, na.rm = TRUE),
+    wp_functional = sum(wp_functional, na.rm = TRUE),
+    ea_list_count = sum(ea_list_count, na.rm = TRUE),
+    promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE),
+    promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE)
+  )
+
+malawi_section <- bind_rows(malawi_data, malawi_total)
+uganda_section <- bind_rows(uganda_data, uganda_total)
+
+malawi_section <- malawi_section %>%
+  mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE)))
+
+uganda_section <- uganda_section %>%
+  mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE)))
+
+cat("\\begin{table}[htbp]\\centering\n")
+cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
+cat("\\begin{tabular}{l*{6}c}\n")
+cat("\\hline\\hline\n")
+cat("& (1) & (2) & (3) & (4) & (5) & (6)\\\\\n")
+cat("                   & Country Total & WP Census & \\shortstack{WP Census \\\\Functional} & \\shortstack{Evidence Action \\\\ Promoter List} & \\shortstack{DIL Promoter \\\\Survey} & \\shortstack{DIL Promoter \\\\Survey Functional}\\n")
+cat("\\hline\n")
+cat("\\textbf{Malawi}                  &            &           &        &        &         &         \\\\\n")
+cat("\\hline\n")
+
+for(i in 1:nrow(malawi_section)) {
+  row <- malawi_section[i,]
+  cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n",
+              row$sample_group, row$pop_points, row$wp_census, 
+              row$wp_functional, row$ea_list_count, row$promoter_surveyed, 
+              row$promoter_surveyed_f))
+}
+
+cat("\\hline\n")
+cat("\\textbf{Uganda}                  &            &          &        &        &        &        \\\\\n")
+cat("\\hline\n")
+
+for(i in 1:nrow(uganda_section)) {
+  row <- uganda_section[i,]
+  cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n",
+              row$sample_group, row$pop_points, row$wp_census, 
+              row$wp_functional, row$ea_list_count, row$promoter_surveyed,
+              row$promoter_surveyed_f))
+}
+
+cat("\\hline\\hline\n")
+cat("\\end{tabular}\n")
+cat("\\end{table}\n")
+```
+
+#### uganda text
+```{r}
+ea_promoters_uganda <-
+  ea_promoters_uganda %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
+  dplyr::filter(wp_intervention != "ILC")
+
+# Calculate metrics
+n_promoters <- nrow(ea_promoters_uganda)
+n_unique_wps <- ea_promoters_uganda %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+
+n_in_wp_census <- ea_promoters_uganda %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  distinct(i102_wpt_id) %>%
+  nrow()
+
+n_promoter_surveyed <- wp_census %>%
+  dplyr::filter(ea_id %in% ea_promoters_uganda$i102_wpt_id, promoter_surveyed == TRUE) %>%
+  distinct(ea_id) %>%
+  nrow()
+
+n_surveyed_no_ea_info <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE, 
+         !ea_id %in% ea_promoters_uganda$i102_wpt_id,
+         country == "Uganda") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+n_total_promoter_surveys <- wp_census %>%
+  group_by(sample_group, wp_intervention) %>%
+  dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+n_program_promoter_surveys <- wp_census %>%
+  group_by(sample_group, wp_intervention) %>%
+  dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>%
+  dplyr::filter(wp_intervention == "Non-program") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+glue("In Uganda, Evidence Action provided information for {n_promoters} promoters of non-ILC water points in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information, for a total of {n_total_promoter_surveys} promoter surveys in Uganda, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.")
+```
+
+#### malawi text
+```{r}
+ea_promoters_malawi <- ea_promoters_malawi %>%
+  # select(-wcp102_wpt_id) %>%
+  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
+  unique
+
+# Calculate metrics
+n_promoters_ <- nrow(ea_promoters_malawi)
+n_unique_wps <- ea_promoters_malawi %>%
+  pull(i102_wpt_id) %>%
+  n_distinct()
+
+n_in_wp_census <- ea_promoters_malawi %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  distinct(i102_wpt_id) %>%
+  nrow()
+
+n_in_wp_census_program <- ea_promoters_malawi %>%
+  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
+  dplyr::filter(wp_intervention == "DSW" | wp_intervention == "ILC") %>%
+  distinct(i102_wpt_id) %>%
+  nrow()
+
+n_promoter_surveyed <- wp_census %>%
+  dplyr::filter(ea_id %in% ea_promoters_malawi$i102_wpt_id, promoter_surveyed == TRUE) %>%
+  distinct(ea_id) %>%
+  nrow()
+
+n_surveyed_no_ea_info <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE, 
+         !ea_id %in% ea_promoters_malawi$i102_wpt_id,
+         country == "Malawi") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+n_total_promoter_surveys <- wp_census %>%
+  group_by(sample_group, wp_intervention) %>%
+  dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+n_program_promoter_surveys <- wp_census %>%
+  group_by(sample_group, wp_intervention) %>%
+  dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>%
+  dplyr::filter(wp_intervention == "Non-program") %>%
+  distinct(wp_id) %>%
+  nrow()
+
+glue("In Malawi, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of {n_total_promoter_surveys} promoter surveys in Malawi, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.")
+```
+
 ##---------------EXPLORATORY---------------
 ## Regressions of chlorination on being listed by promoter
 ###  tcr, control for promoter surveyed
@@ -1669,4 +1965,5 @@ stargazer(model1_lm, model2_lm,
           covariate.labels = c("Monitoring Survey"),
           dep.var.labels = c(" ", " "))
 ```
+
 
