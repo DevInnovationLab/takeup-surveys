@@ -1375,6 +1375,34 @@ ggsave("output/waterfall_malawi.pdf",
        device = "pdf")
 ```
 
+#----MENTIONED IN REPORT---------------
+## difference in estimates: table 1 vs table 3
+```{r}
+# combine the two tables with an identifier
+comparison_data <- bind_rows(
+  table1country %>% 
+    mutate(table = "table1") %>%
+    select(country, table, indiv_access_popn, se),
+  table8country %>% 
+    mutate(table = "table8") %>%
+    select(country, table, indiv_access_popn, se = se_popn_users)
+)
+
+# perform t-test for each country
+# since we have point estimates and standard errors, we'll use a two-sample z-test approach
+comparison_data %>%
+  group_by(country) %>%
+  summarise(
+    diff = indiv_access_popn[table == "table8"] - indiv_access_popn[table == "table1"],
+    se_diff = sqrt(se[table == "table8"]^2 + se[table == "table1"]^2),
+    z_stat = diff / se_diff,
+    p_value = 2 * (1 - pnorm(abs(z_stat))),
+    table1_est = indiv_access_popn[table == "table1"],
+    table8_est = indiv_access_popn[table == "table8"]
+  )
+```
+
+##---------------EXPLORATORY---------------
 ## Regressions of chlorination on being listed by promoter
 ###  tcr, control for promoter surveyed
 ```{r}
