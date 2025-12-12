@@ -495,7 +495,7 @@ users_data <-
   dplyr::filter(
     wp_intervention_type != "Non-program",
     wp_invillage,
-    !(sample_group != "ILC" & wp_intervention == "ILC"))
+    !(sample_group != "ILC" & intervention == "ILC"))
 
 users_data <-
   users_data %>%
@@ -756,115 +756,6 @@ table1country_exout <- table1_exout %>%
 
 table1country_exout
 ```
-
-OLD version: I tried to first exclude households that are outside the village, adjust response rate to account for this, and find total. But I was running into many problems so settled for a simpler approach (above).
-```{r}
-# users_data_exout <-
-#   hh_census %>%
-#   dplyr::filter(
-#     wp_intervention_type != "Non-program",
-#     wp_invillage,
-#     !(sample_group != "ILC" & wp_intervention == "ILC"),
-#     inclusion == "Within village boundaries"  
-#   ) %>%
-#   # Recalculate response rate for in-village households only
-#   group_by(village_id) %>%
-#   mutate(
-#     response_rate = mean(response)  # Recalculate based on filtered data
-#   ) %>%
-#   ungroup() %>%
-#   group_by(country, sample_group) %>%
-#   mutate(
-#     hh_members = if_else(
-#       !is.na(hh_members), 
-#       hh_members, 
-#       mean(hh_members, na.rm = TRUE)
-#     )
-#   ) %>%
-#   ungroup()
-# 
-# users_village <-
-#   users_data_exout %>%
-#   group_by(village_id, country, sample_group, wp_intervention) %>%
-#   summarise(
-#     response_rate = unique(response_rate),  # Now this is the correct rate
-#     hhs = n(),
-#     users = sum(hh_members)
-#   ) %>%
-#   mutate(
-#     users_increased = users/response_rate
-#   )
-
-# users_data_exout <-
-#   hh_census %>%
-#   dplyr::filter(
-#     wp_intervention_type != "Non-program",
-#     wp_invillage,
-#     !(sample_group != "ILC" & wp_intervention == "ILC"),
-#     inclusion == "Within village boundaries"  
-#   )
-# 
-# users_village <-
-#   users_data_exout %>%
-#   group_by(village_id, country, sample_group, wp_intervention) %>%
-#   summarise(
-#     response_rate = unique(response_rate),
-#     hhs = n(),
-#     users = sum(hh_members)
-#   ) %>%
-#   mutate(
-#     users_increased = users/response_rate
-#   )
-
-# users_village <-
-#   users_village %>%
-#   left_join(sample_sizes) %>%
-#   group_by(country, sample_group) %>%
-#   mutate(
-#     weight = n_villages/n_distinct(village_id)
-#   ) %>%
-#   ungroup
-# 
-# people_per_country <-
-#   map(
-#     users_village %>%
-#       group_by(country, wp_intervention) %>%
-#       group_split(),
-#     ~ total_ci(
-#         var = "users_increased",
-#         design = svydesign(
-#           id = ~ village_id,
-#           data = .x, 
-#           weights = ~ weight
-#         )
-#       ) %>%
-#       mutate(
-#         country = .x %>% pull(country) %>% unique,
-#         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-#         villages = .x %>% pull(village_id) %>% n_distinct,
-#         hhs = .x %>% pull(hhs) %>% sum,
-#         pop = .x %>% pull(n_villages) %>% unique %>% sum
-#       )
-#   ) %>% 
-#   bind_rows() %>%
-#   select(
-#     country, wp_intervention, 
-#     outcome, 
-#     villages,
-#     everything()
-#   ) %>%
-#   arrange(outcome)
-# 
-# table1_exout <- people_per_country %>%
-#   mutate(
-#     intervention = wp_intervention,
-#     indiv_access_popn = total
-#   ) %>%
-#   select(country, intervention, indiv_access_popn, lb, ub)
-# 
-# table1_exout
-```
-
 
 ### Census data, census water points, water-point level, excluding outside HHs
 
