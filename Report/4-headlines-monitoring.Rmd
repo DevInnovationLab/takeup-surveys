@@ -1,7 +1,7 @@
 # Monitoring headline results
 
 ## Setup
-# source the .Rprofile to load custom functions
+### source the .Rprofile to load custom functions
 ```{r}
 source(".Rprofile")
 ```
@@ -69,7 +69,11 @@ wp_census <-
       "wp-census.rds"
     )
   ) %>%
-  mutate(ea_id = as.character(ea_id))
+  mutate(ea_id = as.character(ea_id)) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & sample_group == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) 
 
 hh_survey <-
   read_rds(
@@ -81,19 +85,13 @@ hh_survey <-
       "Final",
       "hh-survey.rds"
     )
-  ) 
-
-# hh_census <-
-#   read_rds(
-#     file.path(
-#       path_box,
-#       "Data",
-#       "HouseholdCensus",
-#       "DataSets",
-#       "Final",
-#       "hh-census.rds"
-#     )
-#   ) 
+  ) %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & sample_group == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) 
 
 hh_census <-
   read_rds(
@@ -116,7 +114,13 @@ hh_census <-
       wp_ilc ~ "ILC"
     )
   ) %>% 
-  ungroup
+  ungroup %>%
+  mutate(intervention = wp_intervention) %>%
+  select(-wp_intervention) %>%
+  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
+  dplyr::filter(!(country == "Uganda" & sample_group == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
+  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) 
 ```
 
 ## Number of people using DSW/ILC
@@ -167,9 +171,7 @@ each water point has weight 1
 hh_count_data <- wp_census %>%
   dplyr::filter(promoter_surveyed == "TRUE") %>%
   dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(intervention != "Non-program") %>%
-  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
-  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+  dplyr::filter(intervention != "Non-program")
 
 hh_count_ci_v1 <- calculate_mean_ci(hh_count_data, "pm_users", 1)
 hh_count_ci_v1
@@ -179,14 +181,9 @@ hh_count_ci_v1
 each household has weight 1
 ```{r}
 hh_size <- hh_survey %>%
-  mutate(intervention = wp_intervention) %>%
-  select(-wp_intervention) %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
   dplyr::filter(wp_func == "TRUE") %>%
   dplyr::filter(intervention != "Non-program") %>%
-  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
-  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
-  dplyr::filter(!(country == "Uganda" & intervention == "ILC")) %>%
   mutate(hh_weight = 1)
 
 # calculate CIs
@@ -203,8 +200,6 @@ wp_sample <- wp_census %>%
   dplyr::filter(wp_func == "TRUE") %>%
   # filters for table
   dplyr::filter(intervention != "Non-program") %>%
-  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
-  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
   # number of users
   group_by(country, sample_group, intervention) %>%
   summarise(
@@ -217,17 +212,12 @@ wp_sample
 #### sample size for household data
 ```{r}
 hh_sample <- hh_survey %>%
-  # rename
-  mutate(intervention = wp_intervention) %>%
-  select(-wp_intervention) %>%
   # only monitoring survey households 
   dplyr::filter(survey == "Monitoring Survey") %>%
   # only functional water points
   dplyr::filter(wp_func == "TRUE") %>%
   # filters for table
   dplyr::filter(intervention != "Non-program") %>%
-  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
-  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
   # filter for chlorine test results
   dplyr::filter(!is.na(disctcr_02)) %>%
   dplyr::filter(!is.na(discfcr_02)) %>%
@@ -402,15 +392,10 @@ calculate_mean_ci_chlorination <- function(data, var_name, weight_var) {
 each household (observation) gets weight 1
 ```{r}
 chlorination_data_weighted_combined <- hh_survey %>%
-  mutate(intervention = wp_intervention) %>%
-  select(-wp_intervention) %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
   dplyr::filter(wp_func == "TRUE") %>%  
   dplyr::filter(!is.na(intervention)) %>%  
-  dplyr::filter(intervention != "Non-program") %>%  
-  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%  
-  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%  
-  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+  dplyr::filter(intervention != "Non-program")
 
 chlorination_sef_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "watertreat_dispcl", 1)
 
@@ -424,18 +409,13 @@ chlorination_fcr_ci_combined
 ## Breaking down chlorination rates differences
 ```{r}
 chlorination_data_weighted_combined <- hh_survey %>%
-  mutate(intervention = wp_intervention) %>%
-  select(-wp_intervention) %>%
   dplyr::filter(survey == "Household Survey") %>%
   # dplyr::filter(survey == "Monitoring Survey") %>%
   dplyr::filter(promoter_list == "TRUE") %>%
   dplyr::filter(promoter_surveyed == "TRUE") %>%
   dplyr::filter(wp_func == "TRUE") %>%
   dplyr::filter(!is.na(intervention)) %>%
-  dplyr::filter(intervention != "Non-program") %>%
-  dplyr::filter(!(sample_group == "Footprint" & intervention == "ILC")) %>%
-  dplyr::filter(!(sample_group == "Expansion" & intervention == "ILC")) %>%
-  dplyr::filter(!(country == "Uganda" & intervention == "ILC"))
+  dplyr::filter(intervention != "Non-program") 
 
 chlorination_tcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "disctcr_02", 1)
 chlorination_fcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "discfcr_02", 1)
