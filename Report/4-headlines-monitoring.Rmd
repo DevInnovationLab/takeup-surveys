@@ -185,6 +185,18 @@ ea_promoters_uganda <- pm_list_ug %>%
   select(-any_of(c("country", "sample_group", "wp_intervention", "ea_id"))) %>%
   mutate(i102_wpt_id = as.character(i102_wpt_id)) %>%
   left_join(wp_census, by = c("i102_wpt_id" = "ea_id"))
+
+pm_survey_households <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Constructed",
+      "pm-survey-households.rds"
+    )
+  ) 
 ```
 
 ## Number of people using DSW/ILC
@@ -2373,6 +2385,34 @@ table1country_alt
 ```
 
 ### double counting
+```{r}
+hh_double_count_stats <- hh_census %>%
+  dplyr::filter(promoter_list == TRUE) %>%
+  summarise(
+    total_hh = n_distinct(household_id),
+    hh_multiple_mentions = sum(promoter_list_mentions > 1, na.rm = TRUE),
+    share_multiple_mentions = hh_multiple_mentions / total_hh,
+    share_pct = round(share_multiple_mentions * 100, 1),
+    # calculate average mentions for those with multiple mentions
+    avg_mentions = mean(promoter_list_mentions[promoter_list_mentions > 1], na.rm = TRUE),
+    # wp_secweek is TRUE -> hh reports using additional water sources
+    hh_report_multiple = sum(promoter_list_mentions > 1 & wp_secweek == TRUE, na.rm = TRUE),
+    share_report_multiple = hh_report_multiple / hh_multiple_mentions,
+    share_report_multiple_pct = round(share_report_multiple * 100, 0),
+    # wp_secweek is FALSE -> hh reports not using any additional water sources (double counted)
+    hh_double_counted = sum(promoter_list_mentions > 1 & wp_secweek == FALSE, na.rm = TRUE)
+  )
+
+# auto-generate text summary
+cat(sprintf("Among the %s distinct households listed by promoters across Evidence Action water points that were matched to the household census, we identified %d households (around %s%%) as listed to be using more than one (on average %s) of these water points. Of these %d, only %d%% self-report using more than one water point in the household census: in the remaining %d cases, promoters are double-counting households.\n",
+            format(hh_double_count_stats$total_hh, big.mark = ","),
+            hh_double_count_stats$hh_multiple_mentions,
+            hh_double_count_stats$share_pct,
+            round(hh_double_count_stats$avg_mentions, 0),
+            hh_double_count_stats$hh_multiple_mentions,
+            hh_double_count_stats$share_report_multiple_pct,
+            hh_double_count_stats$hh_double_counted))
+```
 
 ##---------------EXPLORATORY---------------
 ## Regressions of chlorination on being listed by promoter
