@@ -1710,7 +1710,7 @@ hh_outside_all
 
 ### sample selection
 ####hh size
-#####by promoter survey or not
+#####by promoter list
 ```{r}
 hh_size_promoter <- hh_census %>%
   dplyr::filter(promoter_list == TRUE) %>%
@@ -1735,8 +1735,8 @@ hh_size_nonpromoter_avg
 
 # combine the two datasets and run t-tests
 hh_size_comparison <- bind_rows(
-  hh_size_promoter_avg %>% mutate(promoter_surveyed = TRUE),
-  hh_size_nonpromoter_avg %>% mutate(promoter_surveyed = FALSE)
+  hh_size_promoter_avg %>% mutate(promoter_list = TRUE),
+  hh_size_nonpromoter_avg %>% mutate(promoter_list = FALSE)
 )
 
 # run t-tests for each country/sample_group/intervention combination
@@ -1746,8 +1746,20 @@ hh_size_ttest <- hh_size_comparison %>%
   map_df(
     ~ {
       # extract the two means and SEs
-      promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE)
-      nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE)
+      promoter_row <- .x %>% dplyr::filter(promoter_list == TRUE)
+      nonpromoter_row <- .x %>% dplyr::filter(promoter_list == FALSE)
+      
+      # calculate n from original datasets
+      n_prom <- hh_size_promoter %>%
+        dplyr::filter(country == unique(.x$country),
+                     sample_group == unique(.x$sample_group),
+                     wp_intervention == unique(.x$wp_intervention)) %>%
+        nrow()
+      n_nonprom <- hh_size_nonpromoter %>%
+        dplyr::filter(country == unique(.x$country),
+                     sample_group == unique(.x$sample_group),
+                     wp_intervention == unique(.x$wp_intervention)) %>%
+        nrow()
       
       # calculate z-statistic (using normal approximation since we have SEs)
       diff <- promoter_row$mean - nonpromoter_row$mean
@@ -1761,6 +1773,8 @@ hh_size_ttest <- hh_size_comparison %>%
         wp_intervention = unique(.x$wp_intervention),
         mean_promoter = promoter_row$mean,
         mean_nonpromoter = nonpromoter_row$mean,
+        n_promoter = n_prom,
+        n_nonpromoter = n_nonprom,
         difference = diff,
         se_difference = se_diff,
         z_statistic = z_stat,
@@ -1773,9 +1787,99 @@ hh_size_ttest <- hh_size_comparison %>%
 hh_size_ttest
 ```
 
-#####by monitoring survey vs household survey
+###### LaTeX table
+```{r}
+# function to add significance stars
+add_stars <- function(p_value) {
+  if (p_value < 0.01) return("\\sym{***}")
+  if (p_value < 0.05) return("\\sym{**}")
+  if (p_value < 0.10) return("\\sym{*}")
+  return("")
+}
+
+# prepare data for table
+table_data <- hh_size_ttest %>%
+  mutate(
+    stars = map_chr(p_value, add_stars),
+    # format the numbers to 2 decimal places
+    mean_promoter_fmt = sprintf("%.2f", mean_promoter),
+    mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter),
+    difference_fmt = paste0(sprintf("%.2f", difference), stars)
+  ) %>%
+  # create row labels
+  mutate(
+    row_label = case_when(
+      wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint",
+      wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion",
+      wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.",
+      wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC",
+      TRUE ~ paste(sample_group, wp_intervention)
+    )
+  ) %>%
+  arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC")))
+
+# start building latex table
+latex_lines <- c(
+  "\\begin{table}[htbp]\\centering",
+  "\\caption{Difference in mean household size according to Household Census by whether household is in any promoter's list}",
+  "\\label{tab:hh_size_pmsurvey}",
+  "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}",
+  "\\begin{tabular}{l*{5}c}",
+  "\\hline\\hline",
+  "& \\multicolumn{2}{c}{Listed by Promoter} & \\multicolumn{2}{c}{Not Listed by Promoter} & \\\\",
+  "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}",
+  "& Mean & N & Mean & N & Difference\\\\",
+  "\\hline"
+)
+
+# add malawi section
+latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline")
+malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
+for (i in 1:nrow(malawi_data)) {
+  latex_lines <- c(latex_lines, 
+    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
+      malawi_data$row_label[i],
+      malawi_data$mean_promoter_fmt[i],
+      malawi_data$n_promoter[i],
+      malawi_data$mean_nonpromoter_fmt[i],
+      malawi_data$n_nonpromoter[i],
+      malawi_data$difference_fmt[i]
+    )
+  )
+}
+
+# add uganda section
+latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline")
+uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
+for (i in 1:nrow(uganda_data)) {
+  latex_lines <- c(latex_lines, 
+    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
+      uganda_data$row_label[i],
+      uganda_data$mean_promoter_fmt[i],
+      uganda_data$n_promoter[i],
+      uganda_data$mean_nonpromoter_fmt[i],
+      uganda_data$n_nonpromoter[i],
+      uganda_data$difference_fmt[i]
+    )
+  )
+}
+
+# close table
+latex_lines <- c(latex_lines,
+  "\\hline\\hline",
+  "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\",
+  "\\end{tabular}",
+  "\\end{table}"
+)
+
+# print the table
+cat(latex_lines, sep = "\n")
+```
+
+#####by monitoring survey
 ```{r}
 hh_size_monitoring <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
   dplyr::filter(survey == "Monitoring Survey") %>%
   dplyr::filter(wp_func == "TRUE") %>%
   dplyr::filter(wp_intervention != "Non-program") %>%
@@ -1785,6 +1889,7 @@ hh_size_monitoring <- hh_survey %>%
 hh_size_monitoring_avg <- calculate_mean_ci(hh_size_monitoring, "hh_members", hh_weight)
 
 hh_size_household <- hh_survey %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
   dplyr::filter(survey == "Household Survey") %>%
   dplyr::filter(wp_func == "TRUE") %>%
   dplyr::filter(wp_intervention != "Non-program") %>%
@@ -1812,6 +1917,18 @@ hh_size_ttest_survey <- hh_size_comparison_survey %>%
       monitoring_row <- .x %>% dplyr::filter(survey == "Monitoring Survey")
       household_row <- .x %>% dplyr::filter(survey == "Household Survey")
       
+      # calculate n from original datasets
+      n_monitoring <- hh_size_monitoring %>%
+        dplyr::filter(country == unique(.x$country),
+                     sample_group == unique(.x$sample_group),
+                     wp_intervention == unique(.x$wp_intervention)) %>%
+        nrow()
+      n_household <- hh_size_household %>%
+        dplyr::filter(country == unique(.x$country),
+                     sample_group == unique(.x$sample_group),
+                     wp_intervention == unique(.x$wp_intervention)) %>%
+        nrow()
+      
       # calculate z-statistic (using normal approximation since we have SEs)
       diff <- monitoring_row$mean - household_row$mean
       se_diff <- sqrt(monitoring_row$se^2 + household_row$se^2)
@@ -1824,6 +1941,8 @@ hh_size_ttest_survey <- hh_size_comparison_survey %>%
         wp_intervention = unique(.x$wp_intervention),
         mean_monitoring = monitoring_row$mean,
         mean_household = household_row$mean,
+        n_monitoring = n_monitoring,
+        n_household = n_household,
         difference = diff,
         se_difference = se_diff,
         z_statistic = z_stat,
@@ -1834,6 +1953,95 @@ hh_size_ttest_survey <- hh_size_comparison_survey %>%
   )
 
 hh_size_ttest_survey
+```
+
+###### LaTeX table
+```{r}
+# function to add significance stars
+add_stars <- function(p_value) {
+  if (p_value < 0.01) return("\\sym{***}")
+  if (p_value < 0.05) return("\\sym{**}")
+  if (p_value < 0.10) return("\\sym{*}")
+  return("")
+}
+
+# prepare data for table
+table_data <- hh_size_ttest_survey %>%
+  mutate(
+    stars = map_chr(p_value, add_stars),
+    # format the numbers to 2 decimal places
+    mean_monitoring_fmt = sprintf("%.2f", mean_monitoring),
+    mean_household_fmt = sprintf("%.2f", mean_household),
+    difference_fmt = paste0(sprintf("%.2f", difference), stars)
+  ) %>%
+  # create row labels
+  mutate(
+    row_label = case_when(
+      wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint",
+      wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion",
+      wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.",
+      wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC",
+      TRUE ~ paste(sample_group, wp_intervention)
+    )
+  ) %>%
+  arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC")))
+
+# start building latex table
+latex_lines <- c(
+  "\\begin{table}[htbp]\\centering",
+  "\\caption{Difference in mean household size by survey type among promoter survey water points}",
+  "\\label{tab:hh_size_survey_comparison}",
+  "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}",
+  "\\begin{tabular}{l*{5}c}",
+  "\\hline\\hline",
+  "& \\multicolumn{2}{c}{Monitoring Survey} & \\multicolumn{2}{c}{Household Survey} & \\\\",
+  "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}",
+  "& Mean & N & Mean & N & Difference\\\\",
+  "\\hline"
+)
+
+# add malawi section
+latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline")
+malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
+for (i in 1:nrow(malawi_data)) {
+  latex_lines <- c(latex_lines, 
+    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
+      malawi_data$row_label[i],
+      malawi_data$mean_monitoring_fmt[i],
+      malawi_data$n_monitoring[i],
+      malawi_data$mean_household_fmt[i],
+      malawi_data$n_household[i],
+      malawi_data$difference_fmt[i]
+    )
+  )
+}
+
+# add uganda section
+latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline")
+uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
+for (i in 1:nrow(uganda_data)) {
+  latex_lines <- c(latex_lines, 
+    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
+      uganda_data$row_label[i],
+      uganda_data$mean_monitoring_fmt[i],
+      uganda_data$n_monitoring[i],
+      uganda_data$mean_household_fmt[i],
+      uganda_data$n_household[i],
+      uganda_data$difference_fmt[i]
+    )
+  )
+}
+
+# close table
+latex_lines <- c(latex_lines,
+  "\\hline\\hline",
+  "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\",
+  "\\end{tabular}",
+  "\\end{table}"
+)
+
+# print the table
+cat(latex_lines, sep = "\n")
 ```
 
 #### hh count
@@ -1887,6 +2095,7 @@ hh_count_comparison <- bind_rows(
 )
 
 # run t-tests for each country/sample_group/intervention combination
+# run t-tests for each country/sample_group/intervention combination
 hh_count_ttest <- hh_count_comparison %>%
   group_by(country, sample_group, wp_intervention) %>%
   group_split() %>%
@@ -1895,6 +2104,18 @@ hh_count_ttest <- hh_count_comparison %>%
       # extract the two means and SEs
       promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE)
       nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE)
+      
+      # calculate n from original datasets
+      n_prom <- hh_count_promoter_from_census %>%
+        dplyr::filter(country == unique(.x$country),
+                     sample_group == unique(.x$sample_group),
+                     wp_intervention == unique(.x$wp_intervention)) %>%
+        nrow()
+      n_nonprom <- hh_count_nonpromoter_from_census %>%
+        dplyr::filter(country == unique(.x$country),
+                     sample_group == unique(.x$sample_group),
+                     wp_intervention == unique(.x$wp_intervention)) %>%
+        nrow()
       
       # calculate z-statistic (using normal approximation since we have SEs)
       diff <- promoter_row$mean - nonpromoter_row$mean
@@ -1908,6 +2129,8 @@ hh_count_ttest <- hh_count_comparison %>%
         wp_intervention = unique(.x$wp_intervention),
         mean_promoter = promoter_row$mean,
         mean_nonpromoter = nonpromoter_row$mean,
+        n_promoter = n_prom,
+        n_nonpromoter = n_nonprom,
         difference = diff,
         se_difference = se_diff,
         z_statistic = z_stat,
@@ -1918,6 +2141,95 @@ hh_count_ttest <- hh_count_comparison %>%
   )
 
 hh_count_ttest
+```
+
+#####LaTeX table
+```{r}
+# function to add significance stars
+add_stars <- function(p_value) {
+  if (p_value < 0.01) return("\\sym{***}")
+  if (p_value < 0.05) return("\\sym{**}")
+  if (p_value < 0.10) return("\\sym{*}")
+  return("")
+}
+
+# prepare data for table
+table_data <- hh_count_ttest %>%
+  mutate(
+    stars = map_chr(p_value, add_stars),
+    # format the numbers to 2 decimal places
+    mean_promoter_fmt = sprintf("%.2f", mean_promoter),
+    mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter),
+    difference_fmt = paste0(sprintf("%.2f", difference), stars)
+  ) %>%
+  # create row labels
+  mutate(
+    row_label = case_when(
+      wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint",
+      wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion",
+      wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.",
+      wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC",
+      TRUE ~ paste(sample_group, wp_intervention)
+    )
+  ) %>%
+  arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC")))
+
+# start building latex table
+latex_lines <- c(
+  "\\begin{table}[htbp]\\centering",
+  "\\caption{Difference in mean household count per water point according to Household Census by whether water point is in Promoter Survey}",
+  "\\label{tab:hh_count_pmsurvey}",
+  "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}",
+  "\\begin{tabular}{l*{5}c}",
+  "\\hline\\hline",
+  "& \\multicolumn{2}{c}{Promoter Survey} & \\multicolumn{2}{c}{Not In Promoter Survey} & \\\\",
+  "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}",
+  "& Mean & N & Mean & N & Difference\\\\",
+  "\\hline"
+)
+
+# add malawi section
+latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline")
+malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
+for (i in 1:nrow(malawi_data)) {
+  latex_lines <- c(latex_lines, 
+    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
+      malawi_data$row_label[i],
+      malawi_data$mean_promoter_fmt[i],
+      malawi_data$n_promoter[i],
+      malawi_data$mean_nonpromoter_fmt[i],
+      malawi_data$n_nonpromoter[i],
+      malawi_data$difference_fmt[i]
+    )
+  )
+}
+
+# add uganda section
+latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline")
+uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
+for (i in 1:nrow(uganda_data)) {
+  latex_lines <- c(latex_lines, 
+    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
+      uganda_data$row_label[i],
+      uganda_data$mean_promoter_fmt[i],
+      uganda_data$n_promoter[i],
+      uganda_data$mean_nonpromoter_fmt[i],
+      uganda_data$n_nonpromoter[i],
+      uganda_data$difference_fmt[i]
+    )
+  )
+}
+
+# close table
+latex_lines <- c(latex_lines,
+  "\\hline\\hline",
+  "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\",
+  "\\end{tabular}",
+  "\\end{table}"
+)
+
+# print the table
+cat(latex_lines, sep = "\n")
 ```
 
 ### non primary users
