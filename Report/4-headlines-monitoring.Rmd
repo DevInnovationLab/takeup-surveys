@@ -245,7 +245,7 @@ calculate_mean_ci <- function(data, var_name, weight_var) {
 each water point has weight 1
 ```{r}
 hh_count_data <- wp_census %>%
-  dplyr::filter(promoter_surveyed == "TRUE") %>%
+  # dplyr::filter(promoter_surveyed == "TRUE") %>%
   dplyr::filter(wp_func == "TRUE") %>%
   dplyr::filter(wp_intervention != "Non-program")
 
@@ -2412,6 +2412,32 @@ cat(sprintf("Among the %s distinct households listed by promoters across Evidenc
             hh_double_count_stats$hh_multiple_mentions,
             hh_double_count_stats$share_report_multiple_pct,
             hh_double_count_stats$hh_double_counted))
+```
+### hhs that report not using DSW/ILC
+```{r}
+pm_list_nonprogram <- hh_census %>%
+  dplyr::filter(promoter_list == TRUE) %>%
+  group_by(country) %>%
+  summarize(
+    non_program = sum(wp_intervention == "Non-program", na.rm = TRUE),
+    non_program_one = sum(wp_intervention == "Non-program" & wp_secweek == FALSE, na.rm = TRUE),
+    program = sum(wp_intervention == "DSW" | wp_intervention == "ILC", na.rm = TRUE),
+    share_non_program = non_program/program,
+    share_non_program_one = non_program_one/program
+  )
+
+pm_list_nonprogram
+```
+
+###response rates
+```{r}
+hh_census_response <- hh_census %>%
+  group_by(country) %>%
+  summarise(
+    response_rate = mean(response)
+  )
+
+hh_census_response
 ```
 
 ##---------------EXPLORATORY---------------
