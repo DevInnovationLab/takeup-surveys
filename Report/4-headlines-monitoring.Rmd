@@ -557,7 +557,7 @@ writeLines(
 users_data <-
   hh_census %>%
   dplyr::filter(
-    wp_intervention_type != "Non-program",
+    wp_intervention != "Non-program",
     wp_invillage,
     !(sample_group != "ILC" & wp_intervention == "ILC")
     )
@@ -669,7 +669,7 @@ requires that you run 1-input-data and then 3-headlines-wp first
 users_data <-
   hh_census_wp %>%
   dplyr::filter(
-    wp_intervention_type != "Non-program",
+    wp_intervention != "Non-program",
     !(sample_group != "ILC" & wp_intervention == "ILC"),
     # These are households using water points outside of the village
     # that were found to have DSW. Since we don't have a water point ID
@@ -750,7 +750,7 @@ I scale the estimates from Table 1 by the simple average share of households loc
 ```{r}
 in_village_share <- hh_census %>%
   dplyr::filter(
-    wp_intervention_type != "Non-program",
+    wp_intervention != "Non-program",
     wp_invillage,
     !(sample_group != "ILC" & wp_intervention == "ILC")
   ) %>%
@@ -820,7 +820,7 @@ users_data <-
   dplyr::filter(
     # filter for promoter survey water points
     promoter_surveyed == "TRUE",
-    wp_intervention_type != "Non-program",
+    wp_intervention != "Non-program",
     !(sample_group != "ILC" & wp_intervention == "ILC"),
     !is.na(wp_id)
   ) %>%
@@ -929,7 +929,7 @@ users_data <-
     promoter_surveyed == "TRUE",
     # filter for inside village
       inclusion == "Within village boundaries",
-    wp_intervention_type != "Non-program",
+    wp_intervention != "Non-program",
     !(sample_group != "ILC" & wp_intervention == "ILC"),
     !is.na(wp_id)
   ) %>%
@@ -1671,6 +1671,396 @@ n_program_promoter_surveys <- wp_census %>%
 
 glue("In Malawi, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of {n_total_promoter_surveys} promoter surveys in Malawi, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.")
 ```
+### hhs outside 
+```{r}
+hh_outside <- wp_census %>%
+  dplyr::filter(promoter_surveyed == TRUE) %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  group_by(country, sample_group, wp_intervention, wp_id) %>%
+  summarize(
+    hh_outside = sum(pm_users_outside, na.rm = TRUE),
+    hh_users = sum(pm_users, na.rm = TRUE),
+    hh_outside_share = hh_outside/hh_users
+  ) %>%
+  group_by(country) %>%
+  summarize(
+    hh_outside_avg = mean(hh_outside),
+    hh_users_avg = mean(hh_users),
+    hh_outside_share = mean(hh_outside_share, na.rm = TRUE)
+  ) 
+hh_outside
+
+hh_outside_all <- hh_census %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  group_by(country, sample_group, wp_intervention, wp_id) %>%
+  summarize(
+    hh_outside = sum(inclusion == "Up to 200m outside of village boundaries"),
+    hh_users = n_distinct(household_id),
+    hh_outside_share = hh_outside/hh_users
+  ) %>%
+  group_by(country) %>%
+  summarize(
+    hh_outside_avg = mean(hh_outside),
+    hh_users_avg = mean(hh_users),
+    hh_outside_share = mean(hh_outside_share, na.rm = TRUE)
+  ) 
+  
+hh_outside_all  
+```
+
+### sample selection
+####hh size
+#####by promoter survey or not
+```{r}
+hh_size_promoter <- hh_census %>%
+  dplyr::filter(promoter_list == TRUE) %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  mutate(hh_weight = 1)
+
+# calculate CIs
+hh_size_promoter_avg <- calculate_mean_ci(hh_size_promoter, "hh_members", hh_weight)
+
+hh_size_nonpromoter <- hh_census %>%
+  dplyr::filter(promoter_list == FALSE) %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  mutate(hh_weight = 1)
+
+# calculate CIs
+hh_size_nonpromoter_avg <- calculate_mean_ci(hh_size_nonpromoter, "hh_members", hh_weight)
+
+hh_size_promoter_avg
+hh_size_nonpromoter_avg
+
+# combine the two datasets and run t-tests
+hh_size_comparison <- bind_rows(
+  hh_size_promoter_avg %>% mutate(promoter_surveyed = TRUE),
+  hh_size_nonpromoter_avg %>% mutate(promoter_surveyed = FALSE)
+)
+
+# run t-tests for each country/sample_group/intervention combination
+hh_size_ttest <- hh_size_comparison %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  group_split() %>%
+  map_df(
+    ~ {
+      # extract the two means and SEs
+      promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE)
+      nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE)
+      
+      # calculate z-statistic (using normal approximation since we have SEs)
+      diff <- promoter_row$mean - nonpromoter_row$mean
+      se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2)
+      z_stat <- diff / se_diff
+      p_value <- 2 * (1 - pnorm(abs(z_stat)))
+      
+      tibble(
+        country = unique(.x$country),
+        sample_group = unique(.x$sample_group),
+        wp_intervention = unique(.x$wp_intervention),
+        mean_promoter = promoter_row$mean,
+        mean_nonpromoter = nonpromoter_row$mean,
+        difference = diff,
+        se_difference = se_diff,
+        z_statistic = z_stat,
+        p_value = p_value,
+        significant = p_value < 0.1
+      )
+    }
+  )
+
+hh_size_ttest
+```
+
+#####by monitoring survey vs household survey
+```{r}
+hh_size_monitoring <- hh_survey %>%
+  dplyr::filter(survey == "Monitoring Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  mutate(hh_weight = 1)
+
+# calculate CIs
+hh_size_monitoring_avg <- calculate_mean_ci(hh_size_monitoring, "hh_members", hh_weight)
+
+hh_size_household <- hh_survey %>%
+  dplyr::filter(survey == "Household Survey") %>%
+  dplyr::filter(wp_func == "TRUE") %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  mutate(hh_weight = 1)
+
+# calculate CIs
+hh_size_household_avg <- calculate_mean_ci(hh_size_household, "hh_members", hh_weight)
+
+hh_size_monitoring_avg
+hh_size_household_avg
+
+# combine the two datasets and run t-tests
+hh_size_comparison_survey <- bind_rows(
+  hh_size_monitoring_avg %>% mutate(survey = "Monitoring Survey"),
+  hh_size_household_avg %>% mutate(survey = "Household Survey")
+)
+
+# run t-tests for each country/sample_group/intervention combination
+hh_size_ttest_survey <- hh_size_comparison_survey %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  group_split() %>%
+  map_df(
+    ~ {
+      # extract the two means and SEs
+      monitoring_row <- .x %>% dplyr::filter(survey == "Monitoring Survey")
+      household_row <- .x %>% dplyr::filter(survey == "Household Survey")
+      
+      # calculate z-statistic (using normal approximation since we have SEs)
+      diff <- monitoring_row$mean - household_row$mean
+      se_diff <- sqrt(monitoring_row$se^2 + household_row$se^2)
+      z_stat <- diff / se_diff
+      p_value <- 2 * (1 - pnorm(abs(z_stat)))
+      
+      tibble(
+        country = unique(.x$country),
+        sample_group = unique(.x$sample_group),
+        wp_intervention = unique(.x$wp_intervention),
+        mean_monitoring = monitoring_row$mean,
+        mean_household = household_row$mean,
+        difference = diff,
+        se_difference = se_diff,
+        z_statistic = z_stat,
+        p_value = p_value,
+        significant = p_value < 0.05
+      )
+    }
+  )
+
+hh_size_ttest_survey
+```
+
+#### hh count
+```{r}
+# household count for promoter surveyed
+hh_count_promoter_from_census <- hh_census %>%
+  dplyr::filter(
+    promoter_surveyed == TRUE,
+    wp_func == TRUE,
+    wp_intervention != "Non-program"
+  ) %>%
+  # count unique households per water point
+  group_by(country, sample_group, wp_intervention, wp_id) %>%
+  summarise(
+    village_id = dplyr::first(village_id),
+    # hh_count = n_distinct(household_id),
+    hh_count = n(),
+    .groups = "drop"
+  )
+
+# now calculate mean CI on these counts
+hh_count_promoter_avg <- calculate_mean_ci(hh_count_promoter_from_census, "hh_count", 1)
+
+hh_count_promoter_avg
+
+# for non-promoter surveyed WPs, calculate HH count from household census
+hh_count_nonpromoter_from_census <- hh_census %>%
+  dplyr::filter(
+    promoter_surveyed == FALSE,
+    wp_func == TRUE,
+    wp_intervention != "Non-program"
+  ) %>%
+  # count unique households per water point
+  group_by(country, sample_group, wp_intervention, wp_id) %>%
+  summarise(
+    village_id = dplyr::first(village_id),
+    # hh_count = n_distinct(household_id),
+    hh_count = n(),
+    .groups = "drop"
+  )
+
+# now calculate mean CI on these counts
+hh_count_nonpromoter_avg <- calculate_mean_ci(hh_count_nonpromoter_from_census, "hh_count", 1)
+
+hh_count_nonpromoter_avg
+
+# combine with promoter data and run t-tests
+hh_count_comparison <- bind_rows(
+  hh_count_promoter_avg %>% mutate(promoter_surveyed = TRUE),
+  hh_count_nonpromoter_avg %>% mutate(promoter_surveyed = FALSE)
+)
+
+# run t-tests for each country/sample_group/intervention combination
+hh_count_ttest <- hh_count_comparison %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  group_split() %>%
+  map_df(
+    ~ {
+      # extract the two means and SEs
+      promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE)
+      nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE)
+      
+      # calculate z-statistic (using normal approximation since we have SEs)
+      diff <- promoter_row$mean - nonpromoter_row$mean
+      se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2)
+      z_stat <- diff / se_diff
+      p_value <- 2 * (1 - pnorm(abs(z_stat)))
+      
+      tibble(
+        country = unique(.x$country),
+        sample_group = unique(.x$sample_group),
+        wp_intervention = unique(.x$wp_intervention),
+        mean_promoter = promoter_row$mean,
+        mean_nonpromoter = nonpromoter_row$mean,
+        difference = diff,
+        se_difference = se_diff,
+        z_statistic = z_stat,
+        p_value = p_value,
+        significant = p_value < 0.1
+      )
+    }
+  )
+
+hh_count_ttest
+```
+
+### non primary users
+```{r}
+hh_number_wps <- hh_census %>%
+  group_by(country) %>%
+  summarize(
+    multiple_wps = mean(wp_secweek, na.rm = TRUE),
+    n = n()
+  )
+
+hh_number_wps
+
+hh_number_wps_pmlist <- hh_census %>%
+  dplyr::filter(promoter_list == TRUE) %>%
+  group_by(country) %>%
+  summarize(
+    multiple_wps = mean(wp_secweek, na.rm = TRUE),
+    n = n()
+  )
+
+hh_number_wps_pmlist
+```
+
+####what if we count all households that report using more than 1 water point as using DSW/ILC 
+```{r}
+users_data_alt <-
+  hh_census %>%
+  dplyr::filter(
+    wp_invillage,
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+    ) %>%
+  mutate(
+  wp_intervention = if_else(
+    wp_secweek == TRUE & wp_intervention == "Non-program",
+    "DSW",
+    wp_intervention
+  )
+  ) %>%
+  dplyr::filter(wp_intervention != "Non-program")
+
+users_data_alt <-
+  users_data_alt %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    hh_members = if_else(
+      !is.na(hh_members), 
+      hh_members, 
+      mean(hh_members, na.rm = TRUE)
+    )
+  )
+
+users_data_alt <-
+  users_data_alt %>%
+  full_join(
+    village_intervention %>% 
+      select(village_id, country, sample_group, wp_intervention)
+  ) %>%
+  mutate(
+    hh_members = replace_na(hh_members, 0)
+  )
+
+users_village_alt <-
+  users_data_alt %>%
+  group_by(village_id, country, sample_group, wp_intervention) %>%
+  summarise(
+    response_rate = unique(response_rate),
+    hhs = n(),
+    users = sum(hh_members)
+  ) %>%
+  mutate(
+    users_increased = users/response_rate
+  )
+
+users_village_alt <-
+  users_village_alt %>%
+  left_join(sample_sizes) %>%
+  group_by(country, sample_group) %>%
+  mutate(
+    weight = n_villages/n_distinct(village_id)
+  ) %>%
+  ungroup
+
+users_village_alt <-
+  users_village_alt %>%
+  dplyr::filter(hhs > 1)
+
+people_per_country_alt <-
+  map(
+    users_village_alt %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_ci(
+        var = "users_increased",
+        design = svydesign(
+          id = ~ village_id,
+          data = .x, 
+          weights = ~ weight
+        )
+      ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+        hhs = .x %>% pull(hhs) %>% sum,
+        pop = .x %>% pull(n_villages) %>% unique %>% sum
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(
+    country, wp_intervention, 
+    outcome, 
+    villages,
+    everything()
+  ) %>%
+  arrange(outcome)
+
+table1_alt <- people_per_country_alt %>%
+  select(country, wp_intervention, total, lb, ub, se) %>%
+  mutate(
+    indiv_access_popn = total
+  ) %>%
+  select(-total) 
+
+table1_alt
+
+table1country_alt <- table1_alt %>%
+  group_by(country) %>%
+  summarise(
+    indiv_access_popn = sum(indiv_access_popn),
+    # SE of sum: sqrt(sum of squared SEs) assuming independence
+    se = sqrt(sum(se^2, na.rm = TRUE))
+  ) %>%
+  # CI
+  mutate(
+    lb = indiv_access_popn - 1.96 * se,
+    ub = indiv_access_popn + 1.96 * se
+  )
+
+table1country_alt
+```
+
+### double counting
 
 ##---------------EXPLORATORY---------------
 ## Regressions of chlorination on being listed by promoter
