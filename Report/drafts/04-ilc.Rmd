@@ -1,5 +1,8 @@
 # ILC water points
 
+
+This analysis is restricted to ILC water points in Malawi.
+
 ```{r}
 pacman::p_load(
   tidyverse,
@@ -8,22 +11,42 @@ pacman::p_load(
 )
 ```
 
+
+## Sampled villages
+
+```{r}
+ilc_villages <-
+  villages %>%
+  dplyr::filter(
+    sample_group == "ILC",
+    country == "Malawi"
+  )
+```
+
+
 ## Villages
 
 ```{r}
 wp_census %>%
-  dplyr::filter(sample_group == "ILC", ilc) %>%
+  dplyr::filter(sample_group == "ILC") %>%
   group_by(country) %>%
   summarise(
-    villages = n_distinct(village_id)
+    villages = n_distinct(village_id),
+    ilc_villages = case_when(
+      ilc ~ village_id
+    ) %>% na.omit %>% n_distinct,
+    wps = n_distinct(wp_id),
+    ilc = sum(ilc),
+    dsw = sum(dsw)
   )
 ```
 
+
 ```{r}
-ilc_villages <-
+wps_ilc_villages <-
   wp_census %>%
   dplyr::filter(sample_group == "ILC", country == "Malawi") %>%
-  group_by(village_id,) %>%
+  group_by(village_id) %>%
   dplyr::filter(
     any(ilc_wp) | any(ilc_wcp)
   ) %>%
@@ -36,12 +59,12 @@ ilc_villages <-
 ```
 
 ```{r}
-ilc_villages %>% tabyl(ilc_wp, ilc_wcp)
+wps_ilc_villages %>% tabyl(ilc_wp, ilc_wcp)
 ```
 
 
 ```{r}
-ilc_villages %>% 
+wps_ilc_villages %>% 
   group_by(village_id, country) %>%
   summarise(
     villages = n(),
@@ -67,15 +90,6 @@ ilc_villages %>%
   pull(ea_ilc_wpt) %>%
   n_distinct
 ```
-
-```{r}
-ilc_villages %>% 
-  dplyr::filter(str_detect(intervention_type, "ILC"), !is.na(ea_ilc_wpt)) %>%
-  group_by(ea_ilc_wpt) %>%
-  summarise(n = n()) %>% arrange(n) %>% view
-  skim
-```
-
 ```{r}
 ilc_villages %>%
   dplyr::filter(str_detect(intervention_type, "ILC")) %>%
@@ -245,7 +259,111 @@ ilc_villages %>%
 
 ## Water testing
 
-### Closest water collection point
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc, closer) %>%
+  mutate(id = coalesce(ea_id, wp_id)) %>%
+  summarise()
+```
+
+
+
+### Water testing
+
+```{r}
+closer <-
+  ilc_villages %>%
+  dplyr::filter(ilc, closer) %>%
+  ungroup %>%
+  summarise(
+    across(
+      c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
+      list(
+        tests = ~ sum(!is.na(.)),
+        mean = ~ mean(., na.rm = TRUE)
+      )
+    )
+  ) %>%
+  mutate(
+    sample = "closest"
+  )
+
+all <-
+  ilc_villages %>%
+  dplyr::filter(ilc) %>%
+  ungroup %>%
+  summarise(
+    across(
+      c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
+      list(
+        tests = ~ sum(!is.na(.)),
+        mean = ~ mean(., na.rm = TRUE)
+      )
+    )
+  ) %>%
+  mutate(
+    sample = "all"
+  )
+```
+
+```{r}
+closer %>%
+  bind_rows(all) %>%
+  pivot_longer(
+    cols = -c(sample),
+    names_pattern = "(.*)_(..)_(.*)",
+    names_to = c("test", "threshold", ".value")
+  ) %>%
+  mutate(
+    mean = round(mean * 100, 1),
+    res = str_sub(test, -3, -1) %>% str_to_upper,
+    test = str_sub(test, 1, -4)
+  ) %>%
+  pivot_wider(
+    id_cols = c(test, threshold, res),
+    values_from = c(tests, mean),
+    names_from = c(sample)
+  ) %>%
+  arrange(test, desc(threshold), desc(res)) %>%
+  select(
+    res,
+    contains("closest"),
+    contains("all")
+  ) %>%
+  kable(
+    col.names = c(
+      " ",
+      "N", "Detected (%)",
+      "N", "Detected (%)"
+    ),
+    format = "html",
+    align = "c"
+  ) %>%
+  add_header_above(
+      c(" " = 1, "Nearest water collection points" = 2, "All water collection points" = 2)
+  ) %>%
+  group_rows("Color disc reading > 0.2ppm", 1, 2) %>%
+  group_rows("Colorimeter reading > 0.2ppm", 3, 4) %>%
+  group_rows("Colorimeter reading > 0.1ppm", 5, 6) %>%
+  kable_paper("striped", full_width = F)
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc, wp_func, ilc_) %>%
+  mutate(closer = replace_na(closer, FALSE)) %>%
+  group_by(closer) %>%
+  summarise(
+    across(
+      c(meterfcr_01, metertcr_01, meterfcr_02, metertcr_02, discfcr_02, disctcr_02),
+      list(
+        tests = ~ sum(!is.na(.)),
+        mean = ~ mean(., na.rm = TRUE)
+      )
+    )
+  )
+```
+
 
 ```{r}
 ilc_villages %>%
