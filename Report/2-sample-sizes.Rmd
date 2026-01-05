@@ -1,0 +1,489 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+pacman::p_load(
+  sf,
+  tidyverse,
+  viridis,
+  fixest,
+  janitor,
+  broom,
+  car,
+  modelsummary,
+  survey
+)
+```
+
+## Villages
+
+### All villages in admin data
+
+```{r}
+villages <-
+  read_rds(
+      file.path(
+      path_box,
+      "Data",
+      "Villages",
+      "DataSets",
+      "Final",
+      "villages.rds"
+    )
+  ) 
+```
+
+### Sampled villages
+
+- DSW villages were replaced at random (e.g. because of disputed village boundaries or because the village could not be identified under the names in the admin data). Therefore, we remove replaced villages from the analysis
+- ILC villages were not replaced at random: these were replaced when no ILC was present in the village or when all of the water collection points were not functioning. Therefore, we consider replaced villages to have zero users.
+
+```{r}
+sampled_villages <-
+  villages %>%
+  dplyr::filter(
+    (sample_group == "ILC" & visited == "In sample") |
+    (sample_group != "ILC" & visited == "In sample" & !vil_replaced)
+  )
+
+village_intervention <-
+  sampled_villages %>%
+  crossing(wp_intervention = c("DSW", "ILC")) %>%
+  dplyr::filter(!(wp_intervention == "ILC" & sample_group != "ILC")) 
+```
+
+### Calculate village sample sizes for weighing
+
+```{r}
+sample_sizes <-
+  villages %>%
+  mutate(sampled_village = village_id %in% sampled_villages$village_id) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    n_villages = n_distinct(village_id),
+    visited_villages = sum(visited == "In sample" & !vil_replaced),
+    sampled_villages = sum(sampled_village)
+  )
+```
+
+## Water points
+
+```{r}
+wp_sample_sizes <-
+  tribble(
+    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_points,
+    "Uganda", "Expansion", "DSW", 12262,
+    "Uganda", "Footprint", "DSW", 5456,
+    "Uganda", "ILC", "DSW", 398,
+    "Uganda", "ILC", "ILC", 1229,
+    "Malawi", "Expansion", "DSW", 11292,
+    "Malawi", "Footprint", "DSW", 3844,
+    "Malawi", "ILC", "DSW", 1062,
+    "Malawi", "ILC", "ILC", 2024
+  )
+```
+
+## Household census
+
+```{r}
+hh_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdCensus",
+      "DataSets",
+      "Final",
+      "hh-census.rds"
+    )
+  ) %>%
+  st_drop_geometry() %>%
+  # To account for non-responses, we calculate the village-level non-response rate
+  group_by(village_id) %>%
+  mutate(
+    response_rate = mean(response),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  ) %>% 
+  ungroup
+```
+
+## Household survey
+
+```{r}
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    survey == "Household Survey"
+  ) %>%
+  mutate(
+    intervention_selfreport = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC"
+    ),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  )
+```
+
+## Monitoring survey
+
+```{r}
+mon_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  dplyr::filter(
+    survey == "Monitoring Survey"
+  ) %>%
+  mutate(
+    intervention_selfreport = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC"
+    ),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  )
+```
+
+## Water point census
+
+```{r}
+wp_census <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "WaterPointCensus",
+      "DataSets",
+      "Final",
+      "wp-census.rds"
+    )
+  ) %>%
+  st_drop_geometry  %>%
+  mutate(
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    ),
+    closer = (ilc_wcp & str_detect(ea_id, "001^")) | ilc_wp
+  )
+```
+
+# Sample sizes
+
+```{r}
+pacman::p_load(
+  dplyr,
+  readr,
+  tidyr,
+  glue,
+  sf,
+  tidyverse,
+  viridis,
+  fixest,
+  janitor,
+  broom,
+  car,
+  modelsummary,
+  survey,
+  here
+)
+```
+
+## Uganda
+
+- `r villages %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(vil_replaced)) %>% nrow` villages were visited.
+  - `r villages %>% dplyr::filter(country == "Uganda", sample_group != "ILC", vil_replaced) %>% nrow` villages were replaced, one because no dispensers were found, and the other three because the field team observed upon arrival that the chairpeople or the promoters had been informed about the surveys in advance.
+  - `r villages %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !vil_replaced) %>% nrow` are included in our analysis
+    - `r villages %>% dplyr::filter(country == "Uganda", sample_group == "Footprint", !vil_replaced) %>% nrow` of these were from the Footprint sample group, and `r villages %>% dplyr::filter(country == "Uganda", sample_group == "Expansion", !vil_replaced) %>% nrow` from the Expansion sample group.
+- `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow` water points were identified in these villages.
+  - `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", analysis) %>% nrow` were used for drinking by more than one household, and therefore eligible to be included in the water point census.
+  - `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", ilc) %>% nrow` water points from `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", ilc) %>% pull(village_id) %>% n_distinct` distinct villages were served by ILC. These water points are excluded from our analysis. 
+- The field team identified `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw) %>% nrow` water points with DSW.\footnote\textcolor{red}The correspondence between water point census IDs and Evidence Action IDs can be found in \href{this document}{https://docs.google.com/spreadsheets/d/1Nb_ZgIIEIxLdFtRAb-BdVcoQGqHqXLKBGduU_um9BeA/edit?pli=1&gid=1590291999#gid=1590291999}.} 
+  - `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw, !is.na(ea_id)) %>% nrow` were matched to the Evidence Action data using dispensers’ IDs and GPS location
+  - `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw, is.na(ea_id)) %>% nrow` could not be matched to water points in the Evidence Action data
+    - `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw, is.na(ea_id), !is.na(disp_dsw_id) | !is.na(disp_barcode)) %>% nrow` had pictures available from the water point census which confirmed their presence. The field team also took pictures of the barcodes so the dispensers could be identified.
+    - `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw, is.na(ea_id), !wp_func) %>% nrow` were installed in non-functional water points and data on dispenser identification was not collected.
+  - \textcolor{red}{11 water points with DSW mapped to sampled villages in the Evidence Action data could not be matched to water points with DSW in our data}.
+    - 4 were located, but no longer had dispensers when the water point census took place.
+    - 7 are outside of the village boundaries according to the GPS data.
+  - Treated water from all `r wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw, disp_filled) %>% nrow` water points with DSW where the dispenser was dispensing chlorine were tested with both a colorimeter and a color wheel.
+- A total of `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` households were listed in these villages.
+  - `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", inclusion == "Up to 200m outside of village boundaries") %>% nrow %>% format(big.mark = ",")` of them lived up to 200m outside of village boundaries.
+  - `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", response) %>% nrow %>% format(big.mark = ",")` of the listed households were surveyed in the household census.
+    - `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", response, wp_dsw) %>% nrow %>% format(big.mark = ",")` (`r (hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", response) %>% pull(wp_dsw) %>% mean(na.rm = TRUE) %>% round(3)) * 100`%) of these used water points with DSW as their primary source of drinking water.
+- `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` households were surveyed as part of the household survey.
+  - `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", wp_dsw) %>% nrow %>% format(big.mark = ",")` were using water points that were confirmed to have DSW (the remaining could not be verified). Our main estimates of chlorine adoption include only these households, \textcolor{red}{although we also report estimates will all households surveyed in the sensitivity analysis}.
+  - `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` of the households surveyed (and `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", wp_dsw) %>% nrow %>% format(big.mark = ",")` of those using water points that were confirmed to have DSW) had drinking water available at the time of the survey.
+  - A total of `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(disctcr_02)) %>% nrow %>% format(big.mark = ",")` color wheel and `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(metertcr_02)) %>% nrow %>% format(big.mark = ",")` colorimeter tests were conducted (`r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(disctcr_02), wp_dsw) %>% nrow %>% format(big.mark = ",")` and `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(metertcr_02), wp_dsw) %>% nrow %>% format(big.mark = ",")` of which are included in our main estimate, respectively)
+- \textcolor{red}{117 promoter surveys were conducted}, representing `r (117/(wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw) %>% nrow) * 100) %>% round(1)`% of the water points with DSW identified
+  - Evidence Action provided information for \textcolor{red}{119} promoters responsible for \textcolor{red}{118} unique water points. All of these water points are included in the water point census, and promoter surveys were conducted in  \textcolor{red}{110} (\textcolor{red}{`r (10000/118) %>% round(1)`%}) of them.
+  - The field team also identified another \textcolor{red}{7} promoters for water points that were not included the Evidence Action contact list.
+  - \textcolor{red}{1} of the promoters was responsible for a water points that is no longer being served by DSW. \textcolor{red}{Observations linked to this water point is not included in our analysis.}
+- `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` households listed by promoters as using water points with ILC completed the household survey.
+  - `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", wp_dsw) %>% nrow %>% format(big.mark = ",")` of them report using a water point with DSW as their primary source of drinking water.
+  - `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", water_sample) %>% nrow %>% format(big.mark = ",")` of them had water available in the household at the time of the survey
+  - `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(disctcr_02)) %>% nrow %>% format(big.mark = ",")` had the water sample tested with a color wheel, and `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(metertcr_02)) %>% nrow %>% format(big.mark = ",")` with a colorimeter
+  
+## Malawi
+
+```{r}
+mw_villages <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi") %>%
+  pull(village_id) %>%
+  n_distinct()
+
+mw_foot_villages <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "Footprint") %>%
+  pull(village_id) %>%
+  n_distinct()
+
+mw_exp_villages <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "Expansion") %>%
+  pull(village_id) %>%
+  n_distinct()
+
+mw_ilc_villages <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC") %>%
+  pull(village_id) %>%
+  n_distinct()
+
+mw_ilc_villages_ilc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC", ilc) %>%
+  pull(village_id) %>%
+  n_distinct()
+
+mw_ilc_villages_ilc_func <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC", ilc, wp_func) %>%
+  pull(village_id) %>%
+  n_distinct()
+
+mw_ilc_villages_wcpnotfunc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC", ilc_wcp) %>%
+  group_by(village_id) %>%
+  dplyr::filter(!any(wp_func)) %>%
+  ungroup %>%
+  summarise(
+    villages = n_distinct(village_id),
+    wps = n()
+  )
+
+mw_ilc_villages_wcpnotfunc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC", ilc_wp) %>%
+  group_by(village_id) %>%
+  dplyr::filter(!any(wp_func)) %>%
+  ungroup %>%
+  summarise(
+    villages = n_distinct(village_id),
+    wps = n()
+  )
+
+mw_ilc_villages_dsw <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC", dsw) %>%
+  pull(village_id) %>%
+  n_distinct()
+```
+
+```{r}
+mw_dsw_wps <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", dsw) %>%
+  nrow
+
+mw_dsw_wps_ilc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", sample_group == "ILC", dsw) %>%
+  nrow
+
+mw_dsw_wps_ea <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", dsw, !is.na(ea_id)) %>%
+  nrow
+
+mw_dsw_wps_barcode <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", dsw, is.na(ea_id), !is.na(disp_barcode)) %>%
+  nrow
+
+mw_dsw_wps_chlorine <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", dsw, disp_filled) %>%
+  nrow
+
+mw_dsw_wps_disc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", dsw, disp_filled, !is.na(disctcr_02)) %>%
+  nrow
+
+mw_dsw_wps_meter <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", dsw, disp_filled, !is.na(metertcr_02)) %>%
+  nrow
+```
+
+```{r}
+mw_ilc_wps <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", ilc_wp) %>%
+  nrow
+
+mw_ilc_wcps <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", ilc_wcp) %>%
+  nrow
+
+mw_ilc_clusters <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi") %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+
+mw_ilc_clusters <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", !is.na(ea_ilc_wpt), ilc_wcp) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    wcp = n(), 
+    village = n_distinct(village_id)
+  ) %>%
+  summarise(
+    across(
+      everything(),
+      ~ max(.)
+    )
+  )
+
+mw_ilc_wcp_disc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", ilc_wcp, !is.na(discid)) %>%
+  nrow
+
+mw_ilc_wcp_meter <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", ilc_wcp, !is.na(meterid)) %>%
+  nrow
+
+mw_ilc_cluster_disc <-
+  wp_census %>% 
+  dplyr::filter(country == "Malawi", ilc, !is.na(discid)) %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+```{r}
+mw_hhc <-
+  hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  nrow
+
+hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(inclusion)
+
+hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(response)
+
+hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(sample_group)
+
+hh_census %>%
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(wp_intervention)
+
+hh_census %>%
+  dplyr::filter(country == "Malawi", wp_dsw) %>%
+  tabyl(sample_group)
+```
+```{r}
+hh_survey %>%
+  dplyr::filter(country == "Malawi") %>%
+  tabyl(sample_group) %>%
+  adorn_totals()
+
+hh_survey %>%
+  dplyr::filter(country == "Malawi") %>%
+  pull(village_id) %>%
+  n_distinct()
+```
+
+```{r}
+villages %>%
+  tabyl(country, dsw)
+```
+
+
+```{r}
+villages %>%
+  dplyr::filter(country == "Uganda") %>%
+  pull(district) %>%
+  n_distinct()
+```
+
+
+
+
+- Our sample includes `r wp_census %>% dplyr::filter(country == "Malawi", dsw) %>% pull(village_id) %>% n_distinct` villages where water points with DSW are present.
+  - `r wp_census %>% dplyr::filter(country == "Malawi", sample_group == "Footprint", dsw) %>% pull(village_id) %>% n_distinct` of these were from the Footprint sample group, `r wp_census %>% dplyr::filter(country == "Malawi", sample_group == "Expansion", dsw) %>% pull(village_id) %>% n_distinct` from the Expansion group, and `r wp_census %>% dplyr::filter(country == "Malawi", sample_group == "ILC", dsw) %>% pull(village_id) %>% n_distinct` from the ILC group.
+- The field team identified `r wp_census %>% dplyr::filter(country == "Malawi", dsw) %>% nrow` water points with DSW.
+  - `r wp_census %>% dplyr::filter(country == "Malawi", sample_group == "Footprint", dsw) %>% nrow` of these were located in villages from the Footprint sample group, `r wp_census %>% dplyr::filter(country == "Malawi", sample_group == "Expansion", dsw) %>% nrow` from Expansion, and `r wp_census %>% dplyr::filter(country == "Malawi", sample_group == "ILC", dsw) %>% nrow` from ILC.
+  - `r wp_census %>% dplyr::filter(country == "Malawi", dsw, !is.na(ea_id)) %>% nrow` were matched to the Evidence Action data using dispensers’ IDs and GPS location
+  - `r wp_census %>% dplyr::filter(country == "Malawi", dsw, is.na(ea_id)) %>% nrow` could not be matched to water points in the Evidence Action data but had visible barcodes.
+  - \textcolor{red}{47 water points with DSW mapped to sampled villages in the Evidence Action could not be matched to water points with DSW in our data}
+    - 31 are located outside of the sampled villages
+    - 13 water points were identified, but had no dispensers at the time of the visit.
+    - 2 are duplicate entries for the same water point
+    - 1 was found to have ILC and not DSW
+- `r wp_census %>% dplyr::filter(country == "Malawi", dsw, !is.na(disctcr_02)) %>% nrow` of the `r wp_census %>% dplyr::filter(country == "Malawi", dsw, disp_filled) %>% nrow` water points with DSW with a dispenser that was functional and filled were tested with a color wheel, and `r wp_census %>% dplyr::filter(country == "Malawi", dsw, !is.na(metertcr_02)) %>% nrow` a colorimeter.
+- A total of `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` households were listed in these villages.
+  - `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", inclusion == "Up to 200m outside of village boundaries") %>% nrow %>% format(big.mark = ",")` of them lived up to 200m outside of village boundaries.
+  - `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", response) %>% nrow %>% format(big.mark = ",")` of the listed households were surveyed in the household census.
+    - `r hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", response, wp_dsw) %>% nrow %>% format(big.mark = ",")` (`r (hh_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", response) %>% pull(wp_dsw) %>% mean(na.rm = TRUE) %>% round(3)) * 100`%) of these used water points with DSW as their primary source of drinking water.
+- `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` households were surveyed as part of the household survey.
+  - `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", wp_dsw) %>% nrow %>% format(big.mark = ",")` were using water points that were confirmed to have DSW (the remaining could not be verified). Our main estimates of chlorine adoption include only these households, \textcolor{red}{although we also report estimates will all households surveyed in the sensitivity analysis}.
+  - `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` of the households surveyed (and `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", wp_dsw) %>% nrow %>% format(big.mark = ",")` of those using water points that were confirmed to have DSW) had drinking water available at the time of the survey.
+  - A total of `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(disctcr_02)) %>% nrow %>% format(big.mark = ",")` color wheel and `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(metertcr_02)) %>% nrow %>% format(big.mark = ",")` colorimeter tests were conducted (`r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(disctcr_02), wp_dsw) %>% nrow %>% format(big.mark = ",")` and `r hh_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(metertcr_02), wp_dsw) %>% nrow %>% format(big.mark = ",")` of which are included in our main estimate, respectively)
+- \textcolor{red}{117 promoter surveys were conducted}, representing `r (117/(wp_census %>% dplyr::filter(country == "Uganda", sample_group != "ILC", dsw) %>% nrow) * 100) %>% round(1)`% of the water points with DSW identified
+  - Evidence Action provided information for \textcolor{red}{119} promoters responsible for \textcolor{red}{118} unique water points. All of these water points are included in the water point census, and promoter surveys were conducted in  \textcolor{red}{110} (\textcolor{red}{`r (10000/118) %>% round(1)`%}) of them.
+  - The field team also identified another \textcolor{red}{7} promoters for water points that were not included the Evidence Action contact list.
+  - \textcolor{red}{1} of the promoters was responsible for a water points that is no longer being served by DSW. \textcolor{red}{Observations linked to this water point is not included in our analysis.}
+- `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC") %>% nrow %>% format(big.mark = ",")` households listed by promoters as using water points with ILC completed the household survey.
+  - `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", wp_dsw) %>% nrow %>% format(big.mark = ",")` of them report using a water point with DSW as their primary source of drinking water.
+  - `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", water_sample) %>% nrow %>% format(big.mark = ",")` of them had water available in the household at the time of the survey
+  - `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(disctcr_02)) %>% nrow %>% format(big.mark = ",")` had the water sample tested with a color wheel, and `r mon_survey %>% dplyr::filter(country == "Uganda", sample_group != "ILC", !is.na(metertcr_02)) %>% nrow %>% format(big.mark = ",")` with a colorimeter
