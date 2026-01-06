@@ -452,7 +452,7 @@ table <-
     align = "c", 
     booktabs = T,
     col.names = linebreak(
-      c("Intervention", "\\#Vil", "\\#HHs", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      c("Intervention", "\\#WPs", "\\#HHs", "\\#WPs", "People using\nDSW/ILC\n(95\\% CI)", "\\#WPs", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     ),
     caption = "Primary outcomes estimated using the water point as the unit of reference",

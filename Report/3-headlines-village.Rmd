@@ -1281,7 +1281,7 @@ table <-
     caption = "Primary outcomes estimated using the village as the unit of reference",
     label = "headlines-vil"
   ) %>%
-  kable_styling(latex_options = c("scale_up")) %>%
+  kable_styling(latex_options = c("scale_down")) %>%
   pack_rows("Malawi", 1, 4) %>%
   pack_rows("Uganda", 5, 6) %>%
   add_header_above(
