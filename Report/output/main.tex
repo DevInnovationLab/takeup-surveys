@@ -6,7 +6,8 @@
 \usepackage[style=authoryear]{biblatex}
 \usepackage{array}
 \usepackage{tabularx}
-\usepackage{rotating}   
+\usepackage{rotating}
+\usepackage{enumitem}
 \usepackage[multiple]{footmisc} 
 \usepackage{amsmath}
 \usepackage{mathrsfs}
@@ -118,38 +119,50 @@
 \input{design}
 \input{data}
 \input{methods}
+\input{reach}
 
 % ------------------------------------------------------------------------------
 \newpage
-%
-%\input{tables/headlines-vil}
-%\input{tables/headlines-vil-by-group}
-%
-%\input{tables/headlines-wp}
-%\input{tables/headlines-wp-by-group}
+
+\input{tables/headlines-vil}
+\input{tables/headlines-wp}
 
 % ------------------------------------------------------------------------------
-%\newpage
-%
-%\begin{figure}[H]
-%\centering
-%\caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
-%\includegraphics[width=\linewidth]{graphs/users-vil.png}
-%\label{fig:users-vil}
-%\end{figure}
-%
-%\begin{figure}[H]
-%\centering
-%\caption{Sensitivity checks on Total Chlorine Residual detection rates}
-%\includegraphics[width=\linewidth]{graphs/chlorine-vil.png}
-%\label{fig:chlorine-vil}
-%\end{figure}
-%
+\newpage
+
+\begin{figure}[H]
+\centering
+\caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
+\includegraphics[width=\linewidth]{graphs/users-vil.png}
+\label{fig:users-vil}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\caption{Sensitivity checks on Total Chlorine Residual detection rates}
+\includegraphics[width=\linewidth]{graphs/chlorine-vil.png}
+\label{fig:chlorine-vil}
+\end{figure}
+
 %\input{tables/ilc-wpt-nonfunc}
 %\input{tables/ilc-wpt-excluded}
 %\newpage
 %\input{tables/ilc-wpt-func}
-%
+
+\begin{figure}[H]
+\centering
+\caption{Factors contributing to differences in the estimates of the number of people reached by Evidence Action in Malawi}
+\includegraphics[width=\linewidth]{Report/output/graphs/waterfall_malawi.pdf}
+\label{fig:waterfall-mw}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\caption{Factors contributing to differences in the estimates of the number of people reached by Evidence Action in Uganda}
+\includegraphics[width=\linewidth]{Report/output/graphs/waterfall_uganda.pdf}
+\label{fig:waterfall-ug}
+\end{figure}
+
 % ------------------------------------------------------------------------------
 \newpage
 \printbibliography
@@ -158,7 +171,8 @@
 \newpage
 \appendix
 \renewcommand{\thetable}{\Alph{section}\arabic{table}}
-\input{Report/output/appendix-tables}
+\input{appendix-tables}
+\input{appendix-reach}
 
 \end{document}
 
