@@ -69,7 +69,7 @@ test_vars <-
 
 # Functions --------------------------------------------------------------------
 
-mean_ci <- function(var, design) {
+mean_ci <- function(var, design, dummy = TRUE) {
   
   formula <- paste("~", var) %>% as.formula()
   
@@ -88,8 +88,13 @@ mean_ci <- function(var, design) {
   result <-
     bind_cols(mean, mean_ci) %>%
     mutate(outcome = var) %>%
-    select(outcome, everything()) %>%
-    dplyr::filter(str_detect(rownames(.), "TRUE"))
+    select(outcome, everything())
+  
+  if (dummy) {
+    result <- 
+      result %>% 
+      dplyr::filter(str_detect(rownames(.), "TRUE"))
+  }
   
   rownames(result) <- NULL
   
@@ -97,10 +102,10 @@ mean_ci <- function(var, design) {
 }
 
 mean_cis <-
-  function(design, outcomes) {
+  function(design, outcomes, dummy = TRUE) {
     map(
       outcomes,
-      ~ mean_ci(design, var = .x)
+      ~ mean_ci(design, var = .x, dummy)
     ) %>%
       bind_rows
   }

@@ -3,6 +3,7 @@
 ```{r}
 criteria <-
   c(
+    "watertreat_dispcl",
     "disctcr_02", "discfcr_02",
     "metertcr_02", "meterfcr_02",
     "metertcr_01", "meterfcr_01"
@@ -102,6 +103,7 @@ table <-
         "N", "\\%\n(95\\% CI)",
         "N", "\\%\n(95\\% CI)",
         "N", "\\%\n(95\\% CI)",
+        "N", "\\%\n(95\\% CI)",
         "N", "\\%\n(95\\% CI)"
       ),
       align = "c"
@@ -115,12 +117,13 @@ table <-
   add_header_above(
     c(
       " " = 2, 
-      "TCR > 0.2 ppm" = 2,
-      "FCR > 0.2 ppm" = 2,
-      "TCR > 0.2 ppm" = 2,
-      "FCR > 0.2 ppm" = 2,
-      "TCR > 0.1 ppm" = 2,
-      "FCR > 0.1 ppm" = 2
+      "Self-report" = 2,
+      "TCR ≥ 0.2 ppm" = 2,
+      "FCR ≥ 0.2 ppm" = 2,
+      "TCR ≥ 0.2 ppm" = 2,
+      "FCR ≥ 0.2 ppm" = 2,
+      "TCR ≥ 0.1 ppm" = 2,
+      "FCR ≥ 0.1 ppm" = 2
     )
   )
 
@@ -210,6 +213,7 @@ table <-
         "N", "\\%\n(95\\% CI)",
         "N", "\\%\n(95\\% CI)",
         "N", "\\%\n(95\\% CI)",
+        "N", "\\%\n(95\\% CI)",
         "N", "\\%\n(95\\% CI)"
       ),
       align = "c"
@@ -223,12 +227,13 @@ table <-
   add_header_above(
     c(
       " ", 
-      "TCR > 0.2 ppm" = 2,
-      "FCR > 0.2 ppm" = 2,
-      "TCR > 0.2 ppm" = 2,
-      "FCR > 0.2 ppm" = 2,
-      "TCR > 0.1 ppm" = 2,
-      "FCR > 0.1 ppm" = 2
+      "Self-report" = 2,
+      "TCR ≥ 0.2 ppm" = 2,
+      "FCR ≥ 0.2 ppm" = 2,
+      "TCR ≥ 0.2 ppm" = 2,
+      "FCR ≥ 0.2 ppm" = 2,
+      "TCR ≥ 0.1 ppm" = 2,
+      "FCR ≥ 0.1 ppm" = 2
     )
   )
 

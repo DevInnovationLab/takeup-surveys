@@ -1,5 +1,81 @@
 # Reach estimates comparisons
 
+## All estimates
+
+### Village-level
+
+```{r}
+main <-
+  people_per_country %>%
+  group_by(country) %>%
+  summarise(
+    total = sum(total),
+    se = sqrt(sum(se ^ 2))
+  ) %>%
+  mutate(
+    ub = total + 1.96 * se,
+    lb = total - 1.96 * se,
+    step = 0,
+    method = "Census\nvillage-level"
+  )
+```
+
+### WP-level
+
+```{r}
+wp <-
+  users_wp_country %>%
+  group_by(country) %>%
+  summarise(
+    total = sum(total),
+    se = sqrt(sum(se ^ 2))
+  ) %>%
+  mutate(
+    ub = total + 1.96 * se,
+    lb = total - 1.96 * se,
+    step = 0,
+    method = "Census\nwater point-level"
+  )
+```
+
+### Adoption Monitoring
+
+```{r}
+monitoring <-
+  total_country %>%
+  group_by(country) %>%
+  summarise(
+    total = sum(total_people, na.rm = TRUE),
+    se = sqrt(sum(total_people_se ^ 2, na.rm = TRUE))
+  ) %>%
+  mutate(
+    ub = total + 1.96 * se,
+    lb = total - 1.96 * se,
+    step = 5,
+    method = "Monitoring"
+  )
+```
+
+### Combine
+
+```{r}
+main %>%
+  bind_rows(wp) %>%
+  bind_rows(monitoring) %>%
+  ggplot(
+    aes(
+      x = method,
+      y = total,
+      ymin = lb,
+      ymax = ub
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width  = .5) +
+  facet_wrap(~ country)
+```
+
+
 ## Households located outside of the village boundaries
 
 ### Census, WP-level
@@ -262,40 +338,6 @@ wf_step4 <-
   mutate(step = 4)
 ```
 
-### Starting point
-
-```{r}
-start <-
-  people_per_country %>%
-  group_by(country) %>%
-  summarise(
-    total = sum(total),
-    se = sqrt(sum(se ^ 2))
-  ) %>%
-  mutate(
-    ub = total + 1.96 * se,
-    lb = total - 1.96 * se,
-    step = 0
-  )
-```
-
-### End point
-
-```{r}
-end <-
-  total_country %>%
-  group_by(country) %>%
-  summarise(
-    total = sum(total_people, na.rm = TRUE),
-    se = sqrt(sum(total_people_se ^ 2, na.rm = TRUE))
-  ) %>%
-  mutate(
-    ub = total + 1.96 * se,
-    lb = total - 1.96 * se,
-    step = 5
-  )
-```
-
 ### Combine
 
 ```{r}
@@ -430,21 +472,19 @@ wf_malawi <-
 
 ```{r}
 ggsave(
-  "output/graphs/waterfall_uganda.pdf", 
+  "output/graphs/waterfall_uganda.png", 
    plot = wf_uganda, 
    width = 8, 
    height = 6, 
-   units = "in",
-   device = "pdf"
+   units = "in"
 )
 
 ggsave(
-  "output/graphs/waterfall_malawi.pdf", 
+  "output/graphs/waterfall_malawi.png", 
    plot = wf_malawi, 
    width = 8, 
    height = 6, 
-   units = "in",
-   device = "pdf"
+   units = "in"
 )
 ```
 
