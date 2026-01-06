@@ -1,0 +1,23 @@
+% Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+% \usepackage[table,xcdraw]{xcolor}
+% Beamer presentation requires \usepackage{colortbl} instead of \usepackage[table,xcdraw]{xcolor}
+\begin{table}[H]
+\caption{ILC water points excluded from the data}
+\label{ilc-wpt-excluded}
+\begin{tabular}{cccccp{6.5cm}}
+\toprule 
+& \multicolumn{3}{c}{\begin{tabular}[c]{@{}c@{}}Number of\\water collection points\end{tabular}} 
+& ILC device & \\
+\cmidrule(l{3pt}r{3pt}){2-4}\
+ID & EvAc & Census & Functional & Present & Notes \\
+(1) & (2) & (3) & (4) & (5) & (6)  \\
+\midrule
+83052025 & 4 & 1 & 1 & Yes &  The water point is only used by the hospital staff, and wasn't eligible for inclusion in the survey.  \\
+81062950 & 2 & 2 & 1 & Yes &  Three taps by the tank were not functional. A fourth collection water point was functional, which is also connected to the same tank according to Evidence Action data. However, the field team indicated that only one household uses this fourth tap, and there for it was not eligible for inclusion in our census or testing. \\
+83052045 & 1 & 1 & 1 & Yes &  The water point is only used by the school staff, and wasn't eligible for inclusion in the survey. \\
+81062953 & 1 & 1 & 1 & No  &  The field team was denied entry into the compound where the water point is located. They also report that the ILC device was never installed.  \\
+86081007 & 1 & 1 & 0 & Yes & The water point is located within a school, and closed outside of school days, which was when the survey happened. \\
+\bottomrule
+\end{tabular}
+\end{table}
