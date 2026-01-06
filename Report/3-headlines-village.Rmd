@@ -410,80 +410,6 @@ users_vil_boundary <-
   arrange(outcome)
 ```
 
-#### Exclude villages where it was raining
-
-```{r eval = FALSE}
-users_norain <-
-  hh_census %>%
-  dplyr::filter(
-    !is.na(wp_intervention),
-    wp_invillage,
-    is.na(vil_rain),
-    !(sample_group != "ILC" & wp_intervention == "ILC")
-  ) %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    hh_members = if_else(
-      !is.na(hh_members), 
-      hh_members, 
-      mean(hh_members, na.rm = TRUE)
-    )
-  ) %>%
-  full_join(
-    village_intervention %>% 
-      select(village_id, country, sample_group, wp_intervention)
-  ) %>%
-  mutate(
-    hh_members = replace_na(hh_members, 0)
-  ) %>%
-  group_by(village_id, country, sample_group, wp_intervention) %>%
-  summarise(
-    response_rate = unique(response_rate),
-    hhs = n(),
-    users = sum(hh_members)
-  ) %>%
-  mutate(
-    users_increased = users/response_rate
-  ) %>%
-  left_join(sample_sizes) %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    weight = n_villages/n_distinct(village_id)
-  ) %>%
-  dplyr::filter(hhs > 1) %>%
-  ungroup
-```
-
-```{r eval = FALSE}
-users_vil_norain <-
-  map(
-    users_norain %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
-    ~ total_ci(
-        var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight
-        )
-      ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(
-    country, wp_intervention, 
-    outcome, 
-    villages,
-    everything()
-  ) %>%
-  arrange(outcome)
-```
-
 #### Don't correct for non-functional ILC
 
 ```{r}
@@ -631,6 +557,7 @@ plot_data <-
   list(
     "Main estimate" = people_per_country,
     "Including households using water points\noutside of sampled villages" = users_vil_outside,
+    "Excluding households living outside of\nthe village boundaries" = users_vil_boundary,
     "Without correction for non-responses" = users_vil_responseonly,
     "Without corrections to DSW/ILC status\nfrom admin data" = users_vil_fo,
     "Without correction for functionality rates" = users_vil_func
@@ -1002,6 +929,8 @@ cl_village_userweights <-
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
+
+#### Exclude villages where it was raining
 
 #### FO reports of intervention
 

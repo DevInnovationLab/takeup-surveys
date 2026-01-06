@@ -106,7 +106,10 @@ hh_census <-
       wp_ilc ~ "ILC"
     )
   ) %>% 
-  ungroup
+  ungroup %>%
+  dplyr::filter(
+    !(sample_group == "ILC" & country == "Uganda")
+  )
 ```
 
 ## Household survey
@@ -135,6 +138,9 @@ hh_survey <-
       wp_dsw ~ "DSW",
       wp_ilc ~ "ILC"
     )
+  ) %>%
+  dplyr::filter(
+    !(sample_group == "ILC" & country == "Uganda")
   )
 ```
 
@@ -164,6 +170,9 @@ mon_survey <-
       wp_dsw ~ "DSW",
       wp_ilc ~ "ILC"
     )
+  ) %>%
+  dplyr::filter(
+    !(sample_group == "ILC" & country == "Uganda")
   )
 ```
 
@@ -188,5 +197,8 @@ wp_census <-
       wp_ilc ~ "ILC"
     ),
     closer = (ilc_wcp & str_detect(ea_id, "001^")) | ilc_wp
+  ) %>%
+  dplyr::filter(
+    !(sample_group == "ILC" & country == "Uganda")
   )
 ```
