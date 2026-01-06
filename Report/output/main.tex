@@ -1,4 +1,9 @@
-\documentclass[10pt]{article}
+\documentclass[12pt, a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[skip=2pt,font=footnotesize,justification=centering]{caption}
+\setlength\parindent{15pt} % Removes all indentation from paragraphs
+
+\usepackage[style=authoryear]{biblatex}
 \usepackage{array}
 \usepackage{tabularx}
 \usepackage{rotating}   
@@ -16,7 +21,6 @@
 \usepackage{lscape} 
 \usepackage{ascmac}   
 \usepackage{rotating}   
-\usepackage[natbibapa]{apacite}    
 \usepackage{url}
 \usepackage{setspace}     
 \usepackage{adjustbox}
@@ -25,10 +29,10 @@
 \usepackage{float} 
 \usepackage{enumerate}
 \usepackage{amssymb}
+\usepackage{multirow}
 \usepackage{wrapfig}
 \usepackage{mathrsfs}
 \usepackage{graphicx} % Required to insert images
-\setlength\parindent{15pt} % Removes all indentation from paragraphs
 \usepackage[most]{tcolorbox} % Required for boxes that split across pages
 \usepackage{booktabs} % Required for better horizontal rules in tables
 \usepackage{listings} % Required for insertion of code
@@ -39,61 +43,122 @@
 \usepackage{soul}
 \usepackage{pdfpages}
 \usepackage{hyperref}
-\usepackage{geometry} % Required for adjusting page dimensions and margins
-\geometry{
-	paper=letterpaper, % Change to letterpaper for US letter
-	top=1.2in, % Top margin
-	bottom=1.2in, % Bottom margin
-	left=1in, % Left margin
-	right=1in, % Right margin
-	headheight=14pt, % Header height
-	footskip=1.4cm, % Space from the bottom margin to the baseline of the footer
-	headsep=1.2cm, % Space from the top margin to the baseline of the header
-	%showframe, % Uncomment to show how the type block is set on the page
-}
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
 \usepackage{graphicx} % Required for inserting images
 \usepackage{tabularx} 
 \usepackage{caption}
+\usepackage{color}
+\usepackage{multirow}
+\usepackage{engord}
+\usepackage{soul}
+\usepackage{textcomp}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\usepackage[UKenglish]{babel}
+\usepackage[UKenglish]{isodate}
 
-\title{Independent chlorine coverage surveys\\Preliminary results including Uganda ILC villages}
+
+% Make some additional useful commands
+\newcommand{\ie}{\emph{i.e.}\ }
+\newcommand{\eg}{\emph{e.g.}\ }
+\newcommand{\etal}{\emph{et al}}
+\newcommand{\sub}[1]{$_{\textrm{#1}}$}
+\newcommand{\super}[1]{$^{\textrm{#1}}$}
+\newcommand{\degC}{$^{\circ}$C}
+\newcommand{\wig}{$\sim$}
+\newcommand{\ord}[1]{\engordnumber{#1}}
+\newcommand{\num}[2]{$#1\,$#2}
+\newcommand{\range}[3]{$#1$-$#2\,$#3}
+\newcommand{\roughly}[2]{$\sim\!#1\,$#2}
+\newcommand{\area}[3]{$#1 \! \times \! #2\,$#3}
+\newcommand{\vol}[4]{$#1 \! \times \! #2 \! \times \! #3\,$#4}
+\newcommand{\cube}[1]{$#1 \! \times \! #1 \! \times \! #1$}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\eqnref}[1]{Equation~\ref{#1}}
+\newcommand{\tableref}[1]{Table~\ref{#1}}
+\newcommand{\secref}[1]{Section \ref{#1}}
+\newcommand{\XC}{\emph{exchange-correlation}}
+\newcommand{\abinit}{\emph{ab initio}}
+\newcommand{\Abinit}{\emph{Ab initio}}
+\newcommand{\Lonetwo}{L1$_{2}$}
+\newcommand{\Dznt}{D0$_{19}$}
+\newcommand{\Dtf}{D8$_{5}$}
+\newcommand{\Btwo}{B$_{2}$}
+\newcommand{\fcc}{\emph{fcc}}
+\newcommand{\hcp}{\emph{hcp}}
+\newcommand{\bcc}{\emph{bcc}}
+\newcommand{\Ang}{{\AA}}
+\newcommand{\inverseAng}{{\AA}$^{-1}$}
+
+
+% Change this to modify look of header and footer
+\lhead{}
+\chead{}
+\rhead{}
+\lfoot{}
+\cfoot{\thepage{}}
+\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\title{Independent chlorine adoption surveys}
+\bibliography{bibliography}
 
 \begin{document}
+
+\onehalfspacing
 
 \maketitle
 \date{}
 
-\textcolor{red}{Results for Uganda ILC villages are preliminary and may change after further exploration and QA.}
-\begin{itemize}
-    \item The estimates presented here perform exactly the same analysis as for ILC villages in Malawi
-    \item This means that no adjustments have been made based on water point functionality and distance from the tank with the ILC device
-    \item We may incorporate such adjustments after further exploration of the water point-level data and of the enumerator comments about each water point
-\end{itemize}
+\input{design}
+\input{data}
+\input{methods}
 
+% ------------------------------------------------------------------------------
 \newpage
+%
+%\input{tables/headlines-vil}
+%\input{tables/headlines-vil-by-group}
+%
+%\input{tables/headlines-wp}
+%\input{tables/headlines-wp-by-group}
 
-\input{tables/headlines-vil}
-\input{tables/headlines-vil-by-group}
-
-\input{tables/headlines-wp}
-\input{tables/headlines-wp-by-group}
-
+% ------------------------------------------------------------------------------
+%\newpage
+%
+%\begin{figure}[H]
+%\centering
+%\caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
+%\includegraphics[width=\linewidth]{graphs/users-vil.png}
+%\label{fig:users-vil}
+%\end{figure}
+%
+%\begin{figure}[H]
+%\centering
+%\caption{Sensitivity checks on Total Chlorine Residual detection rates}
+%\includegraphics[width=\linewidth]{graphs/chlorine-vil.png}
+%\label{fig:chlorine-vil}
+%\end{figure}
+%
+%\input{tables/ilc-wpt-nonfunc}
+%\input{tables/ilc-wpt-excluded}
+%\newpage
+%\input{tables/ilc-wpt-func}
+%
+% ------------------------------------------------------------------------------
 \newpage
+\printbibliography
 
-\begin{figure}[H]
-    \centering
-    \caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
-    \includegraphics[width=\linewidth]{graphs/users-vil.png}
-    \label{fig:users-vil}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \caption{Sensitivity checks on Total Chlorine Residual detection rates}
-    \includegraphics[width=\linewidth]{graphs/chlorine-vil.png}
-    \label{fig:chlorine-vil}
-\end{figure}
+%-------------------------------------------------------------------------------
+\newpage
+\appendix
+\renewcommand{\thetable}{\Alph{section}\arabic{table}}
+\input{Report/output/appendix-tables}
 
 \end{document}
 
