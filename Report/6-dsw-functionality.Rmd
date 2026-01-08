@@ -1,39 +1,32 @@
 # DSW water points
 
 
-## Sample
-
-```{r}
-wp_census <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "WaterPointCensus",
-      "DataSets",
-      "Final",
-      "wp-census.rds"
-    )
-  ) %>%
-  st_drop_geometry 
-```
-
-### DSW
-
 ```{r}
 dsw <-
-  wp_census  %>%
+  wp_census %>%
   dplyr::filter(intervention_type == "DSW")
 ```
 
+## By sample group
+
 ```{r}
-dsw %>%
+evac <-
+  villages %>%
+  select(country, sample_group, village_id, dsw_wpt) %>%
+  dplyr::filter(village_id %in% dsw$village_id) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    dsw_wpt = sum(dsw_wpt)
+  )
+
+dsw_func <-
+  dsw %>%
   group_by(country, sample_group) %>%
   summarise(
     Villages = n_distinct(village_id),
-    N = n_distinct(wp_id),
+    `WP census` = n_distinct(wp_id),
     `Matched to EvAc data` = sum(!is.na(ea_id)),
-    `WP Functional` = sum(wp_func, na.rm = TRUE),
+    `WP functional` = sum(wp_func, na.rm = TRUE),
     `Casing present` = sum(disp_casing_present, na.rm = TRUE),
     `Tank present` = sum(disp_tank_present, na.rm = TRUE),
     `Dispenser functional` = sum(disp_func, na.rm = TRUE),
@@ -42,31 +35,86 @@ dsw %>%
   mutate(
     across(
       `Matched to EvAc data`:`Dispenser filled`,
-      ~ round(. * 100/N, 1) %>% paste0("%")
+      ~ round(. * 100/`WP census`, 1)
     )
   ) %>%
-  rename(
-    Sample = sample_group
-  ) %>%
   ungroup %>%
+  left_join(evac) %>%
   select(-country) %>%
+  select(Sample = sample_group, Villages, `EvAc data` = dsw_wpt, everything())
+
+dsw_func %>%
   kable(
     format = "html"
   ) %>%
   pack_rows("Malawi", 1, 3) %>%
-  pack_rows("Uganda", 4, 6) %>%
-  kable_paper("striped", full_width = TRUE)
+  pack_rows("Uganda", 4, 5) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  add_header_above(
+    c(
+      " " = 2,
+      "Number of WPs" = 2,
+      "Percent of water points in the census" = 6
+    ),
+    line = TRUE
+  ) %>%
+  add_header_above(
+    c(" ", paste0("(", 1:9,")")), 
+    line = FALSE
+  )
 ```
 
-#Table Export
 ```{r}
-dsw %>%
+kable(
+  dsw_func,
+  format = "latex",
+  escape = F,
+  align = "c", 
+  booktabs = T,
+  caption = "Functionality rate",
+  label = "dsw-func-group"
+) %>%
+  kable_styling(latex_options = c("scale_down")) %>%
+  pack_rows("Malawi", 1, 3) %>%
+  pack_rows("Uganda", 4, 5) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  add_header_above(
+    c(
+      " " = 2,
+      "Number of WPs" = 2,
+      "Percent of water points in the census" = 6
+    ),
+    line = TRUE
+  ) %>%
+  add_header_above(
+    c(" ", paste0("(", 1:9,")")), 
+    line = FALSE
+  ) %>%
+  writeLines(
+    "output/appendix-tables/dsw-func-group.tex"
+  )
+```
+
+## By country
+
+```{r}
+evac <-
+  villages %>%
+  select(country, village_id, dsw_wpt) %>%
+  dplyr::filter(village_id %in% dsw$village_id) %>%
+  group_by(country) %>%
+  summarise(
+    dsw_wpt = sum(dsw_wpt)
+  )
+
+dsw_func <-
+  dsw %>%
   group_by(country) %>%
   summarise(
     Villages = n_distinct(village_id),
-    N = n_distinct(wp_id),
+    `WP census` = n_distinct(wp_id),
     `Matched to EvAc data` = sum(!is.na(ea_id)),
-    `WP Functional` = sum(wp_func, na.rm = TRUE),
+    `WP functional` = sum(wp_func, na.rm = TRUE),
     `Casing present` = sum(disp_casing_present, na.rm = TRUE),
     `Tank present` = sum(disp_tank_present, na.rm = TRUE),
     `Dispenser functional` = sum(disp_func, na.rm = TRUE),
@@ -75,76 +123,56 @@ dsw %>%
   mutate(
     across(
       `Matched to EvAc data`:`Dispenser filled`,
-      ~ round(. * 100/N, 1) %>% paste0("%")
+      ~ round(. * 100/`WP census`, 1)
     )
   ) %>%
-  rename(Country = country) %>%
-  ungroup %>%
+  left_join(evac) %>%
+  select(Country = country, Villages, `EvAc data` = dsw_wpt, everything())
+
+dsw_func %>%
   kable(
     format = "html"
   ) %>%
-  kable_paper("striped", full_width = TRUE)
+  kable_paper("striped", full_width = TRUE) %>%
+  add_header_above(
+    c(
+      " " = 2,
+      "Number of WPs" = 2,
+      "Percent of water points in the census" = 6
+    ),
+    line = TRUE
+  ) %>%
+  add_header_above(
+    c(" ", paste0("(", 1:9,")")), 
+    line = FALSE
+  )
 ```
 
 ```{r}
-library(dplyr)
-library(glue)
-
-tab <- dsw %>%
-  group_by(country, sample_group) %>%
-  summarise(
-    Villages               = n_distinct(village_id),
-    N                      = n_distinct(wp_id),
-    `Matched to EvAc data` = sum(!is.na(ea_id)),
-    `WP Functional`        = sum(wp_func, na.rm = TRUE),
-    `Casing present`       = sum(disp_casing_present, na.rm = TRUE),
-    `Tank present`         = sum(disp_tank_present, na.rm = TRUE),
-    `Dispenser functional` = sum(disp_func, na.rm = TRUE),
-    `Dispenser filled`     = sum(disp_filled, na.rm = TRUE),
-    .groups = "drop"
+kable(
+  dsw_func, 
+  format = "latex",
+  escape = F,
+  align = "c", 
+  booktabs = T,
+  caption = "Functionality rate",
+  label = "dsw-func"
+) %>%
+  kable_styling(latex_options = c("scale_down")) %>%
+  add_header_above(
+    c(
+      " " = 2,
+      "Number of WPs" = 2,
+      "Percent of water points in the census" = 6
+    ),
+    line = TRUE
   ) %>%
-  mutate(
-    across(
-      `Matched to EvAc data`:`Dispenser filled`,
-      ~ round(. * 100 / N, 1)
-    )
+  add_header_above(
+    c(" ", paste0("(", 1:9,")")), 
+    line = FALSE
   ) %>%
-  arrange(
-    factor(country,      levels = c("Malawi", "Uganda")),
-    factor(sample_group, levels = c("Footprint", "Expansion", "ILC"))
+  writeLines(
+    "output/tables/dsw-func.tex"
   )
-
-fmt1 <- function(x) sub("\\.0$", "", format(x, nsmall = 1, trim = TRUE))
-
-rows <- character()
-current_country <- NULL
-
-for (i in seq_len(nrow(tab))) {
-  r <- tab[i, ]
-
-  if (is.null(current_country) || r$country != current_country) {
-    if (!is.null(current_country)) {
-      rows <- c(rows, "\\addlinespace[0pt]", "\\hline")
-    }
-    rows <- c(
-      rows,
-      glue("\\multicolumn{{9}}{{l}}{{\\textbf{{{r$country}}}}}\\\\"),
-      "\\hline"
-    )
-    current_country <- r$country
-  }
-
-  line <- glue(
-"\\hspace{{1em}}\\hspace{{1em}}{r$sample_group} & ",
-"{r$Villages} & {r$N} & ",
-"{fmt1(r$`Matched to EvAc data`)} & {fmt1(r$`WP Functional`)} & ",
-"{fmt1(r$`Casing present`)} & {fmt1(r$`Tank present`)} & ",
-"{fmt1(r$`Dispenser functional`)} & {fmt1(r$`Dispenser filled`)} \\\\"
-  )
-
-  rows <- c(rows, line)
-}
-
-writeLines(rows, "../output/tables/wp-summary.tex")
 ```
 

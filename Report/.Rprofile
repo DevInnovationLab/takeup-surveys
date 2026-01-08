@@ -54,7 +54,7 @@ theme <-
       size = 10,
       color = "gray40"
     ),
-    legend.position = "bottom"
+    legend.position = "none"
   )
 
 # Inputs -----------------------------------------------------------------------

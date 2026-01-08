@@ -46,7 +46,7 @@ users_data %>%
   adorn_totals()
 ```
 
-There are 8 villages in Uganda with no observations for this variable, so we cannot impute it as the village average. Therefore, we impute it are the sample group level. 
+There are `r users_data %>% dplyr::filter(is.na(hh_members)) %>% pull(village_id) %>% n_distinct` villages in Uganda with no observations for this variable, so we cannot impute it as the village average. Therefore, we impute it are the sample group level. 
 
 ```{r}
 users_data <-
@@ -216,18 +216,6 @@ people_per_country <-
   arrange(outcome)
 
 people_per_country
-```
-
-```{r}
-people_per_group %>%
-  mutate(estimate = "by_group") %>%
-  bind_rows(
-    people_per_country %>%
-      mutate(estimate = "by_country")
-  ) %>%
-  write_csv(
-    here("output/results/users-vil.csv")
-  )
 ```
 
 ### Sensitivity checks
@@ -560,7 +548,7 @@ plot_data <-
     "Excluding households living outside of\nthe village boundaries" = users_vil_boundary,
     "Without correction for non-responses" = users_vil_responseonly,
     "Without corrections to DSW/ILC status\nfrom admin data" = users_vil_fo,
-    "Without correction for functionality rates" = users_vil_func
+    "Without correction for water point\nfunctionality" = users_vil_func
   ) %>%
     map(
       ~ .x %>%
@@ -580,7 +568,7 @@ plot_data %>%
       xmax = ub,
       x = total,
       label = format(round(total), big.mark = ","),
-      color = !main
+      color = main
     )
   ) +
   geom_errorbar(width = .3) +
@@ -595,9 +583,9 @@ plot_data %>%
     scales = "free_x"
   ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
-  scale_color_viridis_d() +
-  theme +
-  scale_color_viridis_d() +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  theme + 
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
   theme(legend.position = "none") +
   labs(
@@ -824,10 +812,6 @@ cl_village_noweights_country <-
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 
-cl_village_noweights_country %>%
-  write_csv(
-    here("output/results/chlorine-vil.csv")
-  )
 ```
 
 ### Sensitivity checks
@@ -1142,7 +1126,7 @@ plot_data %>%
       xmax = ub,
       x = mean,
       label = round(mean, 1) %>% paste0("%"),
-      color = !main
+      color = main
     )
   ) +
   geom_errorbar(width = .3) +
@@ -1157,10 +1141,9 @@ plot_data %>%
     scales = "free_x"
   ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
-  scale_color_viridis_d() +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
   theme +
-  scale_color_viridis_d() +
-  theme(legend.position = "none") +
   labs(
     y = NULL,
     x = "Percent of tested households where color wheel\nTCR reading was at least 0.2 ppm"
