@@ -1,0 +1,3 @@
+It looks like the headline numbers from November have changed vs the first draft you shared in late September. In the report, could you explain what in the analysis has changed that’s driving this? 
+
+The explanations you give here for the promoter listing overcounting DSW/ILC water point users seem like they’d imply high household nonresponse rates, in particular in Malawi (e.g. if a high share of promoter listed households were duplicates, deceased, moved, etc., you wouldn’t be able to find them). Is that right and is there evidence of this in your data? 

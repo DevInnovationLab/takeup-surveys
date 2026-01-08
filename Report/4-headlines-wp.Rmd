@@ -452,13 +452,13 @@ table <-
     align = "c", 
     booktabs = T,
     col.names = linebreak(
-      c("Intervention", "\\#WPs", "\\#HHs", "\\#WPs", "People using\nDSW/ILC\n(95\\% CI)", "\\#WPs", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      c("Intervention", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#WP", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     ),
     caption = "Primary outcomes estimated using the water point as the unit of reference",
     label = "headlines-wp"
   ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 4) %>%
   pack_rows("Uganda", 5, 6) %>%
   add_header_above(
@@ -577,7 +577,7 @@ table <-
     caption = "Primary outcomes estimated using the water point as the unit of reference",
     label = "headlines-wp-by-group"
   ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 8) %>%
   pack_rows("Uganda", 9, 12) %>%
   add_header_above(

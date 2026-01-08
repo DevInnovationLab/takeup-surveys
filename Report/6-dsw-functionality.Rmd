@@ -74,10 +74,9 @@ kable(
   caption = "Functionality rate",
   label = "dsw-func-group"
 ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 3) %>%
   pack_rows("Uganda", 4, 5) %>%
-  kable_paper("striped", full_width = TRUE) %>%
   add_header_above(
     c(
       " " = 2,
@@ -90,6 +89,9 @@ kable(
     c(" ", paste0("(", 1:9,")")), 
     line = FALSE
   ) %>%
+  column_spec(c(1, 2, 7, 8, 10), width = "1.5cm") %>%
+  column_spec(3:4, width = "1cm") %>%
+  column_spec(c(5, 8), width = "2cm") %>%
   writeLines(
     "output/appendix-tables/dsw-func-group.tex"
   )
@@ -158,7 +160,7 @@ kable(
   caption = "Functionality rate",
   label = "dsw-func"
 ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   add_header_above(
     c(
       " " = 2,
@@ -171,8 +173,23 @@ kable(
     c(" ", paste0("(", 1:9,")")), 
     line = FALSE
   ) %>%
+  column_spec(c(1, 2, 7, 8, 10), width = "1.5cm") %>%
+  column_spec(3:4, width = "1cm") %>%
+  column_spec(c(5, 8), width = "2cm") %>%
   writeLines(
     "output/tables/dsw-func.tex"
   )
 ```
+
+## Text
+
+### Functionality rates among non-program WPs
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention == "Non-program") %>%
+  group_by(country) %>%
+  summarise(mean(wp_func, na.rm = TRUE))
+```
+
 
