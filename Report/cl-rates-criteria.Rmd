@@ -1,4 +1,8 @@
-# Chlorination rates under different criteria
+
+
+
+
+## Chlorination rates under different criteria
 
 ```{r}
 criteria <-
@@ -10,7 +14,7 @@ criteria <-
   )
 ```
 
-## Number of observations
+### Number of observations
 
 ```{r}
 obs <-
@@ -36,7 +40,7 @@ obs_long <-
 ```
 
 
-## By sample group and program
+### By sample group and program
 
 ```{r}
 cl_criteria_group <-
@@ -133,7 +137,7 @@ writeLines(
 )
 ```
 
-## By country and program
+### By country and program
 
 ```{r}
 obs <-

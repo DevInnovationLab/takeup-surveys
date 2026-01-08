@@ -74,7 +74,7 @@ kable(
   align = "c", 
   booktabs = T,
   caption = "DSW functionality indicators",
-  label = "dsw-func-group"
+  label = "tab:dsw-func-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 3) %>%
@@ -95,7 +95,7 @@ kable(
   column_spec(3:4, width = "1cm") %>%
   column_spec(c(1, 5), width = "2cm") %>%
   footnote(
-    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data."
+    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data."  %>% str_wrap()
   ) %>%
   writeLines(
     "output/appendix-tables/dsw-func-group.tex"
@@ -163,7 +163,7 @@ kable(
   align = "c", 
   booktabs = T,
   caption = "DSW functionality indicators",
-  label = "dsw-func"
+  label = "tab:dsw-func"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   add_header_above(
@@ -182,7 +182,7 @@ kable(
   column_spec(3:4, width = "1cm") %>%
   column_spec(c(5), width = "2cm") %>%
   footnote(
-    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data."
+    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data." %>% str_wrap()
   ) %>%
   writeLines(
     "output/tables/dsw-func.tex"
@@ -233,7 +233,7 @@ kable(
     align = "c"
   ),
   caption = "Post-treatment Chlorine detection rates at water points with DSW",
-  label = "dsw-cl-group"
+  label = "tab:dsw-cl-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 2) %>%
@@ -278,19 +278,14 @@ kable(
   escape = F,
   align = "c", 
   booktabs = T,
-  col.names = linebreak(
-    c("Sample", "Filled dispenser", "TCR tests", "TCR ≥ 0.2 ppm", "FCR tests", "FCR ≥ 0.2 ppm"),
-    align = "c"
-  ),
   caption = "Post-treatment Chlorine detection rates at water points with DSW",
-  label = "dsw-cl-group"
+  label = "tab:dsw-cl-group"
 ) %>%
-kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
-writeLines(
-  table, 
-  "output/tables/dsw-cl.tex"
-)
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  writeLines(
+    "output/tables/dsw-cl.tex"
+  )
 ```
 
 

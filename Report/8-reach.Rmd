@@ -59,7 +59,8 @@ monitoring <-
 ### Combine
 
 ```{r}
-main %>%
+comparison <-
+  main %>%
   bind_rows(wp) %>%
   bind_rows(monitoring) %>%
   ggplot(
@@ -67,12 +68,32 @@ main %>%
       x = method,
       y = total,
       ymin = lb,
-      ymax = ub
+      ymax = ub,
+      fill = country
     )
   ) +
   geom_col() +
-  geom_errorbar(width  = .5) +
-  facet_wrap(~ country)
+  geom_errorbar(width  = .2) +
+  facet_wrap(~ country) + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme + 
+  labs(
+    x = NULL,
+    y = NULL
+  )  +
+  scale_y_continuous(labels = scales::comma)
+
+comparison
+```
+
+```{r}
+ggsave(
+  "output/appendix-graphs/reach-comparison.png", 
+   plot = comparison, 
+   width = 8, 
+   height = 6, 
+   units = "in"
+)
 ```
 
 
@@ -110,7 +131,7 @@ users_outside_census <-
 
 ```{r}
 hhoutside_per_wp <-
-  wp_census_pm %>%
+  wp_census %>%
   dplyr::filter(
     wp_func,
     intervention != "Non-program", 
