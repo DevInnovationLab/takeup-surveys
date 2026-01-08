@@ -1,0 +1,65 @@
+\section{Estimation methods}
+
+This Section describes the methods followed to calculate our two main outcomes. Program reach is estimated using the number of people whose primary source of drinking water has DSW/ILC, and Section \ref{sec:methods-people} describes how this number is calculated. Section \ref{sec:method-cl} describes how we use the TCR detection rate from household water samples to estimate adoption rates for chlorine treatment of drinking water. Section \ref{sec:methods-mon} describes how these methods are adapted to calculate estimates that approximate those that would be obtained under Evidence Action Adoption.
+
+\subsection{Number of people using water points with DSW/ILC}\label{sec:methods-people}
+
+The number of people served by Evidence Action is calculated based on the number of people living in households whose self-reported primary source of drinking water has a DSW dispenser or is connected to ILC. Standard errors are clustered by village, and sample group weights are based on the population of villages and water points in each country.
+
+We use the R package \textit{survey} to estimate the country-level reach and the confidence interval around it.\footnote{\textcite{survey}.} The point estimates are equivalent to the procedure described below, but the package also calculates the standard errors clustered by village and corrected for the sampling weights:
+
+\begin{enumerate}
+    \item \textbf{Restrict the household census data to households using water points with DSW or ILC.} 
+    \item \textbf{In each unit of reference (village, water point), add the number of people living in households that use a water point with DSW or ILC as their primary source of drinking water.} Due to a survey coding error, the question on the number of household members was skipped during the first two weeks of data collection in Uganda. In these cases, we impute it using the sample group average.
+    \item \textbf{Take the sample group and intervention average and multiply by the number of villages in this group across the country.} 
+\end{enumerate}
+
+Our main estimates also include the adjustments listed below. We also present sensitivity checks that change each of these at a time.
+
+\begin{itemize}
+    \item We exclude households using water points with DSW or ILC located within the village boundaries to avoid counting users of the same water point in two villages.
+    \item The previous step would remove from our estimates the villages where no households use a water point with DSW/ILC, which happens in some ILC villages where all ILC water collection points are out of order. Therefore, we add these villages back into the data and assign zero users to them.
+    \item We include households living up to 200 meters outside of the village boundaries.
+    \item We restrict the sample to households using water points that were confirmed to have DSW/ILC in the Evidence Action database as opposed to relying only of field officers' reports.
+    \item We account for non-responses by assuming that the share of users that did not respond to the household census and use a water point with DSW/ILC is the same as among those that did response. Therefore, between Step 2 and Step 3, we divide the village-level estimate by the response rate.
+\end{itemize}
+
+Since our unit of sampling is the village, our main estimates use the village as the unit of reference in Step 2. We also report estimates using the water point as the unit of reference, since those may be more comparable to Evidence Action's Adoption Monitoring estimates.
+
+\subsection{Share of households using water points with DSW/ILC where chlorine was detected in the drinking water sample}\label{sec:methods-cl}
+
+The chlorine adoption rate is estimated by calculating the share of households in the census sample of the Household Survey using a DSW/ILC water point that had chlorine detected in the water sample tested during the household survey.
+
+\textbf{We define chlorine detection as meeting the 0.2 mg/L threshold for Total Chlorine Residual, measured using a color wheel.}
+\begin{itemize}
+    \item We use the color wheel for the reasons discussed in Section \ref{sec:design-chlorine} and so our measures are more comparable with those taken by Evidence.
+    \item We adopt 0.2 mg/L as the threshold because this is the minimum concentration detected by the color wheel.
+    \item We focus on TCR because, unlike FCR, it decays more slowly and therefore better reflects whether chlorine was applied to the water (as opposed to whether it still has any disifectant power). It is worth noting, however, that most studies of health effects of water treatment focus on FCR measures, and therefore we also report it.\footnote{Table \ref{tab:thresholds} presents the criteria used by the studies included in \textcite{kremer2023water}.}
+\end{itemize}  
+
+As with the number of people using water points with DSW/ILC, we use the R package \textit{survey} to estimate the confidence interval clustered at the village level.
+
+Our main estimates also include the adjustments listed below, although they are relaxed for sensitivity checks.
+
+\begin{itemize}
+    \item We restrict the sample to households using water points that were confirmed to have DSW/ILC in the Evidence Action database. We also show how estimates change when using the raw field officers' report of DSW/ILC presence as well as the household's report and not restricting the sample at all.
+    \item We restrict sample to households that had water available in the household at the time of the survey. This is a deviation from Evidence Action's Adoption Monitoring protocol, since they assume these households do not chlorinate. Our sensitivity checks include this alternative version of the estimates.
+    \item That is, every household in the sample has the same weight. We use this estimate because as far as we understand, this is the procedure followed by Evidence Action in their Adoption Monitoring. Our sensitivity checks show how using different weights affect the estimates.
+\end{itemize}
+
+\subsection{Approximating Adoption Monitoring estimates}\label{{sec:methods-mon}}
+
+Evidence Action's Adoption Monitoring estimates reach and adoption starting from a list of water point users provided by a local promoter, and sampling households from that list. As described in Sections \ref{sec:design-pm} and \ref{sec:design-mon}, we also collected data to follow the Adoption Monitoring estimation methods.
+
+To estimate the number of people with access to DSW/ILC under this method, we 
+\begin{enumerate}
+    \item Group water points into 4 categories: Footprint DSW, Expansion DSW, DSW in ILC villages, and ILC water points (the latter two only apply to Malawi);
+    \item Calculate the average number of households listed by promoters as using water points with DSW/ILC in the group, as reported in the Promoter Survey;
+    \item Calculate the average household size reported in the Household Survey by households in the promoter sample;
+    \item Multiply these two averages to obtain the average number of households per water point in each group;
+    \item Multiply the average number of households per water point by the number of water points in each group according to the Evidence Action database.
+\end{enumerate}
+
+We estimated chlorination rates by finding the unweighted average across households in the promoter sample of the indicator representing whether detected FCR and FCR concentrations were above 0.2 ppm. Here, we immediately combined all DSW water points, as opposed to first finding chlorination rates separately for Expansion, Footprint, and DSW in ILC villages. This was because the differences in chlorination rates among these categories were found to not be statistically different. 
+
+For chlorination rates, standard errors were estimated accounting for village-level clustering and sample group stratification. Standard errors for household counts and household size were estimated accounting for clustering at the village level and stratification by sample group. For the estimated number of people per water point, standard errors were calculated using the delta method, assuming independence between household counts and household size.\footnote{The Pearson's correlation coefficient between them is 0.022 (95\% CI = -0.044 - 0.087).} Population-level estimates were obtained by scaling water point-level estimates by the country number of water points of each category, with standard errors scaled proportionally. Country totals across categories were aggregated assuming independence, with standard errors estimated as the square root of the sum of squared standard errors.
