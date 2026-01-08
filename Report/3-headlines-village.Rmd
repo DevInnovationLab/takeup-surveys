@@ -1264,7 +1264,7 @@ table <-
     caption = "Primary outcomes estimated using the village as the unit of reference",
     label = "headlines-vil"
   ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 4) %>%
   pack_rows("Uganda", 5, 6) %>%
   add_header_above(
@@ -1376,13 +1376,13 @@ table <-
     align = "c", 
     booktabs = T,
     col.names = linebreak(
-      c(" ", "Sample group", "\\#Vil", "\\#HHs", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HHs", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      c(" ", "Sample group", "\\#Vil", "\\#HH", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     ),
     caption = "Primary outcomes estimated using the village as the unit of reference",
     label = "headlines-vil-by-group"
   ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 8) %>%
   pack_rows("Uganda", 9, 12) %>%
   add_header_above(

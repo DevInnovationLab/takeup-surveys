@@ -111,7 +111,7 @@ table <-
     caption = "Percent of households where chlorine residual was detected under different thresholds, by sample group and intervention",
     label = "cl-criteria-sample"
   ) %>%
-  kable_styling(latex_options = c("scale_down")) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 8) %>%
   pack_rows("Uganda", 9, 12) %>%
   add_header_above(
