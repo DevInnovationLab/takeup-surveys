@@ -117,6 +117,10 @@
 \date{}
 
 \input{1-executive-summary}
+
+\newpage
+\tableofcontents
+
 \newpage\input{2-introduction}
 \newpage\input{3-design}
 \newpage\input{4-data}
@@ -180,9 +184,12 @@
 
 %-------------------------------------------------------------------------------
 \newpage
+
 \appendix
 \renewcommand{\thetable}{\Alph{section}\arabic{table}}
-\input{appendix-tables}
-\input{appendix-reach}
+
+\input{appendix-glossary}
+\newpage\input{appendix-tables}
+\newpage\input{appendix-reach}
 
 \end{document}
