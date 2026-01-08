@@ -74,7 +74,7 @@ kable(
   align = "c", 
   booktabs = T,
   caption = "DSW functionality indicators",
-  label = "tab:dsw-func-group"
+  label = "dsw-func-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 3) %>%
@@ -163,7 +163,7 @@ kable(
   align = "c", 
   booktabs = T,
   caption = "DSW functionality indicators",
-  label = "tab:dsw-func"
+  label = "dsw-func"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   add_header_above(
@@ -186,6 +186,21 @@ kable(
   ) %>%
   writeLines(
     "output/tables/dsw-func.tex"
+  )
+```
+
+
+```{r}
+dsw %>%
+  group_by(country) %>%
+  group_split %>%
+  map(
+    ~ feols(
+      disp_filled ~ sample_group,
+      cluster = ~ village_id,
+      data = .
+    ) %>%
+      summary
   )
 ```
 
@@ -233,7 +248,7 @@ kable(
     align = "c"
   ),
   caption = "Post-treatment Chlorine detection rates at water points with DSW",
-  label = "tab:dsw-cl-group"
+  label = "dsw-cl-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 2) %>%
@@ -279,7 +294,7 @@ kable(
   align = "c", 
   booktabs = T,
   caption = "Post-treatment Chlorine detection rates at water points with DSW",
-  label = "tab:dsw-cl-group"
+  label = "dsw-cl-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
