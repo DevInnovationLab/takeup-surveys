@@ -17,7 +17,7 @@ We use the R package \textit{survey} to estimate the country-level reach and the
 Our main estimates also include the adjustments listed below. We also present sensitivity checks that change each of these at a time.
 
 \begin{itemize}
-    \item We exclude households using water points with DSW or ILC located within the village boundaries to avoid counting users of the same water point in two villages.
+    \item We exclude households using water points with DSW or ILC located within the village boundaries. This is to avoid double counting these households when estimating the country-level population given our village-level sample design. 
     \item The previous step would remove from our estimates the villages where no households use a water point with DSW/ILC, which happens in some ILC villages where all ILC water collection points are out of order. Therefore, we add these villages back into the data and assign zero users to them.
     \item We include households living up to 200 meters outside of the village boundaries.
     \item We restrict the sample to households using water points that were confirmed to have DSW/ILC in the Evidence Action database as opposed to relying only of field officers' reports.
