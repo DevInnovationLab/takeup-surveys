@@ -26,6 +26,31 @@ pacman::p_load(
   packages,
   character.only = TRUE
 )
+
+hh_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "HouseholdSurvey",
+      "DataSets",
+      "Final",
+      "hh-survey.rds"
+    )
+  ) %>%
+  mutate(
+    intervention_selfreport = case_when(
+      hh_dsw ~ "DSW",
+      hh_ilc ~ "ILC"
+    ),
+    intervention_fo = case_when(
+      wp_dsw ~ "DSW",
+      wp_ilc ~ "ILC"
+    )
+  ) %>%
+  dplyr::filter(
+    !(sample_group == "ILC" & country == "Uganda")
+  )
 ```
 
 ## Number of people reached
@@ -34,7 +59,7 @@ pacman::p_load(
 
 ```{r}
 hh_per_wp <-
-  wp_census_pm %>%
+  wp_census %>%
   dplyr::filter(
     wp_func,
     intervention != "Non-program", 
@@ -98,6 +123,41 @@ people_per_hh <-
   ) %>%
   bind_rows() %>%
   select(country, sample_group, wp_intervention, av_size = mean, av_size_se = se)
+
+people_per_hh_census <-
+  hh_census %>%
+  dplyr::filter(
+    wp_func,
+    wp_intervention != "Non-program",
+    promoter_list == FALSE
+    )  %>%
+  group_by(
+    country, sample_group, wp_intervention
+  ) %>%
+  dplyr::filter(
+    n() > 2,
+    n_distinct(village_id) > 1
+      ) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+      outcomes = c("hh_members"),
+      dummy = FALSE,
+      design = svydesign(
+        id = ~ village_id, # cluster IDs
+        strata = ~ sample_group,
+        data = .x,
+        nest = TRUE
+      )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        sample_group = .x %>% pull(sample_group) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+      )
+  ) %>%
+  bind_rows() %>%
+  select(country, sample_group, wp_intervention, av_size = mean, av_size_se = se)
 ```
 ### Total number of people per group
 
@@ -128,6 +188,37 @@ total_people <-
     total_people_lb = total_people - 1.96 * total_people_se,
     total_people_ub = total_people + 1.96 * total_people_se
   )
+
+total_people
+
+total_people_hhsizecensus <- 
+  hh_per_wp %>%
+  left_join(people_per_hh_census) %>%
+  # Calculate people per WP and its SE using delta method
+  mutate(
+    av_people = av_hhs * av_size,
+    # delta method: SE(X*Y) = sqrt((Y^2 * SE_X^2) + (X^2 * SE_Y^2))
+    # assuming X and Y are independent
+    av_people_se = sqrt(
+      (av_size^2) * (av_hhs_se^2) + 
+      (av_hhs^2) * (av_size_se^2)
+    )
+  ) %>%
+  # join with population water points - sum across sample_groups
+  left_join(
+    wp_sample_sizes
+  ) %>%
+  # scale up to population
+  mutate(
+    total_people = av_people * pop_points,
+    # SE scales linearly with constant: SE(c*X) = c * SE(X)
+    total_people_se = av_people_se * pop_points,
+    # 95% CI for popn_users
+    total_people_lb = total_people - 1.96 * total_people_se,
+    total_people_ub = total_people + 1.96 * total_people_se
+  )
+
+total_people
 ```
 ### Total number of people per country
 
@@ -147,6 +238,26 @@ total_country <-
     total_people_lb = total_people - 1.96 * total_people_se,
     total_people_ub = total_people + 1.96 * total_people_se,
   )
+
+total_country
+
+total_country_hhsizecensus <-
+  total_people_hhsizecensus %>%
+  mutate(total_people_se_sq = total_people_se ^ 2) %>%
+  group_by(country, wp_intervention) %>%
+  summarise(
+    across(
+      c(total_people, total_people_se_sq),
+      ~ sum(.)
+    )
+  ) %>%
+  mutate(
+    total_people_se = sqrt(total_people_se_sq),
+    total_people_lb = total_people - 1.96 * total_people_se,
+    total_people_ub = total_people + 1.96 * total_people_se,
+  )
+
+total_country_hhsizecensus
 ```
 
 
@@ -1534,6 +1645,30 @@ hh_size_ttest <- hh_size_comparison %>%
   )
 
 hh_size_ttest
+```
+
+regression approach
+```{r}
+hh_census %>%
+  dplyr::filter(
+    wp_func,
+    wp_intervention != "Non-program"
+  ) %>%
+  feols(
+    hh_members ~ promoter_list | country + sample_group + wp_intervention,
+    cluster = ~ village_id
+  )
+
+hh_census %>%
+  dplyr::filter(
+    wp_func,
+    wp_intervention != "Non-program",
+    !is.na(country),
+    !is.na(sample_group),
+    !is.na(wp_intervention),
+    promoter_list == FALSE
+  ) %>%
+  summarize(mean_hh_members = mean(hh_members, na.rm = TRUE))
 ```
 
 ###### LaTeX table
