@@ -84,7 +84,7 @@ table <-
 
 writeLines(
   table, 
-  "output/tables/population.tex"
+  "output/appendix-tables/population.tex"
 )
 ```
 
@@ -432,6 +432,68 @@ hh_census %>%
 
 ### Number of water sources
 
+```{r}
+hh_census <-
+  hh_census %>%
+  mutate(
+    wp_single = wp_count_pastmonth == 1,
+    wp_nonprogram = wp_intervention == "Non-program",
+    wp_intervention = fct_relevel(wp_intervention, "Non-program")
+  )
+
+hh_census %>%
+  dplyr::filter(!wp_nonprogram) %>%
+  summarise(
+    single = mean(wp_single, na.rm = TRUE),
+    av_count = if_else(!wp_single, wp_count_pastmonth, NA) %>% mean(na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(!wp_nonprogram) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    mean = mean(wp_secweek, na.rm = TRUE)
+  )
+```
+
+Difference between interventions
+
+```{r}
+feols(
+  wp_single ~ wp_nonprogram | sample_group + country,
+  data = hh_census,
+  cluster = ~ village_id
+)
+```
+
+No difference between countries
+
+```{r}
+feols(
+  wp_single ~ country | sample_group + wp_intervention,
+  data = hh_census %>% dplyr::filter(!wp_nonprogram),
+  cluster = ~ village_id
+)
+```
+
+No difference between groups in Uganda
+
+```{r}
+feols(
+  wp_single ~ sample_group | wp_intervention,
+  data = hh_census %>% dplyr::filter(country == "Uganda"),
+  cluster = ~ village_id
+)
+```
+
+
+
+
+
+
+
 ### Average household size
 
 ```{r}
@@ -446,7 +508,7 @@ hh_census %>%
 feols(
   hh_members ~ country | sample_group,
   data = hh_census,
-  clluaster = ~ village_id
+  cluster = ~ village_id
 )
 ```
 

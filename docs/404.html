@@ -22,7 +22,7 @@
 
 
 
-<meta name="date" content="2025-12-04" />
+<meta name="date" content="2026-01-12" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1883,6 +1883,295 @@ a.anchor-section::before {content: '#';font-size: 80%;}
 
 
 
+
+
+
+
+
+
+<style type="text/css">
+.lightable-minimal {
+border-collapse: separate;
+border-spacing: 16px 1px;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-minimal td {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal th {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal thead tr:last-child th {
+border-bottom: 2px solid #00000050;
+empty-cells: hide;
+}
+.lightable-minimal tbody tr:first-child td {
+padding-top: 0.5em;
+}
+.lightable-minimal.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-minimal.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic {
+border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
+width: 100%;
+margin-bottom: 10px;
+margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
+}
+.lightable-classic caption {
+color: #222222;
+}
+.lightable-classic td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic thead tr:last-child th {
+border-bottom: 0.10em solid #111111;
+}
+.lightable-classic.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic-2 {
+border-top: 3px double #111111;
+border-bottom: 3px double #111111;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
+}
+.lightable-classic-2 caption {
+color: #222222;
+}
+.lightable-classic-2 td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic-2 th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic-2 tbody tr:last-child td {
+border-bottom: 3px double #111111;
+}
+.lightable-classic-2 thead tr:last-child th {
+border-bottom: 1px solid #111111;
+}
+.lightable-classic-2.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic-2.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #EEE;
+border-collapse: collapse;
+margin-bottom: 10px;
+}
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
+.lightable-material th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+}
+.lightable-material td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+border-top: 1px solid #eeeeee;
+}
+.lightable-material.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #ddd;
+}
+.lightable-material-dark {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #FFFFFF12;
+border-collapse: collapse;
+margin-bottom: 10px;
+background-color: #363640;
+}
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF60;
+}
+.lightable-material-dark td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF;
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark.lightable-hover tbody tr:hover {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody tr:nth-child(even) {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material-dark.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #FFFFFF12;
+}
+.lightable-paper {
+width: 100%;
+margin-bottom: 10px;
+color: #444;
+}
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
+.lightable-paper thead tr:last-child th {
+color: #666;
+vertical-align: bottom;
+border-bottom: 1px solid #00000020;
+line-height: 1.15em;
+padding: 10px 5px;
+}
+.lightable-paper td {
+vertical-align: middle;
+border-bottom: 1px solid #00000010;
+line-height: 1.15em;
+padding: 7px 5px;
+}
+.lightable-paper.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-paper.lightable-striped tbody tr:nth-child(even) {
+background-color: #00000008;
+}
+.lightable-paper.lightable-striped tbody td {
+border: 0;
+}
+</style>
+
+
+<style type="text/css">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+
 <style type="text/css">
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 </style>
@@ -1917,50 +2206,93 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <li class="chapter" data-level="2.4" data-path="inputs.html"><a href="inputs.html#household-survey"><i class="fa fa-check"></i><b>2.4</b> Household survey</a></li>
 <li class="chapter" data-level="2.5" data-path="inputs.html"><a href="inputs.html#monitoring-survey"><i class="fa fa-check"></i><b>2.5</b> Monitoring survey</a></li>
 <li class="chapter" data-level="2.6" data-path="inputs.html"><a href="inputs.html#water-point-census"><i class="fa fa-check"></i><b>2.6</b> Water point census</a></li>
+<li class="chapter" data-level="2.7" data-path="inputs.html"><a href="inputs.html#promoter-survey"><i class="fa fa-check"></i><b>2.7</b> Promoter survey</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html"><i class="fa fa-check"></i><b>3</b> Village-level headline results</a>
+<li class="chapter" data-level="3" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html"><i class="fa fa-check"></i><b>3</b> Sample sizes and descriptives</a>
 <ul>
-<li class="chapter" data-level="3.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#people-using-dswilc-water-points"><i class="fa fa-check"></i><b>3.1</b> People using DSW/ILC water points</a>
+<li class="chapter" data-level="3.1" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#summary-table"><i class="fa fa-check"></i><b>3.1</b> Summary table</a></li>
+<li class="chapter" data-level="3.2" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#uganda"><i class="fa fa-check"></i><b>3.2</b> Uganda</a>
 <ul>
-<li class="chapter" data-level="3.1.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#prepare-data"><i class="fa fa-check"></i><b>3.1.1</b> Prepare data</a></li>
-<li class="chapter" data-level="3.1.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sanity-check"><i class="fa fa-check"></i><b>3.1.2</b> Sanity check</a></li>
-<li class="chapter" data-level="3.1.3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#final-numbers"><i class="fa fa-check"></i><b>3.1.3</b> Final numbers</a></li>
-<li class="chapter" data-level="3.1.4" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sensitivity-checks"><i class="fa fa-check"></i><b>3.1.4</b> Sensitivity checks</a></li>
+<li class="chapter" data-level="3.2.1" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#villages-1"><i class="fa fa-check"></i><b>3.2.1</b> Villages</a></li>
+<li class="chapter" data-level="3.2.2" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#water-points-1"><i class="fa fa-check"></i><b>3.2.2</b> Water points</a></li>
+<li class="chapter" data-level="3.2.3" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#water-samples-tested"><i class="fa fa-check"></i><b>3.2.3</b> Water samples tested</a></li>
+<li class="chapter" data-level="3.2.4" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#household-census-1"><i class="fa fa-check"></i><b>3.2.4</b> Household census</a></li>
+<li class="chapter" data-level="3.2.5" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#household-survey-1"><i class="fa fa-check"></i><b>3.2.5</b> Household survey</a></li>
+<li class="chapter" data-level="3.2.6" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#promoter-survey-1"><i class="fa fa-check"></i><b>3.2.6</b> Promoter survey</a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#chlorine-detection-rates"><i class="fa fa-check"></i><b>3.2</b> Chlorine detection rates</a>
+<li class="chapter" data-level="3.3" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#malawi"><i class="fa fa-check"></i><b>3.3</b> Malawi</a>
 <ul>
-<li class="chapter" data-level="3.2.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#prepare-data-1"><i class="fa fa-check"></i><b>3.2.1</b> Prepare data</a></li>
-<li class="chapter" data-level="3.2.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sanity-check-1"><i class="fa fa-check"></i><b>3.2.2</b> Sanity check</a></li>
-<li class="chapter" data-level="3.2.3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#final-numbers-1"><i class="fa fa-check"></i><b>3.2.3</b> Final numbers</a></li>
-<li class="chapter" data-level="3.2.4" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sensitivity-checks-1"><i class="fa fa-check"></i><b>3.2.4</b> Sensitivity checks</a></li>
+<li class="chapter" data-level="3.3.1" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#villages-2"><i class="fa fa-check"></i><b>3.3.1</b> Villages</a></li>
+<li class="chapter" data-level="3.3.2" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#ilc-villages"><i class="fa fa-check"></i><b>3.3.2</b> ILC villages</a></li>
+<li class="chapter" data-level="3.3.3" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#water-point-census-1"><i class="fa fa-check"></i><b>3.3.3</b> Water point census</a></li>
+<li class="chapter" data-level="3.3.4" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#household-census-2"><i class="fa fa-check"></i><b>3.3.4</b> Household census</a></li>
+<li class="chapter" data-level="3.3.5" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#household-survey-2"><i class="fa fa-check"></i><b>3.3.5</b> Household survey</a></li>
+<li class="chapter" data-level="3.3.6" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#promoter-survey-2"><i class="fa fa-check"></i><b>3.3.6</b> Promoter survey</a></li>
 </ul></li>
-<li class="chapter" data-level="3.3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#table"><i class="fa fa-check"></i><b>3.3</b> Table</a>
+<li class="chapter" data-level="3.4" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#descriptive-statistics"><i class="fa fa-check"></i><b>3.4</b> Descriptive statistics</a>
 <ul>
-<li class="chapter" data-level="3.3.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#by-program-2"><i class="fa fa-check"></i><b>3.3.1</b> By program</a></li>
-<li class="chapter" data-level="3.3.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#by-program-and-sample-group-1"><i class="fa fa-check"></i><b>3.3.2</b> By program and sample group</a></li>
+<li class="chapter" data-level="3.4.1" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#average-village-sizes"><i class="fa fa-check"></i><b>3.4.1</b> Average village sizes</a></li>
+<li class="chapter" data-level="3.4.2" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#households-living-inside-the-village"><i class="fa fa-check"></i><b>3.4.2</b> Households living inside the village</a></li>
+<li class="chapter" data-level="3.4.3" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#households-using-water-points-inside-the-village"><i class="fa fa-check"></i><b>3.4.3</b> Households using water points inside the village</a></li>
+<li class="chapter" data-level="3.4.4" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#use-of-water-points-served-by-evidence-action"><i class="fa fa-check"></i><b>3.4.4</b> Use of water points served by Evidence Action</a></li>
+<li class="chapter" data-level="3.4.5" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#number-of-water-sources"><i class="fa fa-check"></i><b>3.4.5</b> Number of water sources</a></li>
+<li class="chapter" data-level="3.4.6" data-path="sample-sizes-and-descriptives.html"><a href="sample-sizes-and-descriptives.html#average-household-size"><i class="fa fa-check"></i><b>3.4.6</b> Average household size</a></li>
 </ul></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html"><i class="fa fa-check"></i><b>4</b> Water point-level headline results</a>
+<li class="chapter" data-level="4" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html"><i class="fa fa-check"></i><b>4</b> Village-level headline results</a>
 <ul>
-<li class="chapter" data-level="4.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#number-of-people-using-dswilc"><i class="fa fa-check"></i><b>4.1</b> Number of people using DSW/ILC</a>
+<li class="chapter" data-level="4.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#people-using-dswilc-water-points"><i class="fa fa-check"></i><b>4.1</b> People using DSW/ILC water points</a>
 <ul>
-<li class="chapter" data-level="4.1.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#prepare-data-2"><i class="fa fa-check"></i><b>4.1.1</b> Prepare data</a></li>
-<li class="chapter" data-level="4.1.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#sanity-check-2"><i class="fa fa-check"></i><b>4.1.2</b> Sanity check</a></li>
-<li class="chapter" data-level="4.1.3" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#final-numbers-2"><i class="fa fa-check"></i><b>4.1.3</b> Final numbers</a></li>
-<li class="chapter" data-level="4.1.4" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#sensitivty-cehcks"><i class="fa fa-check"></i><b>4.1.4</b> Sensitivty cehcks</a></li>
+<li class="chapter" data-level="4.1.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#prepare-data"><i class="fa fa-check"></i><b>4.1.1</b> Prepare data</a></li>
+<li class="chapter" data-level="4.1.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sanity-check"><i class="fa fa-check"></i><b>4.1.2</b> Sanity check</a></li>
+<li class="chapter" data-level="4.1.3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#final-numbers"><i class="fa fa-check"></i><b>4.1.3</b> Final numbers</a></li>
+<li class="chapter" data-level="4.1.4" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sensitivity-checks"><i class="fa fa-check"></i><b>4.1.4</b> Sensitivity checks</a></li>
 </ul></li>
-<li class="chapter" data-level="4.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#chlorination-rates"><i class="fa fa-check"></i><b>4.2</b> Chlorination rates</a>
+<li class="chapter" data-level="4.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#chlorine-detection-rates"><i class="fa fa-check"></i><b>4.2</b> Chlorine detection rates</a>
 <ul>
-<li class="chapter" data-level="4.2.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#prepare-data-3"><i class="fa fa-check"></i><b>4.2.1</b> Prepare data</a></li>
-<li class="chapter" data-level="4.2.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#sanity-check-3"><i class="fa fa-check"></i><b>4.2.2</b> Sanity check</a></li>
-<li class="chapter" data-level="4.2.3" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#final-numbers-3"><i class="fa fa-check"></i><b>4.2.3</b> Final numbers</a></li>
-<li class="chapter" data-level="4.2.4" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#sensitivity-checks-2"><i class="fa fa-check"></i><b>4.2.4</b> Sensitivity checks</a></li>
+<li class="chapter" data-level="4.2.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#prepare-data-1"><i class="fa fa-check"></i><b>4.2.1</b> Prepare data</a></li>
+<li class="chapter" data-level="4.2.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sanity-check-1"><i class="fa fa-check"></i><b>4.2.2</b> Sanity check</a></li>
+<li class="chapter" data-level="4.2.3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#final-numbers-1"><i class="fa fa-check"></i><b>4.2.3</b> Final numbers</a></li>
+<li class="chapter" data-level="4.2.4" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#sensitivity-checks-1"><i class="fa fa-check"></i><b>4.2.4</b> Sensitivity checks</a></li>
 </ul></li>
-<li class="chapter" data-level="4.3" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#table-1"><i class="fa fa-check"></i><b>4.3</b> Table</a>
+<li class="chapter" data-level="4.3" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#table"><i class="fa fa-check"></i><b>4.3</b> Table</a>
 <ul>
-<li class="chapter" data-level="4.3.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#by-program-4"><i class="fa fa-check"></i><b>4.3.1</b> By program</a></li>
-<li class="chapter" data-level="4.3.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#by-program-and-sample-group-3"><i class="fa fa-check"></i><b>4.3.2</b> By program and sample group</a></li>
+<li class="chapter" data-level="4.3.1" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#by-program-2"><i class="fa fa-check"></i><b>4.3.1</b> By program</a></li>
+<li class="chapter" data-level="4.3.2" data-path="village-level-headline-results.html"><a href="village-level-headline-results.html#by-program-and-sample-group-1"><i class="fa fa-check"></i><b>4.3.2</b> By program and sample group</a></li>
 </ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html"><i class="fa fa-check"></i><b>5</b> Water point-level headline results</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#number-of-people-using-dswilc"><i class="fa fa-check"></i><b>5.1</b> Number of people using DSW/ILC</a>
+<ul>
+<li class="chapter" data-level="5.1.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#prepare-data-2"><i class="fa fa-check"></i><b>5.1.1</b> Prepare data</a></li>
+<li class="chapter" data-level="5.1.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#sanity-check-2"><i class="fa fa-check"></i><b>5.1.2</b> Sanity check</a></li>
+<li class="chapter" data-level="5.1.3" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#final-numbers-2"><i class="fa fa-check"></i><b>5.1.3</b> Final numbers</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#chlorination-rates"><i class="fa fa-check"></i><b>5.2</b> Chlorination rates</a>
+<ul>
+<li class="chapter" data-level="5.2.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#prepare-data-3"><i class="fa fa-check"></i><b>5.2.1</b> Prepare data</a></li>
+<li class="chapter" data-level="5.2.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#sanity-check-3"><i class="fa fa-check"></i><b>5.2.2</b> Sanity check</a></li>
+<li class="chapter" data-level="5.2.3" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#final-numbers-3"><i class="fa fa-check"></i><b>5.2.3</b> Final numbers</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#table-1"><i class="fa fa-check"></i><b>5.3</b> Table</a>
+<ul>
+<li class="chapter" data-level="5.3.1" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#by-program-4"><i class="fa fa-check"></i><b>5.3.1</b> By program</a></li>
+<li class="chapter" data-level="5.3.2" data-path="water-point-level-headline-results.html"><a href="water-point-level-headline-results.html#by-program-and-sample-group-3"><i class="fa fa-check"></i><b>5.3.2</b> By program and sample group</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html"><i class="fa fa-check"></i><b>6</b> Monitoring headline results</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#number-of-people-reached"><i class="fa fa-check"></i><b>6.1</b> Number of people reached</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#average-number-of-households-per-water-point"><i class="fa fa-check"></i><b>6.1.1</b> Average number of households per water point</a></li>
+<li class="chapter" data-level="6.1.2" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#average-number-of-people-per-household"><i class="fa fa-check"></i><b>6.1.2</b> Average number of people per household</a></li>
+<li class="chapter" data-level="6.1.3" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#total-number-of-people-per-group"><i class="fa fa-check"></i><b>6.1.3</b> Total number of people per group</a></li>
+<li class="chapter" data-level="6.1.4" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#total-number-of-people-per-country"><i class="fa fa-check"></i><b>6.1.4</b> Total number of people per country</a></li>
+<li class="chapter" data-level="6.1.5" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#does-it-make-sense-to-assume-independence"><i class="fa fa-check"></i><b>6.1.5</b> Does it make sense to assume independence?</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#chlorination-rates-1"><i class="fa fa-check"></i><b>6.2</b> Chlorination rates</a></li>
+<li class="chapter" data-level="6.3" data-path="monitoring-headline-results.html"><a href="monitoring-headline-results.html#table-2"><i class="fa fa-check"></i><b>6.3</b> Table</a></li>
 </ul></li>
 </ul>
 
@@ -2949,6 +3281,15 @@ jQuery.fn.highlight = function (words, options) {
     x.parentElement.classList.remove('hasAnchor')
   })
 })
+</script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
 </script>
 <script>
 gitbook.require(["gitbook"], function(gitbook) {

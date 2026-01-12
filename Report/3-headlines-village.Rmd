@@ -398,6 +398,46 @@ users_vil_boundary <-
   arrange(outcome)
 ```
 
+#### Correct for missed water points
+
+```{r}
+users_vil_misspoints <-
+  map(
+    users_vilboundary %>%
+      mutate(
+        users_increased = 
+          case_when(
+            wp_intervention == "DSW" ~ users_increased * 1.12,
+            wp_intervention == "ILC" ~ users_increased * 1.05
+          )
+      ) %>%
+      dplyr::filter(country == "Malawi") %>%
+      group_by(country, wp_intervention) %>%
+      group_split(),
+    ~ total_ci(
+        var = "users_increased",
+        design = svydesign(
+          id = ~ village_id,
+          data = .x, 
+          weights = ~ weight
+        )
+      ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        villages = .x %>% pull(village_id) %>% n_distinct
+      )
+  ) %>% 
+  bind_rows() %>%
+  select(
+    country, wp_intervention, 
+    outcome, 
+    villages,
+    everything()
+  ) %>%
+  arrange(outcome)
+```
+
 #### Don't correct for non-functional ILC
 
 ```{r}
@@ -548,7 +588,8 @@ plot_data <-
     "Excluding households living outside of\nthe village boundaries" = users_vil_boundary,
     "Without correction for non-responses" = users_vil_responseonly,
     "Without corrections to DSW/ILC status\nfrom admin data" = users_vil_fo,
-    "Without correction for water point\nfunctionality" = users_vil_func
+    "Without correction for water point\nfunctionality" = users_vil_func,
+    "Correcting for potentially missed \nwater points" = users_vil_misspoints
   ) %>%
     map(
       ~ .x %>%
@@ -757,17 +798,22 @@ feols(
   summary
 ```
 ```{r}
-feols(
-  disctcr_02 ~ wp_intervention_type,
-  cluster = ~ village_id,
-  data = chlorination_data %>%
-    dplyr::filter(
-      country == "Malawi",
-      wp_intervention == "ILC"
-    )
-) %>% 
-  summary
+model <-
+  feols(
+    disctcr_02 ~ sample_group,
+    cluster = ~ village_id,
+    data = chlorination_data %>%
+      dplyr::filter(
+        country == "Malawi"
+      )
+  )
+
+summary(model)
 ```
+```{r}
+fitstat(model, type = "f") 
+```
+
 
 ```{r}
 feols(
@@ -811,7 +857,6 @@ cl_village_noweights_country <-
   bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
-
 ```
 
 ### Sensitivity checks
@@ -888,7 +933,8 @@ cl_village_vilweights <-
 
 ```{r}
 cl_village_userweights <-
-  chlorination_data %>%
+  chlorination_data %>% 
+  dplyr::filter(!is.na(weight_users)) %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
   map(
@@ -915,6 +961,72 @@ cl_village_userweights <-
 ```
 
 #### Exclude villages where it was raining
+
+```{r}
+cl_village_rain <-
+  chlorination_data %>%
+  dplyr::filter(is.na(vil_rain), country == "Uganda") %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map(
+    ~ mean_cis(
+        outcomes = c("discfcr_02", "disctcr_02"),
+        design = svydesign(
+          id = ~ village_id + wp_id,      # PSU (here: villages)
+          data = .,
+          nest = TRUE,
+          strata = ~ sample_group
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+      )
+  ) %>%
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(desc(outcome))
+```
+
+#### Exclude villages with potential interference from promoters
+
+```{r}
+cl_village_int <-
+  chlorination_data %>%
+  dplyr::filter(
+    !(village_id %in% 
+        (villages %>% 
+           dplyr::filter(potential_interference) %>% 
+           pull(village_id)
+         )
+      ),
+    country == "Uganda"
+  ) %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map(
+    ~ mean_cis(
+        outcomes = c("discfcr_02", "disctcr_02"),
+        design = svydesign(
+          id = ~ village_id + wp_id,      # PSU (here: villages)
+          data = .,
+          nest = TRUE,
+          strata = ~ sample_group
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+      )
+  ) %>%
+  bind_rows() %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(desc(outcome))
+```
 
 #### FO reports of intervention
 
@@ -1101,7 +1213,9 @@ plot_data <-
     "Weighing villages by number of users" = cl_village_userweights,
     "Without corrections to DSW/ILC status\nfrom admin data" = cl_village_fo,
     "Using self-report of DSW/ILC status" = cl_village_self,
-    "Including household with unconfirmed\nDSW/ILC status" = cl_village_all
+    "Including household with unconfirmed\nDSW/ILC status" = cl_village_all,
+    "Excluding villages with unseasonable rain" = cl_village_rain,
+    "Excluding villages with potential \npromoter interference" = cl_village_int
   ) %>%
     map(
       ~ .x %>%
