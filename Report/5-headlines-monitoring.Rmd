@@ -34,7 +34,7 @@ pacman::p_load(
 
 ```{r}
 hh_per_wp <-
-  wp_census_pm %>%
+  wp_census %>%
   dplyr::filter(
     wp_func,
     intervention != "Non-program", 
@@ -65,6 +65,7 @@ hh_per_wp <-
   bind_rows() %>%
   select(country, sample_group, wp_intervention, av_hhs = mean, av_hhs_se = se)
 ```
+
 ### Average number of people per household
 
 ```{r}
@@ -99,6 +100,7 @@ people_per_hh <-
   bind_rows() %>%
   select(country, sample_group, wp_intervention, av_size = mean, av_size_se = se)
 ```
+
 ### Total number of people per group
 
 ```{r}
@@ -129,6 +131,7 @@ total_people <-
     total_people_ub = total_people + 1.96 * total_people_se
   )
 ```
+
 ### Total number of people per country
 
 ```{r}
@@ -146,2329 +149,1621 @@ total_country <-
     total_people_se = sqrt(total_people_se_sq),
     total_people_lb = total_people - 1.96 * total_people_se,
     total_people_ub = total_people + 1.96 * total_people_se,
+  ) %>%
+  dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC"))
+```
+
+### Does it make sense to assume independence?
+
+```{r}
+cor_data <-
+  hh_survey %>% 
+  bind_rows(mon_survey) %>%
+  select(household_id, village_id, country, sample_group, wp_intervention, survey, wp_id, hh_members) %>%
+  left_join(
+    wp_census %>%
+      select(wp_id, pm_users)
+  ) %>%
+  dplyr::filter(
+    !is.na(hh_members),
+    !is.na(pm_users)
   )
+
+cor(cor_data$hh_members, cor_data$pm_users)
+
+cor_data <-
+  mon_survey %>%
+  select(household_id, village_id, country, sample_group, wp_intervention, survey, wp_id, hh_members) %>%
+  left_join(
+    wp_census %>%
+      select(wp_id, pm_users)
+  ) %>%
+  dplyr::filter(
+    !is.na(hh_members),
+    !is.na(pm_users)
+  )
+
+cor(cor_data$hh_members, cor_data$pm_users)
+
+cor.test(cor_data$hh_members, cor_data$pm_users)$conf.int
 ```
 
 
 ## Chlorination rates
-### Define function
+
+we should not remove households that are not using program water points!
+
 ```{r}
-# for chlorination - by intervention only, filters for TRUE
-calculate_mean_ci_chlorination <- function(data, var_name, weight_var) {
-  data %>%
-    mutate(weight = {{weight_var}}) %>%
-    group_by(country, sample_group, wp_intervention) %>%
-    group_split() %>%
-    map(
-      ~ {
-        design <- svydesign(
+chlorine_am <-
+  mean_cis(
+    outcomes = c("disctcr_02", "discfcr_02"),
+    design = svydesign(
+      id = ~ village_id,
+      nest = TRUE,
+      data = mon_survey %>%
+      dplyr::filter(
+        wp_func,
+        country == "Uganda"
+      )
+    )
+  )
+```
+
+```{r}
+chlorine_am <-
+  mon_survey %>%
+  dplyr::filter(
+    wp_func, 
+    wp_intervention != "Non-program",
+    !is.na(wp_intervention),
+    !(ilc & sample_group != "ILC")
+  ) %>%
+  group_by(country, wp_intervention) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+        outcomes = c("disctcr_02", "discfcr_02"),
+        design = svydesign(
           id = ~ village_id,
-          strata = ~ sample_group,
-          weights = ~ weight,
           data = .x,
           nest = TRUE
         )
-        
-        # create formula from variable name
-        formula <- as.formula(paste0("~ ", var_name))
-        
-        mean_val <- svymean(formula, na.rm = TRUE, design) %>%
-          as.data.frame() %>%
-          set_names(c("mean", "se"))
-        
-        ci_val <- confint(svymean(formula, na.rm = TRUE, design)) %>%
-          as.data.frame() %>%
-          set_names(c("lb", "ub"))
-        
-        n_val <- .x %>%
-          summarise(n = sum(!is.na(.data[[var_name]])))
-        
-        result <- bind_cols(
-          .x %>% select(country, sample_group, wp_intervention) %>% slice(1),
-          mean_val,
-          ci_val,
-          n_val
-        )
-        
-        # filter for TRUE only
-        result <- result %>% dplyr::filter(str_detect(row.names(.), "TRUE"))
-        
-        rownames(result) <- NULL
-        result
-      }
     ) %>%
-    bind_rows()
-}
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+      )
+  ) %>%
+  bind_rows %>%
+  select(country, wp_intervention, outcome, everything()) %>%
+  arrange(desc(outcome))
 ```
-
-### Final numbers
-each household (observation) gets weight 1
-```{r}
-chlorination_data_weighted_combined <- hh_survey %>%
-  dplyr::filter(survey == "Monitoring Survey") %>%
-  dplyr::filter(wp_func == "TRUE") %>%  
-  dplyr::filter(!is.na(wp_intervention)) %>%  
-  dplyr::filter(wp_intervention != "Non-program")
-
-chlorination_sef_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "watertreat_dispcl", 1)
-
-chlorination_tcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "disctcr_02", 1)
-chlorination_fcr_ci_combined <- calculate_mean_ci_chlorination(chlorination_data_weighted_combined, "discfcr_02", 1)
-
-chlorination_tcr_ci_combined
-chlorination_fcr_ci_combined
-```
-
 ## Table
+
 ```{r}
-monitoring_table <- users_table %>%
-  left_join(
-    chlorination_tcr_ci_combined %>%
-      mutate(
-        tcr = mean,
-        tcr_lb = lb,
-        tcr_ub = ub
-      ) %>%
-      select(tcr, tcr_lb, tcr_ub, country, wp_intervention),
-      by = c("country", "wp_intervention")
-  ) %>%
-  left_join(
-    chlorination_fcr_ci_combined %>%
-      mutate(
-        fcr = mean,
-        fcr_lb = lb,
-        fcr_ub = ub
-      ) %>%
-      select(fcr, fcr_lb, fcr_ub, country, wp_intervention),
-      by = c("country", "wp_intervention")
-  )
-
-monitoring_table %>% select(country, wp_intervention, n_wp, n_hh_count, pop_points, popn_users, popn_users_lb, popn_users_ub, n_wp_chl, n_hh, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub)
-```
-
-### Export Table
-```{r, message=FALSE, warning=FALSE}
-mt <- monitoring_table %>%
-  select(country, wp_intervention, n_wp, n_hh_count, pop_points,
-         popn_users, popn_users_lb, popn_users_ub,
-         n_wp_chl, n_hh, tcr, tcr_lb, tcr_ub, fcr, fcr_lb, fcr_ub) %>%
+cl <-
+  chlorine_am %>%
   mutate(
-    # For fixing the number on table to actual number 
-    pop_points = if_else(
-      country == "Malawi" & wp_intervention == "ILC",
-      as.integer(round(pop_points / 0.85, 0)),
-      pop_points
-    )
-  ) %>%
-  mutate(
-    country = factor(country, levels = c("Malawi","Uganda")),
-    wp_intervention = factor(wp_intervention, levels = c("DSW","ILC"))
-  ) %>%
-  arrange(country, wp_intervention)
-
-fmt_int <- function(x) format(round(x), big.mark = ",", trim = TRUE)
-
-rows <- character()
-
-for (i in seq_len(nrow(mt))) {
-  r <- mt[i, ]
-
-  if (i == 1 || mt$country[i] != mt$country[i-1]) {
-    if (i > 1) rows <- c(rows, "\\addlinespace")
-    rows <- c(rows, glue("\\textbf{{{r$country}}} &&&&&&&& \\\\"))
-  }
-
-  tcr_mean <- sprintf("%.1f", 100 * r$tcr)
-  tcr_ci   <- glue("({sprintf('%.1f', 100*r$tcr_lb)}, {sprintf('%.1f', 100*r$tcr_ub)})")
-  fcr_mean <- sprintf("%.1f", 100 * r$fcr)
-  fcr_ci   <- glue("({sprintf('%.1f', 100*r$fcr_lb)}, {sprintf('%.1f', 100*r$fcr_ub)})")
-
-  line1 <- glue(
-"\\hspace{{1em}}{r$wp_intervention} & {fmt_int(r$n_wp)} & {fmt_int(r$n_hh_count)} & {fmt_int(r$pop_points)} & {fmt_int(r$popn_users)} & {fmt_int(r$n_wp_chl)} & {fmt_int(r$n_hh)} & {tcr_mean} & {fcr_mean} \\\\"
-  )
-
-  line2 <- glue(
-" &  &  &  & ({fmt_int(r$popn_users_lb)}, {fmt_int(r$popn_users_ub)}) &  &  & {tcr_ci} & {fcr_ci} \\\\"
-  )
-
-  rows <- c(rows, line1, line2)
-}
-
-writeLines(
-  rows,
-  here("../output/tables/headlines-monitoring.tex")
-)
-```
-
-## Alternative tables
-### Census data, census water points, village-level (table 1)
-```{r}
-users_data <-
-  hh_census %>%
-  dplyr::filter(
-    wp_intervention != "Non-program",
-    wp_invillage,
-    !(sample_group != "ILC" & wp_intervention == "ILC")
-    )
-
-users_data <-
-  users_data %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    hh_members = if_else(
-      !is.na(hh_members), 
-      hh_members, 
-      mean(hh_members, na.rm = TRUE)
-    )
-  )
-
-users_data <-
-  users_data %>%
-  full_join(
-    village_intervention %>% 
-      select(village_id, country, sample_group, wp_intervention)
-  ) %>%
-  mutate(
-    hh_members = replace_na(hh_members, 0)
-  )
-
-users_village <-
-  users_data %>%
-  group_by(village_id, country, sample_group, wp_intervention) %>%
-  summarise(
-    response_rate = unique(response_rate),
-    hhs = n(),
-    users = sum(hh_members)
-  ) %>%
-  mutate(
-    users_increased = users/response_rate
-  )
-
-users_village <-
-  users_village %>%
-  left_join(sample_sizes) %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    weight = n_villages/n_distinct(village_id)
-  ) %>%
-  ungroup
-
-users_village <-
-  users_village %>%
-  dplyr::filter(hhs > 1)
-
-people_per_country <-
-  map(
-    users_village %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
-    ~ total_ci(
-        var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight
-        )
-      ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(hhs) %>% sum,
-        pop = .x %>% pull(n_villages) %>% unique %>% sum
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(
-    country, wp_intervention, 
-    outcome, 
-    villages,
-    everything()
-  ) %>%
-  arrange(outcome)
-
-table1 <- people_per_country %>%
-  select(country, wp_intervention, total, lb, ub, se) %>%
-  mutate(
-    indiv_access_popn = total
-  ) %>%
-  select(-total) 
-
-table1
-
-table1country <- table1 %>%
-  group_by(country) %>%
-  summarise(
-    indiv_access_popn = sum(indiv_access_popn),
-    # SE of sum: sqrt(sum of squared SEs) assuming independence
-    se = sqrt(sum(se^2, na.rm = TRUE))
-  ) %>%
-  # CI
-  mutate(
-    lb = indiv_access_popn - 1.96 * se,
-    ub = indiv_access_popn + 1.96 * se
-  )
-
-table1country
-```
-
-### Census data, census water points, water-point level (new table 2, old table 12)
-requires that you run 1-input-data and then 3-headlines-wp first
-```{r}
-users_data <-
-  hh_census_wp %>%
-  dplyr::filter(
-    wp_intervention != "Non-program",
-    !(sample_group != "ILC" & wp_intervention == "ILC"),
-    # These are households using water points outside of the village
-    # that were found to have DSW. Since we don't have a water point ID
-    # for them, we cannot used them fow water point-level estimtes
-    !is.na(wp_id),
-    !(country == "Uganda" & wp_intervention == "ILC"),
-    !(country == "Uganda" & sample_group == "ILC")
-  ) %>%
-  left_join(
-    wp_census %>%
-      dplyr::filter(dsw | ilc_wcp) %>%
-      group_by(country, sample_group, wp_intervention) %>%
-      summarise(
-        func_rate = mean(wp_func, na.rm = TRUE)
-      )
-  ) %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  mutate(
-    func_points = func_rate * pop_points,
-    weight = n_distinct(wp_id)/func_points,
-    weight_nofunc = n_distinct(wp_id)/pop_points
-  ) %>% 
-  ungroup
-
-users_data <-
-  users_data %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    hh_members = if_else(
-      !is.na(hh_members), 
-      hh_members, 
-      mean(hh_members, na.rm = TRUE)
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% 
+        round(1) %>% 
+        str_remove_all(" ")
     ),
-    hh_members_increased = hh_members/response_rate
-  )
-
-users_wp_country <-
-  users_data %>%
-  group_by(
-    country, wp_intervention
+    ci = paste0("(", lb, ", ", ub, ")") ,
+    hhs = hhs %>% format(big.mark = ",")
   ) %>%
-  group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(household_id) %>% n_distinct,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, wp_intervention, outcome, everything()) %>%
-  arrange(outcome)
-
-table2 <- users_wp_country %>%
-  select(country, wp_intervention, total, lb, ub) %>%
-  mutate(
-    indiv_access_popn = total
-  ) %>%
-  select(-total)
-
-table2
-```
-
-### Census data, census water points, village-level, excluding outside HHs
-I scale the estimates from Table 1 by the simple average share of households located within village boundaries for each intervention type in each country.
-```{r}
-in_village_share <- hh_census %>%
-  dplyr::filter(
-    wp_intervention != "Non-program",
-    wp_invillage,
-    !(sample_group != "ILC" & wp_intervention == "ILC")
-  ) %>%
-  group_by(country, wp_intervention) %>%
-  summarise(
-    total_people = sum(hh_members, na.rm = TRUE),
-    in_village_people = sum(hh_members[inclusion == "Within village boundaries"], na.rm = TRUE),
-    share_in_village = in_village_people / total_people,
-    .groups = "drop"
-  ) 
-
-in_village_share
-
-# apply this to table 1
-table1_exout <- table1 %>%
-  left_join(
-    in_village_share %>% select(country, wp_intervention, share_in_village),
-    by = c("country", "wp_intervention")
-  ) %>%
-  mutate(
-    indiv_access_popn = indiv_access_popn * share_in_village
-    # lb = lb * share_in_village, # this is probably inaccurate but we don't use the lb / ub / se from these intermediate tables
-    # ub = ub * share_in_village,
-    # se = se * share_in_village
-  ) %>%
-  select(country, wp_intervention, indiv_access_popn) #, lb, ub, se)
-
-table1_exout
-
-# country totals
-table1country_exout <- table1_exout %>%
-  group_by(country) %>%
-  summarise(
-    indiv_access_popn = sum(indiv_access_popn)
-    # se = sqrt(sum(se^2, na.rm = TRUE))
-  ) 
-  # mutate(
-  #   lb = indiv_access_popn - 1.96 * se,
-  #   ub = indiv_access_popn + 1.96 * se
-  # )
-
-table1country_exout
-```
-
-### Census data, census water points, water-point level, excluding outside HHs
-
-```{r}
-table2_exout <- table2 %>%
-  left_join(
-    in_village_share %>% select(country, wp_intervention, share_in_village),
-    by = c("country", "wp_intervention")
-  ) %>%
-  mutate(
-    indiv_access_popn = indiv_access_popn * share_in_village
-    # lb = lb * share_in_village,
-    # ub = ub * share_in_village
-  ) %>%
-  select(country, wp_intervention, indiv_access_popn) #, lb, ub)
-
-table2_exout
-```
-
-### Census data, but promoter survey water points (old table 10)
-```{r}
-users_data <-
-  hh_census_wp %>%
-  dplyr::filter(
-    # filter for promoter survey water points
-    promoter_surveyed == "TRUE",
-    wp_intervention != "Non-program",
-    !(sample_group != "ILC" & wp_intervention == "ILC"),
-    !is.na(wp_id)
-  ) %>%
-  left_join(
-    wp_census %>%
-      dplyr::filter(dsw | ilc_wcp) %>%
-      group_by(country, sample_group, wp_intervention) %>%
-      summarise(
-        func_rate = mean(wp_func, na.rm = TRUE)
-      )
-  ) %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  mutate(
-    func_points = func_rate * pop_points,
-    weight = n_distinct(wp_id)/func_points,
-    weight_nofunc = n_distinct(wp_id)/pop_points
-  ) %>% 
-  ungroup
-
-users_data <-
-  users_data %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    hh_members = if_else(
-      !is.na(hh_members), 
-      hh_members, 
-      mean(hh_members, na.rm = TRUE)
-    ),
-    hh_members_increased = hh_members/response_rate
-  ) 
-
-users_wp <-
-  users_data %>%
-  group_by(
-    country, sample_group, wp_intervention
-  ) %>%
-  group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(household_id) %>% n_distinct,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(outcome)
-
-users_wp_country <-
-  users_data %>%
-  group_by(
-    country, wp_intervention
-  ) %>%
-  group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(household_id) %>% n_distinct,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, wp_intervention, outcome, everything()) %>%
-  arrange(outcome)
-
-table10 <- users_wp_country %>%
-  mutate(
-    indiv_access_popn = total
-  ) %>%
-  select(country, wp_intervention, indiv_access_popn, lb, ub)
-
-table10
-```
-
-### Census data, but promoter survey water points, excluding out of village
-```{r}
-users_data <-
-  hh_census_wp %>%
-  dplyr::filter(
-    # filter for promoter survey water points
-    promoter_surveyed == "TRUE",
-    # filter for inside village
-      inclusion == "Within village boundaries",
-    wp_intervention != "Non-program",
-    !(sample_group != "ILC" & wp_intervention == "ILC"),
-    !is.na(wp_id)
-  ) %>%
-  left_join(
-    wp_census %>%
-      dplyr::filter(dsw | ilc_wcp) %>%
-      group_by(country, sample_group, wp_intervention) %>%
-      summarise(
-        func_rate = mean(wp_func, na.rm = TRUE)
-      )
-  ) %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  mutate(
-    func_points = func_rate * pop_points,
-    weight = n_distinct(wp_id)/func_points,
-    weight_nofunc = n_distinct(wp_id)/pop_points
-  ) %>% 
-  ungroup
-
-users_data <-
-  users_data %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    hh_members = if_else(
-      !is.na(hh_members), 
-      hh_members, 
-      mean(hh_members, na.rm = TRUE)
-    ),
-    hh_members_increased = hh_members/response_rate
-  ) 
-
-users_wp <-
-  users_data %>%
-  group_by(
-    country, sample_group, wp_intervention
-  ) %>%
-  group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(household_id) %>% n_distinct,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(outcome)
-
-users_wp_country <-
-  users_data %>%
-  group_by(
-    country, wp_intervention
-  ) %>%
-  group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(household_id) %>% n_distinct,
-        wps = .x %>% pull(wp_id) %>% n_distinct,
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(country, wp_intervention, outcome, everything()) %>%
-  arrange(outcome)
-
-table10_exout <- users_wp_country %>%
-  mutate(
-    indiv_access_popn = total
-  ) %>%
-  select(country, wp_intervention, indiv_access_popn, lb, ub)
-
-table10_exout
-```
-
-### Monitoring data, promoter survey water points, exluding outside HHs (old table 13)
-```{r}
-hh_count_data <- wp_census %>%
-  dplyr::filter(promoter_surveyed == "TRUE") %>%
-  dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  mutate(pm_users_adjusted = pm_users - pm_users_outside)
-
-hh_count <- calculate_mean_ci(hh_count_data, "pm_users_adjusted", 1)
-
-hh_size_data <- hh_survey %>%
-  dplyr::filter(survey == "Monitoring Survey") %>%
-  dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  mutate(hh_weight = 1)
-
-# calculate CIs
-hh_size <- calculate_mean_ci(hh_size_data, "hh_members", hh_weight)
-
-# combine hh_count and hh_size CIs and calculate users with CIs
-users_with_ci_combined <- hh_count %>%
-  # rename columns to be clearer
-  rename(
-    hh_count = mean,
-    se_hh_count = se,
-    hh_count_lb = lb,
-    hh_count_ub = ub
-  ) %>%
-  # join with hh_size
-  left_join(
-    hh_size %>%
-      rename(
-        hh_size = mean,
-        se_hh_size = se,
-        hh_size_lb = lb,
-        hh_size_ub = ub
-      ),
-    by = c("country", "sample_group", "wp_intervention")) %>%
-  # calculate per_wp_users and its SE using delta method
-  mutate(
-    per_wp_users = hh_count * hh_size,
-    # delta method: SE(X*Y) = sqrt((Y^2 * SE_X^2) + (X^2 * SE_Y^2))
-    # assuming X and Y are independent
-    se_per_wp_users = sqrt(
-      (hh_size^2) * (se_hh_count^2) + 
-      (hh_count^2) * (se_hh_size^2)
-    ),
-    # 95% CI for per_wp_users
-    per_wp_users_lb = per_wp_users - 1.96 * se_per_wp_users,
-    per_wp_users_ub = per_wp_users + 1.96 * se_per_wp_users
-  ) %>%
-  # join with population water points - sum across sample_groups
-  left_join(
-    wp_sample_sizes,
-    by = c("country", "sample_group", "wp_intervention")
-  ) %>%
-  # scale up to population
-  mutate(
-    popn_users = per_wp_users * pop_points,
-    # SE scales linearly with constant: SE(c*X) = c * SE(X)
-    se_popn_users = se_per_wp_users * pop_points,
-    # 95% CI for popn_users
-    popn_users_lb = popn_users - 1.96 * se_popn_users,
-    popn_users_ub = popn_users + 1.96 * se_popn_users
-  )
-
-users_with_ci_combined %>% select(country, sample_group, wp_intervention, popn_users, popn_users_lb, popn_users_ub)
-
-table13 <- users_with_ci_combined %>%
-  group_by(country, wp_intervention) %>%
-  summarise(
-    se_popn_users = sqrt(sum(se_popn_users^2, na.rm = TRUE)),
-    popn_users = sum(popn_users)
-  )%>%
-  # CI
-  mutate(
-    lb = popn_users - 1.96 * se_popn_users,
-    ub = popn_users + 1.96 * se_popn_users
-  ) %>%
-  mutate(
-    indiv_access_popn = popn_users
-  ) %>%
-  select(-popn_users, -se_popn_users)
-
-table13
-```
-
-
-## Waterfall charts
-### with CIs
-```{r}
-# create CI bounds dataframe for table1 and table8
-ci_bounds <- table1country %>%
-  dplyr::select(country, lb, ub) %>%
-  mutate(
-    table = "table1"
-  ) %>%
-  rbind(
-    table8country %>%
-      dplyr::select(country, lb, ub) %>%
-      mutate(table = "table8")
-  )
-
-estimates <- table1 %>%
-  group_by(country) %>%
-  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
-  left_join(
-    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table2_exout %>% group_by(country) %>% summarise(table2_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    ci_bounds %>% dplyr::filter(table == "table1") %>% dplyr::select(country, lb_table1 = lb, ub_table1 = ub),
-    by = "country"
-  ) %>%
-  left_join(
-    ci_bounds %>% dplyr::filter(table == "table8") %>% dplyr::select(country, lb_table8 = lb, ub_table8 = ub),
-    by = "country"
-  )
-
-# calculate differences for waterfall chart
-create_waterfall <- function(country_name, country_data) {
-  
-  df <- data.frame(
-    category = c("Table 1", 
-                "Exclude \ncensus\nout-of-village\nhouseholds", 
-                "Unit of\nobservation",
-                "Sample \nselection\nof water points",
-                "Dataset",
-                "Promoter\nsurvey\nout-of-village\nhouseholds",
-                "Table 3"),
-    amount = c(
-      country_data$table1,
-      country_data$table1_exout - country_data$table1,
-      country_data$table2_exout - country_data$table1_exout,
-      country_data$table10_exout - country_data$table2_exout,
-      country_data$table13 - country_data$table10_exout,
-      country_data$table8 - country_data$table13,
-      country_data$table8),
-    ci_lb = c(
-      country_data$lb_table1,
-      NA,
-      NA,
-      NA,
-      NA,
-      NA,
-      country_data$lb_table8),
-    ci_ub = c(
-      country_data$ub_table1,
-      NA,
-      NA,
-      NA,
-      NA,
-      NA,
-      country_data$ub_table8)
-  )
-  
-  # round (to 20k)
-  df <- df %>%
-    mutate(
-      amount_rounded = round(amount / 20000) * 20000
-    )
-  
-  df$category <- factor(df$category, levels = df$category)
-  
-  # calculate positions
-  df <- df %>%
-    mutate(
-      id = row_number(),
-      type = case_when(
-        id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",
-        amount_rounded < 0 ~ "decrease",
-        TRUE ~ "increase"
-      ),
-      end = cumsum(amount_rounded),
-      start = dplyr::lag(end, n = 1, default = 0, order_by = id)
-    ) %>%
-    mutate(
-      start = ifelse(type == "total", 0, start),
-      end = ifelse(type == "total", amount_rounded, end)
-    )
-  
-  # create waterfall charts
-  ggplot(df, aes(x = category, fill = type)) +
-    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
-                  ymin = start, ymax = end)) +
-    # add CI error bars for table1 and table8
-    geom_segment(
-      data = df %>% dplyr::filter(!is.na(ci_lb)),
-      aes(x = id - 0.1, xend = id + 0.1, y = ci_lb, yend = ci_lb),
-      color = "black",
-      linewidth = 1,
-      inherit.aes = FALSE
-    ) +
-    geom_segment(
-      data = df %>% dplyr::filter(!is.na(ci_lb)),
-      aes(x = id - 0.1, xend = id + 0.1, y = ci_ub, yend = ci_ub),
-      color = "black",
-      linewidth = 1,
-      inherit.aes = FALSE
-    ) +
-    geom_segment(
-      data = df %>% dplyr::filter(!is.na(ci_lb)),
-      aes(x = id, xend = id, y = ci_lb, yend = ci_ub),
-      color = "black",
-      linewidth = 1,
-      inherit.aes = FALSE
-    ) +
-    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
-              vjust = -0.5, size = 4, fontface = "bold") +
-    scale_fill_manual(values = c("decrease" = "#d73027", 
-                                  "increase" = "#4575b4",
-                                  "dataset" = "#FDB462",
-                                  "total" = "#4575b4"),
-                      na.value = NA) +   
-    labs(
-      y = "People with access",
-      x = NULL) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_y_continuous(limits = c(0, max(c(df$end, df$ci_ub), na.rm = TRUE) * 1.1), 
-                       labels = scales::comma)
-}
-
-# create plots for each country
-uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
-malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
-
-waterfall_uganda <- create_waterfall("Uganda", uganda_data)
-waterfall_malawi <- create_waterfall("Malawi", malawi_data)
-
-ggsave("output/waterfall_uganda.pdf", 
-       plot = waterfall_uganda, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-ggsave("output/waterfall_malawi.pdf", 
-       plot = waterfall_malawi, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-
-waterfall_uganda
-waterfall_malawi
-```
-
-### without CIs
-```{r}
-estimates <- table1 %>%
-  group_by(country) %>%
-  summarise(table1 = sum(indiv_access_popn, na.rm = TRUE)) %>%
-  left_join(
-    table1_exout %>% group_by(country) %>% summarise(table1_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table2_exout %>% group_by(country) %>% summarise(table2_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table10_exout %>% group_by(country) %>% summarise(table10_exout = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table13 %>% group_by(country) %>% summarise(table13 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  ) %>%
-  left_join(
-    table8 %>% group_by(country) %>% summarise(table8 = sum(indiv_access_popn, na.rm = TRUE)),
-    by = "country"
-  )
-
-# calculate differences for waterfall chart
-create_waterfall <- function(country_name, country_data) {
-  
-  df <- data.frame(
-  category = c("Table 1", 
-              "Exclude \ncensus\nout-of-village\nhouseholds", 
-              "Unit of\nobservation",
-              "Sample \nselection\nof water points",
-              "Dataset",
-              "Promoter\nsurvey\nout-of-village\nhouseholds",
-              "Table 8"),
-  amount = c(
-    country_data$table1,
-    country_data$table1_exout - country_data$table1,
-    country_data$table2_exout - country_data$table1_exout,
-    country_data$table10_exout - country_data$table2_exout,
-    country_data$table13 - country_data$table10_exout,
-    country_data$table8 - country_data$table13,
-    country_data$table8)
-  )
-  
-# round (to 20k)
-df <- df %>%
-    mutate(amount_rounded = round(amount / 20000) * 20000)
-  
-  df$category <- factor(df$category, levels = df$category)
-  
-# calculate positions
-  df <- df %>%
-    mutate(
-      id = row_number(),
-      type = case_when(
-        id == 1 | id == n() ~ "total",
-        id == 5 ~ "dataset",
-        amount_rounded < 0 ~ "decrease",
-        TRUE ~ "increase"
-      ),
-      end = cumsum(amount_rounded),
-      start = dplyr::lag(end, n = 1,  default = 0, order_by = id)
-    )  %>%
-    mutate(
-      start = ifelse(type == "total", 0, start),
-      end = ifelse(type == "total", amount_rounded, end)
-    )
- 
-# create waterfall charts
-  ggplot(df, aes(x = category, fill = type)) +
-    geom_rect(aes(xmin = id - 0.45, xmax = id + 0.45, 
-                  ymin = start, ymax = end)) +
-    geom_text(aes(x = id, y = end, label = scales::comma(abs(amount_rounded))), 
-              vjust = -0.5, size = 4, fontface = "bold") +
-    scale_fill_manual(values = c("decrease" = "#d73027", 
-                                  "increase" = "#4575b4",
-                                  "dataset" = "#FDB462",
-                                  "total" = "#4575b4")) +   
-    labs(
-      # title = paste("Breaking down the difference between census and monitoring\nestimates for", country_name),
-         y = "People with access",
-         x = NULL) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),
-      # plot.title = element_text(size = 14, face = "bold"),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_y_continuous(limits = c(0, max(df$end) * 1.1), 
-                       labels = scales::comma)
-}
-
-# create plots for each country
-uganda_data <- estimates %>% dplyr::filter(country == "Uganda")
-malawi_data <- estimates %>% dplyr::filter(country == "Malawi")
-
-waterfall_uganda <- create_waterfall("Uganda", uganda_data)
-waterfall_malawi <- create_waterfall("Malawi", malawi_data)
-
-ggsave("output/waterfall_uganda.pdf", 
-       plot = waterfall_uganda, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-
-ggsave("output/waterfall_malawi.pdf", 
-       plot = waterfall_malawi, 
-       width = 8, 
-       height = 6, 
-       units = "in",
-       device = "pdf")
-```
-
-##----MENTIONED IN REPORT---------------
-### difference in estimates: table 1 vs table 3
-```{r}
-# combine the two tables with an identifier
-comparison_data <- bind_rows(
-  table1country %>% 
-    mutate(table = "table1") %>%
-    select(country, table, indiv_access_popn, se),
-  table8country %>% 
-    mutate(table = "table8") %>%
-    select(country, table, indiv_access_popn, se = se_popn_users)
-)
-
-# perform t-test for each country
-# since we have point estimates and standard errors, we'll use a two-sample z-test approach
-comparison_data %>%
-  group_by(country) %>%
-  summarise(
-    diff = indiv_access_popn[table == "table8"] - indiv_access_popn[table == "table1"],
-    se_diff = sqrt(se[table == "table8"]^2 + se[table == "table1"]^2),
-    z_stat = diff / se_diff,
-    p_value = 2 * (1 - pnorm(abs(z_stat))),
-    table1_est = indiv_access_popn[table == "table1"],
-    table8_est = indiv_access_popn[table == "table8"]
-  )
-```
-
-### WP sample
-#### table 4
-```{r}
-wp_table <- wp_census %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  summarise(
-    wp_census = n_distinct(wp_id),
-    wp_functional = n_distinct(wp_id[wp_func == TRUE]),
-    promoter_surveyed_f = n_distinct(wp_id[promoter_surveyed == TRUE & wp_func == TRUE]),
-    promoter_surveyed = n_distinct(wp_id[promoter_surveyed == TRUE]),
-    .groups = "drop"
-  )%>%
-  left_join(wp_sample_sizes, by = c("country", "sample_group", "wp_intervention")) %>%
-  left_join(
-    ea_list_malawi %>%
-      group_by(country, sample_group, wp_intervention) %>%
-      summarise(ea_list_malawi_count = n_distinct(i102_wpt_id), .groups = "drop"),
-    by = c("country", "sample_group", "wp_intervention")
-  ) %>%
-  left_join(
-    ea_list_uganda %>%
-      group_by(country, sample_group, wp_intervention) %>%
-      summarise(ea_list_uganda_count = n_distinct(i102_wpt_id), .groups = "drop"),
-    by = c("country", "sample_group", "wp_intervention")
-  )# %>%
-  #dplyr::filter(wp_intervention != "Non-program")
-
-wp_table
-
-# generate latex table
-wp_table_latex <- wp_table %>%
-  mutate(
-    ea_list_count = coalesce(ea_list_malawi_count, ea_list_uganda_count)
-  ) %>%
-  select(country, sample_group, wp_intervention, pop_points, wp_census, wp_functional, ea_list_count, promoter_surveyed, promoter_surveyed_f)
-
-malawi_footprint <- wp_table_latex %>%
-  dplyr::filter(country == "Malawi", sample_group == "Footprint", wp_intervention == "DSW") %>%
-  mutate(sample_group = "Footprint")
-
-malawi_expansion <- wp_table_latex %>%
-  dplyr::filter(country == "Malawi", sample_group == "Expansion", wp_intervention == "DSW") %>%
-  mutate(sample_group = "Expansion")
-
-malawi_dsw_ilc <- wp_table_latex %>%
-  dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "DSW") %>%
-  mutate(sample_group = "DSW in ILC vill.")
-
-malawi_ilc <- wp_table_latex %>%
-  dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "ILC") %>%
-  mutate(sample_group = "ILC")
-
-malawi_data <- bind_rows(malawi_footprint, malawi_expansion, malawi_dsw_ilc, malawi_ilc) %>%
-  select(-country, -wp_intervention)
-
-uganda_footprint <- wp_table_latex %>%
-  dplyr::filter(country == "Uganda", sample_group == "Footprint", wp_intervention == "DSW") %>%
-  mutate(sample_group = "Footprint")
-
-uganda_expansion <- wp_table_latex %>%
-  dplyr::filter(country == "Uganda", sample_group == "Expansion", wp_intervention == "DSW") %>%
-  mutate(sample_group = "Expansion")
-
-uganda_data <- bind_rows(uganda_footprint, uganda_expansion) %>%
-  select(-country, -wp_intervention)
-
-malawi_total <- malawi_data %>%
-  summarise(
-    sample_group = "\\textbf{Total EA points}",
-    pop_points = sum(pop_points, na.rm = TRUE),
-    wp_census = sum(wp_census, na.rm = TRUE),
-    wp_functional = sum(wp_functional, na.rm = TRUE),
-    ea_list_count = sum(ea_list_count, na.rm = TRUE),
-    promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE),
-    promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE)
-  )
-
-uganda_total <- uganda_data %>%
-  summarise(
-    sample_group = "\\textbf{Total EA points}",
-    pop_points = sum(pop_points, na.rm = TRUE),
-    wp_census = sum(wp_census, na.rm = TRUE),
-    wp_functional = sum(wp_functional, na.rm = TRUE),
-    ea_list_count = sum(ea_list_count, na.rm = TRUE),
-    promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE),
-    promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE)
-  )
-
-malawi_section <- bind_rows(malawi_data, malawi_total)
-uganda_section <- bind_rows(uganda_data, uganda_total)
-
-malawi_section <- malawi_section %>%
-  mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE)))
-
-uganda_section <- uganda_section %>%
-  mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE)))
-
-cat("\\begin{table}[htbp]\\centering\n")
-cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n")
-cat("\\begin{tabular}{l*{6}c}\n")
-cat("\\hline\\hline\n")
-cat("& (1) & (2) & (3) & (4) & (5) & (6)\\\\\n")
-cat("                   & Country Total & WP Census & \\shortstack{WP Census \\\\Functional} & \\shortstack{Evidence Action \\\\ Promoter List} & \\shortstack{DIL Promoter \\\\Survey} & \\shortstack{DIL Promoter \\\\Survey Functional}\\n")
-cat("\\hline\n")
-cat("\\textbf{Malawi}                  &            &           &        &        &         &         \\\\\n")
-cat("\\hline\n")
-
-for(i in 1:nrow(malawi_section)) {
-  row <- malawi_section[i,]
-  cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n",
-              row$sample_group, row$pop_points, row$wp_census, 
-              row$wp_functional, row$ea_list_count, row$promoter_surveyed, 
-              row$promoter_surveyed_f))
-}
-
-cat("\\hline\n")
-cat("\\textbf{Uganda}                  &            &          &        &        &        &        \\\\\n")
-cat("\\hline\n")
-
-for(i in 1:nrow(uganda_section)) {
-  row <- uganda_section[i,]
-  cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n",
-              row$sample_group, row$pop_points, row$wp_census, 
-              row$wp_functional, row$ea_list_count, row$promoter_surveyed,
-              row$promoter_surveyed_f))
-}
-
-cat("\\hline\\hline\n")
-cat("\\end{tabular}\n")
-cat("\\end{table}\n")
-```
-
-#### uganda text
-```{r}
-ea_promoters_uganda <-
-  ea_promoters_uganda %>%
-  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
-  dplyr::filter(wp_intervention != "ILC")
-
-# Calculate metrics
-n_promoters <- nrow(ea_promoters_uganda)
-n_unique_wps <- ea_promoters_uganda %>%
-  pull(i102_wpt_id) %>%
-  n_distinct()
-
-n_in_wp_census <- ea_promoters_uganda %>%
-  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
-  distinct(i102_wpt_id) %>%
-  nrow()
-
-n_promoter_surveyed <- wp_census %>%
-  dplyr::filter(ea_id %in% ea_promoters_uganda$i102_wpt_id, promoter_surveyed == TRUE) %>%
-  distinct(ea_id) %>%
-  nrow()
-
-n_surveyed_no_ea_info <- wp_census %>%
-  dplyr::filter(promoter_surveyed == TRUE, 
-         !ea_id %in% ea_promoters_uganda$i102_wpt_id,
-         country == "Uganda") %>%
-  distinct(wp_id) %>%
-  nrow()
-
-n_total_promoter_surveys <- wp_census %>%
-  group_by(sample_group, wp_intervention) %>%
-  dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>%
-  distinct(wp_id) %>%
-  nrow()
-
-n_program_promoter_surveys <- wp_census %>%
-  group_by(sample_group, wp_intervention) %>%
-  dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>%
-  dplyr::filter(wp_intervention == "Non-program") %>%
-  distinct(wp_id) %>%
-  nrow()
-
-glue("In Uganda, Evidence Action provided information for {n_promoters} promoters of non-ILC water points in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information, for a total of {n_total_promoter_surveys} promoter surveys in Uganda, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.")
-```
-
-#### malawi text
-```{r}
-ea_promoters_malawi <- ea_promoters_malawi %>%
-  # select(-wcp102_wpt_id) %>%
-  dplyr::filter(villageid %in% sampled_villages$village_id) %>%
-  unique
-
-# Calculate metrics
-n_promoters_ <- nrow(ea_promoters_malawi)
-n_unique_wps <- ea_promoters_malawi %>%
-  pull(i102_wpt_id) %>%
-  n_distinct()
-
-n_in_wp_census <- ea_promoters_malawi %>%
-  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
-  distinct(i102_wpt_id) %>%
-  nrow()
-
-n_in_wp_census_program <- ea_promoters_malawi %>%
-  dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>%
-  dplyr::filter(wp_intervention == "DSW" | wp_intervention == "ILC") %>%
-  distinct(i102_wpt_id) %>%
-  nrow()
-
-n_promoter_surveyed <- wp_census %>%
-  dplyr::filter(ea_id %in% ea_promoters_malawi$i102_wpt_id, promoter_surveyed == TRUE) %>%
-  distinct(ea_id) %>%
-  nrow()
-
-n_surveyed_no_ea_info <- wp_census %>%
-  dplyr::filter(promoter_surveyed == TRUE, 
-         !ea_id %in% ea_promoters_malawi$i102_wpt_id,
-         country == "Malawi") %>%
-  distinct(wp_id) %>%
-  nrow()
-
-n_total_promoter_surveys <- wp_census %>%
-  group_by(sample_group, wp_intervention) %>%
-  dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>%
-  distinct(wp_id) %>%
-  nrow()
-
-n_program_promoter_surveys <- wp_census %>%
-  group_by(sample_group, wp_intervention) %>%
-  dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>%
-  dplyr::filter(wp_intervention == "Non-program") %>%
-  distinct(wp_id) %>%
-  nrow()
-
-glue("In Malawi, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of {n_total_promoter_surveys} promoter surveys in Malawi, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.")
-```
-### hhs outside 
-```{r}
-hh_outside <- wp_census %>%
-  dplyr::filter(promoter_surveyed == TRUE) %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  group_by(country, sample_group, wp_intervention, wp_id) %>%
-  summarize(
-    hh_outside = sum(pm_users_outside, na.rm = TRUE),
-    hh_users = sum(pm_users, na.rm = TRUE),
-    hh_outside_share = hh_outside/hh_users
-  ) %>%
-  group_by(country) %>%
-  summarize(
-    hh_outside_avg = mean(hh_outside),
-    hh_users_avg = mean(hh_users),
-    hh_outside_share = mean(hh_outside_share, na.rm = TRUE)
-  ) 
-hh_outside
-
-hh_outside_all <- hh_census %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  group_by(country, sample_group, wp_intervention, wp_id) %>%
-  summarize(
-    hh_outside = sum(inclusion == "Up to 200m outside of village boundaries"),
-    hh_users = n_distinct(household_id),
-    hh_outside_share = hh_outside/hh_users
-  ) %>%
-  group_by(country) %>%
-  summarize(
-    hh_outside_avg = mean(hh_outside),
-    hh_users_avg = mean(hh_users),
-    hh_outside_share = mean(hh_outside_share, na.rm = TRUE)
-  ) 
-  
-hh_outside_all  
-```
-
-### sample selection
-####hh size
-#####by promoter list
-```{r}
-hh_size_promoter <- hh_census %>%
-  dplyr::filter(promoter_list == TRUE) %>%
-  dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  mutate(hh_weight = 1)
-
-# calculate CIs
-hh_size_promoter_avg <- calculate_mean_ci(hh_size_promoter, "hh_members", hh_weight)
-
-hh_size_nonpromoter <- hh_census %>%
-  dplyr::filter(promoter_list == FALSE) %>%
-  dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  mutate(hh_weight = 1)
-
-# calculate CIs
-hh_size_nonpromoter_avg <- calculate_mean_ci(hh_size_nonpromoter, "hh_members", hh_weight)
-
-hh_size_promoter_avg
-hh_size_nonpromoter_avg
-
-# combine the two datasets and run t-tests
-hh_size_comparison <- bind_rows(
-  hh_size_promoter_avg %>% mutate(promoter_list = TRUE),
-  hh_size_nonpromoter_avg %>% mutate(promoter_list = FALSE)
-)
-
-# run t-tests for each country/sample_group/intervention combination
-hh_size_ttest <- hh_size_comparison %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  group_split() %>%
-  map_df(
-    ~ {
-      # extract the two means and SEs
-      promoter_row <- .x %>% dplyr::filter(promoter_list == TRUE)
-      nonpromoter_row <- .x %>% dplyr::filter(promoter_list == FALSE)
-      
-      # calculate n from original datasets
-      n_prom <- hh_size_promoter %>%
-        dplyr::filter(country == unique(.x$country),
-                     sample_group == unique(.x$sample_group),
-                     wp_intervention == unique(.x$wp_intervention)) %>%
-        nrow()
-      n_nonprom <- hh_size_nonpromoter %>%
-        dplyr::filter(country == unique(.x$country),
-                     sample_group == unique(.x$sample_group),
-                     wp_intervention == unique(.x$wp_intervention)) %>%
-        nrow()
-      
-      # calculate z-statistic (using normal approximation since we have SEs)
-      diff <- promoter_row$mean - nonpromoter_row$mean
-      se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2)
-      z_stat <- diff / se_diff
-      p_value <- 2 * (1 - pnorm(abs(z_stat)))
-      
-      tibble(
-        country = unique(.x$country),
-        sample_group = unique(.x$sample_group),
-        wp_intervention = unique(.x$wp_intervention),
-        mean_promoter = promoter_row$mean,
-        mean_nonpromoter = nonpromoter_row$mean,
-        n_promoter = n_prom,
-        n_nonpromoter = n_nonprom,
-        difference = diff,
-        se_difference = se_diff,
-        z_statistic = z_stat,
-        p_value = p_value,
-        significant = p_value < 0.1
-      )
-    }
-  )
-
-hh_size_ttest
-```
-
-###### LaTeX table
-```{r}
-# function to add significance stars
-add_stars <- function(p_value) {
-  if (p_value < 0.01) return("\\sym{***}")
-  if (p_value < 0.05) return("\\sym{**}")
-  if (p_value < 0.10) return("\\sym{*}")
-  return("")
-}
-
-# prepare data for table
-table_data <- hh_size_ttest %>%
-  mutate(
-    stars = map_chr(p_value, add_stars),
-    # format the numbers to 2 decimal places
-    mean_promoter_fmt = sprintf("%.2f", mean_promoter),
-    mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter),
-    difference_fmt = paste0(sprintf("%.2f", difference), stars)
-  ) %>%
-  # create row labels
-  mutate(
-    row_label = case_when(
-      wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint",
-      wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion",
-      wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.",
-      wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC",
-      TRUE ~ paste(sample_group, wp_intervention)
-    )
-  ) %>%
-  arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC")))
-
-# start building latex table
-latex_lines <- c(
-  "\\begin{table}[htbp]\\centering",
-  "\\caption{Difference in mean household size according to Household Census by whether household is in any promoter's list}",
-  "\\label{tab:hh_size_pmsurvey}",
-  "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}",
-  "\\begin{tabular}{l*{5}c}",
-  "\\hline\\hline",
-  "& \\multicolumn{2}{c}{Listed by Promoter} & \\multicolumn{2}{c}{Not Listed by Promoter} & \\\\",
-  "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}",
-  "& Mean & N & Mean & N & Difference\\\\",
-  "\\hline"
-)
-
-# add malawi section
-latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline")
-malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
-for (i in 1:nrow(malawi_data)) {
-  latex_lines <- c(latex_lines, 
-    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
-      malawi_data$row_label[i],
-      malawi_data$mean_promoter_fmt[i],
-      malawi_data$n_promoter[i],
-      malawi_data$mean_nonpromoter_fmt[i],
-      malawi_data$n_nonpromoter[i],
-      malawi_data$difference_fmt[i]
-    )
-  )
-}
-
-# add uganda section
-latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline")
-uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
-for (i in 1:nrow(uganda_data)) {
-  latex_lines <- c(latex_lines, 
-    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
-      uganda_data$row_label[i],
-      uganda_data$mean_promoter_fmt[i],
-      uganda_data$n_promoter[i],
-      uganda_data$mean_nonpromoter_fmt[i],
-      uganda_data$n_nonpromoter[i],
-      uganda_data$difference_fmt[i]
-    )
-  )
-}
-
-# close table
-latex_lines <- c(latex_lines,
-  "\\hline\\hline",
-  "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\",
-  "\\end{tabular}",
-  "\\end{table}"
-)
-
-# print the table
-cat(latex_lines, sep = "\n")
-```
-
-#####by monitoring survey
-```{r}
-hh_size_monitoring <- hh_survey %>%
-  dplyr::filter(promoter_surveyed == TRUE) %>%
-  dplyr::filter(survey == "Monitoring Survey") %>%
-  dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  mutate(hh_weight = 1)
-
-# calculate CIs
-hh_size_monitoring_avg <- calculate_mean_ci(hh_size_monitoring, "hh_members", hh_weight)
-
-hh_size_household <- hh_survey %>%
-  dplyr::filter(promoter_surveyed == TRUE) %>%
-  dplyr::filter(survey == "Household Survey") %>%
-  dplyr::filter(wp_func == "TRUE") %>%
-  dplyr::filter(wp_intervention != "Non-program") %>%
-  mutate(hh_weight = 1)
-
-# calculate CIs
-hh_size_household_avg <- calculate_mean_ci(hh_size_household, "hh_members", hh_weight)
-
-hh_size_monitoring_avg
-hh_size_household_avg
-
-# combine the two datasets and run t-tests
-hh_size_comparison_survey <- bind_rows(
-  hh_size_monitoring_avg %>% mutate(survey = "Monitoring Survey"),
-  hh_size_household_avg %>% mutate(survey = "Household Survey")
-)
-
-# run t-tests for each country/sample_group/intervention combination
-hh_size_ttest_survey <- hh_size_comparison_survey %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  group_split() %>%
-  map_df(
-    ~ {
-      # extract the two means and SEs
-      monitoring_row <- .x %>% dplyr::filter(survey == "Monitoring Survey")
-      household_row <- .x %>% dplyr::filter(survey == "Household Survey")
-      
-      # calculate n from original datasets
-      n_monitoring <- hh_size_monitoring %>%
-        dplyr::filter(country == unique(.x$country),
-                     sample_group == unique(.x$sample_group),
-                     wp_intervention == unique(.x$wp_intervention)) %>%
-        nrow()
-      n_household <- hh_size_household %>%
-        dplyr::filter(country == unique(.x$country),
-                     sample_group == unique(.x$sample_group),
-                     wp_intervention == unique(.x$wp_intervention)) %>%
-        nrow()
-      
-      # calculate z-statistic (using normal approximation since we have SEs)
-      diff <- monitoring_row$mean - household_row$mean
-      se_diff <- sqrt(monitoring_row$se^2 + household_row$se^2)
-      z_stat <- diff / se_diff
-      p_value <- 2 * (1 - pnorm(abs(z_stat)))
-      
-      tibble(
-        country = unique(.x$country),
-        sample_group = unique(.x$sample_group),
-        wp_intervention = unique(.x$wp_intervention),
-        mean_monitoring = monitoring_row$mean,
-        mean_household = household_row$mean,
-        n_monitoring = n_monitoring,
-        n_household = n_household,
-        difference = diff,
-        se_difference = se_diff,
-        z_statistic = z_stat,
-        p_value = p_value,
-        significant = p_value < 0.05
-      )
-    }
-  )
-
-hh_size_ttest_survey
-```
-
-###### LaTeX table
-```{r}
-# function to add significance stars
-add_stars <- function(p_value) {
-  if (p_value < 0.01) return("\\sym{***}")
-  if (p_value < 0.05) return("\\sym{**}")
-  if (p_value < 0.10) return("\\sym{*}")
-  return("")
-}
-
-# prepare data for table
-table_data <- hh_size_ttest_survey %>%
-  mutate(
-    stars = map_chr(p_value, add_stars),
-    # format the numbers to 2 decimal places
-    mean_monitoring_fmt = sprintf("%.2f", mean_monitoring),
-    mean_household_fmt = sprintf("%.2f", mean_household),
-    difference_fmt = paste0(sprintf("%.2f", difference), stars)
-  ) %>%
-  # create row labels
-  mutate(
-    row_label = case_when(
-      wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint",
-      wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion",
-      wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.",
-      wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC",
-      TRUE ~ paste(sample_group, wp_intervention)
-    )
-  ) %>%
-  arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC")))
-
-# start building latex table
-latex_lines <- c(
-  "\\begin{table}[htbp]\\centering",
-  "\\caption{Difference in mean household size by survey type among promoter survey water points}",
-  "\\label{tab:hh_size_survey_comparison}",
-  "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}",
-  "\\begin{tabular}{l*{5}c}",
-  "\\hline\\hline",
-  "& \\multicolumn{2}{c}{Monitoring Survey} & \\multicolumn{2}{c}{Household Survey} & \\\\",
-  "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}",
-  "& Mean & N & Mean & N & Difference\\\\",
-  "\\hline"
-)
-
-# add malawi section
-latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline")
-malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
-for (i in 1:nrow(malawi_data)) {
-  latex_lines <- c(latex_lines, 
-    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
-      malawi_data$row_label[i],
-      malawi_data$mean_monitoring_fmt[i],
-      malawi_data$n_monitoring[i],
-      malawi_data$mean_household_fmt[i],
-      malawi_data$n_household[i],
-      malawi_data$difference_fmt[i]
-    )
-  )
-}
-
-# add uganda section
-latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline")
-uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
-for (i in 1:nrow(uganda_data)) {
-  latex_lines <- c(latex_lines, 
-    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
-      uganda_data$row_label[i],
-      uganda_data$mean_monitoring_fmt[i],
-      uganda_data$n_monitoring[i],
-      uganda_data$mean_household_fmt[i],
-      uganda_data$n_household[i],
-      uganda_data$difference_fmt[i]
-    )
-  )
-}
-
-# close table
-latex_lines <- c(latex_lines,
-  "\\hline\\hline",
-  "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\",
-  "\\end{tabular}",
-  "\\end{table}"
-)
-
-# print the table
-cat(latex_lines, sep = "\n")
-```
-
-#### hh count
-```{r}
-# household count for promoter surveyed
-hh_count_promoter_from_census <- hh_census %>%
-  dplyr::filter(
-    promoter_surveyed == TRUE,
-    wp_func == TRUE,
-    wp_intervention != "Non-program"
-  ) %>%
-  # count unique households per water point
-  group_by(country, sample_group, wp_intervention, wp_id) %>%
-  summarise(
-    village_id = dplyr::first(village_id),
-    # hh_count = n_distinct(household_id),
-    hh_count = n(),
-    .groups = "drop"
-  )
-
-# now calculate mean CI on these counts
-hh_count_promoter_avg <- calculate_mean_ci(hh_count_promoter_from_census, "hh_count", 1)
-
-hh_count_promoter_avg
-
-# for non-promoter surveyed WPs, calculate HH count from household census
-hh_count_nonpromoter_from_census <- hh_census %>%
-  dplyr::filter(
-    promoter_surveyed == FALSE,
-    wp_func == TRUE,
-    wp_intervention != "Non-program"
-  ) %>%
-  # count unique households per water point
-  group_by(country, sample_group, wp_intervention, wp_id) %>%
-  summarise(
-    village_id = dplyr::first(village_id),
-    # hh_count = n_distinct(household_id),
-    hh_count = n(),
-    .groups = "drop"
-  )
-
-# now calculate mean CI on these counts
-hh_count_nonpromoter_avg <- calculate_mean_ci(hh_count_nonpromoter_from_census, "hh_count", 1)
-
-hh_count_nonpromoter_avg
-
-# combine with promoter data and run t-tests
-hh_count_comparison <- bind_rows(
-  hh_count_promoter_avg %>% mutate(promoter_surveyed = TRUE),
-  hh_count_nonpromoter_avg %>% mutate(promoter_surveyed = FALSE)
-)
-
-# run t-tests for each country/sample_group/intervention combination
-# run t-tests for each country/sample_group/intervention combination
-hh_count_ttest <- hh_count_comparison %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  group_split() %>%
-  map_df(
-    ~ {
-      # extract the two means and SEs
-      promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE)
-      nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE)
-      
-      # calculate n from original datasets
-      n_prom <- hh_count_promoter_from_census %>%
-        dplyr::filter(country == unique(.x$country),
-                     sample_group == unique(.x$sample_group),
-                     wp_intervention == unique(.x$wp_intervention)) %>%
-        nrow()
-      n_nonprom <- hh_count_nonpromoter_from_census %>%
-        dplyr::filter(country == unique(.x$country),
-                     sample_group == unique(.x$sample_group),
-                     wp_intervention == unique(.x$wp_intervention)) %>%
-        nrow()
-      
-      # calculate z-statistic (using normal approximation since we have SEs)
-      diff <- promoter_row$mean - nonpromoter_row$mean
-      se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2)
-      z_stat <- diff / se_diff
-      p_value <- 2 * (1 - pnorm(abs(z_stat)))
-      
-      tibble(
-        country = unique(.x$country),
-        sample_group = unique(.x$sample_group),
-        wp_intervention = unique(.x$wp_intervention),
-        mean_promoter = promoter_row$mean,
-        mean_nonpromoter = nonpromoter_row$mean,
-        n_promoter = n_prom,
-        n_nonpromoter = n_nonprom,
-        difference = diff,
-        se_difference = se_diff,
-        z_statistic = z_stat,
-        p_value = p_value,
-        significant = p_value < 0.1
-      )
-    }
-  )
-
-hh_count_ttest
-```
-
-#####LaTeX table
-```{r}
-# function to add significance stars
-add_stars <- function(p_value) {
-  if (p_value < 0.01) return("\\sym{***}")
-  if (p_value < 0.05) return("\\sym{**}")
-  if (p_value < 0.10) return("\\sym{*}")
-  return("")
-}
-
-# prepare data for table
-table_data <- hh_count_ttest %>%
-  mutate(
-    stars = map_chr(p_value, add_stars),
-    # format the numbers to 2 decimal places
-    mean_promoter_fmt = sprintf("%.2f", mean_promoter),
-    mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter),
-    difference_fmt = paste0(sprintf("%.2f", difference), stars)
-  ) %>%
-  # create row labels
-  mutate(
-    row_label = case_when(
-      wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint",
-      wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion",
-      wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.",
-      wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC",
-      TRUE ~ paste(sample_group, wp_intervention)
-    )
-  ) %>%
-  arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC")))
-
-# start building latex table
-latex_lines <- c(
-  "\\begin{table}[htbp]\\centering",
-  "\\caption{Difference in mean household count per water point according to Household Census by whether water point is in Promoter Survey}",
-  "\\label{tab:hh_count_pmsurvey}",
-  "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}",
-  "\\begin{tabular}{l*{5}c}",
-  "\\hline\\hline",
-  "& \\multicolumn{2}{c}{Promoter Survey} & \\multicolumn{2}{c}{Not In Promoter Survey} & \\\\",
-  "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}",
-  "& Mean & N & Mean & N & Difference\\\\",
-  "\\hline"
-)
-
-# add malawi section
-latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline")
-malawi_data <- table_data %>% dplyr::filter(country == "Malawi")
-for (i in 1:nrow(malawi_data)) {
-  latex_lines <- c(latex_lines, 
-    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
-      malawi_data$row_label[i],
-      malawi_data$mean_promoter_fmt[i],
-      malawi_data$n_promoter[i],
-      malawi_data$mean_nonpromoter_fmt[i],
-      malawi_data$n_nonpromoter[i],
-      malawi_data$difference_fmt[i]
-    )
-  )
-}
-
-# add uganda section
-latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline")
-uganda_data <- table_data %>% dplyr::filter(country == "Uganda")
-for (i in 1:nrow(uganda_data)) {
-  latex_lines <- c(latex_lines, 
-    sprintf("%s & %s & %d & %s & %d & %s \\\\", 
-      uganda_data$row_label[i],
-      uganda_data$mean_promoter_fmt[i],
-      uganda_data$n_promoter[i],
-      uganda_data$mean_nonpromoter_fmt[i],
-      uganda_data$n_nonpromoter[i],
-      uganda_data$difference_fmt[i]
-    )
-  )
-}
-
-# close table
-latex_lines <- c(latex_lines,
-  "\\hline\\hline",
-  "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\",
-  "\\end{tabular}",
-  "\\end{table}"
-)
-
-# print the table
-cat(latex_lines, sep = "\n")
-```
-
-### non primary users
-```{r}
-hh_number_wps <- hh_census %>%
-  group_by(country) %>%
-  summarize(
-    multiple_wps = mean(wp_secweek, na.rm = TRUE),
-    n = n()
-  )
-
-hh_number_wps
-
-hh_number_wps_pmlist <- hh_census %>%
-  dplyr::filter(promoter_list == TRUE) %>%
-  group_by(country) %>%
-  summarize(
-    multiple_wps = mean(wp_secweek, na.rm = TRUE),
-    n = n()
-  )
-
-hh_number_wps_pmlist
-```
-
-####what if we count all households that report using more than 1 water point as using DSW/ILC 
-```{r}
-users_data_alt <-
-  hh_census %>%
-  dplyr::filter(
-    wp_invillage,
-    !(sample_group != "ILC" & wp_intervention == "ILC")
-    ) %>%
-  mutate(
-  wp_intervention = if_else(
-    wp_secweek == TRUE & wp_intervention == "Non-program",
-    "DSW",
-    wp_intervention
-  )
-  ) %>%
-  dplyr::filter(wp_intervention != "Non-program")
-
-users_data_alt <-
-  users_data_alt %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    hh_members = if_else(
-      !is.na(hh_members), 
-      hh_members, 
-      mean(hh_members, na.rm = TRUE)
-    )
-  )
-
-users_data_alt <-
-  users_data_alt %>%
-  full_join(
-    village_intervention %>% 
-      select(village_id, country, sample_group, wp_intervention)
-  ) %>%
-  mutate(
-    hh_members = replace_na(hh_members, 0)
-  )
-
-users_village_alt <-
-  users_data_alt %>%
-  group_by(village_id, country, sample_group, wp_intervention) %>%
-  summarise(
-    response_rate = unique(response_rate),
-    hhs = n(),
-    users = sum(hh_members)
-  ) %>%
-  mutate(
-    users_increased = users/response_rate
-  )
-
-users_village_alt <-
-  users_village_alt %>%
-  left_join(sample_sizes) %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    weight = n_villages/n_distinct(village_id)
-  ) %>%
-  ungroup
-
-users_village_alt <-
-  users_village_alt %>%
-  dplyr::filter(hhs > 1)
-
-people_per_country_alt <-
-  map(
-    users_village_alt %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
-    ~ total_ci(
-        var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight
-        )
-      ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-        hhs = .x %>% pull(hhs) %>% sum,
-        pop = .x %>% pull(n_villages) %>% unique %>% sum
-      )
-  ) %>% 
-  bind_rows() %>%
-  select(
-    country, wp_intervention, 
-    outcome, 
-    villages,
-    everything()
-  ) %>%
-  arrange(outcome)
-
-table1_alt <- people_per_country_alt %>%
-  select(country, wp_intervention, total, lb, ub, se) %>%
-  mutate(
-    indiv_access_popn = total
-  ) %>%
-  select(-total) 
-
-table1_alt
-
-table1country_alt <- table1_alt %>%
-  group_by(country) %>%
-  summarise(
-    indiv_access_popn = sum(indiv_access_popn),
-    # SE of sum: sqrt(sum of squared SEs) assuming independence
-    se = sqrt(sum(se^2, na.rm = TRUE))
-  ) %>%
-  # CI
-  mutate(
-    lb = indiv_access_popn - 1.96 * se,
-    ub = indiv_access_popn + 1.96 * se
-  )
-
-table1country_alt
-```
-
-### double counting
-```{r}
-hh_double_count_stats <- hh_census %>%
-  dplyr::filter(promoter_list == TRUE) %>%
-  summarise(
-    total_hh = n_distinct(household_id),
-    hh_multiple_mentions = sum(promoter_list_mentions > 1, na.rm = TRUE),
-    share_multiple_mentions = hh_multiple_mentions / total_hh,
-    share_pct = round(share_multiple_mentions * 100, 1),
-    # calculate average mentions for those with multiple mentions
-    avg_mentions = mean(promoter_list_mentions[promoter_list_mentions > 1], na.rm = TRUE),
-    # wp_secweek is TRUE -> hh reports using additional water sources
-    hh_report_multiple = sum(promoter_list_mentions > 1 & wp_secweek == TRUE, na.rm = TRUE),
-    share_report_multiple = hh_report_multiple / hh_multiple_mentions,
-    share_report_multiple_pct = round(share_report_multiple * 100, 0),
-    # wp_secweek is FALSE -> hh reports not using any additional water sources (double counted)
-    hh_double_counted = sum(promoter_list_mentions > 1 & wp_secweek == FALSE, na.rm = TRUE)
-  )
-
-# auto-generate text summary
-cat(sprintf("Among the %s distinct households listed by promoters across Evidence Action water points that were matched to the household census, we identified %d households (around %s%%) as listed to be using more than one (on average %s) of these water points. Of these %d, only %d%% self-report using more than one water point in the household census: in the remaining %d cases, promoters are double-counting households.\n",
-            format(hh_double_count_stats$total_hh, big.mark = ","),
-            hh_double_count_stats$hh_multiple_mentions,
-            hh_double_count_stats$share_pct,
-            round(hh_double_count_stats$avg_mentions, 0),
-            hh_double_count_stats$hh_multiple_mentions,
-            hh_double_count_stats$share_report_multiple_pct,
-            hh_double_count_stats$hh_double_counted))
-```
-### hhs that report not using DSW/ILC
-```{r}
-pm_list_nonprogram <- hh_census %>%
-  dplyr::filter(promoter_list == TRUE) %>%
-  group_by(country) %>%
-  summarize(
-    non_program = sum(wp_intervention == "Non-program", na.rm = TRUE),
-    non_program_one = sum(wp_intervention == "Non-program" & wp_secweek == FALSE, na.rm = TRUE),
-    program = sum(wp_intervention == "DSW" | wp_intervention == "ILC", na.rm = TRUE),
-    share_non_program = non_program/program,
-    share_non_program_one = non_program_one/program
-  )
-
-pm_list_nonprogram
-```
-
-###response rates
-```{r}
-hh_census_response <- hh_census %>%
-  group_by(country) %>%
-  summarise(
-    response_rate = mean(response)
-  )
-
-hh_census_response
-```
-
-##---------------EXPLORATORY---------------
-## Regressions of chlorination on being listed by promoter
-###  tcr, control for promoter surveyed
-```{r}
-library(estimatr)
-
-promoter_wp_households <- hh_survey #%>%
-  # dplyr::filter(promoter_surveyed == 1) 
-
-uganda_promoter_wp <- hh_survey %>%
-  dplyr::filter(country == "Uganda")
-
-malawi_promoter_wp <- hh_survey %>%
-  dplyr::filter(country == "Malawi")
-
-uganda_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed, 
-                          data = uganda_promoter_wp,
-                          clusters = wp_id)
-
-malawi_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed, 
-                          data = malawi_promoter_wp,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp)
-malawi_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp)
-
-stargazer(uganda_lm, malawi_lm,
-          type = "text",
-          title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination",
-          dep.var.labels = "disctcr 02",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model$std.error),
-          p = list(uganda_model$p.value, malawi_model$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
-```
-
-### fcr, control for promoter surveyed
-```{r}
-library(estimatr)
-
-promoter_wp_households <- hh_survey #%>%
-  # dplyr::filter(promoter_surveyed == 1) 
-
-uganda_promoter_wp <- hh_survey %>%
-  dplyr::filter(country == "Uganda")
-
-malawi_promoter_wp <- hh_survey %>%
-  dplyr::filter(country == "Malawi")
-
-uganda_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed, 
-                          data = uganda_promoter_wp,
-                          clusters = wp_id)
-
-malawi_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed, 
-                          data = malawi_promoter_wp,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp)
-malawi_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp)
-
-stargazer(uganda_lm, malawi_lm,
-          type = "text",
-          title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination",
-          dep.var.labels = "discfcr 02",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model$std.error),
-          p = list(uganda_model$p.value, malawi_model$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
-```
-
-### tcr, no controls
-```{r}
-library(estimatr)
-
-uganda_promoter_wp <- hh_survey %>%
-  dplyr::filter(country == "Uganda")
-
-malawi_promoter_wp <- hh_survey %>%
-  dplyr::filter(country == "Malawi")
-
-uganda_model <- lm_robust(disctcr_02 ~ promoter_list, 
-                          data = uganda_promoter_wp,
-                          clusters = wp_id)
-
-malawi_model <- lm_robust(disctcr_02 ~ promoter_list, 
-                          data = malawi_promoter_wp,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
-malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
-
-stargazer(uganda_lm, malawi_lm,
-          type = "text",
-          title = "Association between Being Listed by Promoter and Chlorination",
-          dep.var.labels = "disctcr 02",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model$std.error),
-          p = list(uganda_model$p.value, malawi_model$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
-```
-
-### tcr, limit sample to promoter surveyed
-```{r}
-library(estimatr)
-
-promoter_wp_households <- hh_survey %>%
-  dplyr::filter(promoter_surveyed == 1)
-
-uganda_promoter_wp <- promoter_wp_households %>%
-  dplyr::filter(country == "Uganda")
-
-malawi_promoter_wp <- promoter_wp_households %>%
-  dplyr::filter(country == "Malawi")
-
-uganda_model <- lm_robust(disctcr_02 ~ promoter_list, 
-                          data = uganda_promoter_wp,
-                          clusters = wp_id)
-
-malawi_model <- lm_robust(disctcr_02 ~ promoter_list, 
-                          data = malawi_promoter_wp,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp)
-malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp)
-
-stargazer(uganda_lm, malawi_lm,
-          type = "text",
-          title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users",
-          dep.var.labels = "disctcr 02",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model$std.error),
-          p = list(uganda_model$p.value, malawi_model$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
-```
-
-### tcr continuous (as opposed to disctcr_02)
-```{r}
-library(estimatr)
-
-promoter_wp_households <- hh_survey %>%
-  dplyr::filter(promoter_surveyed == 1)
-
-uganda_promoter_wp <- promoter_wp_households %>%
-  dplyr::filter(country == "Uganda")
-
-malawi_promoter_wp <- promoter_wp_households %>%
-  dplyr::filter(country == "Malawi")
-
-uganda_model <- lm_robust(disctcr ~ promoter_list, 
-                          data = uganda_promoter_wp,
-                          clusters = wp_id)
-
-malawi_model <- lm_robust(disctcr ~ promoter_list, 
-                          data = malawi_promoter_wp,
-                          clusters = wp_id)
-
-# convert to regular lm objects for stargazer
-uganda_lm <- lm(disctcr ~ promoter_list, data = uganda_promoter_wp)
-malawi_lm <- lm(disctcr ~ promoter_list, data = malawi_promoter_wp)
-
-stargazer(uganda_lm, malawi_lm,
-          type = "text",
-          title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users",
-          dep.var.labels = "disctcr",
-          # covariate.labels = c("Listed by Promoter"),
-          column.labels = c("Uganda", "Malawi"),
-          model.numbers = FALSE,
-          se = list(uganda_model$std.error, malawi_model$std.error),
-          p = list(uganda_model$p.value, malawi_model$p.value),
-          keep.stat = c("n", "rsq", "adj.rsq"),
-          add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint")))
-```
-
-## Do households surveyed after the promoter respond differently?
-### load rank dataset
-```{r}
-pm_survey_clean <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "PromoterSurvey",
-      "DataSets",
-      "Clean",
-      "pm-survey-clean.rds"
-    )
-  )
-
-randomization <- pm_survey_clean %>% 
-  dplyr::select(
-    wp_id, village_id, country,
-    contains("rand_hh")
+  select(country, wp_intervention, outcome, hhs, est = mean, ci) %>%
+  pivot_wider(
+    values_from = c(est, ci),
+    names_from = outcome
   ) %>%
   pivot_longer(
-    cols = starts_with("rand_hh"),
-    names_prefix = "rand_hh_",
-    names_to = "rank",
-    values_to = "household_name",
-    values_drop_na = TRUE
+    cols = ends_with("02"),
+    names_pattern = "(.*)_disc(.*)_02",
+    names_to = c("name", ".value")
+  )
+
+people <-
+  total_country %>%
+  left_join(
+    wp_sample_sizes %>%
+      group_by(country, wp_intervention) %>%
+      summarise(pop = sum(pop_points))
   ) %>%
-  mutate(household_name = household_name %>% str_squish %>% str_trim)
+  mutate(
+    across(
+      c(total_people, total_people_lb, total_people_ub, pop),
+      ~ . %>% 
+        round %>% 
+        format(big.mark = ",") %>%
+        str_remove_all(" ")
+    ),
+    ci = paste0("(", total_people_lb, ", ", total_people_ub, ")") 
+  ) %>%
+  select(
+    country, wp_intervention, pop, est = total_people, ci
+  ) %>%
+  pivot_longer(
+    cols = c(est, ci),
+    values_to = "people"
+  ) 
 
+obs <-
+  wp_census %>%
+  dplyr::filter(
+    promoter_surveyed,
+    intervention != "Non-program",
+    !(country == "Uganda" & intervention == "ILC")
+  ) %>%
+  group_by(country, intervention) %>%
+  summarise(
+    wps = n(),
+    listed_hhs = sum(pm_users, na.rm = TRUE) %>% format(big.mark = ",")
+  ) %>%
+  mutate(name = "est") %>%
+  rename(wp_intervention = intervention)
 
-hhc <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdCensus",
-      "DataSets",
-      "Constructed",
-      "hh-census-constructed.rds"
+tab <- 
+  obs %>% 
+  mutate(wp_intervention = as.character(wp_intervention)) %>%
+  full_join(people) %>%
+  left_join(cl) %>%
+  arrange(country, wp_intervention, desc(name)) %>%
+  ungroup %>%
+  mutate(
+    across(
+      everything(),
+      ~ as.character(.)
+    ),
+    across(
+      -c(people, tcr, fcr),
+      ~ case_when(
+        name == "est" ~ .,
+        TRUE ~ ""
+      )
     )
   ) %>%
-  select(village_id, household_id, household_name)
+  dplyr::filter(!is.na(country))%>%
+  select(-c(name, country)) 
 
-randomization_id <-
-  randomization %>%
-  left_join(hhc)
+table <-
+  kable(
+    tab, 
+    format = "latex",
+    escape = F,
+    align = "c", 
+    booktabs = T,
+    col.names = linebreak(
+      c("Intervention", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+      align = "c"
+    ),
+    caption = "Primary outcomes estimated following the monitoring method",
+    label = "headlines-am"
+  ) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 6) %>%
+  add_header_above(
+    c(
+      " ", 
+      "Promoter survey" = 2, 
+      "Country-level estimates" = 2, 
+      "Percent of color wheel readings ≥ 0.2 ppm" = 3
+    )
+  ) %>%
+  add_header_above(c(" ", " ", paste0("(", 1:6,")")), line = FALSE)
 
-hh_survey <- hh_survey %>%
-  left_join(
-    randomization_id %>% select(household_id, rank),
-    by = "household_id"
-  )
+writeLines(
+  table, 
+  "output/tables/headlines-am.tex"
+)
 ```
 
-```{r}
-table(hh_survey$survey, hh_survey$rank, useNA = "always")
-```
 
-### test
-```{r}
-chlor <- hh_survey %>%
-  dplyr::filter(!is.na(rank)) %>% # only HHs randomized into monitoring
-  dplyr::filter(survey == "Household Survey" & rank < 5 | survey == "Monitoring Survey") 
-  
-table <- chlor_uganda %>%
-  group_by(survey) %>%
-  summarize(
-    disctcr_02 = mean(disctcr_02, na.rm = TRUE),
-    discfcr_02 = mean(discfcr_02, na.rm = TRUE)
-  )
-  
-table
+<!-- ## Sample -->
 
-chlor_uganda <- chlor %>%
-  dplyr::filter(country == "Uganda")
+<!-- ```{r} -->
+<!-- wp_table <-  -->
+<!--   wp_census %>% -->
+<!--   rename(wp_intervention = intervention) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   summarise( -->
+<!--     wp_census = n_distinct(wp_id), -->
+<!--     wp_functional = sum(wp_func), -->
+<!--     promoter_surveyed_f = sum(promoter_surveyed & wp_func), -->
+<!--     promoter_surveyed = sum(promoter_surveyed), -->
+<!--     ea_list = sum(pm_ea_list, na.rm = TRUE) -->
+<!--   )%>% -->
+<!--   left_join( -->
+<!--     wp_sample_sizes,  -->
+<!--     by = c("country", "sample_group", "wp_intervention") -->
+<!--   ) %>% -->
+<!--   dplyr::filter(!is.na(pop_points)) -->
 
-# run regressions
-model1 <- lm_robust(disctcr_02 ~ survey,
-                    data = chlor_uganda,
-                    clusters = wp_id)
+<!-- wp_table -->
+<!-- ``` -->
 
-model2 <- lm_robust(discfcr_02 ~ survey,
-                    data = chlor_uganda,
-                    clusters = wp_id)
+<!-- ```{r} -->
+<!-- # generate latex table -->
+<!-- wp_table_latex <- wp_table %>% -->
+<!--   mutate( -->
+<!--     ea_list_count = coalesce(ea_list_malawi_count, ea_list_uganda_count) -->
+<!--   ) %>% -->
+<!--   select(country, sample_group, wp_intervention, pop_points, wp_census, wp_functional, ea_list_count, promoter_surveyed, promoter_surveyed_f) -->
 
-# extract components from lm_robust objects
-coef1 <- model1$coefficients
-se1 <- model1$std.error
-coef2 <- model2$coefficients
-se2 <- model2$std.error
+<!-- malawi_footprint <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "Footprint", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Footprint") -->
 
-# fit regular lm models (just for stargazer structure)
-model1_lm <- lm(disctcr_02 ~ survey, data = chlor_uganda)
-model2_lm <- lm(discfcr_02 ~ survey, data = chlor_uganda)
+<!-- malawi_expansion <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "Expansion", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Expansion") -->
 
-# create stargazer table with clustered SEs from lm_robust
-stargazer(model1_lm, model2_lm,
-          se = list(se1, se2),
-          type = "text",
-          title = "Uganda Association between Survey and Chlorination (Monitoring vs Household Survey & Rank <=4)",
-          column.labels = c("DISCTCR", "DISCFCR"),
-          covariate.labels = c("Monitoring Survey"),
-          dep.var.labels = c(" ", " "))
-```
+<!-- malawi_dsw_ilc <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "DSW in ILC vill.") -->
+
+<!-- malawi_ilc <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "ILC") %>% -->
+<!--   mutate(sample_group = "ILC") -->
+
+<!-- malawi_data <- bind_rows(malawi_footprint, malawi_expansion, malawi_dsw_ilc, malawi_ilc) %>% -->
+<!--   select(-country, -wp_intervention) -->
+
+<!-- uganda_footprint <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Uganda", sample_group == "Footprint", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Footprint") -->
+
+<!-- uganda_expansion <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Uganda", sample_group == "Expansion", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Expansion") -->
+
+<!-- uganda_data <- bind_rows(uganda_footprint, uganda_expansion) %>% -->
+<!--   select(-country, -wp_intervention) -->
+
+<!-- malawi_total <- malawi_data %>% -->
+<!--   summarise( -->
+<!--     sample_group = "\\textbf{Total EA points}", -->
+<!--     pop_points = sum(pop_points, na.rm = TRUE), -->
+<!--     wp_census = sum(wp_census, na.rm = TRUE), -->
+<!--     wp_functional = sum(wp_functional, na.rm = TRUE), -->
+<!--     ea_list_count = sum(ea_list_count, na.rm = TRUE), -->
+<!--     promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE), -->
+<!--     promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE) -->
+<!--   ) -->
+
+<!-- uganda_total <- uganda_data %>% -->
+<!--   summarise( -->
+<!--     sample_group = "\\textbf{Total EA points}", -->
+<!--     pop_points = sum(pop_points, na.rm = TRUE), -->
+<!--     wp_census = sum(wp_census, na.rm = TRUE), -->
+<!--     wp_functional = sum(wp_functional, na.rm = TRUE), -->
+<!--     ea_list_count = sum(ea_list_count, na.rm = TRUE), -->
+<!--     promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE), -->
+<!--     promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE) -->
+<!--   ) -->
+
+<!-- malawi_section <- bind_rows(malawi_data, malawi_total) -->
+<!-- uganda_section <- bind_rows(uganda_data, uganda_total) -->
+
+<!-- malawi_section <- malawi_section %>% -->
+<!--   mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE))) -->
+
+<!-- uganda_section <- uganda_section %>% -->
+<!--   mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE))) -->
+
+<!-- cat("\\begin{table}[htbp]\\centering\n") -->
+<!-- cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n") -->
+<!-- cat("\\begin{tabular}{l*{6}c}\n") -->
+<!-- cat("\\hline\\hline\n") -->
+<!-- cat("& (1) & (2) & (3) & (4) & (5) & (6)\\\\\n") -->
+<!-- cat("                   & Country Total & WP Census & \\shortstack{WP Census \\\\Functional} & \\shortstack{Evidence Action \\\\ Promoter List} & \\shortstack{DIL Promoter \\\\Survey} & \\shortstack{DIL Promoter \\\\Survey Functional}\\n") -->
+<!-- cat("\\hline\n") -->
+<!-- cat("\\textbf{Malawi}                  &            &           &        &        &         &         \\\\\n") -->
+<!-- cat("\\hline\n") -->
+
+<!-- for(i in 1:nrow(malawi_section)) { -->
+<!--   row <- malawi_section[i,] -->
+<!--   cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n", -->
+<!--               row$sample_group, row$pop_points, row$wp_census,  -->
+<!--               row$wp_functional, row$ea_list_count, row$promoter_surveyed,  -->
+<!--               row$promoter_surveyed_f)) -->
+<!-- } -->
+
+<!-- cat("\\hline\n") -->
+<!-- cat("\\textbf{Uganda}                  &            &          &        &        &        &        \\\\\n") -->
+<!-- cat("\\hline\n") -->
+
+<!-- for(i in 1:nrow(uganda_section)) { -->
+<!--   row <- uganda_section[i,] -->
+<!--   cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n", -->
+<!--               row$sample_group, row$pop_points, row$wp_census,  -->
+<!--               row$wp_functional, row$ea_list_count, row$promoter_surveyed, -->
+<!--               row$promoter_surveyed_f)) -->
+<!-- } -->
+
+<!-- cat("\\hline\\hline\n") -->
+<!-- cat("\\end{tabular}\n") -->
+<!-- cat("\\end{table}\n") -->
+<!-- ``` -->
+
+<!-- #### uganda text -->
+<!-- ```{r} -->
+<!-- ea_promoters_uganda <- -->
+<!--   ea_promoters_uganda %>% -->
+<!--   dplyr::filter(villageid %in% sampled_villages$village_id) %>% -->
+<!--   dplyr::filter(wp_intervention != "ILC") -->
+
+<!-- # Calculate metrics -->
+<!-- n_promoters <- nrow(ea_promoters_uganda) -->
+<!-- n_unique_wps <- ea_promoters_uganda %>% -->
+<!--   pull(i102_wpt_id) %>% -->
+<!--   n_distinct() -->
+
+<!-- n_in_wp_census <- ea_promoters_uganda %>% -->
+<!--   dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>% -->
+<!--   distinct(i102_wpt_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_promoter_surveyed <- wp_census %>% -->
+<!--   dplyr::filter(ea_id %in% ea_promoters_uganda$i102_wpt_id, promoter_surveyed == TRUE) %>% -->
+<!--   distinct(ea_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_surveyed_no_ea_info <- wp_census %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE,  -->
+<!--          !ea_id %in% ea_promoters_uganda$i102_wpt_id, -->
+<!--          country == "Uganda") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_total_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_program_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>% -->
+<!--   dplyr::filter(wp_intervention == "Non-program") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+
+<!-- glue("In Uganda, Evidence Action provided information for {n_promoters} promoters of non-ILC water points in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information, for a total of {n_total_promoter_surveys} promoter surveys in Uganda, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.") -->
+<!-- ``` -->
+
+<!-- #### malawi text -->
+<!-- ```{r} -->
+<!-- ea_promoters_malawi <- ea_promoters_malawi %>% -->
+<!--   # select(-wcp102_wpt_id) %>% -->
+<!--   dplyr::filter(villageid %in% sampled_villages$village_id) %>% -->
+<!--   unique -->
+
+<!-- # Calculate metrics -->
+<!-- n_promoters_ <- nrow(ea_promoters_malawi) -->
+<!-- n_unique_wps <- ea_promoters_malawi %>% -->
+<!--   pull(i102_wpt_id) %>% -->
+<!--   n_distinct() -->
+
+<!-- n_in_wp_census <- ea_promoters_malawi %>% -->
+<!--   dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>% -->
+<!--   distinct(i102_wpt_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_in_wp_census_program <- ea_promoters_malawi %>% -->
+<!--   dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>% -->
+<!--   dplyr::filter(wp_intervention == "DSW" | wp_intervention == "ILC") %>% -->
+<!--   distinct(i102_wpt_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_promoter_surveyed <- wp_census %>% -->
+<!--   dplyr::filter(ea_id %in% ea_promoters_malawi$i102_wpt_id, promoter_surveyed == TRUE) %>% -->
+<!--   distinct(ea_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_surveyed_no_ea_info <- wp_census %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE,  -->
+<!--          !ea_id %in% ea_promoters_malawi$i102_wpt_id, -->
+<!--          country == "Malawi") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_total_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+
+<!-- n_program_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>% -->
+<!--   dplyr::filter(wp_intervention == "Non-program") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+
+<!-- glue("In Malawi, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of {n_total_promoter_surveys} promoter surveys in Malawi, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.") -->
+<!-- ``` -->
+
+<!-- ### hhs outside  -->
+<!-- ```{r} -->
+<!-- hh_outside <- wp_census %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE) %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarize( -->
+<!--     hh_outside = sum(pm_users_outside, na.rm = TRUE), -->
+<!--     hh_users = sum(pm_users, na.rm = TRUE), -->
+<!--     hh_outside_share = hh_outside/hh_users -->
+<!--   ) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     hh_outside_avg = mean(hh_outside), -->
+<!--     hh_users_avg = mean(hh_users), -->
+<!--     hh_outside_share = mean(hh_outside_share, na.rm = TRUE) -->
+<!--   )  -->
+<!-- hh_outside -->
+
+<!-- hh_outside_all <- hh_census %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarize( -->
+<!--     hh_outside = sum(inclusion == "Up to 200m outside of village boundaries"), -->
+<!--     hh_users = n_distinct(household_id), -->
+<!--     hh_outside_share = hh_outside/hh_users -->
+<!--   ) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     hh_outside_avg = mean(hh_outside), -->
+<!--     hh_users_avg = mean(hh_users), -->
+<!--     hh_outside_share = mean(hh_outside_share, na.rm = TRUE) -->
+<!--   )  -->
+
+<!-- hh_outside_all   -->
+<!-- ``` -->
+
+<!-- ### sample selection -->
+
+<!-- ## Users per water point -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   group_by(wp_id, village_id, sample_group, country, wp_intervention) %>% -->
+<!--   summarise(users = n()) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   feols( -->
+<!--     users ~ promoter_surveyed | sample_group + country + wp_intervention, -->
+<!--     cluster = ~ village_id -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   group_by(wp_id, village_id, sample_group, country, wp_intervention) %>% -->
+<!--   summarise(users = n()) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   group_by(country) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       users ~ promoter_surveyed | sample_group + wp_intervention, -->
+<!--       cluster = ~ village_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+
+
+<!-- ## Household size -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   feols( -->
+<!--     hh_members ~ promoter_surveyed | sample_group + country + wp_intervention, -->
+<!--     cluster = ~ village_id -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       hh_members ~ promoter_list, -->
+<!--       cluster = ~ wp_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ## Household size across samples -->
+
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   bind_rows(mon_survey) %>% -->
+<!--   dplyr::filter(wp_id %in% wp_census_pm$wp_id) %>% -->
+<!--   feols( -->
+<!--     hh_members ~ survey | sample_group + country + wp_intervention, -->
+<!--     cluster = ~ village_id -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   bind_rows(mon_survey) %>% -->
+<!--   dplyr::filter(wp_id %in% wp_census_pm$wp_id) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(n() > 2) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       hh_members ~ survey, -->
+<!--       cluster = ~ village_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       hh_members ~ promoter_list, -->
+<!--       cluster = ~ wp_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ####hh size -->
+<!-- #####by promoter list -->
+<!-- ```{r} -->
+<!-- hh_size_promoter <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+
+<!-- # calculate CIs -->
+<!-- hh_size_promoter_avg <- calculate_mean_ci(hh_size_promoter, "hh_members", hh_weight) -->
+
+<!-- hh_size_nonpromoter <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == FALSE) %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+
+<!-- # calculate CIs -->
+<!-- hh_size_nonpromoter_avg <- calculate_mean_ci(hh_size_nonpromoter, "hh_members", hh_weight) -->
+
+<!-- hh_size_promoter_avg -->
+<!-- hh_size_nonpromoter_avg -->
+
+<!-- # combine the two datasets and run t-tests -->
+<!-- hh_size_comparison <- bind_rows( -->
+<!--   hh_size_promoter_avg %>% mutate(promoter_list = TRUE), -->
+<!--   hh_size_nonpromoter_avg %>% mutate(promoter_list = FALSE) -->
+<!-- ) -->
+
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- hh_size_ttest <- hh_size_comparison %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map_df( -->
+<!--     ~ { -->
+<!--       # extract the two means and SEs -->
+<!--       promoter_row <- .x %>% dplyr::filter(promoter_list == TRUE) -->
+<!--       nonpromoter_row <- .x %>% dplyr::filter(promoter_list == FALSE) -->
+
+<!--       # calculate n from original datasets -->
+<!--       n_prom <- hh_size_promoter %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       n_nonprom <- hh_size_nonpromoter %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+
+<!--       # calculate z-statistic (using normal approximation since we have SEs) -->
+<!--       diff <- promoter_row$mean - nonpromoter_row$mean -->
+<!--       se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2) -->
+<!--       z_stat <- diff / se_diff -->
+<!--       p_value <- 2 * (1 - pnorm(abs(z_stat))) -->
+
+<!--       tibble( -->
+<!--         country = unique(.x$country), -->
+<!--         sample_group = unique(.x$sample_group), -->
+<!--         wp_intervention = unique(.x$wp_intervention), -->
+<!--         mean_promoter = promoter_row$mean, -->
+<!--         mean_nonpromoter = nonpromoter_row$mean, -->
+<!--         n_promoter = n_prom, -->
+<!--         n_nonpromoter = n_nonprom, -->
+<!--         difference = diff, -->
+<!--         se_difference = se_diff, -->
+<!--         z_statistic = z_stat, -->
+<!--         p_value = p_value, -->
+<!--         significant = p_value < 0.1 -->
+<!--       ) -->
+<!--     } -->
+<!--   ) -->
+
+<!-- hh_size_ttest -->
+<!-- ``` -->
+
+<!-- ###### LaTeX table -->
+<!-- ```{r} -->
+<!-- # function to add significance stars -->
+<!-- add_stars <- function(p_value) { -->
+<!--   if (p_value < 0.01) return("\\sym{***}") -->
+<!--   if (p_value < 0.05) return("\\sym{**}") -->
+<!--   if (p_value < 0.10) return("\\sym{*}") -->
+<!--   return("") -->
+<!-- } -->
+
+<!-- # prepare data for table -->
+<!-- table_data <- hh_size_ttest %>% -->
+<!--   mutate( -->
+<!--     stars = map_chr(p_value, add_stars), -->
+<!--     # format the numbers to 2 decimal places -->
+<!--     mean_promoter_fmt = sprintf("%.2f", mean_promoter), -->
+<!--     mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter), -->
+<!--     difference_fmt = paste0(sprintf("%.2f", difference), stars) -->
+<!--   ) %>% -->
+<!--   # create row labels -->
+<!--   mutate( -->
+<!--     row_label = case_when( -->
+<!--       wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint", -->
+<!--       wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion", -->
+<!--       wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.", -->
+<!--       wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC", -->
+<!--       TRUE ~ paste(sample_group, wp_intervention) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC"))) -->
+
+<!-- # start building latex table -->
+<!-- latex_lines <- c( -->
+<!--   "\\begin{table}[htbp]\\centering", -->
+<!--   "\\caption{Difference in mean household size according to Household Census by whether household is in any promoter's list}", -->
+<!--   "\\label{tab:hh_size_pmsurvey}", -->
+<!--   "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", -->
+<!--   "\\begin{tabular}{l*{5}c}", -->
+<!--   "\\hline\\hline", -->
+<!--   "& \\multicolumn{2}{c}{Listed by Promoter} & \\multicolumn{2}{c}{Not Listed by Promoter} & \\\\", -->
+<!--   "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}", -->
+<!--   "& Mean & N & Mean & N & Difference\\\\", -->
+<!--   "\\hline" -->
+<!-- ) -->
+
+<!-- # add malawi section -->
+<!-- latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline") -->
+<!-- malawi_data <- table_data %>% dplyr::filter(country == "Malawi") -->
+<!-- for (i in 1:nrow(malawi_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       malawi_data$row_label[i], -->
+<!--       malawi_data$mean_promoter_fmt[i], -->
+<!--       malawi_data$n_promoter[i], -->
+<!--       malawi_data$mean_nonpromoter_fmt[i], -->
+<!--       malawi_data$n_nonpromoter[i], -->
+<!--       malawi_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+
+<!-- # add uganda section -->
+<!-- latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline") -->
+<!-- uganda_data <- table_data %>% dplyr::filter(country == "Uganda") -->
+<!-- for (i in 1:nrow(uganda_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       uganda_data$row_label[i], -->
+<!--       uganda_data$mean_promoter_fmt[i], -->
+<!--       uganda_data$n_promoter[i], -->
+<!--       uganda_data$mean_nonpromoter_fmt[i], -->
+<!--       uganda_data$n_nonpromoter[i], -->
+<!--       uganda_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+
+<!-- # close table -->
+<!-- latex_lines <- c(latex_lines, -->
+<!--   "\\hline\\hline", -->
+<!--   "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\", -->
+<!--   "\\end{tabular}", -->
+<!--   "\\end{table}" -->
+<!-- ) -->
+
+<!-- # print the table -->
+<!-- cat(latex_lines, sep = "\n") -->
+<!-- ``` -->
+
+<!-- #####by monitoring survey -->
+<!-- ```{r} -->
+<!-- hh_size_monitoring <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE) %>% -->
+<!--   dplyr::filter(survey == "Monitoring Survey") %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+
+<!-- # calculate CIs -->
+<!-- hh_size_monitoring_avg <- calculate_mean_ci(hh_size_monitoring, "hh_members", hh_weight) -->
+
+<!-- hh_size_household <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE) %>% -->
+<!--   dplyr::filter(survey == "Household Survey") %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+
+<!-- # calculate CIs -->
+<!-- hh_size_household_avg <- calculate_mean_ci(hh_size_household, "hh_members", hh_weight) -->
+
+<!-- hh_size_monitoring_avg -->
+<!-- hh_size_household_avg -->
+
+<!-- # combine the two datasets and run t-tests -->
+<!-- hh_size_comparison_survey <- bind_rows( -->
+<!--   hh_size_monitoring_avg %>% mutate(survey = "Monitoring Survey"), -->
+<!--   hh_size_household_avg %>% mutate(survey = "Household Survey") -->
+<!-- ) -->
+
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- hh_size_ttest_survey <- hh_size_comparison_survey %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map_df( -->
+<!--     ~ { -->
+<!--       # extract the two means and SEs -->
+<!--       monitoring_row <- .x %>% dplyr::filter(survey == "Monitoring Survey") -->
+<!--       household_row <- .x %>% dplyr::filter(survey == "Household Survey") -->
+
+<!--       # calculate n from original datasets -->
+<!--       n_monitoring <- hh_size_monitoring %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       n_household <- hh_size_household %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+
+<!--       # calculate z-statistic (using normal approximation since we have SEs) -->
+<!--       diff <- monitoring_row$mean - household_row$mean -->
+<!--       se_diff <- sqrt(monitoring_row$se^2 + household_row$se^2) -->
+<!--       z_stat <- diff / se_diff -->
+<!--       p_value <- 2 * (1 - pnorm(abs(z_stat))) -->
+
+<!--       tibble( -->
+<!--         country = unique(.x$country), -->
+<!--         sample_group = unique(.x$sample_group), -->
+<!--         wp_intervention = unique(.x$wp_intervention), -->
+<!--         mean_monitoring = monitoring_row$mean, -->
+<!--         mean_household = household_row$mean, -->
+<!--         n_monitoring = n_monitoring, -->
+<!--         n_household = n_household, -->
+<!--         difference = diff, -->
+<!--         se_difference = se_diff, -->
+<!--         z_statistic = z_stat, -->
+<!--         p_value = p_value, -->
+<!--         significant = p_value < 0.05 -->
+<!--       ) -->
+<!--     } -->
+<!--   ) -->
+
+<!-- hh_size_ttest_survey -->
+<!-- ``` -->
+
+<!-- ###### LaTeX table -->
+<!-- ```{r} -->
+<!-- # function to add significance stars -->
+<!-- add_stars <- function(p_value) { -->
+<!--   if (p_value < 0.01) return("\\sym{***}") -->
+<!--   if (p_value < 0.05) return("\\sym{**}") -->
+<!--   if (p_value < 0.10) return("\\sym{*}") -->
+<!--   return("") -->
+<!-- } -->
+
+<!-- # prepare data for table -->
+<!-- table_data <- hh_size_ttest_survey %>% -->
+<!--   mutate( -->
+<!--     stars = map_chr(p_value, add_stars), -->
+<!--     # format the numbers to 2 decimal places -->
+<!--     mean_monitoring_fmt = sprintf("%.2f", mean_monitoring), -->
+<!--     mean_household_fmt = sprintf("%.2f", mean_household), -->
+<!--     difference_fmt = paste0(sprintf("%.2f", difference), stars) -->
+<!--   ) %>% -->
+<!--   # create row labels -->
+<!--   mutate( -->
+<!--     row_label = case_when( -->
+<!--       wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint", -->
+<!--       wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion", -->
+<!--       wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.", -->
+<!--       wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC", -->
+<!--       TRUE ~ paste(sample_group, wp_intervention) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC"))) -->
+
+<!-- # start building latex table -->
+<!-- latex_lines <- c( -->
+<!--   "\\begin{table}[htbp]\\centering", -->
+<!--   "\\caption{Difference in mean household size by survey type among promoter survey water points}", -->
+<!--   "\\label{tab:hh_size_survey_comparison}", -->
+<!--   "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", -->
+<!--   "\\begin{tabular}{l*{5}c}", -->
+<!--   "\\hline\\hline", -->
+<!--   "& \\multicolumn{2}{c}{Monitoring Survey} & \\multicolumn{2}{c}{Household Survey} & \\\\", -->
+<!--   "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}", -->
+<!--   "& Mean & N & Mean & N & Difference\\\\", -->
+<!--   "\\hline" -->
+<!-- ) -->
+
+<!-- # add malawi section -->
+<!-- latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline") -->
+<!-- malawi_data <- table_data %>% dplyr::filter(country == "Malawi") -->
+<!-- for (i in 1:nrow(malawi_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       malawi_data$row_label[i], -->
+<!--       malawi_data$mean_monitoring_fmt[i], -->
+<!--       malawi_data$n_monitoring[i], -->
+<!--       malawi_data$mean_household_fmt[i], -->
+<!--       malawi_data$n_household[i], -->
+<!--       malawi_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+
+<!-- # add uganda section -->
+<!-- latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline") -->
+<!-- uganda_data <- table_data %>% dplyr::filter(country == "Uganda") -->
+<!-- for (i in 1:nrow(uganda_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       uganda_data$row_label[i], -->
+<!--       uganda_data$mean_monitoring_fmt[i], -->
+<!--       uganda_data$n_monitoring[i], -->
+<!--       uganda_data$mean_household_fmt[i], -->
+<!--       uganda_data$n_household[i], -->
+<!--       uganda_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+
+<!-- # close table -->
+<!-- latex_lines <- c(latex_lines, -->
+<!--   "\\hline\\hline", -->
+<!--   "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\", -->
+<!--   "\\end{tabular}", -->
+<!--   "\\end{table}" -->
+<!-- ) -->
+
+<!-- # print the table -->
+<!-- cat(latex_lines, sep = "\n") -->
+<!-- ``` -->
+
+<!-- #### hh count -->
+<!-- ```{r} -->
+<!-- # household count for promoter surveyed -->
+<!-- hh_count_promoter_from_census <- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     promoter_surveyed == TRUE, -->
+<!--     wp_func == TRUE, -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   # count unique households per water point -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarise( -->
+<!--     village_id = dplyr::first(village_id), -->
+<!--     # hh_count = n_distinct(household_id), -->
+<!--     hh_count = n(), -->
+<!--     .groups = "drop" -->
+<!--   ) -->
+
+<!-- # now calculate mean CI on these counts -->
+<!-- hh_count_promoter_avg <- calculate_mean_ci(hh_count_promoter_from_census, "hh_count", 1) -->
+
+<!-- hh_count_promoter_avg -->
+
+<!-- # for non-promoter surveyed WPs, calculate HH count from household census -->
+<!-- hh_count_nonpromoter_from_census <- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     promoter_surveyed == FALSE, -->
+<!--     wp_func == TRUE, -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   # count unique households per water point -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarise( -->
+<!--     village_id = dplyr::first(village_id), -->
+<!--     # hh_count = n_distinct(household_id), -->
+<!--     hh_count = n(), -->
+<!--     .groups = "drop" -->
+<!--   ) -->
+
+<!-- # now calculate mean CI on these counts -->
+<!-- hh_count_nonpromoter_avg <- calculate_mean_ci(hh_count_nonpromoter_from_census, "hh_count", 1) -->
+
+<!-- hh_count_nonpromoter_avg -->
+
+<!-- # combine with promoter data and run t-tests -->
+<!-- hh_count_comparison <- bind_rows( -->
+<!--   hh_count_promoter_avg %>% mutate(promoter_surveyed = TRUE), -->
+<!--   hh_count_nonpromoter_avg %>% mutate(promoter_surveyed = FALSE) -->
+<!-- ) -->
+
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- hh_count_ttest <- hh_count_comparison %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map_df( -->
+<!--     ~ { -->
+<!--       # extract the two means and SEs -->
+<!--       promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE) -->
+<!--       nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE) -->
+
+<!--       # calculate n from original datasets -->
+<!--       n_prom <- hh_count_promoter_from_census %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       n_nonprom <- hh_count_nonpromoter_from_census %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+
+<!--       # calculate z-statistic (using normal approximation since we have SEs) -->
+<!--       diff <- promoter_row$mean - nonpromoter_row$mean -->
+<!--       se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2) -->
+<!--       z_stat <- diff / se_diff -->
+<!--       p_value <- 2 * (1 - pnorm(abs(z_stat))) -->
+
+<!--       tibble( -->
+<!--         country = unique(.x$country), -->
+<!--         sample_group = unique(.x$sample_group), -->
+<!--         wp_intervention = unique(.x$wp_intervention), -->
+<!--         mean_promoter = promoter_row$mean, -->
+<!--         mean_nonpromoter = nonpromoter_row$mean, -->
+<!--         n_promoter = n_prom, -->
+<!--         n_nonpromoter = n_nonprom, -->
+<!--         difference = diff, -->
+<!--         se_difference = se_diff, -->
+<!--         z_statistic = z_stat, -->
+<!--         p_value = p_value, -->
+<!--         significant = p_value < 0.1 -->
+<!--       ) -->
+<!--     } -->
+<!--   ) -->
+
+<!-- hh_count_ttest -->
+<!-- ``` -->
+
+<!-- #####LaTeX table -->
+<!-- ```{r} -->
+<!-- # function to add significance stars -->
+<!-- add_stars <- function(p_value) { -->
+<!--   if (p_value < 0.01) return("\\sym{***}") -->
+<!--   if (p_value < 0.05) return("\\sym{**}") -->
+<!--   if (p_value < 0.10) return("\\sym{*}") -->
+<!--   return("") -->
+<!-- } -->
+
+<!-- # prepare data for table -->
+<!-- table_data <- hh_count_ttest %>% -->
+<!--   mutate( -->
+<!--     stars = map_chr(p_value, add_stars), -->
+<!--     # format the numbers to 2 decimal places -->
+<!--     mean_promoter_fmt = sprintf("%.2f", mean_promoter), -->
+<!--     mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter), -->
+<!--     difference_fmt = paste0(sprintf("%.2f", difference), stars) -->
+<!--   ) %>% -->
+<!--   # create row labels -->
+<!--   mutate( -->
+<!--     row_label = case_when( -->
+<!--       wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint", -->
+<!--       wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion", -->
+<!--       wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.", -->
+<!--       wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC", -->
+<!--       TRUE ~ paste(sample_group, wp_intervention) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC"))) -->
+
+<!-- # start building latex table -->
+<!-- latex_lines <- c( -->
+<!--   "\\begin{table}[htbp]\\centering", -->
+<!--   "\\caption{Difference in mean household count per water point according to Household Census by whether water point is in Promoter Survey}", -->
+<!--   "\\label{tab:hh_count_pmsurvey}", -->
+<!--   "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", -->
+<!--   "\\begin{tabular}{l*{5}c}", -->
+<!--   "\\hline\\hline", -->
+<!--   "& \\multicolumn{2}{c}{Promoter Survey} & \\multicolumn{2}{c}{Not In Promoter Survey} & \\\\", -->
+<!--   "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}", -->
+<!--   "& Mean & N & Mean & N & Difference\\\\", -->
+<!--   "\\hline" -->
+<!-- ) -->
+
+<!-- # add malawi section -->
+<!-- latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline") -->
+<!-- malawi_data <- table_data %>% dplyr::filter(country == "Malawi") -->
+<!-- for (i in 1:nrow(malawi_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       malawi_data$row_label[i], -->
+<!--       malawi_data$mean_promoter_fmt[i], -->
+<!--       malawi_data$n_promoter[i], -->
+<!--       malawi_data$mean_nonpromoter_fmt[i], -->
+<!--       malawi_data$n_nonpromoter[i], -->
+<!--       malawi_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+
+<!-- # add uganda section -->
+<!-- latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline") -->
+<!-- uganda_data <- table_data %>% dplyr::filter(country == "Uganda") -->
+<!-- for (i in 1:nrow(uganda_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       uganda_data$row_label[i], -->
+<!--       uganda_data$mean_promoter_fmt[i], -->
+<!--       uganda_data$n_promoter[i], -->
+<!--       uganda_data$mean_nonpromoter_fmt[i], -->
+<!--       uganda_data$n_nonpromoter[i], -->
+<!--       uganda_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+
+<!-- # close table -->
+<!-- latex_lines <- c(latex_lines, -->
+<!--   "\\hline\\hline", -->
+<!--   "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\", -->
+<!--   "\\end{tabular}", -->
+<!--   "\\end{table}" -->
+<!-- ) -->
+
+<!-- # print the table -->
+<!-- cat(latex_lines, sep = "\n") -->
+<!-- ``` -->
+
+<!-- ### non primary users -->
+<!-- ```{r} -->
+<!-- hh_number_wps <- hh_census %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     multiple_wps = mean(wp_secweek, na.rm = TRUE), -->
+<!--     n = n() -->
+<!--   ) -->
+
+<!-- hh_number_wps -->
+
+<!-- hh_number_wps_pmlist <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     multiple_wps = mean(wp_secweek, na.rm = TRUE), -->
+<!--     n = n() -->
+<!--   ) -->
+
+<!-- hh_number_wps_pmlist -->
+<!-- ``` -->
+
+<!-- ####what if we count all households that report using more than 1 water point as using DSW/ILC  -->
+<!-- ```{r} -->
+<!-- users_data_alt <- -->
+<!--   hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_invillage, -->
+<!--     !(sample_group != "ILC" & wp_intervention == "ILC") -->
+<!--     ) %>% -->
+<!--   mutate( -->
+<!--   wp_intervention = if_else( -->
+<!--     wp_secweek == TRUE & wp_intervention == "Non-program", -->
+<!--     "DSW", -->
+<!--     wp_intervention -->
+<!--   ) -->
+<!--   ) %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") -->
+
+<!-- users_data_alt <- -->
+<!--   users_data_alt %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   mutate( -->
+<!--     hh_members = if_else( -->
+<!--       !is.na(hh_members),  -->
+<!--       hh_members,  -->
+<!--       mean(hh_members, na.rm = TRUE) -->
+<!--     ) -->
+<!--   ) -->
+
+<!-- users_data_alt <- -->
+<!--   users_data_alt %>% -->
+<!--   full_join( -->
+<!--     village_intervention %>%  -->
+<!--       select(village_id, country, sample_group, wp_intervention) -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     hh_members = replace_na(hh_members, 0) -->
+<!--   ) -->
+
+<!-- users_village_alt <- -->
+<!--   users_data_alt %>% -->
+<!--   group_by(village_id, country, sample_group, wp_intervention) %>% -->
+<!--   summarise( -->
+<!--     response_rate = unique(response_rate), -->
+<!--     hhs = n(), -->
+<!--     users = sum(hh_members) -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     users_increased = users/response_rate -->
+<!--   ) -->
+
+<!-- users_village_alt <- -->
+<!--   users_village_alt %>% -->
+<!--   left_join(sample_sizes) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   mutate( -->
+<!--     weight = n_villages/n_distinct(village_id) -->
+<!--   ) %>% -->
+<!--   ungroup -->
+
+<!-- users_village_alt <- -->
+<!--   users_village_alt %>% -->
+<!--   dplyr::filter(hhs > 1) -->
+
+<!-- people_per_country_alt <- -->
+<!--   map( -->
+<!--     users_village_alt %>% -->
+<!--       group_by(country, wp_intervention) %>% -->
+<!--       group_split(), -->
+<!--     ~ total_ci( -->
+<!--         var = "users_increased", -->
+<!--         design = svydesign( -->
+<!--           id = ~ village_id, -->
+<!--           data = .x,  -->
+<!--           weights = ~ weight -->
+<!--         ) -->
+<!--       ) %>% -->
+<!--       mutate( -->
+<!--         country = .x %>% pull(country) %>% unique, -->
+<!--         wp_intervention = .x %>% pull(wp_intervention) %>% unique, -->
+<!--         villages = .x %>% pull(village_id) %>% n_distinct, -->
+<!--         hhs = .x %>% pull(hhs) %>% sum, -->
+<!--         pop = .x %>% pull(n_villages) %>% unique %>% sum -->
+<!--       ) -->
+<!--   ) %>%  -->
+<!--   bind_rows() %>% -->
+<!--   select( -->
+<!--     country, wp_intervention,  -->
+<!--     outcome,  -->
+<!--     villages, -->
+<!--     everything() -->
+<!--   ) %>% -->
+<!--   arrange(outcome) -->
+
+<!-- table1_alt <- people_per_country_alt %>% -->
+<!--   select(country, wp_intervention, total, lb, ub, se) %>% -->
+<!--   mutate( -->
+<!--     indiv_access_popn = total -->
+<!--   ) %>% -->
+<!--   select(-total)  -->
+
+<!-- table1_alt -->
+
+<!-- table1country_alt <- table1_alt %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarise( -->
+<!--     indiv_access_popn = sum(indiv_access_popn), -->
+<!--     # SE of sum: sqrt(sum of squared SEs) assuming independence -->
+<!--     se = sqrt(sum(se^2, na.rm = TRUE)) -->
+<!--   ) %>% -->
+<!--   # CI -->
+<!--   mutate( -->
+<!--     lb = indiv_access_popn - 1.96 * se, -->
+<!--     ub = indiv_access_popn + 1.96 * se -->
+<!--   ) -->
+
+<!-- table1country_alt -->
+<!-- ``` -->
+
+<!-- ### double counting -->
+<!-- ```{r} -->
+<!-- hh_double_count_stats <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   summarise( -->
+<!--     total_hh = n_distinct(household_id), -->
+<!--     hh_multiple_mentions = sum(promoter_list_mentions > 1, na.rm = TRUE), -->
+<!--     share_multiple_mentions = hh_multiple_mentions / total_hh, -->
+<!--     share_pct = round(share_multiple_mentions * 100, 1), -->
+<!--     # calculate average mentions for those with multiple mentions -->
+<!--     avg_mentions = mean(promoter_list_mentions[promoter_list_mentions > 1], na.rm = TRUE), -->
+<!--     # wp_secweek is TRUE -> hh reports using additional water sources -->
+<!--     hh_report_multiple = sum(promoter_list_mentions > 1 & wp_secweek == TRUE, na.rm = TRUE), -->
+<!--     share_report_multiple = hh_report_multiple / hh_multiple_mentions, -->
+<!--     share_report_multiple_pct = round(share_report_multiple * 100, 0), -->
+<!--     # wp_secweek is FALSE -> hh reports not using any additional water sources (double counted) -->
+<!--     hh_double_counted = sum(promoter_list_mentions > 1 & wp_secweek == FALSE, na.rm = TRUE) -->
+<!--   ) -->
+
+<!-- # auto-generate text summary -->
+<!-- cat(sprintf("Among the %s distinct households listed by promoters across Evidence Action water points that were matched to the household census, we identified %d households (around %s%%) as listed to be using more than one (on average %s) of these water points. Of these %d, only %d%% self-report using more than one water point in the household census: in the remaining %d cases, promoters are double-counting households.\n", -->
+<!--             format(hh_double_count_stats$total_hh, big.mark = ","), -->
+<!--             hh_double_count_stats$hh_multiple_mentions, -->
+<!--             hh_double_count_stats$share_pct, -->
+<!--             round(hh_double_count_stats$avg_mentions, 0), -->
+<!--             hh_double_count_stats$hh_multiple_mentions, -->
+<!--             hh_double_count_stats$share_report_multiple_pct, -->
+<!--             hh_double_count_stats$hh_double_counted)) -->
+<!-- ``` -->
+<!-- ### hhs that report not using DSW/ILC -->
+<!-- ```{r} -->
+<!-- pm_list_nonprogram <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     non_program = sum(wp_intervention == "Non-program", na.rm = TRUE), -->
+<!--     non_program_one = sum(wp_intervention == "Non-program" & wp_secweek == FALSE, na.rm = TRUE), -->
+<!--     program = sum(wp_intervention == "DSW" | wp_intervention == "ILC", na.rm = TRUE), -->
+<!--     share_non_program = non_program/program, -->
+<!--     share_non_program_one = non_program_one/program -->
+<!--   ) -->
+
+<!-- pm_list_nonprogram -->
+<!-- ``` -->
+
+<!-- ###response rates -->
+<!-- ```{r} -->
+<!-- hh_census_response <- hh_census %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarise( -->
+<!--     response_rate = mean(response) -->
+<!--   ) -->
+
+<!-- hh_census_response -->
+<!-- ``` -->
+
+<!-- ##---------------EXPLORATORY--------------- -->
+<!-- ## Regressions of chlorination on being listed by promoter -->
+<!-- ###  tcr, control for promoter surveyed -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+
+<!-- promoter_wp_households <- hh_survey #%>% -->
+<!--   # dplyr::filter(promoter_surveyed == 1)  -->
+
+<!-- uganda_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+
+<!-- malawi_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+
+<!-- uganda_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- malawi_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp) -->
+
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination", -->
+<!--           dep.var.labels = "disctcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+
+<!-- ### fcr, control for promoter surveyed -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+
+<!-- promoter_wp_households <- hh_survey #%>% -->
+<!--   # dplyr::filter(promoter_surveyed == 1)  -->
+
+<!-- uganda_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+
+<!-- malawi_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+
+<!-- uganda_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- malawi_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp) -->
+
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination", -->
+<!--           dep.var.labels = "discfcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+
+<!-- ### tcr, no controls -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+
+<!-- uganda_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+
+<!-- malawi_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+
+<!-- uganda_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- malawi_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp) -->
+
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter and Chlorination", -->
+<!--           dep.var.labels = "disctcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+
+<!-- ### tcr, limit sample to promoter surveyed -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+
+<!-- promoter_wp_households <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == 1) -->
+
+<!-- uganda_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+
+<!-- malawi_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+
+<!-- uganda_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- malawi_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp) -->
+
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users", -->
+<!--           dep.var.labels = "disctcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+
+<!-- ### tcr continuous (as opposed to disctcr_02) -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+
+<!-- promoter_wp_households <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == 1) -->
+
+<!-- uganda_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+
+<!-- malawi_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+
+<!-- uganda_model <- lm_robust(disctcr ~ promoter_list,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- malawi_model <- lm_robust(disctcr ~ promoter_list,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr ~ promoter_list, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr ~ promoter_list, data = malawi_promoter_wp) -->
+
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users", -->
+<!--           dep.var.labels = "disctcr", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+
+<!-- ## Do households surveyed after the promoter respond differently? -->
+<!-- ### load rank dataset -->
+<!-- ```{r} -->
+<!-- pm_survey_clean <- -->
+<!--   read_rds( -->
+<!--     file.path( -->
+<!--       path_box, -->
+<!--       "Data", -->
+<!--       "PromoterSurvey", -->
+<!--       "DataSets", -->
+<!--       "Clean", -->
+<!--       "pm-survey-clean.rds" -->
+<!--     ) -->
+<!--   ) -->
+
+<!-- randomization <- pm_survey_clean %>%  -->
+<!--   dplyr::select( -->
+<!--     wp_id, village_id, country, -->
+<!--     contains("rand_hh") -->
+<!--   ) %>% -->
+<!--   pivot_longer( -->
+<!--     cols = starts_with("rand_hh"), -->
+<!--     names_prefix = "rand_hh_", -->
+<!--     names_to = "rank", -->
+<!--     values_to = "household_name", -->
+<!--     values_drop_na = TRUE -->
+<!--   ) %>% -->
+<!--   mutate(household_name = household_name %>% str_squish %>% str_trim) -->
+
+
+<!-- hhc <- -->
+<!--   read_rds( -->
+<!--     file.path( -->
+<!--       path_box, -->
+<!--       "Data", -->
+<!--       "HouseholdCensus", -->
+<!--       "DataSets", -->
+<!--       "Constructed", -->
+<!--       "hh-census-constructed.rds" -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   select(village_id, household_id, household_name) -->
+
+<!-- randomization_id <- -->
+<!--   randomization %>% -->
+<!--   left_join(hhc) -->
+
+<!-- hh_survey <- hh_survey %>% -->
+<!--   left_join( -->
+<!--     randomization_id %>% select(household_id, rank), -->
+<!--     by = "household_id" -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- table(hh_survey$survey, hh_survey$rank, useNA = "always") -->
+<!-- ``` -->
+
+<!-- ### test -->
+<!-- ```{r} -->
+<!-- chlor <- hh_survey %>% -->
+<!--   dplyr::filter(!is.na(rank)) %>% # only HHs randomized into monitoring -->
+<!--   dplyr::filter(survey == "Household Survey" & rank < 5 | survey == "Monitoring Survey")  -->
+
+<!-- table <- chlor_uganda %>% -->
+<!--   group_by(survey) %>% -->
+<!--   summarize( -->
+<!--     disctcr_02 = mean(disctcr_02, na.rm = TRUE), -->
+<!--     discfcr_02 = mean(discfcr_02, na.rm = TRUE) -->
+<!--   ) -->
+
+<!-- table -->
+
+<!-- chlor_uganda <- chlor %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+
+<!-- # run regressions -->
+<!-- model1 <- lm_robust(disctcr_02 ~ survey, -->
+<!--                     data = chlor_uganda, -->
+<!--                     clusters = wp_id) -->
+
+<!-- model2 <- lm_robust(discfcr_02 ~ survey, -->
+<!--                     data = chlor_uganda, -->
+<!--                     clusters = wp_id) -->
+
+<!-- # extract components from lm_robust objects -->
+<!-- coef1 <- model1$coefficients -->
+<!-- se1 <- model1$std.error -->
+<!-- coef2 <- model2$coefficients -->
+<!-- se2 <- model2$std.error -->
+
+<!-- # fit regular lm models (just for stargazer structure) -->
+<!-- model1_lm <- lm(disctcr_02 ~ survey, data = chlor_uganda) -->
+<!-- model2_lm <- lm(discfcr_02 ~ survey, data = chlor_uganda) -->
+
+<!-- # create stargazer table with clustered SEs from lm_robust -->
+<!-- stargazer(model1_lm, model2_lm, -->
+<!--           se = list(se1, se2), -->
+<!--           type = "text", -->
+<!--           title = "Uganda Association between Survey and Chlorination (Monitoring vs Household Survey & Rank <=4)", -->
+<!--           column.labels = c("DISCTCR", "DISCFCR"), -->
+<!--           covariate.labels = c("Monitoring Survey"), -->
+<!--           dep.var.labels = c(" ", " ")) -->
+<!-- ``` -->
 
 

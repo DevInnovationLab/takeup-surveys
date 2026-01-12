@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda</title>
-  <meta name="description" content="2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda" />
+  <title>3 Sample sizes and descriptives | Estimating Chlorination Take-up in Malawi and Uganda</title>
+  <meta name="description" content="3 Sample sizes and descriptives | Estimating Chlorination Take-up in Malawi and Uganda" />
   <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda" />
+  <meta property="og:title" content="3 Sample sizes and descriptives | Estimating Chlorination Take-up in Malawi and Uganda" />
   <meta property="og:type" content="book" />
   
   
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda" />
+  <meta name="twitter:title" content="3 Sample sizes and descriptives | Estimating Chlorination Take-up in Malawi and Uganda" />
   
   
   
@@ -29,8 +29,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="index.html"/>
-<link rel="next" href="sample-sizes-and-descriptives.html"/>
+<link rel="prev" href="inputs.html"/>
+<link rel="next" href="village-level-headline-results.html"/>
 
 
 
@@ -2311,238 +2311,1071 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="inputs" class="section level1 hasAnchor" number="2">
-<h1><span class="header-section-number">2</span> Inputs<a href="inputs.html#inputs" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="sample-sizes-and-descriptives" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">3</span> Sample sizes and descriptives<a href="sample-sizes-and-descriptives.html#sample-sizes-and-descriptives" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="inputs.html#cb1-1" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
-<span id="cb1-2"><a href="inputs.html#cb1-2" tabindex="-1"></a>  sf,</span>
-<span id="cb1-3"><a href="inputs.html#cb1-3" tabindex="-1"></a>  tidyverse,</span>
-<span id="cb1-4"><a href="inputs.html#cb1-4" tabindex="-1"></a>  viridis,</span>
-<span id="cb1-5"><a href="inputs.html#cb1-5" tabindex="-1"></a>  fixest,</span>
-<span id="cb1-6"><a href="inputs.html#cb1-6" tabindex="-1"></a>  janitor,</span>
-<span id="cb1-7"><a href="inputs.html#cb1-7" tabindex="-1"></a>  broom,</span>
-<span id="cb1-8"><a href="inputs.html#cb1-8" tabindex="-1"></a>  car,</span>
-<span id="cb1-9"><a href="inputs.html#cb1-9" tabindex="-1"></a>  modelsummary,</span>
-<span id="cb1-10"><a href="inputs.html#cb1-10" tabindex="-1"></a>  survey</span>
-<span id="cb1-11"><a href="inputs.html#cb1-11" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="sample-sizes-and-descriptives.html#cb13-1" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
+<span id="cb13-2"><a href="sample-sizes-and-descriptives.html#cb13-2" tabindex="-1"></a>  dplyr,</span>
+<span id="cb13-3"><a href="sample-sizes-and-descriptives.html#cb13-3" tabindex="-1"></a>  readr,</span>
+<span id="cb13-4"><a href="sample-sizes-and-descriptives.html#cb13-4" tabindex="-1"></a>  tidyr,</span>
+<span id="cb13-5"><a href="sample-sizes-and-descriptives.html#cb13-5" tabindex="-1"></a>  glue,</span>
+<span id="cb13-6"><a href="sample-sizes-and-descriptives.html#cb13-6" tabindex="-1"></a>  sf,</span>
+<span id="cb13-7"><a href="sample-sizes-and-descriptives.html#cb13-7" tabindex="-1"></a>  tidyverse,</span>
+<span id="cb13-8"><a href="sample-sizes-and-descriptives.html#cb13-8" tabindex="-1"></a>  viridis,</span>
+<span id="cb13-9"><a href="sample-sizes-and-descriptives.html#cb13-9" tabindex="-1"></a>  fixest,</span>
+<span id="cb13-10"><a href="sample-sizes-and-descriptives.html#cb13-10" tabindex="-1"></a>  janitor,</span>
+<span id="cb13-11"><a href="sample-sizes-and-descriptives.html#cb13-11" tabindex="-1"></a>  broom,</span>
+<span id="cb13-12"><a href="sample-sizes-and-descriptives.html#cb13-12" tabindex="-1"></a>  car,</span>
+<span id="cb13-13"><a href="sample-sizes-and-descriptives.html#cb13-13" tabindex="-1"></a>  modelsummary,</span>
+<span id="cb13-14"><a href="sample-sizes-and-descriptives.html#cb13-14" tabindex="-1"></a>  survey,</span>
+<span id="cb13-15"><a href="sample-sizes-and-descriptives.html#cb13-15" tabindex="-1"></a>  here</span>
+<span id="cb13-16"><a href="sample-sizes-and-descriptives.html#cb13-16" tabindex="-1"></a>)</span></code></pre></div>
 </details>
-<div id="villages" class="section level2 hasAnchor" number="2.1">
-<h2><span class="header-section-number">2.1</span> Villages<a href="inputs.html#villages" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="all-villages-in-admin-data" class="section level3 hasAnchor" number="2.1.1">
-<h3><span class="header-section-number">2.1.1</span> All villages in admin data<a href="inputs.html#all-villages-in-admin-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="summary-table" class="section level2 hasAnchor" number="3.1">
+<h2><span class="header-section-number">3.1</span> Summary table<a href="sample-sizes-and-descriptives.html#summary-table" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="inputs.html#cb2-1" tabindex="-1"></a>villages <span class="ot">&lt;-</span></span>
-<span id="cb2-2"><a href="inputs.html#cb2-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb2-3"><a href="inputs.html#cb2-3" tabindex="-1"></a>      <span class="fu">file.path</span>(</span>
-<span id="cb2-4"><a href="inputs.html#cb2-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb2-5"><a href="inputs.html#cb2-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb2-6"><a href="inputs.html#cb2-6" tabindex="-1"></a>      <span class="st">&quot;Villages&quot;</span>,</span>
-<span id="cb2-7"><a href="inputs.html#cb2-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb2-8"><a href="inputs.html#cb2-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb2-9"><a href="inputs.html#cb2-9" tabindex="-1"></a>      <span class="st">&quot;villages.rds&quot;</span></span>
-<span id="cb2-10"><a href="inputs.html#cb2-10" tabindex="-1"></a>    )</span>
-<span id="cb2-11"><a href="inputs.html#cb2-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb2-12"><a href="inputs.html#cb2-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span> <span class="sc">&amp;</span> <span class="sc">!</span>dsw))</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="sample-sizes-and-descriptives.html#cb14-1" tabindex="-1"></a>evac <span class="ot">&lt;-</span></span>
+<span id="cb14-2"><a href="sample-sizes-and-descriptives.html#cb14-2" tabindex="-1"></a>  villages <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="sample-sizes-and-descriptives.html#cb14-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-4"><a href="sample-sizes-and-descriptives.html#cb14-4" tabindex="-1"></a>    <span class="at">sample_group =</span> </span>
+<span id="cb14-5"><a href="sample-sizes-and-descriptives.html#cb14-5" tabindex="-1"></a>      <span class="fu">if_else</span>(</span>
+<span id="cb14-6"><a href="sample-sizes-and-descriptives.html#cb14-6" tabindex="-1"></a>        country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, </span>
+<span id="cb14-7"><a href="sample-sizes-and-descriptives.html#cb14-7" tabindex="-1"></a>        pre_expansion <span class="sc">%&gt;%</span> as.character, </span>
+<span id="cb14-8"><a href="sample-sizes-and-descriptives.html#cb14-8" tabindex="-1"></a>        sample_group <span class="sc">%&gt;%</span> as.character</span>
+<span id="cb14-9"><a href="sample-sizes-and-descriptives.html#cb14-9" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-10"><a href="sample-sizes-and-descriptives.html#cb14-10" tabindex="-1"></a>      <span class="fu">factor</span>(<span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Footprint&quot;</span>, <span class="st">&quot;Expansion&quot;</span>, <span class="st">&quot;ILC&quot;</span>), <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-11"><a href="sample-sizes-and-descriptives.html#cb14-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-12"><a href="sample-sizes-and-descriptives.html#cb14-12" tabindex="-1"></a>  <span class="fu">group_by</span>(</span>
+<span id="cb14-13"><a href="sample-sizes-and-descriptives.html#cb14-13" tabindex="-1"></a>    country, sample_group, ea_program_vil</span>
+<span id="cb14-14"><a href="sample-sizes-and-descriptives.html#cb14-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-15"><a href="sample-sizes-and-descriptives.html#cb14-15" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb14-16"><a href="sample-sizes-and-descriptives.html#cb14-16" tabindex="-1"></a>    <span class="at">districts =</span> <span class="fu">n_distinct</span>(district_id),</span>
+<span id="cb14-17"><a href="sample-sizes-and-descriptives.html#cb14-17" tabindex="-1"></a>    <span class="at">villages =</span> <span class="fu">n</span>(),</span>
+<span id="cb14-18"><a href="sample-sizes-and-descriptives.html#cb14-18" tabindex="-1"></a>    <span class="at">dsw =</span> <span class="fu">sum</span>(dsw_wpt),</span>
+<span id="cb14-19"><a href="sample-sizes-and-descriptives.html#cb14-19" tabindex="-1"></a>    <span class="at">ilc_wpt =</span> <span class="fu">sum</span>(ilc_wpt),</span>
+<span id="cb14-20"><a href="sample-sizes-and-descriptives.html#cb14-20" tabindex="-1"></a>    <span class="at">ilc_wcp =</span> <span class="fu">sum</span>(ilc_wcp)</span>
+<span id="cb14-21"><a href="sample-sizes-and-descriptives.html#cb14-21" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-22"><a href="sample-sizes-and-descriptives.html#cb14-22" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
+<span id="cb14-23"><a href="sample-sizes-and-descriptives.html#cb14-23" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>country) <span class="sc">%&gt;%</span></span>
+<span id="cb14-24"><a href="sample-sizes-and-descriptives.html#cb14-24" tabindex="-1"></a>  <span class="fu">set_names</span>(</span>
+<span id="cb14-25"><a href="sample-sizes-and-descriptives.html#cb14-25" tabindex="-1"></a>    <span class="fu">c</span>(</span>
+<span id="cb14-26"><a href="sample-sizes-and-descriptives.html#cb14-26" tabindex="-1"></a>      <span class="st">&quot;Village group&quot;</span>,</span>
+<span id="cb14-27"><a href="sample-sizes-and-descriptives.html#cb14-27" tabindex="-1"></a>      <span class="st">&quot;Active programs&quot;</span>,</span>
+<span id="cb14-28"><a href="sample-sizes-and-descriptives.html#cb14-28" tabindex="-1"></a>      <span class="st">&quot;Districts&quot;</span>,</span>
+<span id="cb14-29"><a href="sample-sizes-and-descriptives.html#cb14-29" tabindex="-1"></a>      <span class="st">&quot;Villages&quot;</span>,</span>
+<span id="cb14-30"><a href="sample-sizes-and-descriptives.html#cb14-30" tabindex="-1"></a>      <span class="st">&quot;DSW water points&quot;</span>,</span>
+<span id="cb14-31"><a href="sample-sizes-and-descriptives.html#cb14-31" tabindex="-1"></a>      <span class="st">&quot;ILC water points&quot;</span>,</span>
+<span id="cb14-32"><a href="sample-sizes-and-descriptives.html#cb14-32" tabindex="-1"></a>      <span class="st">&quot;ILC water collection points&quot;</span></span>
+<span id="cb14-33"><a href="sample-sizes-and-descriptives.html#cb14-33" tabindex="-1"></a>    )</span>
+<span id="cb14-34"><a href="sample-sizes-and-descriptives.html#cb14-34" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## `summarise()` has grouped output by &#39;country&#39;, &#39;sample_group&#39;. You can override
+## using the `.groups` argument.</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="sample-sizes-and-descriptives.html#cb16-1" tabindex="-1"></a>evac <span class="sc">%&gt;%</span></span>
+<span id="cb16-2"><a href="sample-sizes-and-descriptives.html#cb16-2" tabindex="-1"></a>  <span class="fu">kable</span>(</span>
+<span id="cb16-3"><a href="sample-sizes-and-descriptives.html#cb16-3" tabindex="-1"></a>    <span class="at">format =</span> <span class="st">&quot;html&quot;</span>,</span>
+<span id="cb16-4"><a href="sample-sizes-and-descriptives.html#cb16-4" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>, <span class="at">decimal.mark =</span> <span class="st">&quot;.&quot;</span>)</span>
+<span id="cb16-5"><a href="sample-sizes-and-descriptives.html#cb16-5" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-6"><a href="sample-sizes-and-descriptives.html#cb16-6" tabindex="-1"></a>  <span class="fu">kable_paper</span>(<span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-7"><a href="sample-sizes-and-descriptives.html#cb16-7" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Malawi&quot;</span>, <span class="dv">1</span>, <span class="dv">4</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-8"><a href="sample-sizes-and-descriptives.html#cb16-8" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="dv">5</span>, <span class="dv">8</span>)</span></code></pre></div>
+</details>
+<table class=" lightable-paper lightable-striped" style="font-family: &quot;Arial Narrow&quot;, arial, helvetica, sans-serif; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Village group
+</th>
+<th style="text-align:left;">
+Active programs
+</th>
+<th style="text-align:right;">
+Districts
+</th>
+<th style="text-align:right;">
+Villages
+</th>
+<th style="text-align:right;">
+DSW water points
+</th>
+<th style="text-align:right;">
+ILC water points
+</th>
+<th style="text-align:right;">
+ILC water collection points
+</th>
+</tr>
+</thead>
+<tbody>
+<tr grouplength="4">
+<td colspan="7" style="border-bottom: 1px solid;">
+<strong>Malawi</strong>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+Footprint
+</td>
+<td style="text-align:left;">
+DSW
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1,161
+</td>
+<td style="text-align:right;">
+2,187
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+Expansion
+</td>
+<td style="text-align:left;">
+DSW
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+4,809
+</td>
+<td style="text-align:right;">
+12,949
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+ILC
+</td>
+<td style="text-align:left;">
+DSW &amp; ILC
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+275
+</td>
+<td style="text-align:right;">
+1,062
+</td>
+<td style="text-align:right;">
+212
+</td>
+<td style="text-align:right;">
+1,087
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+ILC
+</td>
+<td style="text-align:left;">
+ILC
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+362
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+140
+</td>
+<td style="text-align:right;">
+937
+</td>
+</tr>
+<tr grouplength="4">
+<td colspan="7" style="border-bottom: 1px solid;">
+<strong>Uganda</strong>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+Footprint
+</td>
+<td style="text-align:left;">
+DSW
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+3,171
+</td>
+<td style="text-align:right;">
+5,192
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+Footprint
+</td>
+<td style="text-align:left;">
+DSW &amp; ILC
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+161
+</td>
+<td style="text-align:right;">
+264
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+342
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+Expansion
+</td>
+<td style="text-align:left;">
+DSW
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+4,012
+</td>
+<td style="text-align:right;">
+11,942
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;padding-left: 2em;" indentlevel="1">
+Expansion
+</td>
+<td style="text-align:left;">
+DSW &amp; ILC
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:right;">
+320
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:right;">
+205
+</td>
+</tr>
+</tbody>
+</table>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="sample-sizes-and-descriptives.html#cb17-1" tabindex="-1"></a>table <span class="ot">&lt;-</span></span>
+<span id="cb17-2"><a href="sample-sizes-and-descriptives.html#cb17-2" tabindex="-1"></a>  evac <span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="sample-sizes-and-descriptives.html#cb17-3" tabindex="-1"></a>  <span class="fu">kable</span>(</span>
+<span id="cb17-4"><a href="sample-sizes-and-descriptives.html#cb17-4" tabindex="-1"></a>    <span class="at">format =</span> <span class="st">&quot;latex&quot;</span>,</span>
+<span id="cb17-5"><a href="sample-sizes-and-descriptives.html#cb17-5" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>, <span class="at">decimal.mark =</span> <span class="st">&quot;.&quot;</span>),</span>
+<span id="cb17-6"><a href="sample-sizes-and-descriptives.html#cb17-6" tabindex="-1"></a>    <span class="at">align =</span> <span class="st">&quot;c&quot;</span>, </span>
+<span id="cb17-7"><a href="sample-sizes-and-descriptives.html#cb17-7" tabindex="-1"></a>    <span class="at">booktabs =</span> T,</span>
+<span id="cb17-8"><a href="sample-sizes-and-descriptives.html#cb17-8" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">&quot;Summary of Evidence Action administrative data&quot;</span>,</span>
+<span id="cb17-9"><a href="sample-sizes-and-descriptives.html#cb17-9" tabindex="-1"></a>    <span class="at">label =</span> <span class="st">&quot;population&quot;</span></span>
+<span id="cb17-10"><a href="sample-sizes-and-descriptives.html#cb17-10" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb17-11"><a href="sample-sizes-and-descriptives.html#cb17-11" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">latex_options =</span> <span class="fu">c</span>(<span class="st">&quot;scale_down&quot;</span>, <span class="st">&quot;HOLD_position&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb17-12"><a href="sample-sizes-and-descriptives.html#cb17-12" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Malawi&quot;</span>, <span class="dv">1</span>, <span class="dv">4</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-13"><a href="sample-sizes-and-descriptives.html#cb17-13" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="dv">5</span>, <span class="dv">8</span>)</span>
+<span id="cb17-14"><a href="sample-sizes-and-descriptives.html#cb17-14" tabindex="-1"></a></span>
+<span id="cb17-15"><a href="sample-sizes-and-descriptives.html#cb17-15" tabindex="-1"></a><span class="fu">writeLines</span>(</span>
+<span id="cb17-16"><a href="sample-sizes-and-descriptives.html#cb17-16" tabindex="-1"></a>  table, </span>
+<span id="cb17-17"><a href="sample-sizes-and-descriptives.html#cb17-17" tabindex="-1"></a>  <span class="st">&quot;output/appendix-tables/population.tex&quot;</span></span>
+<span id="cb17-18"><a href="sample-sizes-and-descriptives.html#cb17-18" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 </div>
-<div id="sampled-villages" class="section level3 hasAnchor" number="2.1.2">
-<h3><span class="header-section-number">2.1.2</span> Sampled villages<a href="inputs.html#sampled-villages" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="uganda" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> Uganda<a href="sample-sizes-and-descriptives.html#uganda" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="villages-1" class="section level3 hasAnchor" number="3.2.1">
+<h3><span class="header-section-number">3.2.1</span> Villages<a href="sample-sizes-and-descriptives.html#villages-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="sample-sizes-and-descriptives.html#cb18-1" tabindex="-1"></a>villages <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="sample-sizes-and-descriptives.html#cb18-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="sample-sizes-and-descriptives.html#cb18-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb18-4"><a href="sample-sizes-and-descriptives.html#cb18-4" tabindex="-1"></a>    <span class="at">Visited =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(vil_replaced)),</span>
+<span id="cb18-5"><a href="sample-sizes-and-descriptives.html#cb18-5" tabindex="-1"></a>    <span class="at">Replaced =</span> <span class="fu">sum</span>(vil_replaced, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-6"><a href="sample-sizes-and-descriptives.html#cb18-6" tabindex="-1"></a>    <span class="at">Included =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-7"><a href="sample-sizes-and-descriptives.html#cb18-7" tabindex="-1"></a>    <span class="at">Footprint =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;Footprint&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-8"><a href="sample-sizes-and-descriptives.html#cb18-8" tabindex="-1"></a>    <span class="at">Expansion =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;Expansion&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-9"><a href="sample-sizes-and-descriptives.html#cb18-9" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 5
+##   Visited Replaced Included Footprint Expansion
+##     &lt;int&gt;    &lt;int&gt;    &lt;int&gt;     &lt;int&gt;     &lt;int&gt;
+## 1      86        9       77        30        30</code></pre>
+</div>
+<div id="water-points-1" class="section level3 hasAnchor" number="3.2.2">
+<h3><span class="header-section-number">3.2.2</span> Water points<a href="sample-sizes-and-descriptives.html#water-points-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="sample-sizes-and-descriptives.html#cb20-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span> </span>
+<span id="cb20-2"><a href="sample-sizes-and-descriptives.html#cb20-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="sample-sizes-and-descriptives.html#cb20-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb20-4"><a href="sample-sizes-and-descriptives.html#cb20-4" tabindex="-1"></a>    <span class="at">All =</span> <span class="fu">n</span>(),</span>
+<span id="cb20-5"><a href="sample-sizes-and-descriptives.html#cb20-5" tabindex="-1"></a>    <span class="at">Eligible =</span> <span class="fu">sum</span>(analysis, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb20-6"><a href="sample-sizes-and-descriptives.html#cb20-6" tabindex="-1"></a>    <span class="st">`</span><span class="at">ILC WPs</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(ilc),</span>
+<span id="cb20-7"><a href="sample-sizes-and-descriptives.html#cb20-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">ILC Villages</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">if_else</span>(ilc, village_id, <span class="cn">NA</span>) <span class="sc">%&gt;%</span> <span class="fu">n_distinct</span>(<span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb20-8"><a href="sample-sizes-and-descriptives.html#cb20-8" tabindex="-1"></a>    <span class="at">DSW =</span> <span class="fu">sum</span>(dsw),</span>
+<span id="cb20-9"><a href="sample-sizes-and-descriptives.html#cb20-9" tabindex="-1"></a>    <span class="at">Matched =</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(ea_id)),</span>
+<span id="cb20-10"><a href="sample-sizes-and-descriptives.html#cb20-10" tabindex="-1"></a>    <span class="at">Unmatched =</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_id)),</span>
+<span id="cb20-11"><a href="sample-sizes-and-descriptives.html#cb20-11" tabindex="-1"></a>    <span class="st">`</span><span class="at">Unmatched with ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> (<span class="sc">!</span><span class="fu">is.na</span>(disp_dsw_id) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(disp_barcode))),</span>
+<span id="cb20-12"><a href="sample-sizes-and-descriptives.html#cb20-12" tabindex="-1"></a>    <span class="st">`</span><span class="at">Unmatched with no ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> <span class="sc">!</span>wp_func)</span>
+<span id="cb20-13"><a href="sample-sizes-and-descriptives.html#cb20-13" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 9
+##     All Eligible `ILC WPs` `ILC Villages`   DSW Matched Unmatched
+##   &lt;int&gt;    &lt;int&gt;     &lt;int&gt;          &lt;int&gt; &lt;int&gt;   &lt;int&gt;     &lt;int&gt;
+## 1   524      452        11              6   185     172        13
+## # ℹ 2 more variables: `Unmatched with ID` &lt;int&gt;, `Unmatched with no ID` &lt;int&gt;</code></pre>
 <ul>
-<li>DSW villages were replaced at random (e.g. because of disputed village boundaries or because the village could not be identified under the names in the admin data). Therefore, we remove replaced villages from the analysis</li>
-<li>ILC villages were not replaced at random: these were replaced when no ILC was present in the village or when all of the water collection points were not functioning. Therefore, we consider replaced villages to have zero users.</li>
+<li>.
+<ul>
+<li>4 were located, but no longer had dispensers when the water point census took place.</li>
+<li>7 are outside of the village boundaries according to the GPS data.</li>
+</ul></li>
 </ul>
-<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="inputs.html#cb3-1" tabindex="-1"></a>sampled_villages <span class="ot">&lt;-</span></span>
-<span id="cb3-2"><a href="inputs.html#cb3-2" tabindex="-1"></a>  villages <span class="sc">%&gt;%</span></span>
-<span id="cb3-3"><a href="inputs.html#cb3-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb3-4"><a href="inputs.html#cb3-4" tabindex="-1"></a>    (sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> visited <span class="sc">==</span> <span class="st">&quot;In sample&quot;</span>) <span class="sc">|</span></span>
-<span id="cb3-5"><a href="inputs.html#cb3-5" tabindex="-1"></a>    (sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> visited <span class="sc">==</span> <span class="st">&quot;In sample&quot;</span> <span class="sc">&amp;</span> <span class="sc">!</span>vil_replaced)</span>
-<span id="cb3-6"><a href="inputs.html#cb3-6" tabindex="-1"></a>  )</span>
-<span id="cb3-7"><a href="inputs.html#cb3-7" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="inputs.html#cb3-8" tabindex="-1"></a>village_intervention <span class="ot">&lt;-</span></span>
-<span id="cb3-9"><a href="inputs.html#cb3-9" tabindex="-1"></a>  sampled_villages <span class="sc">%&gt;%</span></span>
-<span id="cb3-10"><a href="inputs.html#cb3-10" tabindex="-1"></a>  <span class="fu">crossing</span>(<span class="at">wp_intervention =</span> <span class="fu">c</span>(<span class="st">&quot;DSW&quot;</span>, <span class="st">&quot;ILC&quot;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb3-11"><a href="inputs.html#cb3-11" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>(wp_intervention <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>)) </span></code></pre></div>
-</details>
 </div>
-<div id="calculate-village-sample-sizes-for-weighing" class="section level3 hasAnchor" number="2.1.3">
-<h3><span class="header-section-number">2.1.3</span> Calculate village sample sizes for weighing<a href="inputs.html#calculate-village-sample-sizes-for-weighing" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="water-samples-tested" class="section level3 hasAnchor" number="3.2.3">
+<h3><span class="header-section-number">3.2.3</span> Water samples tested<a href="sample-sizes-and-descriptives.html#water-samples-tested" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="inputs.html#cb4-1" tabindex="-1"></a>sample_sizes <span class="ot">&lt;-</span></span>
-<span id="cb4-2"><a href="inputs.html#cb4-2" tabindex="-1"></a>  villages <span class="sc">%&gt;%</span></span>
-<span id="cb4-3"><a href="inputs.html#cb4-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sampled_village =</span> village_id <span class="sc">%in%</span> sampled_villages<span class="sc">$</span>village_id) <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="inputs.html#cb4-4" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
-<span id="cb4-5"><a href="inputs.html#cb4-5" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb4-6"><a href="inputs.html#cb4-6" tabindex="-1"></a>    <span class="at">n_villages =</span> <span class="fu">n_distinct</span>(village_id),</span>
-<span id="cb4-7"><a href="inputs.html#cb4-7" tabindex="-1"></a>    <span class="at">visited_villages =</span> <span class="fu">sum</span>(visited <span class="sc">==</span> <span class="st">&quot;In sample&quot;</span> <span class="sc">&amp;</span> <span class="sc">!</span>vil_replaced),</span>
-<span id="cb4-8"><a href="inputs.html#cb4-8" tabindex="-1"></a>    <span class="at">sampled_villages =</span> <span class="fu">sum</span>(sampled_village)</span>
-<span id="cb4-9"><a href="inputs.html#cb4-9" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="sample-sizes-and-descriptives.html#cb22-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span> </span>
+<span id="cb22-2"><a href="sample-sizes-and-descriptives.html#cb22-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, dsw, disp_filled) <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="sample-sizes-and-descriptives.html#cb22-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb22-4"><a href="sample-sizes-and-descriptives.html#cb22-4" tabindex="-1"></a>    <span class="st">`</span><span class="at">Filled dispensers</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">n</span>(),</span>
+<span id="cb22-5"><a href="sample-sizes-and-descriptives.html#cb22-5" tabindex="-1"></a>    <span class="at">Disc =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(disctcr) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(discfcr)),</span>
+<span id="cb22-6"><a href="sample-sizes-and-descriptives.html#cb22-6" tabindex="-1"></a>    <span class="at">Colorimeter =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(metertcr) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(meterfcr))</span>
+<span id="cb22-7"><a href="sample-sizes-and-descriptives.html#cb22-7" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 3
+##   `Filled dispensers`  Disc Colorimeter
+##                 &lt;int&gt; &lt;int&gt;       &lt;int&gt;
+## 1                 128   128         128</code></pre>
+</div>
+<div id="household-census-1" class="section level3 hasAnchor" number="3.2.4">
+<h3><span class="header-section-number">3.2.4</span> Household census<a href="sample-sizes-and-descriptives.html#household-census-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="sample-sizes-and-descriptives.html#cb24-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span> </span>
+<span id="cb24-2"><a href="sample-sizes-and-descriptives.html#cb24-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-3"><a href="sample-sizes-and-descriptives.html#cb24-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb24-4"><a href="sample-sizes-and-descriptives.html#cb24-4" tabindex="-1"></a>    <span class="at">All =</span> <span class="fu">n</span>(),</span>
+<span id="cb24-5"><a href="sample-sizes-and-descriptives.html#cb24-5" tabindex="-1"></a>    <span class="at">Outside =</span> <span class="fu">sum</span>(inclusion <span class="sc">==</span> <span class="st">&quot;Up to 200m outside of village boundaries&quot;</span>),</span>
+<span id="cb24-6"><a href="sample-sizes-and-descriptives.html#cb24-6" tabindex="-1"></a>    <span class="at">Responses =</span> <span class="fu">sum</span>(response),</span>
+<span id="cb24-7"><a href="sample-sizes-and-descriptives.html#cb24-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">Responses (%)</span><span class="st">`</span> <span class="ot">=</span> Responses<span class="sc">/</span>All</span>
+<span id="cb24-8"><a href="sample-sizes-and-descriptives.html#cb24-8" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 4
+##     All Outside Responses `Responses (%)`
+##   &lt;int&gt;   &lt;int&gt;     &lt;int&gt;           &lt;dbl&gt;
+## 1  9525    1515      8467           0.889</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="sample-sizes-and-descriptives.html#cb26-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span> </span>
+<span id="cb26-2"><a href="sample-sizes-and-descriptives.html#cb26-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, response) <span class="sc">%&gt;%</span></span>
+<span id="cb26-3"><a href="sample-sizes-and-descriptives.html#cb26-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb26-4"><a href="sample-sizes-and-descriptives.html#cb26-4" tabindex="-1"></a>    <span class="st">`</span><span class="at">WP matched</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(wp_id)),</span>
+<span id="cb26-5"><a href="sample-sizes-and-descriptives.html#cb26-5" tabindex="-1"></a>    <span class="st">`</span><span class="at">WP matched (%)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="sc">!</span><span class="fu">is.na</span>(wp_id)),</span>
+<span id="cb26-6"><a href="sample-sizes-and-descriptives.html#cb26-6" tabindex="-1"></a>    <span class="st">`</span><span class="at">DSW users</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(wp_dsw, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb26-7"><a href="sample-sizes-and-descriptives.html#cb26-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">DSW users (%)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">mean</span>(wp_dsw, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb26-8"><a href="sample-sizes-and-descriptives.html#cb26-8" tabindex="-1"></a>    <span class="at">Outside =</span> <span class="fu">sum</span>(inclusion <span class="sc">==</span> <span class="st">&quot;Up to 200m outside of village boundaries&quot;</span>),</span>
+<span id="cb26-9"><a href="sample-sizes-and-descriptives.html#cb26-9" tabindex="-1"></a>    <span class="at">Responses =</span> <span class="fu">sum</span>(response)</span>
+<span id="cb26-10"><a href="sample-sizes-and-descriptives.html#cb26-10" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 6
+##   `WP matched` `WP matched (%)` `DSW users` `DSW users (%)` Outside Responses
+##          &lt;int&gt;            &lt;dbl&gt;       &lt;int&gt;           &lt;dbl&gt;   &lt;int&gt;     &lt;int&gt;
+## 1         8155            0.963        5963           0.754    1406      8467</code></pre>
+</div>
+<div id="household-survey-1" class="section level3 hasAnchor" number="3.2.5">
+<h3><span class="header-section-number">3.2.5</span> Household survey<a href="sample-sizes-and-descriptives.html#household-survey-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="sample-sizes-and-descriptives.html#cb28-1" tabindex="-1"></a>hh_survey <span class="sc">%&gt;%</span> </span>
+<span id="cb28-2"><a href="sample-sizes-and-descriptives.html#cb28-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-3"><a href="sample-sizes-and-descriptives.html#cb28-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb28-4"><a href="sample-sizes-and-descriptives.html#cb28-4" tabindex="-1"></a>    <span class="at">All =</span> <span class="fu">n</span>(),</span>
+<span id="cb28-5"><a href="sample-sizes-and-descriptives.html#cb28-5" tabindex="-1"></a>    <span class="at">DSW =</span> <span class="fu">sum</span>(wp_dsw, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb28-6"><a href="sample-sizes-and-descriptives.html#cb28-6" tabindex="-1"></a>    <span class="st">`</span><span class="at">DSW (%)</span><span class="st">`</span> <span class="ot">=</span> DSW<span class="sc">/</span>All,</span>
+<span id="cb28-7"><a href="sample-sizes-and-descriptives.html#cb28-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">Non-program (%)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(wp_intervention <span class="sc">==</span> <span class="st">&quot;Non-program&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">/</span>All,</span>
+<span id="cb28-8"><a href="sample-sizes-and-descriptives.html#cb28-8" tabindex="-1"></a>    <span class="st">`</span><span class="at">No WP (%)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(wp_id), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">/</span>All,</span>
+<span id="cb28-9"><a href="sample-sizes-and-descriptives.html#cb28-9" tabindex="-1"></a>    <span class="st">`</span><span class="at">Water sample</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(water_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb28-10"><a href="sample-sizes-and-descriptives.html#cb28-10" tabindex="-1"></a>    <span class="st">`</span><span class="at">Water sample (% DSW)</span><span class="st">`</span> <span class="ot">=</span> <span class="st">`</span><span class="at">Water sample</span><span class="st">`</span><span class="sc">/</span>DSW,</span>
+<span id="cb28-11"><a href="sample-sizes-and-descriptives.html#cb28-11" tabindex="-1"></a>    <span class="st">`</span><span class="at">Color wheel</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(disctcr) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(discfcr)),</span>
+<span id="cb28-12"><a href="sample-sizes-and-descriptives.html#cb28-12" tabindex="-1"></a>    <span class="at">Colorimeter =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(metertcr) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(meterfcr))</span>
+<span id="cb28-13"><a href="sample-sizes-and-descriptives.html#cb28-13" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 9
+##     All   DSW `DSW (%)` `Non-program (%)` `No WP (%)` `Water sample`
+##   &lt;int&gt; &lt;int&gt;     &lt;dbl&gt;             &lt;dbl&gt;       &lt;dbl&gt;          &lt;int&gt;
+## 1  1209  1147     0.949            0.0323     0.00662           1067
+## # ℹ 3 more variables: `Water sample (% DSW)` &lt;dbl&gt;, `Color wheel` &lt;int&gt;,
+## #   Colorimeter &lt;int&gt;</code></pre>
+</div>
+<div id="promoter-survey-1" class="section level3 hasAnchor" number="3.2.6">
+<h3><span class="header-section-number">3.2.6</span> Promoter survey<a href="sample-sizes-and-descriptives.html#promoter-survey-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="sample-sizes-and-descriptives.html#cb30-1" tabindex="-1"></a>pm_survey <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="sample-sizes-and-descriptives.html#cb30-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="sample-sizes-and-descriptives.html#cb30-3" tabindex="-1"></a>  nrow</span></code></pre></div>
+</details>
+<pre><code>## [1] 119</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="sample-sizes-and-descriptives.html#cb32-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb32-2"><a href="sample-sizes-and-descriptives.html#cb32-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, wp_id <span class="sc">%in%</span> pm_survey<span class="sc">$</span>wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb32-3"><a href="sample-sizes-and-descriptives.html#cb32-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">sum</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 1
+##   `sum(promoter_surveyed)`
+##                      &lt;int&gt;
+## 1                      119</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="sample-sizes-and-descriptives.html#cb34-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb34-2"><a href="sample-sizes-and-descriptives.html#cb34-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>, dsw) <span class="sc">%&gt;%</span></span>
+<span id="cb34-3"><a href="sample-sizes-and-descriptives.html#cb34-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">mean</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 1
+##   `mean(promoter_surveyed)`
+##                       &lt;dbl&gt;
+## 1                     0.627</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="sample-sizes-and-descriptives.html#cb36-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb36-2"><a href="sample-sizes-and-descriptives.html#cb36-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>, wp_id <span class="sc">%in%</span> pm_survey<span class="sc">$</span>wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb36-3"><a href="sample-sizes-and-descriptives.html#cb36-3" tabindex="-1"></a>  <span class="fu">group_by</span>(intervention) <span class="sc">%&gt;%</span></span>
+<span id="cb36-4"><a href="sample-sizes-and-descriptives.html#cb36-4" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">sum</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 3 × 2
+##   intervention `sum(promoter_surveyed)`
+##   &lt;fct&gt;                           &lt;int&gt;
+## 1 DSW                               115
+## 2 Non-program                         1
+## 3 ILC                                 3</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="sample-sizes-and-descriptives.html#cb38-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb38-2"><a href="sample-sizes-and-descriptives.html#cb38-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, wp_id <span class="sc">%in%</span> pm_survey<span class="sc">$</span>wp_id, pm_ea_list) <span class="sc">%&gt;%</span></span>
+<span id="cb38-3"><a href="sample-sizes-and-descriptives.html#cb38-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">sum</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 1
+##   `sum(promoter_surveyed)`
+##                      &lt;int&gt;
+## 1                      111</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="sample-sizes-and-descriptives.html#cb40-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb40-2"><a href="sample-sizes-and-descriptives.html#cb40-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb40-3"><a href="sample-sizes-and-descriptives.html#cb40-3" tabindex="-1"></a>  <span class="fu">group_by</span>(pm_ea_list) <span class="sc">%&gt;%</span></span>
+<span id="cb40-4"><a href="sample-sizes-and-descriptives.html#cb40-4" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">sum</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 3 × 2
+##   pm_ea_list `sum(promoter_surveyed)`
+##   &lt;lgl&gt;                         &lt;int&gt;
+## 1 FALSE                             8
+## 2 TRUE                            112
+## 3 NA                                0</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="sample-sizes-and-descriptives.html#cb42-1" tabindex="-1"></a>mon_survey <span class="sc">%&gt;%</span></span>
+<span id="cb42-2"><a href="sample-sizes-and-descriptives.html#cb42-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>, sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb42-3"><a href="sample-sizes-and-descriptives.html#cb42-3" tabindex="-1"></a>  nrow</span></code></pre></div>
+</details>
+<pre><code>## [1] 460</code></pre>
+</div>
+</div>
+<div id="malawi" class="section level2 hasAnchor" number="3.3">
+<h2><span class="header-section-number">3.3</span> Malawi<a href="sample-sizes-and-descriptives.html#malawi" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="villages-2" class="section level3 hasAnchor" number="3.3.1">
+<h3><span class="header-section-number">3.3.1</span> Villages<a href="sample-sizes-and-descriptives.html#villages-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="sample-sizes-and-descriptives.html#cb44-1" tabindex="-1"></a>villages <span class="sc">%&gt;%</span></span>
+<span id="cb44-2"><a href="sample-sizes-and-descriptives.html#cb44-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb44-3"><a href="sample-sizes-and-descriptives.html#cb44-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb44-4"><a href="sample-sizes-and-descriptives.html#cb44-4" tabindex="-1"></a>    <span class="at">Visited =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(vil_replaced)),</span>
+<span id="cb44-5"><a href="sample-sizes-and-descriptives.html#cb44-5" tabindex="-1"></a>    <span class="at">Replaced =</span> <span class="fu">sum</span>(vil_replaced, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb44-6"><a href="sample-sizes-and-descriptives.html#cb44-6" tabindex="-1"></a>    <span class="at">Included =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb44-7"><a href="sample-sizes-and-descriptives.html#cb44-7" tabindex="-1"></a>    <span class="at">Footprint =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;Footprint&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb44-8"><a href="sample-sizes-and-descriptives.html#cb44-8" tabindex="-1"></a>    <span class="at">Expansion =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;Expansion&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb44-9"><a href="sample-sizes-and-descriptives.html#cb44-9" tabindex="-1"></a>    <span class="at">ILC =</span> <span class="fu">sum</span>(<span class="sc">!</span>vil_replaced <span class="sc">&amp;</span> <span class="sc">!</span>vil_dropped <span class="sc">&amp;</span> sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb44-10"><a href="sample-sizes-and-descriptives.html#cb44-10" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 6
+##   Visited Replaced Included Footprint Expansion   ILC
+##     &lt;int&gt;    &lt;int&gt;    &lt;int&gt;     &lt;int&gt;     &lt;int&gt; &lt;int&gt;
+## 1     107        7       99        28        28    43</code></pre>
+</div>
+<div id="ilc-villages" class="section level3 hasAnchor" number="3.3.2">
+<h3><span class="header-section-number">3.3.2</span> ILC villages<a href="sample-sizes-and-descriptives.html#ilc-villages" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>With ILC water collection points</p>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="sample-sizes-and-descriptives.html#cb46-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb46-2"><a href="sample-sizes-and-descriptives.html#cb46-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, ilc_wcp) <span class="sc">%&gt;%</span></span>
+<span id="cb46-3"><a href="sample-sizes-and-descriptives.html#cb46-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb46-4"><a href="sample-sizes-and-descriptives.html#cb46-4" tabindex="-1"></a>    <span class="at">WCPs =</span> <span class="fu">n</span>(),</span>
+<span id="cb46-5"><a href="sample-sizes-and-descriptives.html#cb46-5" tabindex="-1"></a>    <span class="at">Villages =</span> <span class="fu">n_distinct</span>(village_id)</span>
+<span id="cb46-6"><a href="sample-sizes-and-descriptives.html#cb46-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb46-7"><a href="sample-sizes-and-descriptives.html#cb46-7" tabindex="-1"></a>  kable</span></code></pre></div>
+</details>
+<table>
+<thead>
+<tr class="header">
+<th align="right">WCPs</th>
+<th align="right">Villages</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">178</td>
+<td align="right">39</td>
+</tr>
+</tbody>
+</table>
+<p>With DSW</p>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="sample-sizes-and-descriptives.html#cb47-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb47-2"><a href="sample-sizes-and-descriptives.html#cb47-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, dsw, sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb47-3"><a href="sample-sizes-and-descriptives.html#cb47-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb47-4"><a href="sample-sizes-and-descriptives.html#cb47-4" tabindex="-1"></a>    <span class="at">WPs =</span> <span class="fu">n</span>(),</span>
+<span id="cb47-5"><a href="sample-sizes-and-descriptives.html#cb47-5" tabindex="-1"></a>    <span class="at">Villages =</span> <span class="fu">n_distinct</span>(village_id)</span>
+<span id="cb47-6"><a href="sample-sizes-and-descriptives.html#cb47-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb47-7"><a href="sample-sizes-and-descriptives.html#cb47-7" tabindex="-1"></a>  kable</span></code></pre></div>
+</details>
+<table>
+<thead>
+<tr class="header">
+<th align="right">WPs</th>
+<th align="right">Villages</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">66</td>
+<td align="right">24</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="water-point-census-1" class="section level3 hasAnchor" number="3.3.3">
+<h3><span class="header-section-number">3.3.3</span> Water point census<a href="sample-sizes-and-descriptives.html#water-point-census-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="sample-sizes-and-descriptives.html#cb48-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb48-2"><a href="sample-sizes-and-descriptives.html#cb48-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, dsw) <span class="sc">%&gt;%</span></span>
+<span id="cb48-3"><a href="sample-sizes-and-descriptives.html#cb48-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb48-4"><a href="sample-sizes-and-descriptives.html#cb48-4" tabindex="-1"></a>    <span class="at">All =</span> <span class="fu">n</span>(),</span>
+<span id="cb48-5"><a href="sample-sizes-and-descriptives.html#cb48-5" tabindex="-1"></a>    <span class="st">`</span><span class="at">ILC sample group</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>),</span>
+<span id="cb48-6"><a href="sample-sizes-and-descriptives.html#cb48-6" tabindex="-1"></a>     <span class="at">Matched =</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(ea_id)),</span>
+<span id="cb48-7"><a href="sample-sizes-and-descriptives.html#cb48-7" tabindex="-1"></a>    <span class="at">Unmatched =</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_id)),</span>
+<span id="cb48-8"><a href="sample-sizes-and-descriptives.html#cb48-8" tabindex="-1"></a>    <span class="st">`</span><span class="at">Unmatched with ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(dsw <span class="sc">&amp;</span> <span class="fu">is.na</span>(ea_id) <span class="sc">&amp;</span> (<span class="sc">!</span><span class="fu">is.na</span>(disp_dsw_id) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(disp_barcode)))</span>
+<span id="cb48-9"><a href="sample-sizes-and-descriptives.html#cb48-9" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 5
+##     All `ILC sample group` Matched Unmatched `Unmatched with ID`
+##   &lt;int&gt;              &lt;int&gt;   &lt;int&gt;     &lt;int&gt;               &lt;int&gt;
+## 1   202                 66     197         5                   5</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="sample-sizes-and-descriptives.html#cb50-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb50-2"><a href="sample-sizes-and-descriptives.html#cb50-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, ilc, <span class="sc">!</span><span class="fu">is.na</span>(ea_ilc_wpt)) <span class="sc">%&gt;%</span></span>
+<span id="cb50-3"><a href="sample-sizes-and-descriptives.html#cb50-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb50-4"><a href="sample-sizes-and-descriptives.html#cb50-4" tabindex="-1"></a>    <span class="at">Clusters =</span> <span class="fu">n_distinct</span>(ea_ilc_wpt),</span>
+<span id="cb50-5"><a href="sample-sizes-and-descriptives.html#cb50-5" tabindex="-1"></a>    <span class="at">WP =</span> <span class="fu">sum</span>(ilc_wp),</span>
+<span id="cb50-6"><a href="sample-sizes-and-descriptives.html#cb50-6" tabindex="-1"></a>    <span class="at">WCP =</span> <span class="fu">sum</span>(ilc_wcp)</span>
+<span id="cb50-7"><a href="sample-sizes-and-descriptives.html#cb50-7" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 3
+##   Clusters    WP   WCP
+##      &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1       32    26   178</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="sample-sizes-and-descriptives.html#cb52-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb52-2"><a href="sample-sizes-and-descriptives.html#cb52-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, ilc) <span class="sc">%&gt;%</span></span>
+<span id="cb52-3"><a href="sample-sizes-and-descriptives.html#cb52-3" tabindex="-1"></a>  <span class="fu">group_by</span>(ea_ilc_wpt) <span class="sc">%&gt;%</span></span>
+<span id="cb52-4"><a href="sample-sizes-and-descriptives.html#cb52-4" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb52-5"><a href="sample-sizes-and-descriptives.html#cb52-5" tabindex="-1"></a>    <span class="at">Tested =</span> <span class="fu">any</span>(<span class="sc">!</span><span class="fu">is.na</span>(disctcr)),</span>
+<span id="cb52-6"><a href="sample-sizes-and-descriptives.html#cb52-6" tabindex="-1"></a>    <span class="at">Closer =</span> <span class="fu">sum</span>(closer),</span>
+<span id="cb52-7"><a href="sample-sizes-and-descriptives.html#cb52-7" tabindex="-1"></a>    <span class="st">`</span><span class="at">Closer tested</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>((<span class="sc">!</span><span class="fu">is.na</span>(disctcr) <span class="sc">|</span> <span class="fu">is.na</span>(discfcr)) <span class="sc">&amp;</span> closer),</span>
+<span id="cb52-8"><a href="sample-sizes-and-descriptives.html#cb52-8" tabindex="-1"></a>    <span class="at">Count =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(disctcr))</span>
+<span id="cb52-9"><a href="sample-sizes-and-descriptives.html#cb52-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb52-10"><a href="sample-sizes-and-descriptives.html#cb52-10" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb52-11"><a href="sample-sizes-and-descriptives.html#cb52-11" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb52-12"><a href="sample-sizes-and-descriptives.html#cb52-12" tabindex="-1"></a>      <span class="sc">-</span>ea_ilc_wpt,</span>
+<span id="cb52-13"><a href="sample-sizes-and-descriptives.html#cb52-13" tabindex="-1"></a>      <span class="sc">~</span><span class="fu">sum</span>(.)</span>
+<span id="cb52-14"><a href="sample-sizes-and-descriptives.html#cb52-14" tabindex="-1"></a>    )</span>
+<span id="cb52-15"><a href="sample-sizes-and-descriptives.html#cb52-15" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 4
+##   Tested Closer `Closer tested` Count
+##    &lt;int&gt;  &lt;int&gt;           &lt;int&gt; &lt;int&gt;
+## 1     20     15              15    63</code></pre>
+</div>
+<div id="household-census-2" class="section level3 hasAnchor" number="3.3.4">
+<h3><span class="header-section-number">3.3.4</span> Household census<a href="sample-sizes-and-descriptives.html#household-census-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="sample-sizes-and-descriptives.html#cb54-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb54-2"><a href="sample-sizes-and-descriptives.html#cb54-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb54-3"><a href="sample-sizes-and-descriptives.html#cb54-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb54-4"><a href="sample-sizes-and-descriptives.html#cb54-4" tabindex="-1"></a>    <span class="at">Listed =</span> <span class="fu">n</span>(),</span>
+<span id="cb54-5"><a href="sample-sizes-and-descriptives.html#cb54-5" tabindex="-1"></a>    <span class="at">Surveyed =</span> <span class="fu">sum</span>(response),</span>
+<span id="cb54-6"><a href="sample-sizes-and-descriptives.html#cb54-6" tabindex="-1"></a>    <span class="st">`</span><span class="at">Surveyed (%)</span><span class="st">`</span> <span class="ot">=</span> Surveyed<span class="sc">/</span>Listed,</span>
+<span id="cb54-7"><a href="sample-sizes-and-descriptives.html#cb54-7" tabindex="-1"></a>    <span class="at">DSW =</span> <span class="fu">sum</span>(wp_dsw, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb54-8"><a href="sample-sizes-and-descriptives.html#cb54-8" tabindex="-1"></a>    <span class="st">`</span><span class="at">DSW (%)</span><span class="st">`</span> <span class="ot">=</span> DSW<span class="sc">/</span>Surveyed,</span>
+<span id="cb54-9"><a href="sample-sizes-and-descriptives.html#cb54-9" tabindex="-1"></a>    <span class="at">ILC =</span> <span class="fu">sum</span>(wp_ilc, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb54-10"><a href="sample-sizes-and-descriptives.html#cb54-10" tabindex="-1"></a>    <span class="st">`</span><span class="at">ILC (%)</span><span class="st">`</span> <span class="ot">=</span> ILC<span class="sc">/</span>Surveyed</span>
+<span id="cb54-11"><a href="sample-sizes-and-descriptives.html#cb54-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb54-12"><a href="sample-sizes-and-descriptives.html#cb54-12" tabindex="-1"></a>  kable</span></code></pre></div>
+</details>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Listed</th>
+<th align="right">Surveyed</th>
+<th align="right">Surveyed (%)</th>
+<th align="right">DSW</th>
+<th align="right">DSW (%)</th>
+<th align="right">ILC</th>
+<th align="right">ILC (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">11426</td>
+<td align="right">11209</td>
+<td align="right">0.9810082</td>
+<td align="right">5361</td>
+<td align="right">0.4782764</td>
+<td align="right">1165</td>
+<td align="right">0.1039343</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="household-survey-2" class="section level3 hasAnchor" number="3.3.5">
+<h3><span class="header-section-number">3.3.5</span> Household survey<a href="sample-sizes-and-descriptives.html#household-survey-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="sample-sizes-and-descriptives.html#cb55-1" tabindex="-1"></a>hh_survey <span class="sc">%&gt;%</span></span>
+<span id="cb55-2"><a href="sample-sizes-and-descriptives.html#cb55-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb55-3"><a href="sample-sizes-and-descriptives.html#cb55-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb55-4"><a href="sample-sizes-and-descriptives.html#cb55-4" tabindex="-1"></a>    <span class="at">Total =</span> <span class="fu">n</span>(),</span>
+<span id="cb55-5"><a href="sample-sizes-and-descriptives.html#cb55-5" tabindex="-1"></a>    <span class="at">Villages =</span> <span class="fu">n_distinct</span>(village_id),</span>
+<span id="cb55-6"><a href="sample-sizes-and-descriptives.html#cb55-6" tabindex="-1"></a>    <span class="st">`</span><span class="at">Water available</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(water_sample),</span>
+<span id="cb55-7"><a href="sample-sizes-and-descriptives.html#cb55-7" tabindex="-1"></a>    <span class="at">Tested =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(disctcr) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(discfcr))</span>
+<span id="cb55-8"><a href="sample-sizes-and-descriptives.html#cb55-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb55-9"><a href="sample-sizes-and-descriptives.html#cb55-9" tabindex="-1"></a>  kable</span></code></pre></div>
+</details>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Total</th>
+<th align="right">Villages</th>
+<th align="right">Water available</th>
+<th align="right">Tested</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1947</td>
+<td align="right">98</td>
+<td align="right">1932</td>
+<td align="right">1894</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="promoter-survey-2" class="section level3 hasAnchor" number="3.3.6">
+<h3><span class="header-section-number">3.3.6</span> Promoter survey<a href="sample-sizes-and-descriptives.html#promoter-survey-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="sample-sizes-and-descriptives.html#cb56-1" tabindex="-1"></a>pm_survey <span class="sc">%&gt;%</span></span>
+<span id="cb56-2"><a href="sample-sizes-and-descriptives.html#cb56-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb56-3"><a href="sample-sizes-and-descriptives.html#cb56-3" tabindex="-1"></a>  nrow</span></code></pre></div>
+</details>
+<pre><code>## [1] 196</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="sample-sizes-and-descriptives.html#cb58-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb58-2"><a href="sample-sizes-and-descriptives.html#cb58-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, wp_id <span class="sc">%in%</span> pm_survey<span class="sc">$</span>wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb58-3"><a href="sample-sizes-and-descriptives.html#cb58-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">sum</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## # A tibble: 1 × 1
+##   `sum(promoter_surveyed)`
+##                      &lt;int&gt;
+## 1                      196</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="sample-sizes-and-descriptives.html#cb60-1" tabindex="-1"></a>wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb60-2"><a href="sample-sizes-and-descriptives.html#cb60-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>, wp_id <span class="sc">%in%</span> pm_survey<span class="sc">$</span>wp_id) <span class="sc">%&gt;%</span></span>
+<span id="cb60-3"><a href="sample-sizes-and-descriptives.html#cb60-3" tabindex="-1"></a>  <span class="fu">group_by</span>(intervention, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb60-4"><a href="sample-sizes-and-descriptives.html#cb60-4" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">sum</span>(promoter_surveyed))</span></code></pre></div>
+</details>
+<pre><code>## `summarise()` has grouped output by &#39;intervention&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 6 × 3
+## # Groups:   intervention [3]
+##   intervention sample_group `sum(promoter_surveyed)`
+##   &lt;fct&gt;        &lt;ord&gt;                           &lt;int&gt;
+## 1 DSW          Footprint                          46
+## 2 DSW          Expansion                          59
+## 3 DSW          ILC                                45
+## 4 Non-program  Footprint                           2
+## 5 Non-program  ILC                                 2
+## 6 ILC          ILC                                42</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="sample-sizes-and-descriptives.html#cb63-1" tabindex="-1"></a>mon_survey <span class="sc">%&gt;%</span></span>
+<span id="cb63-2"><a href="sample-sizes-and-descriptives.html#cb63-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb63-3"><a href="sample-sizes-and-descriptives.html#cb63-3" tabindex="-1"></a>  nrow</span></code></pre></div>
+</details>
+<pre><code>## [1] 724</code></pre>
+</div>
+</div>
+<div id="descriptive-statistics" class="section level2 hasAnchor" number="3.4">
+<h2><span class="header-section-number">3.4</span> Descriptive statistics<a href="sample-sizes-and-descriptives.html#descriptive-statistics" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="average-village-sizes" class="section level3 hasAnchor" number="3.4.1">
+<h3><span class="header-section-number">3.4.1</span> Average village sizes<a href="sample-sizes-and-descriptives.html#average-village-sizes" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="sample-sizes-and-descriptives.html#cb65-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb65-2"><a href="sample-sizes-and-descriptives.html#cb65-2" tabindex="-1"></a>  <span class="fu">group_by</span>(village_id, country, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb65-3"><a href="sample-sizes-and-descriptives.html#cb65-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">size =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb65-4"><a href="sample-sizes-and-descriptives.html#cb65-4" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb65-5"><a href="sample-sizes-and-descriptives.html#cb65-5" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">mean</span>(size))</span></code></pre></div>
+</details>
+<pre><code>## `summarise()` has grouped output by &#39;village_id&#39;, &#39;country&#39;. You can override using the `.groups` argument.
+## `summarise()` has grouped output by &#39;country&#39;. You can override using the `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 5 × 3
+## # Groups:   country [2]
+##   country sample_group `mean(size)`
+##   &lt;chr&gt;   &lt;ord&gt;               &lt;dbl&gt;
+## 1 Malawi  Footprint            122.
+## 2 Malawi  Expansion            111.
+## 3 Malawi  ILC                  114.
+## 4 Uganda  Footprint            114 
+## 5 Uganda  Expansion            204.</code></pre>
+</div>
+<div id="households-living-inside-the-village" class="section level3 hasAnchor" number="3.4.2">
+<h3><span class="header-section-number">3.4.2</span> Households living inside the village<a href="sample-sizes-and-descriptives.html#households-living-inside-the-village" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="sample-sizes-and-descriptives.html#cb68-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb68-2"><a href="sample-sizes-and-descriptives.html#cb68-2" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb68-3"><a href="sample-sizes-and-descriptives.html#cb68-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">within =</span> <span class="fu">mean</span>(inclusion <span class="sc">==</span> <span class="st">&quot;Within village boundaries&quot;</span>))</span></code></pre></div>
 </details>
 <pre><code>## `summarise()` has grouped output by &#39;country&#39;. You can override using the
 ## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 5 × 3
+## # Groups:   country [2]
+##   country sample_group within
+##   &lt;chr&gt;   &lt;ord&gt;         &lt;dbl&gt;
+## 1 Malawi  Footprint     0.904
+## 2 Malawi  Expansion     0.978
+## 3 Malawi  ILC           0.988
+## 4 Uganda  Footprint     0.788
+## 5 Uganda  Expansion     0.870</code></pre>
 </div>
-</div>
-<div id="water-points" class="section level2 hasAnchor" number="2.2">
-<h2><span class="header-section-number">2.2</span> Water points<a href="inputs.html#water-points" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="households-using-water-points-inside-the-village" class="section level3 hasAnchor" number="3.4.3">
+<h3><span class="header-section-number">3.4.3</span> Households using water points inside the village<a href="sample-sizes-and-descriptives.html#households-using-water-points-inside-the-village" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="inputs.html#cb6-1" tabindex="-1"></a>wp_sample_sizes <span class="ot">&lt;-</span></span>
-<span id="cb6-2"><a href="inputs.html#cb6-2" tabindex="-1"></a>  <span class="fu">tribble</span>(</span>
-<span id="cb6-3"><a href="inputs.html#cb6-3" tabindex="-1"></a>    <span class="sc">~</span> country, <span class="sc">~</span> sample_group, <span class="sc">~</span> wp_intervention, <span class="sc">~</span> pop_points,</span>
-<span id="cb6-4"><a href="inputs.html#cb6-4" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;Expansion&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">12262</span>,</span>
-<span id="cb6-5"><a href="inputs.html#cb6-5" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;Footprint&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">5456</span>,</span>
-<span id="cb6-6"><a href="inputs.html#cb6-6" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">398</span>,</span>
-<span id="cb6-7"><a href="inputs.html#cb6-7" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="dv">1229</span>,</span>
-<span id="cb6-8"><a href="inputs.html#cb6-8" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;Expansion&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">11292</span>,</span>
-<span id="cb6-9"><a href="inputs.html#cb6-9" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;Footprint&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">3844</span>,</span>
-<span id="cb6-10"><a href="inputs.html#cb6-10" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">1062</span>,</span>
-<span id="cb6-11"><a href="inputs.html#cb6-11" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="dv">2024</span></span>
-<span id="cb6-12"><a href="inputs.html#cb6-12" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="sample-sizes-and-descriptives.html#cb71-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb71-2"><a href="sample-sizes-and-descriptives.html#cb71-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb71-3"><a href="sample-sizes-and-descriptives.html#cb71-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(wp_source, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb71-4"><a href="sample-sizes-and-descriptives.html#cb71-4" tabindex="-1"></a>  <span class="fu">adorn_percentages</span>(<span class="at">denominator =</span> <span class="st">&quot;col&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb71-5"><a href="sample-sizes-and-descriptives.html#cb71-5" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
 </details>
-</div>
-<div id="household-census" class="section level2 hasAnchor" number="2.3">
-<h2><span class="header-section-number">2.3</span> Household census<a href="inputs.html#household-census" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<pre><code>##                              wp_source Footprint Expansion   ILC
+##                                  Other      0.3%      0.1%  0.4%
+##     From a water point in this village     76.2%     93.0% 87.1%
+##  From a water point outside of village     18.8%      6.1%  9.6%
+##                              Rainwater      0.0%      0.0%  0.0%
+##         Piped water into the household      1.0%      0.3%  1.3%
+##                                   &lt;NA&gt;      3.7%      0.5%  1.5%</code></pre>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="inputs.html#cb7-1" tabindex="-1"></a>hh_census <span class="ot">&lt;-</span></span>
-<span id="cb7-2"><a href="inputs.html#cb7-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb7-3"><a href="inputs.html#cb7-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb7-4"><a href="inputs.html#cb7-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb7-5"><a href="inputs.html#cb7-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb7-6"><a href="inputs.html#cb7-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb7-7"><a href="inputs.html#cb7-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb7-8"><a href="inputs.html#cb7-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb7-9"><a href="inputs.html#cb7-9" tabindex="-1"></a>      <span class="st">&quot;hh-census.rds&quot;</span></span>
-<span id="cb7-10"><a href="inputs.html#cb7-10" tabindex="-1"></a>    )</span>
-<span id="cb7-11"><a href="inputs.html#cb7-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-12"><a href="inputs.html#cb7-12" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb7-13"><a href="inputs.html#cb7-13" tabindex="-1"></a>  <span class="co"># To account for non-responses, we calculate the village-level non-response rate</span></span>
-<span id="cb7-14"><a href="inputs.html#cb7-14" tabindex="-1"></a>  <span class="fu">group_by</span>(village_id) <span class="sc">%&gt;%</span></span>
-<span id="cb7-15"><a href="inputs.html#cb7-15" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb7-16"><a href="inputs.html#cb7-16" tabindex="-1"></a>    <span class="at">response_rate =</span> <span class="fu">mean</span>(response),</span>
-<span id="cb7-17"><a href="inputs.html#cb7-17" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb7-18"><a href="inputs.html#cb7-18" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb7-19"><a href="inputs.html#cb7-19" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb7-20"><a href="inputs.html#cb7-20" tabindex="-1"></a>    )</span>
-<span id="cb7-21"><a href="inputs.html#cb7-21" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-22"><a href="inputs.html#cb7-22" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
-<span id="cb7-23"><a href="inputs.html#cb7-23" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb7-24"><a href="inputs.html#cb7-24" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb7-25"><a href="inputs.html#cb7-25" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="sample-sizes-and-descriptives.html#cb73-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb73-2"><a href="sample-sizes-and-descriptives.html#cb73-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb73-3"><a href="sample-sizes-and-descriptives.html#cb73-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(wp_source, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb73-4"><a href="sample-sizes-and-descriptives.html#cb73-4" tabindex="-1"></a>  <span class="fu">adorn_percentages</span>(<span class="at">denominator =</span> <span class="st">&quot;col&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb73-5"><a href="sample-sizes-and-descriptives.html#cb73-5" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
 </details>
+<pre><code>##                              wp_source Footprint Expansion ILC
+##                                  Other      0.1%      0.0%   -
+##     From a water point in this village     67.0%     72.6%   -
+##  From a water point outside of village     25.9%     13.7%   -
+##                              Rainwater      0.0%      0.1%   -
+##         Piped water into the household      0.4%      0.1%   -
+##                                   &lt;NA&gt;      6.7%     13.5%   -</code></pre>
 </div>
-<div id="household-survey" class="section level2 hasAnchor" number="2.4">
-<h2><span class="header-section-number">2.4</span> Household survey<a href="inputs.html#household-survey" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="use-of-water-points-served-by-evidence-action" class="section level3 hasAnchor" number="3.4.4">
+<h3><span class="header-section-number">3.4.4</span> Use of water points served by Evidence Action<a href="sample-sizes-and-descriptives.html#use-of-water-points-served-by-evidence-action" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="inputs.html#cb8-1" tabindex="-1"></a>hh_survey <span class="ot">&lt;-</span></span>
-<span id="cb8-2"><a href="inputs.html#cb8-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb8-3"><a href="inputs.html#cb8-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb8-4"><a href="inputs.html#cb8-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb8-5"><a href="inputs.html#cb8-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb8-6"><a href="inputs.html#cb8-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb8-7"><a href="inputs.html#cb8-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb8-8"><a href="inputs.html#cb8-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb8-9"><a href="inputs.html#cb8-9" tabindex="-1"></a>      <span class="st">&quot;hh-survey.rds&quot;</span></span>
-<span id="cb8-10"><a href="inputs.html#cb8-10" tabindex="-1"></a>    )</span>
-<span id="cb8-11"><a href="inputs.html#cb8-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-12"><a href="inputs.html#cb8-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb8-13"><a href="inputs.html#cb8-13" tabindex="-1"></a>    survey <span class="sc">==</span> <span class="st">&quot;Household Survey&quot;</span></span>
-<span id="cb8-14"><a href="inputs.html#cb8-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-15"><a href="inputs.html#cb8-15" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb8-16"><a href="inputs.html#cb8-16" tabindex="-1"></a>    <span class="at">intervention_selfreport =</span> <span class="fu">case_when</span>(</span>
-<span id="cb8-17"><a href="inputs.html#cb8-17" tabindex="-1"></a>      hh_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb8-18"><a href="inputs.html#cb8-18" tabindex="-1"></a>      hh_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb8-19"><a href="inputs.html#cb8-19" tabindex="-1"></a>    ),</span>
-<span id="cb8-20"><a href="inputs.html#cb8-20" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb8-21"><a href="inputs.html#cb8-21" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb8-22"><a href="inputs.html#cb8-22" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb8-23"><a href="inputs.html#cb8-23" tabindex="-1"></a>    )</span>
-<span id="cb8-24"><a href="inputs.html#cb8-24" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-25"><a href="inputs.html#cb8-25" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb8-26"><a href="inputs.html#cb8-26" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb8-27"><a href="inputs.html#cb8-27" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="sample-sizes-and-descriptives.html#cb75-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb75-2"><a href="sample-sizes-and-descriptives.html#cb75-2" tabindex="-1"></a>  <span class="fu">tabyl</span>(country, wp_intervention) <span class="sc">%&gt;%</span></span>
+<span id="cb75-3"><a href="sample-sizes-and-descriptives.html#cb75-3" tabindex="-1"></a>  <span class="fu">adorn_percentages</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb75-4"><a href="sample-sizes-and-descriptives.html#cb75-4" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
 </details>
+<pre><code>##  country   DSW   ILC Non-program   NA_
+##   Malawi 46.4% 11.2%       28.5% 13.9%
+##   Uganda 63.5%  1.0%       21.1% 14.4%</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="sample-sizes-and-descriptives.html#cb77-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb77-2"><a href="sample-sizes-and-descriptives.html#cb77-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb77-3"><a href="sample-sizes-and-descriptives.html#cb77-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(wp_intervention, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb77-4"><a href="sample-sizes-and-descriptives.html#cb77-4" tabindex="-1"></a>  <span class="fu">adorn_percentages</span>(<span class="at">denominator =</span> <span class="st">&quot;col&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb77-5"><a href="sample-sizes-and-descriptives.html#cb77-5" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
+</details>
+<pre><code>##  wp_intervention Footprint Expansion ILC
+##              DSW     57.6%     66.8%   -
+##              ILC      2.8%      0.0%   -
+##      Non-program     27.3%     17.7%   -
+##             &lt;NA&gt;     12.3%     15.5%   -</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb79"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb79-1"><a href="sample-sizes-and-descriptives.html#cb79-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb79-2"><a href="sample-sizes-and-descriptives.html#cb79-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb79-3"><a href="sample-sizes-and-descriptives.html#cb79-3" tabindex="-1"></a>  <span class="fu">tabyl</span>(wp_intervention, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb79-4"><a href="sample-sizes-and-descriptives.html#cb79-4" tabindex="-1"></a>  <span class="fu">adorn_percentages</span>(<span class="at">denominator =</span> <span class="st">&quot;col&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb79-5"><a href="sample-sizes-and-descriptives.html#cb79-5" tabindex="-1"></a>  <span class="fu">adorn_pct_formatting</span>()</span></code></pre></div>
+</details>
+<pre><code>##  wp_intervention Footprint Expansion   ILC
+##              DSW     40.5%     70.1% 35.6%
+##              ILC      0.1%      1.4% 25.1%
+##      Non-program     36.9%     22.4% 26.4%
+##             &lt;NA&gt;     22.5%      6.1% 12.9%</code></pre>
 </div>
-<div id="monitoring-survey" class="section level2 hasAnchor" number="2.5">
-<h2><span class="header-section-number">2.5</span> Monitoring survey<a href="inputs.html#monitoring-survey" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="number-of-water-sources" class="section level3 hasAnchor" number="3.4.5">
+<h3><span class="header-section-number">3.4.5</span> Number of water sources<a href="sample-sizes-and-descriptives.html#number-of-water-sources" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="inputs.html#cb9-1" tabindex="-1"></a>mon_survey <span class="ot">&lt;-</span></span>
-<span id="cb9-2"><a href="inputs.html#cb9-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb9-3"><a href="inputs.html#cb9-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb9-4"><a href="inputs.html#cb9-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb9-5"><a href="inputs.html#cb9-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb9-6"><a href="inputs.html#cb9-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb9-7"><a href="inputs.html#cb9-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb9-8"><a href="inputs.html#cb9-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb9-9"><a href="inputs.html#cb9-9" tabindex="-1"></a>      <span class="st">&quot;hh-survey.rds&quot;</span></span>
-<span id="cb9-10"><a href="inputs.html#cb9-10" tabindex="-1"></a>    )</span>
-<span id="cb9-11"><a href="inputs.html#cb9-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-12"><a href="inputs.html#cb9-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb9-13"><a href="inputs.html#cb9-13" tabindex="-1"></a>    survey <span class="sc">==</span> <span class="st">&quot;Monitoring Survey&quot;</span></span>
-<span id="cb9-14"><a href="inputs.html#cb9-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-15"><a href="inputs.html#cb9-15" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-16"><a href="inputs.html#cb9-16" tabindex="-1"></a>    <span class="at">intervention_selfreport =</span> <span class="fu">case_when</span>(</span>
-<span id="cb9-17"><a href="inputs.html#cb9-17" tabindex="-1"></a>      hh_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb9-18"><a href="inputs.html#cb9-18" tabindex="-1"></a>      hh_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb9-19"><a href="inputs.html#cb9-19" tabindex="-1"></a>    ),</span>
-<span id="cb9-20"><a href="inputs.html#cb9-20" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb9-21"><a href="inputs.html#cb9-21" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb9-22"><a href="inputs.html#cb9-22" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb9-23"><a href="inputs.html#cb9-23" tabindex="-1"></a>    )</span>
-<span id="cb9-24"><a href="inputs.html#cb9-24" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-25"><a href="inputs.html#cb9-25" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb9-26"><a href="inputs.html#cb9-26" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb9-27"><a href="inputs.html#cb9-27" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb81"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb81-1"><a href="sample-sizes-and-descriptives.html#cb81-1" tabindex="-1"></a>hh_census <span class="ot">&lt;-</span></span>
+<span id="cb81-2"><a href="sample-sizes-and-descriptives.html#cb81-2" tabindex="-1"></a>  hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb81-3"><a href="sample-sizes-and-descriptives.html#cb81-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb81-4"><a href="sample-sizes-and-descriptives.html#cb81-4" tabindex="-1"></a>    <span class="at">wp_single =</span> wp_count_pastmonth <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb81-5"><a href="sample-sizes-and-descriptives.html#cb81-5" tabindex="-1"></a>    <span class="at">wp_nonprogram =</span> wp_intervention <span class="sc">==</span> <span class="st">&quot;Non-program&quot;</span>,</span>
+<span id="cb81-6"><a href="sample-sizes-and-descriptives.html#cb81-6" tabindex="-1"></a>    <span class="at">wp_intervention =</span> <span class="fu">fct_relevel</span>(wp_intervention, <span class="st">&quot;Non-program&quot;</span>)</span>
+<span id="cb81-7"><a href="sample-sizes-and-descriptives.html#cb81-7" tabindex="-1"></a>  )</span>
+<span id="cb81-8"><a href="sample-sizes-and-descriptives.html#cb81-8" tabindex="-1"></a></span>
+<span id="cb81-9"><a href="sample-sizes-and-descriptives.html#cb81-9" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb81-10"><a href="sample-sizes-and-descriptives.html#cb81-10" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>wp_nonprogram) <span class="sc">%&gt;%</span></span>
+<span id="cb81-11"><a href="sample-sizes-and-descriptives.html#cb81-11" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb81-12"><a href="sample-sizes-and-descriptives.html#cb81-12" tabindex="-1"></a>    <span class="at">single =</span> <span class="fu">mean</span>(wp_single, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb81-13"><a href="sample-sizes-and-descriptives.html#cb81-13" tabindex="-1"></a>    <span class="at">av_count =</span> <span class="fu">if_else</span>(<span class="sc">!</span>wp_single, wp_count_pastmonth, <span class="cn">NA</span>) <span class="sc">%&gt;%</span> <span class="fu">mean</span>(<span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb81-14"><a href="sample-sizes-and-descriptives.html#cb81-14" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
+<pre><code>## # A tibble: 1 × 2
+##   single av_count
+##    &lt;dbl&gt;    &lt;dbl&gt;
+## 1  0.795     2.21</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="sample-sizes-and-descriptives.html#cb83-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb83-2"><a href="sample-sizes-and-descriptives.html#cb83-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>wp_nonprogram) <span class="sc">%&gt;%</span></span>
+<span id="cb83-3"><a href="sample-sizes-and-descriptives.html#cb83-3" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb83-4"><a href="sample-sizes-and-descriptives.html#cb83-4" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb83-5"><a href="sample-sizes-and-descriptives.html#cb83-5" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">mean</span>(wp_secweek, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb83-6"><a href="sample-sizes-and-descriptives.html#cb83-6" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## `summarise()` has grouped output by &#39;country&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 5 × 3
+## # Groups:   country [2]
+##   country sample_group  mean
+##   &lt;chr&gt;   &lt;ord&gt;        &lt;dbl&gt;
+## 1 Malawi  Footprint    0.235
+## 2 Malawi  Expansion    0.140
+## 3 Malawi  ILC          0.245
+## 4 Uganda  Footprint    0.239
+## 5 Uganda  Expansion    0.200</code></pre>
+<p>Difference between interventions</p>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="sample-sizes-and-descriptives.html#cb86-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb86-2"><a href="sample-sizes-and-descriptives.html#cb86-2" tabindex="-1"></a>  wp_single <span class="sc">~</span> wp_nonprogram <span class="sc">|</span> sample_group <span class="sc">+</span> country,</span>
+<span id="cb86-3"><a href="sample-sizes-and-descriptives.html#cb86-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census,</span>
+<span id="cb86-4"><a href="sample-sizes-and-descriptives.html#cb86-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb86-5"><a href="sample-sizes-and-descriptives.html#cb86-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## NOTE: 2,960 observations removed because of NA values (LHS: 1,266, RHS: 2,960).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: wp_single
+## Observations: 17,991
+## Fixed-effects: sample_group: 3,  country: 2
+## Standard-errors: Clustered (village_id) 
+##                    Estimate Std. Error  t value   Pr(&gt;|t|)    
+## wp_nonprogramTRUE -0.059941    0.01602 -3.74172 0.00025534 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 0.413898     Adj. R2: 0.010212
+##                  Within R2: 0.004184</code></pre>
+<p>No difference between countries</p>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="sample-sizes-and-descriptives.html#cb89-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb89-2"><a href="sample-sizes-and-descriptives.html#cb89-2" tabindex="-1"></a>  wp_single <span class="sc">~</span> country <span class="sc">|</span> sample_group <span class="sc">+</span> wp_intervention,</span>
+<span id="cb89-3"><a href="sample-sizes-and-descriptives.html#cb89-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>wp_nonprogram),</span>
+<span id="cb89-4"><a href="sample-sizes-and-descriptives.html#cb89-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb89-5"><a href="sample-sizes-and-descriptives.html#cb89-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## OLS estimation, Dep. Var.: wp_single
+## Observations: 12,726
+## Fixed-effects: sample_group: 3,  wp_intervention: 2
+## Standard-errors: Clustered (village_id) 
+##                Estimate Std. Error  t value Pr(&gt;|t|)    
+## countryUganda -0.041967   0.024964 -1.68109  0.09472 .  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 0.400759     Adj. R2: 0.013423
+##                  Within R2: 0.001952</code></pre>
+<p>No difference between groups in Uganda</p>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb91-1"><a href="sample-sizes-and-descriptives.html#cb91-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb91-2"><a href="sample-sizes-and-descriptives.html#cb91-2" tabindex="-1"></a>  wp_single <span class="sc">~</span> sample_group <span class="sc">|</span> wp_intervention,</span>
+<span id="cb91-3"><a href="sample-sizes-and-descriptives.html#cb91-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>),</span>
+<span id="cb91-4"><a href="sample-sizes-and-descriptives.html#cb91-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb91-5"><a href="sample-sizes-and-descriptives.html#cb91-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## NOTE: 1,370 observations removed because of NA values (LHS: 1,051, Fixed-effects: 1,370).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: wp_single
+## Observations: 8,155
+## Fixed-effects: wp_intervention: 3
+## Standard-errors: Clustered (village_id) 
+##                Estimate Std. Error  t value Pr(&gt;|t|)    
+## sample_group.L 0.046722   0.027054 1.726985 0.089403 .  
+## sample_group.Q 0.013107   0.015663 0.836817 0.406072    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 0.421103     Adj. R2: 0.011907
+##                  Within R2: 3.638e-4</code></pre>
 </div>
-<div id="water-point-census" class="section level2 hasAnchor" number="2.6">
-<h2><span class="header-section-number">2.6</span> Water point census<a href="inputs.html#water-point-census" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="average-household-size" class="section level3 hasAnchor" number="3.4.6">
+<h3><span class="header-section-number">3.4.6</span> Average household size<a href="sample-sizes-and-descriptives.html#average-household-size" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="inputs.html#cb10-1" tabindex="-1"></a>wp_census <span class="ot">&lt;-</span></span>
-<span id="cb10-2"><a href="inputs.html#cb10-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb10-3"><a href="inputs.html#cb10-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb10-4"><a href="inputs.html#cb10-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb10-5"><a href="inputs.html#cb10-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb10-6"><a href="inputs.html#cb10-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb10-7"><a href="inputs.html#cb10-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb10-8"><a href="inputs.html#cb10-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb10-9"><a href="inputs.html#cb10-9" tabindex="-1"></a>      <span class="st">&quot;wp-census.rds&quot;</span></span>
-<span id="cb10-10"><a href="inputs.html#cb10-10" tabindex="-1"></a>    )</span>
-<span id="cb10-11"><a href="inputs.html#cb10-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-12"><a href="inputs.html#cb10-12" tabindex="-1"></a>  st_drop_geometry  <span class="sc">%&gt;%</span></span>
-<span id="cb10-13"><a href="inputs.html#cb10-13" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb10-14"><a href="inputs.html#cb10-14" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb10-15"><a href="inputs.html#cb10-15" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb10-16"><a href="inputs.html#cb10-16" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb10-17"><a href="inputs.html#cb10-17" tabindex="-1"></a>    )</span>
-<span id="cb10-18"><a href="inputs.html#cb10-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-19"><a href="inputs.html#cb10-19" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb10-20"><a href="inputs.html#cb10-20" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb10-21"><a href="inputs.html#cb10-21" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="sample-sizes-and-descriptives.html#cb94-1" tabindex="-1"></a>hh_census <span class="sc">%&gt;%</span></span>
+<span id="cb94-2"><a href="sample-sizes-and-descriptives.html#cb94-2" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
+<span id="cb94-3"><a href="sample-sizes-and-descriptives.html#cb94-3" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb94-4"><a href="sample-sizes-and-descriptives.html#cb94-4" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">mean</span>(hh_members, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb94-5"><a href="sample-sizes-and-descriptives.html#cb94-5" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-</div>
-<div id="promoter-survey" class="section level2 hasAnchor" number="2.7">
-<h2><span class="header-section-number">2.7</span> Promoter survey<a href="inputs.html#promoter-survey" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<pre><code>## `summarise()` has grouped output by &#39;country&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 5 × 3
+## # Groups:   country [2]
+##   country sample_group  mean
+##   &lt;chr&gt;   &lt;ord&gt;        &lt;dbl&gt;
+## 1 Malawi  Footprint     4.41
+## 2 Malawi  Expansion     4.71
+## 3 Malawi  ILC           4.51
+## 4 Uganda  Footprint     5.43
+## 5 Uganda  Expansion     5.38</code></pre>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="inputs.html#cb11-1" tabindex="-1"></a>pm_survey <span class="ot">&lt;-</span></span>
-<span id="cb11-2"><a href="inputs.html#cb11-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb11-3"><a href="inputs.html#cb11-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb11-4"><a href="inputs.html#cb11-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb11-5"><a href="inputs.html#cb11-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb11-6"><a href="inputs.html#cb11-6" tabindex="-1"></a>      <span class="st">&quot;PromoterSurvey&quot;</span>,</span>
-<span id="cb11-7"><a href="inputs.html#cb11-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb11-8"><a href="inputs.html#cb11-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb11-9"><a href="inputs.html#cb11-9" tabindex="-1"></a>      <span class="st">&quot;pm-survey.rds&quot;</span></span>
-<span id="cb11-10"><a href="inputs.html#cb11-10" tabindex="-1"></a>    )</span>
-<span id="cb11-11"><a href="inputs.html#cb11-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb11-12"><a href="inputs.html#cb11-12" tabindex="-1"></a>  <span class="fu">left_join</span>(villages) <span class="sc">%&gt;%</span></span>
-<span id="cb11-13"><a href="inputs.html#cb11-13" tabindex="-1"></a>  st_drop_geometry  <span class="sc">%&gt;%</span></span>
-<span id="cb11-14"><a href="inputs.html#cb11-14" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb11-15"><a href="inputs.html#cb11-15" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>),</span>
-<span id="cb11-16"><a href="inputs.html#cb11-16" tabindex="-1"></a>    <span class="sc">!</span>vil_replaced,</span>
-<span id="cb11-17"><a href="inputs.html#cb11-17" tabindex="-1"></a>    <span class="sc">!</span>vil_dropped</span>
-<span id="cb11-18"><a href="inputs.html#cb11-18" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb97-1"><a href="sample-sizes-and-descriptives.html#cb97-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb97-2"><a href="sample-sizes-and-descriptives.html#cb97-2" tabindex="-1"></a>  hh_members <span class="sc">~</span> country <span class="sc">|</span> sample_group,</span>
+<span id="cb97-3"><a href="sample-sizes-and-descriptives.html#cb97-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census,</span>
+<span id="cb97-4"><a href="sample-sizes-and-descriptives.html#cb97-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb97-5"><a href="sample-sizes-and-descriptives.html#cb97-5" tabindex="-1"></a>)</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(village_id)`</code></pre>
+<pre><code>## NOTE: 2,637 observations removed because of NA values (LHS: 2,637).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: hh_members
+## Observations: 18,314
+## Fixed-effects: sample_group: 3
+## Standard-errors: Clustered (village_id) 
+##               Estimate Std. Error t value  Pr(&gt;|t|)    
+## countryUganda 0.823954   0.105877  7.7822 1.072e-12 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 2.38576     Adj. R2: 0.030161
+##                 Within R2: 0.020987</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb100-1"><a href="sample-sizes-and-descriptives.html#cb100-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb100-2"><a href="sample-sizes-and-descriptives.html#cb100-2" tabindex="-1"></a>  hh_members <span class="sc">~</span> sample_group,</span>
+<span id="cb100-3"><a href="sample-sizes-and-descriptives.html#cb100-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;Malawi&quot;</span>),</span>
+<span id="cb100-4"><a href="sample-sizes-and-descriptives.html#cb100-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb100-5"><a href="sample-sizes-and-descriptives.html#cb100-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## NOTE: 217 observations removed because of NA values (LHS: 217).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: hh_members
+## Observations: 11,209
+## Standard-errors: Clustered (village_id) 
+##                 Estimate Std. Error   t value  Pr(&gt;|t|)    
+## (Intercept)     4.544399   0.054587 83.249943 &lt; 2.2e-16 ***
+## sample_group.L  0.075929   0.080499  0.943226  0.347885    
+## sample_group.Q -0.204955   0.106764 -1.919693  0.057805 .  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 1.97328   Adj. R2: 0.003305</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb103"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb103-1"><a href="sample-sizes-and-descriptives.html#cb103-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb103-2"><a href="sample-sizes-and-descriptives.html#cb103-2" tabindex="-1"></a>  hh_members <span class="sc">~</span> dsw <span class="sc">|</span> country,</span>
+<span id="cb103-3"><a href="sample-sizes-and-descriptives.html#cb103-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(sample_group <span class="sc">==</span> <span class="st">&quot;Expansion&quot;</span>),</span>
+<span id="cb103-4"><a href="sample-sizes-and-descriptives.html#cb103-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb103-5"><a href="sample-sizes-and-descriptives.html#cb103-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## NOTE: 1,912 observations removed because of NA values (LHS: 1,648, RHS: 1,138).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: hh_members
+## Observations: 7,300
+## Fixed-effects: country: 2
+## Standard-errors: Clustered (village_id) 
+##          Estimate Std. Error   t value Pr(&gt;|t|) 
+## dswTRUE -0.040429   0.120756 -0.334803   0.7391 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 2.60456     Adj. R2: 0.013759
+##                 Within R2: 4.102e-5</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="sample-sizes-and-descriptives.html#cb106-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb106-2"><a href="sample-sizes-and-descriptives.html#cb106-2" tabindex="-1"></a>  hh_members <span class="sc">~</span> dsw <span class="sc">|</span> country,</span>
+<span id="cb106-3"><a href="sample-sizes-and-descriptives.html#cb106-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(sample_group <span class="sc">==</span> <span class="st">&quot;Footprint&quot;</span>),</span>
+<span id="cb106-4"><a href="sample-sizes-and-descriptives.html#cb106-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb106-5"><a href="sample-sizes-and-descriptives.html#cb106-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## NOTE: 1,779 observations removed because of NA values (LHS: 918, RHS: 1,250).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: hh_members
+## Observations: 5,068
+## Fixed-effects: country: 2
+## Standard-errors: Clustered (village_id) 
+##         Estimate Std. Error  t value Pr(&gt;|t|) 
+## dswTRUE 0.057903   0.087727 0.660031  0.51215 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 2.44653     Adj. R2: 0.042027
+##                 Within R2: 1.3e-4</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb109"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb109-1"><a href="sample-sizes-and-descriptives.html#cb109-1" tabindex="-1"></a><span class="fu">feols</span>(</span>
+<span id="cb109-2"><a href="sample-sizes-and-descriptives.html#cb109-2" tabindex="-1"></a>  hh_members <span class="sc">~</span> wp_intervention <span class="sc">|</span> country,</span>
+<span id="cb109-3"><a href="sample-sizes-and-descriptives.html#cb109-3" tabindex="-1"></a>  <span class="at">data =</span> hh_census <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">wp_intervention =</span> <span class="fu">fct_relevel</span>(wp_intervention, <span class="st">&quot;Non-program&quot;</span>)),</span>
+<span id="cb109-4"><a href="sample-sizes-and-descriptives.html#cb109-4" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span> village_id</span>
+<span id="cb109-5"><a href="sample-sizes-and-descriptives.html#cb109-5" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<pre><code>## NOTE: 631 observations removed because of NA values (LHS: 71, RHS: 631).</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: hh_members
+## Observations: 4,261
+## Fixed-effects: country: 1
+## Standard-errors: Clustered (village_id) 
+##                     Estimate Std. Error  t value  Pr(&gt;|t|)    
+## wp_interventionDSW -0.726878   0.215365 -3.37510 0.0015979 ** 
+## wp_interventionILC -0.469705   0.180257 -2.60575 0.0126291 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 1.94732     Adj. R2: 0.023355
+##                 Within R2: 0.023813</code></pre>
 
+</div>
 </div>
 </div>
             </section>
@@ -2550,8 +3383,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
           </div>
         </div>
       </div>
-<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="sample-sizes-and-descriptives.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="inputs.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="village-level-headline-results.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script>/*! jQuery v3.6.0 | (c) OpenJS Foundation and other contributors | jquery.org/license */

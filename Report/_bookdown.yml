@@ -3,6 +3,8 @@ output_dir: ../docs/
 rmd_files: [
   "index.Rmd",
   "1-input-data.Rmd",
-  "2-headlines-village.Rmd",
-  "3-headlines-wp.Rmd"
+  "2-sample-sizes.Rmd",
+  "3-headlines-village.Rmd",
+  "4-headlines-wp.Rmd",
+  "5-headlines-monitoring.Rmd",
 ]

@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda</title>
-  <meta name="description" content="2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda" />
+  <title>6 Monitoring headline results | Estimating Chlorination Take-up in Malawi and Uganda</title>
+  <meta name="description" content="6 Monitoring headline results | Estimating Chlorination Take-up in Malawi and Uganda" />
   <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda" />
+  <meta property="og:title" content="6 Monitoring headline results | Estimating Chlorination Take-up in Malawi and Uganda" />
   <meta property="og:type" content="book" />
   
   
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="2 Inputs | Estimating Chlorination Take-up in Malawi and Uganda" />
+  <meta name="twitter:title" content="6 Monitoring headline results | Estimating Chlorination Take-up in Malawi and Uganda" />
   
   
   
@@ -29,8 +29,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="index.html"/>
-<link rel="next" href="sample-sizes-and-descriptives.html"/>
+<link rel="prev" href="water-point-level-headline-results.html"/>
+
 
 
 
@@ -2311,237 +2311,1647 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="inputs" class="section level1 hasAnchor" number="2">
-<h1><span class="header-section-number">2</span> Inputs<a href="inputs.html#inputs" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="monitoring-headline-results" class="section level1 hasAnchor" number="6">
+<h1><span class="header-section-number">6</span> Monitoring headline results<a href="monitoring-headline-results.html#monitoring-headline-results" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="inputs.html#cb1-1" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
-<span id="cb1-2"><a href="inputs.html#cb1-2" tabindex="-1"></a>  sf,</span>
-<span id="cb1-3"><a href="inputs.html#cb1-3" tabindex="-1"></a>  tidyverse,</span>
-<span id="cb1-4"><a href="inputs.html#cb1-4" tabindex="-1"></a>  viridis,</span>
-<span id="cb1-5"><a href="inputs.html#cb1-5" tabindex="-1"></a>  fixest,</span>
-<span id="cb1-6"><a href="inputs.html#cb1-6" tabindex="-1"></a>  janitor,</span>
-<span id="cb1-7"><a href="inputs.html#cb1-7" tabindex="-1"></a>  broom,</span>
-<span id="cb1-8"><a href="inputs.html#cb1-8" tabindex="-1"></a>  car,</span>
-<span id="cb1-9"><a href="inputs.html#cb1-9" tabindex="-1"></a>  modelsummary,</span>
-<span id="cb1-10"><a href="inputs.html#cb1-10" tabindex="-1"></a>  survey</span>
-<span id="cb1-11"><a href="inputs.html#cb1-11" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb237"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb237-1"><a href="monitoring-headline-results.html#cb237-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span></span>
+<span id="cb237-2"><a href="monitoring-headline-results.html#cb237-2" tabindex="-1"></a>  <span class="fu">c</span>(</span>
+<span id="cb237-3"><a href="monitoring-headline-results.html#cb237-3" tabindex="-1"></a>    <span class="st">&quot;stringr&quot;</span>,</span>
+<span id="cb237-4"><a href="monitoring-headline-results.html#cb237-4" tabindex="-1"></a>    <span class="st">&quot;sf&quot;</span>,</span>
+<span id="cb237-5"><a href="monitoring-headline-results.html#cb237-5" tabindex="-1"></a>    <span class="st">&quot;tidyverse&quot;</span>,</span>
+<span id="cb237-6"><a href="monitoring-headline-results.html#cb237-6" tabindex="-1"></a>    <span class="st">&quot;viridis&quot;</span>,</span>
+<span id="cb237-7"><a href="monitoring-headline-results.html#cb237-7" tabindex="-1"></a>    <span class="st">&quot;glue&quot;</span>,</span>
+<span id="cb237-8"><a href="monitoring-headline-results.html#cb237-8" tabindex="-1"></a>    <span class="st">&quot;patchwork&quot;</span>,</span>
+<span id="cb237-9"><a href="monitoring-headline-results.html#cb237-9" tabindex="-1"></a>    <span class="st">&quot;tidyr&quot;</span>,</span>
+<span id="cb237-10"><a href="monitoring-headline-results.html#cb237-10" tabindex="-1"></a>    <span class="st">&quot;dplyr&quot;</span>,</span>
+<span id="cb237-11"><a href="monitoring-headline-results.html#cb237-11" tabindex="-1"></a>    <span class="st">&quot;knitr&quot;</span>,</span>
+<span id="cb237-12"><a href="monitoring-headline-results.html#cb237-12" tabindex="-1"></a>    <span class="st">&quot;kableExtra&quot;</span>,</span>
+<span id="cb237-13"><a href="monitoring-headline-results.html#cb237-13" tabindex="-1"></a>    <span class="st">&quot;vtable&quot;</span>,</span>
+<span id="cb237-14"><a href="monitoring-headline-results.html#cb237-14" tabindex="-1"></a>    <span class="st">&quot;stargazer&quot;</span>,</span>
+<span id="cb237-15"><a href="monitoring-headline-results.html#cb237-15" tabindex="-1"></a>    <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb237-16"><a href="monitoring-headline-results.html#cb237-16" tabindex="-1"></a>    <span class="st">&quot;haven&quot;</span>,</span>
+<span id="cb237-17"><a href="monitoring-headline-results.html#cb237-17" tabindex="-1"></a>    <span class="st">&quot;estimatr&quot;</span>,</span>
+<span id="cb237-18"><a href="monitoring-headline-results.html#cb237-18" tabindex="-1"></a>    <span class="st">&quot;janitor&quot;</span>,</span>
+<span id="cb237-19"><a href="monitoring-headline-results.html#cb237-19" tabindex="-1"></a>    <span class="st">&quot;survey&quot;</span></span>
+<span id="cb237-20"><a href="monitoring-headline-results.html#cb237-20" tabindex="-1"></a>  )</span>
+<span id="cb237-21"><a href="monitoring-headline-results.html#cb237-21" tabindex="-1"></a></span>
+<span id="cb237-22"><a href="monitoring-headline-results.html#cb237-22" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(</span>
+<span id="cb237-23"><a href="monitoring-headline-results.html#cb237-23" tabindex="-1"></a>  packages,</span>
+<span id="cb237-24"><a href="monitoring-headline-results.html#cb237-24" tabindex="-1"></a>  <span class="at">character.only =</span> <span class="cn">TRUE</span></span>
+<span id="cb237-25"><a href="monitoring-headline-results.html#cb237-25" tabindex="-1"></a>)</span></code></pre></div>
 </details>
-<div id="villages" class="section level2 hasAnchor" number="2.1">
-<h2><span class="header-section-number">2.1</span> Villages<a href="inputs.html#villages" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="all-villages-in-admin-data" class="section level3 hasAnchor" number="2.1.1">
-<h3><span class="header-section-number">2.1.1</span> All villages in admin data<a href="inputs.html#all-villages-in-admin-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="number-of-people-reached" class="section level2 hasAnchor" number="6.1">
+<h2><span class="header-section-number">6.1</span> Number of people reached<a href="monitoring-headline-results.html#number-of-people-reached" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="average-number-of-households-per-water-point" class="section level3 hasAnchor" number="6.1.1">
+<h3><span class="header-section-number">6.1.1</span> Average number of households per water point<a href="monitoring-headline-results.html#average-number-of-households-per-water-point" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="inputs.html#cb2-1" tabindex="-1"></a>villages <span class="ot">&lt;-</span></span>
-<span id="cb2-2"><a href="inputs.html#cb2-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb2-3"><a href="inputs.html#cb2-3" tabindex="-1"></a>      <span class="fu">file.path</span>(</span>
-<span id="cb2-4"><a href="inputs.html#cb2-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb2-5"><a href="inputs.html#cb2-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb2-6"><a href="inputs.html#cb2-6" tabindex="-1"></a>      <span class="st">&quot;Villages&quot;</span>,</span>
-<span id="cb2-7"><a href="inputs.html#cb2-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb2-8"><a href="inputs.html#cb2-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb2-9"><a href="inputs.html#cb2-9" tabindex="-1"></a>      <span class="st">&quot;villages.rds&quot;</span></span>
-<span id="cb2-10"><a href="inputs.html#cb2-10" tabindex="-1"></a>    )</span>
-<span id="cb2-11"><a href="inputs.html#cb2-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb2-12"><a href="inputs.html#cb2-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span> <span class="sc">&amp;</span> <span class="sc">!</span>dsw))</span></code></pre></div>
+<div class="sourceCode" id="cb238"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb238-1"><a href="monitoring-headline-results.html#cb238-1" tabindex="-1"></a>hh_per_wp <span class="ot">&lt;-</span></span>
+<span id="cb238-2"><a href="monitoring-headline-results.html#cb238-2" tabindex="-1"></a>  wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb238-3"><a href="monitoring-headline-results.html#cb238-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb238-4"><a href="monitoring-headline-results.html#cb238-4" tabindex="-1"></a>    wp_func,</span>
+<span id="cb238-5"><a href="monitoring-headline-results.html#cb238-5" tabindex="-1"></a>    intervention <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span>, </span>
+<span id="cb238-6"><a href="monitoring-headline-results.html#cb238-6" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(pm_users)</span>
+<span id="cb238-7"><a href="monitoring-headline-results.html#cb238-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb238-8"><a href="monitoring-headline-results.html#cb238-8" tabindex="-1"></a>  <span class="fu">group_by</span>(</span>
+<span id="cb238-9"><a href="monitoring-headline-results.html#cb238-9" tabindex="-1"></a>    country, sample_group, intervention</span>
+<span id="cb238-10"><a href="monitoring-headline-results.html#cb238-10" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb238-11"><a href="monitoring-headline-results.html#cb238-11" tabindex="-1"></a>  group_split <span class="sc">%&gt;%</span></span>
+<span id="cb238-12"><a href="monitoring-headline-results.html#cb238-12" tabindex="-1"></a>  <span class="fu">map</span>(</span>
+<span id="cb238-13"><a href="monitoring-headline-results.html#cb238-13" tabindex="-1"></a>    <span class="sc">~</span> <span class="fu">mean_cis</span>(</span>
+<span id="cb238-14"><a href="monitoring-headline-results.html#cb238-14" tabindex="-1"></a>      <span class="at">outcomes =</span> <span class="fu">c</span>(<span class="st">&quot;pm_users&quot;</span>),</span>
+<span id="cb238-15"><a href="monitoring-headline-results.html#cb238-15" tabindex="-1"></a>      <span class="at">dummy =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb238-16"><a href="monitoring-headline-results.html#cb238-16" tabindex="-1"></a>      <span class="at">design =</span> <span class="fu">svydesign</span>(</span>
+<span id="cb238-17"><a href="monitoring-headline-results.html#cb238-17" tabindex="-1"></a>        <span class="at">id =</span> <span class="sc">~</span> village_id, <span class="co"># cluster IDs</span></span>
+<span id="cb238-18"><a href="monitoring-headline-results.html#cb238-18" tabindex="-1"></a>        <span class="at">strata =</span> <span class="sc">~</span> sample_group,</span>
+<span id="cb238-19"><a href="monitoring-headline-results.html#cb238-19" tabindex="-1"></a>        <span class="at">data =</span> .x,</span>
+<span id="cb238-20"><a href="monitoring-headline-results.html#cb238-20" tabindex="-1"></a>        <span class="at">nest =</span> <span class="cn">TRUE</span></span>
+<span id="cb238-21"><a href="monitoring-headline-results.html#cb238-21" tabindex="-1"></a>      )</span>
+<span id="cb238-22"><a href="monitoring-headline-results.html#cb238-22" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb238-23"><a href="monitoring-headline-results.html#cb238-23" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb238-24"><a href="monitoring-headline-results.html#cb238-24" tabindex="-1"></a>        <span class="at">country =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(country) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb238-25"><a href="monitoring-headline-results.html#cb238-25" tabindex="-1"></a>        <span class="at">sample_group =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(sample_group) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb238-26"><a href="monitoring-headline-results.html#cb238-26" tabindex="-1"></a>        <span class="at">wp_intervention =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(intervention) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb238-27"><a href="monitoring-headline-results.html#cb238-27" tabindex="-1"></a>        <span class="at">wps =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(wp_id) <span class="sc">%&gt;%</span> n_distinct,</span>
+<span id="cb238-28"><a href="monitoring-headline-results.html#cb238-28" tabindex="-1"></a>      )</span>
+<span id="cb238-29"><a href="monitoring-headline-results.html#cb238-29" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb238-30"><a href="monitoring-headline-results.html#cb238-30" tabindex="-1"></a>  <span class="fu">bind_rows</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb238-31"><a href="monitoring-headline-results.html#cb238-31" tabindex="-1"></a>  <span class="fu">select</span>(country, sample_group, wp_intervention, <span class="at">av_hhs =</span> mean, <span class="at">av_hhs_se =</span> se)</span></code></pre></div>
 </details>
+<pre><code>## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability</code></pre>
 </div>
-<div id="sampled-villages" class="section level3 hasAnchor" number="2.1.2">
-<h3><span class="header-section-number">2.1.2</span> Sampled villages<a href="inputs.html#sampled-villages" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<ul>
-<li>DSW villages were replaced at random (e.g. because of disputed village boundaries or because the village could not be identified under the names in the admin data). Therefore, we remove replaced villages from the analysis</li>
-<li>ILC villages were not replaced at random: these were replaced when no ILC was present in the village or when all of the water collection points were not functioning. Therefore, we consider replaced villages to have zero users.</li>
-</ul>
+<div id="average-number-of-people-per-household" class="section level3 hasAnchor" number="6.1.2">
+<h3><span class="header-section-number">6.1.2</span> Average number of people per household<a href="monitoring-headline-results.html#average-number-of-people-per-household" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="inputs.html#cb3-1" tabindex="-1"></a>sampled_villages <span class="ot">&lt;-</span></span>
-<span id="cb3-2"><a href="inputs.html#cb3-2" tabindex="-1"></a>  villages <span class="sc">%&gt;%</span></span>
-<span id="cb3-3"><a href="inputs.html#cb3-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb3-4"><a href="inputs.html#cb3-4" tabindex="-1"></a>    (sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> visited <span class="sc">==</span> <span class="st">&quot;In sample&quot;</span>) <span class="sc">|</span></span>
-<span id="cb3-5"><a href="inputs.html#cb3-5" tabindex="-1"></a>    (sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> visited <span class="sc">==</span> <span class="st">&quot;In sample&quot;</span> <span class="sc">&amp;</span> <span class="sc">!</span>vil_replaced)</span>
-<span id="cb3-6"><a href="inputs.html#cb3-6" tabindex="-1"></a>  )</span>
-<span id="cb3-7"><a href="inputs.html#cb3-7" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="inputs.html#cb3-8" tabindex="-1"></a>village_intervention <span class="ot">&lt;-</span></span>
-<span id="cb3-9"><a href="inputs.html#cb3-9" tabindex="-1"></a>  sampled_villages <span class="sc">%&gt;%</span></span>
-<span id="cb3-10"><a href="inputs.html#cb3-10" tabindex="-1"></a>  <span class="fu">crossing</span>(<span class="at">wp_intervention =</span> <span class="fu">c</span>(<span class="st">&quot;DSW&quot;</span>, <span class="st">&quot;ILC&quot;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb3-11"><a href="inputs.html#cb3-11" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>(wp_intervention <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>)) </span></code></pre></div>
+<div class="sourceCode" id="cb240"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb240-1"><a href="monitoring-headline-results.html#cb240-1" tabindex="-1"></a>people_per_hh <span class="ot">&lt;-</span></span>
+<span id="cb240-2"><a href="monitoring-headline-results.html#cb240-2" tabindex="-1"></a>  mon_survey <span class="sc">%&gt;%</span></span>
+<span id="cb240-3"><a href="monitoring-headline-results.html#cb240-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb240-4"><a href="monitoring-headline-results.html#cb240-4" tabindex="-1"></a>    wp_func,</span>
+<span id="cb240-5"><a href="monitoring-headline-results.html#cb240-5" tabindex="-1"></a>    wp_intervention <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span></span>
+<span id="cb240-6"><a href="monitoring-headline-results.html#cb240-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb240-7"><a href="monitoring-headline-results.html#cb240-7" tabindex="-1"></a>  <span class="fu">group_by</span>(</span>
+<span id="cb240-8"><a href="monitoring-headline-results.html#cb240-8" tabindex="-1"></a>    country, sample_group, wp_intervention</span>
+<span id="cb240-9"><a href="monitoring-headline-results.html#cb240-9" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb240-10"><a href="monitoring-headline-results.html#cb240-10" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb240-11"><a href="monitoring-headline-results.html#cb240-11" tabindex="-1"></a>  group_split <span class="sc">%&gt;%</span></span>
+<span id="cb240-12"><a href="monitoring-headline-results.html#cb240-12" tabindex="-1"></a>  <span class="fu">map</span>(</span>
+<span id="cb240-13"><a href="monitoring-headline-results.html#cb240-13" tabindex="-1"></a>    <span class="sc">~</span> <span class="fu">mean_cis</span>(</span>
+<span id="cb240-14"><a href="monitoring-headline-results.html#cb240-14" tabindex="-1"></a>      <span class="at">outcomes =</span> <span class="fu">c</span>(<span class="st">&quot;hh_members&quot;</span>),</span>
+<span id="cb240-15"><a href="monitoring-headline-results.html#cb240-15" tabindex="-1"></a>      <span class="at">dummy =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb240-16"><a href="monitoring-headline-results.html#cb240-16" tabindex="-1"></a>      <span class="at">design =</span> <span class="fu">svydesign</span>(</span>
+<span id="cb240-17"><a href="monitoring-headline-results.html#cb240-17" tabindex="-1"></a>        <span class="at">id =</span> <span class="sc">~</span> village_id, <span class="co"># cluster IDs</span></span>
+<span id="cb240-18"><a href="monitoring-headline-results.html#cb240-18" tabindex="-1"></a>        <span class="at">strata =</span> <span class="sc">~</span> sample_group,</span>
+<span id="cb240-19"><a href="monitoring-headline-results.html#cb240-19" tabindex="-1"></a>        <span class="at">data =</span> .x,</span>
+<span id="cb240-20"><a href="monitoring-headline-results.html#cb240-20" tabindex="-1"></a>        <span class="at">nest =</span> <span class="cn">TRUE</span></span>
+<span id="cb240-21"><a href="monitoring-headline-results.html#cb240-21" tabindex="-1"></a>      )</span>
+<span id="cb240-22"><a href="monitoring-headline-results.html#cb240-22" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb240-23"><a href="monitoring-headline-results.html#cb240-23" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb240-24"><a href="monitoring-headline-results.html#cb240-24" tabindex="-1"></a>        <span class="at">country =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(country) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb240-25"><a href="monitoring-headline-results.html#cb240-25" tabindex="-1"></a>        <span class="at">sample_group =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(sample_group) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb240-26"><a href="monitoring-headline-results.html#cb240-26" tabindex="-1"></a>        <span class="at">wp_intervention =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(wp_intervention) <span class="sc">%&gt;%</span> unique</span>
+<span id="cb240-27"><a href="monitoring-headline-results.html#cb240-27" tabindex="-1"></a>      )</span>
+<span id="cb240-28"><a href="monitoring-headline-results.html#cb240-28" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb240-29"><a href="monitoring-headline-results.html#cb240-29" tabindex="-1"></a>  <span class="fu">bind_rows</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb240-30"><a href="monitoring-headline-results.html#cb240-30" tabindex="-1"></a>  <span class="fu">select</span>(country, sample_group, wp_intervention, <span class="at">av_size =</span> mean, <span class="at">av_size_se =</span> se)</span></code></pre></div>
 </details>
+<pre><code>## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, strata = ~sample_group, data =
+## .x, : No weights or probabilities supplied, assuming equal probability</code></pre>
 </div>
-<div id="calculate-village-sample-sizes-for-weighing" class="section level3 hasAnchor" number="2.1.3">
-<h3><span class="header-section-number">2.1.3</span> Calculate village sample sizes for weighing<a href="inputs.html#calculate-village-sample-sizes-for-weighing" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="total-number-of-people-per-group" class="section level3 hasAnchor" number="6.1.3">
+<h3><span class="header-section-number">6.1.3</span> Total number of people per group<a href="monitoring-headline-results.html#total-number-of-people-per-group" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="inputs.html#cb4-1" tabindex="-1"></a>sample_sizes <span class="ot">&lt;-</span></span>
-<span id="cb4-2"><a href="inputs.html#cb4-2" tabindex="-1"></a>  villages <span class="sc">%&gt;%</span></span>
-<span id="cb4-3"><a href="inputs.html#cb4-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sampled_village =</span> village_id <span class="sc">%in%</span> sampled_villages<span class="sc">$</span>village_id) <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="inputs.html#cb4-4" tabindex="-1"></a>  <span class="fu">group_by</span>(country, sample_group) <span class="sc">%&gt;%</span></span>
-<span id="cb4-5"><a href="inputs.html#cb4-5" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb4-6"><a href="inputs.html#cb4-6" tabindex="-1"></a>    <span class="at">n_villages =</span> <span class="fu">n_distinct</span>(village_id),</span>
-<span id="cb4-7"><a href="inputs.html#cb4-7" tabindex="-1"></a>    <span class="at">visited_villages =</span> <span class="fu">sum</span>(visited <span class="sc">==</span> <span class="st">&quot;In sample&quot;</span> <span class="sc">&amp;</span> <span class="sc">!</span>vil_replaced),</span>
-<span id="cb4-8"><a href="inputs.html#cb4-8" tabindex="-1"></a>    <span class="at">sampled_villages =</span> <span class="fu">sum</span>(sampled_village)</span>
-<span id="cb4-9"><a href="inputs.html#cb4-9" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb242"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb242-1"><a href="monitoring-headline-results.html#cb242-1" tabindex="-1"></a>total_people <span class="ot">&lt;-</span> </span>
+<span id="cb242-2"><a href="monitoring-headline-results.html#cb242-2" tabindex="-1"></a>  hh_per_wp <span class="sc">%&gt;%</span></span>
+<span id="cb242-3"><a href="monitoring-headline-results.html#cb242-3" tabindex="-1"></a>  <span class="fu">left_join</span>(people_per_hh) <span class="sc">%&gt;%</span></span>
+<span id="cb242-4"><a href="monitoring-headline-results.html#cb242-4" tabindex="-1"></a>  <span class="co"># Calculate people per WP and its SE using delta method</span></span>
+<span id="cb242-5"><a href="monitoring-headline-results.html#cb242-5" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb242-6"><a href="monitoring-headline-results.html#cb242-6" tabindex="-1"></a>    <span class="at">av_people =</span> av_hhs <span class="sc">*</span> av_size,</span>
+<span id="cb242-7"><a href="monitoring-headline-results.html#cb242-7" tabindex="-1"></a>    <span class="co"># delta method: SE(X*Y) = sqrt((Y^2 * SE_X^2) + (X^2 * SE_Y^2))</span></span>
+<span id="cb242-8"><a href="monitoring-headline-results.html#cb242-8" tabindex="-1"></a>    <span class="co"># assuming X and Y are independent</span></span>
+<span id="cb242-9"><a href="monitoring-headline-results.html#cb242-9" tabindex="-1"></a>    <span class="at">av_people_se =</span> <span class="fu">sqrt</span>(</span>
+<span id="cb242-10"><a href="monitoring-headline-results.html#cb242-10" tabindex="-1"></a>      (av_size<span class="sc">^</span><span class="dv">2</span>) <span class="sc">*</span> (av_hhs_se<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> </span>
+<span id="cb242-11"><a href="monitoring-headline-results.html#cb242-11" tabindex="-1"></a>      (av_hhs<span class="sc">^</span><span class="dv">2</span>) <span class="sc">*</span> (av_size_se<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb242-12"><a href="monitoring-headline-results.html#cb242-12" tabindex="-1"></a>    )</span>
+<span id="cb242-13"><a href="monitoring-headline-results.html#cb242-13" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb242-14"><a href="monitoring-headline-results.html#cb242-14" tabindex="-1"></a>  <span class="co"># join with population water points - sum across sample_groups</span></span>
+<span id="cb242-15"><a href="monitoring-headline-results.html#cb242-15" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb242-16"><a href="monitoring-headline-results.html#cb242-16" tabindex="-1"></a>    wp_sample_sizes</span>
+<span id="cb242-17"><a href="monitoring-headline-results.html#cb242-17" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb242-18"><a href="monitoring-headline-results.html#cb242-18" tabindex="-1"></a>  <span class="co"># scale up to population</span></span>
+<span id="cb242-19"><a href="monitoring-headline-results.html#cb242-19" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb242-20"><a href="monitoring-headline-results.html#cb242-20" tabindex="-1"></a>    <span class="at">total_people =</span> av_people <span class="sc">*</span> pop_points,</span>
+<span id="cb242-21"><a href="monitoring-headline-results.html#cb242-21" tabindex="-1"></a>    <span class="co"># SE scales linearly with constant: SE(c*X) = c * SE(X)</span></span>
+<span id="cb242-22"><a href="monitoring-headline-results.html#cb242-22" tabindex="-1"></a>    <span class="at">total_people_se =</span> av_people_se <span class="sc">*</span> pop_points,</span>
+<span id="cb242-23"><a href="monitoring-headline-results.html#cb242-23" tabindex="-1"></a>    <span class="co"># 95% CI for popn_users</span></span>
+<span id="cb242-24"><a href="monitoring-headline-results.html#cb242-24" tabindex="-1"></a>    <span class="at">total_people_lb =</span> total_people <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> total_people_se,</span>
+<span id="cb242-25"><a href="monitoring-headline-results.html#cb242-25" tabindex="-1"></a>    <span class="at">total_people_ub =</span> total_people <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> total_people_se</span>
+<span id="cb242-26"><a href="monitoring-headline-results.html#cb242-26" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<pre><code>## Joining with `by = join_by(country, sample_group, wp_intervention)`
+## Joining with `by = join_by(country, sample_group, wp_intervention)`</code></pre>
+</div>
+<div id="total-number-of-people-per-country" class="section level3 hasAnchor" number="6.1.4">
+<h3><span class="header-section-number">6.1.4</span> Total number of people per country<a href="monitoring-headline-results.html#total-number-of-people-per-country" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb244"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb244-1"><a href="monitoring-headline-results.html#cb244-1" tabindex="-1"></a>total_country <span class="ot">&lt;-</span></span>
+<span id="cb244-2"><a href="monitoring-headline-results.html#cb244-2" tabindex="-1"></a>  total_people <span class="sc">%&gt;%</span></span>
+<span id="cb244-3"><a href="monitoring-headline-results.html#cb244-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_people_se_sq =</span> total_people_se <span class="sc">^</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb244-4"><a href="monitoring-headline-results.html#cb244-4" tabindex="-1"></a>  <span class="fu">group_by</span>(country, wp_intervention) <span class="sc">%&gt;%</span></span>
+<span id="cb244-5"><a href="monitoring-headline-results.html#cb244-5" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb244-6"><a href="monitoring-headline-results.html#cb244-6" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb244-7"><a href="monitoring-headline-results.html#cb244-7" tabindex="-1"></a>      <span class="fu">c</span>(total_people, total_people_se_sq),</span>
+<span id="cb244-8"><a href="monitoring-headline-results.html#cb244-8" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">sum</span>(.)</span>
+<span id="cb244-9"><a href="monitoring-headline-results.html#cb244-9" tabindex="-1"></a>    )</span>
+<span id="cb244-10"><a href="monitoring-headline-results.html#cb244-10" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb244-11"><a href="monitoring-headline-results.html#cb244-11" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb244-12"><a href="monitoring-headline-results.html#cb244-12" tabindex="-1"></a>    <span class="at">total_people_se =</span> <span class="fu">sqrt</span>(total_people_se_sq),</span>
+<span id="cb244-13"><a href="monitoring-headline-results.html#cb244-13" tabindex="-1"></a>    <span class="at">total_people_lb =</span> total_people <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> total_people_se,</span>
+<span id="cb244-14"><a href="monitoring-headline-results.html#cb244-14" tabindex="-1"></a>    <span class="at">total_people_ub =</span> total_people <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> total_people_se,</span>
+<span id="cb244-15"><a href="monitoring-headline-results.html#cb244-15" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb244-16"><a href="monitoring-headline-results.html#cb244-16" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span> <span class="sc">&amp;</span> wp_intervention <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>))</span></code></pre></div>
 </details>
 <pre><code>## `summarise()` has grouped output by &#39;country&#39;. You can override using the
 ## `.groups` argument.</code></pre>
 </div>
-</div>
-<div id="water-points" class="section level2 hasAnchor" number="2.2">
-<h2><span class="header-section-number">2.2</span> Water points<a href="inputs.html#water-points" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="does-it-make-sense-to-assume-independence" class="section level3 hasAnchor" number="6.1.5">
+<h3><span class="header-section-number">6.1.5</span> Does it make sense to assume independence?<a href="monitoring-headline-results.html#does-it-make-sense-to-assume-independence" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="inputs.html#cb6-1" tabindex="-1"></a>wp_sample_sizes <span class="ot">&lt;-</span></span>
-<span id="cb6-2"><a href="inputs.html#cb6-2" tabindex="-1"></a>  <span class="fu">tribble</span>(</span>
-<span id="cb6-3"><a href="inputs.html#cb6-3" tabindex="-1"></a>    <span class="sc">~</span> country, <span class="sc">~</span> sample_group, <span class="sc">~</span> wp_intervention, <span class="sc">~</span> pop_points,</span>
-<span id="cb6-4"><a href="inputs.html#cb6-4" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;Expansion&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">12262</span>,</span>
-<span id="cb6-5"><a href="inputs.html#cb6-5" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;Footprint&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">5456</span>,</span>
-<span id="cb6-6"><a href="inputs.html#cb6-6" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">398</span>,</span>
-<span id="cb6-7"><a href="inputs.html#cb6-7" tabindex="-1"></a>    <span class="st">&quot;Uganda&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="dv">1229</span>,</span>
-<span id="cb6-8"><a href="inputs.html#cb6-8" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;Expansion&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">11292</span>,</span>
-<span id="cb6-9"><a href="inputs.html#cb6-9" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;Footprint&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">3844</span>,</span>
-<span id="cb6-10"><a href="inputs.html#cb6-10" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;DSW&quot;</span>, <span class="dv">1062</span>,</span>
-<span id="cb6-11"><a href="inputs.html#cb6-11" tabindex="-1"></a>    <span class="st">&quot;Malawi&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="st">&quot;ILC&quot;</span>, <span class="dv">2024</span></span>
-<span id="cb6-12"><a href="inputs.html#cb6-12" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb246"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb246-1"><a href="monitoring-headline-results.html#cb246-1" tabindex="-1"></a>cor_data <span class="ot">&lt;-</span></span>
+<span id="cb246-2"><a href="monitoring-headline-results.html#cb246-2" tabindex="-1"></a>  hh_survey <span class="sc">%&gt;%</span> </span>
+<span id="cb246-3"><a href="monitoring-headline-results.html#cb246-3" tabindex="-1"></a>  <span class="fu">bind_rows</span>(mon_survey) <span class="sc">%&gt;%</span></span>
+<span id="cb246-4"><a href="monitoring-headline-results.html#cb246-4" tabindex="-1"></a>  <span class="fu">select</span>(household_id, village_id, country, sample_group, wp_intervention, survey, wp_id, hh_members) <span class="sc">%&gt;%</span></span>
+<span id="cb246-5"><a href="monitoring-headline-results.html#cb246-5" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb246-6"><a href="monitoring-headline-results.html#cb246-6" tabindex="-1"></a>    wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb246-7"><a href="monitoring-headline-results.html#cb246-7" tabindex="-1"></a>      <span class="fu">select</span>(wp_id, pm_users)</span>
+<span id="cb246-8"><a href="monitoring-headline-results.html#cb246-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb246-9"><a href="monitoring-headline-results.html#cb246-9" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb246-10"><a href="monitoring-headline-results.html#cb246-10" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(hh_members),</span>
+<span id="cb246-11"><a href="monitoring-headline-results.html#cb246-11" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(pm_users)</span>
+<span id="cb246-12"><a href="monitoring-headline-results.html#cb246-12" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-</div>
-<div id="household-census" class="section level2 hasAnchor" number="2.3">
-<h2><span class="header-section-number">2.3</span> Household census<a href="inputs.html#household-census" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="inputs.html#cb7-1" tabindex="-1"></a>hh_census <span class="ot">&lt;-</span></span>
-<span id="cb7-2"><a href="inputs.html#cb7-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb7-3"><a href="inputs.html#cb7-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb7-4"><a href="inputs.html#cb7-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb7-5"><a href="inputs.html#cb7-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb7-6"><a href="inputs.html#cb7-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdCensus&quot;</span>,</span>
-<span id="cb7-7"><a href="inputs.html#cb7-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb7-8"><a href="inputs.html#cb7-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb7-9"><a href="inputs.html#cb7-9" tabindex="-1"></a>      <span class="st">&quot;hh-census.rds&quot;</span></span>
-<span id="cb7-10"><a href="inputs.html#cb7-10" tabindex="-1"></a>    )</span>
-<span id="cb7-11"><a href="inputs.html#cb7-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-12"><a href="inputs.html#cb7-12" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb7-13"><a href="inputs.html#cb7-13" tabindex="-1"></a>  <span class="co"># To account for non-responses, we calculate the village-level non-response rate</span></span>
-<span id="cb7-14"><a href="inputs.html#cb7-14" tabindex="-1"></a>  <span class="fu">group_by</span>(village_id) <span class="sc">%&gt;%</span></span>
-<span id="cb7-15"><a href="inputs.html#cb7-15" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb7-16"><a href="inputs.html#cb7-16" tabindex="-1"></a>    <span class="at">response_rate =</span> <span class="fu">mean</span>(response),</span>
-<span id="cb7-17"><a href="inputs.html#cb7-17" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb7-18"><a href="inputs.html#cb7-18" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb7-19"><a href="inputs.html#cb7-19" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb7-20"><a href="inputs.html#cb7-20" tabindex="-1"></a>    )</span>
-<span id="cb7-21"><a href="inputs.html#cb7-21" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-22"><a href="inputs.html#cb7-22" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
-<span id="cb7-23"><a href="inputs.html#cb7-23" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb7-24"><a href="inputs.html#cb7-24" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb7-25"><a href="inputs.html#cb7-25" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb248"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb248-1"><a href="monitoring-headline-results.html#cb248-1" tabindex="-1"></a><span class="fu">cor</span>(cor_data<span class="sc">$</span>hh_members, cor_data<span class="sc">$</span>pm_users)</span></code></pre></div>
 </details>
-</div>
-<div id="household-survey" class="section level2 hasAnchor" number="2.4">
-<h2><span class="header-section-number">2.4</span> Household survey<a href="inputs.html#household-survey" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<pre><code>## [1] 0.00712846</code></pre>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="inputs.html#cb8-1" tabindex="-1"></a>hh_survey <span class="ot">&lt;-</span></span>
-<span id="cb8-2"><a href="inputs.html#cb8-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb8-3"><a href="inputs.html#cb8-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb8-4"><a href="inputs.html#cb8-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb8-5"><a href="inputs.html#cb8-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb8-6"><a href="inputs.html#cb8-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb8-7"><a href="inputs.html#cb8-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb8-8"><a href="inputs.html#cb8-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb8-9"><a href="inputs.html#cb8-9" tabindex="-1"></a>      <span class="st">&quot;hh-survey.rds&quot;</span></span>
-<span id="cb8-10"><a href="inputs.html#cb8-10" tabindex="-1"></a>    )</span>
-<span id="cb8-11"><a href="inputs.html#cb8-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-12"><a href="inputs.html#cb8-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb8-13"><a href="inputs.html#cb8-13" tabindex="-1"></a>    survey <span class="sc">==</span> <span class="st">&quot;Household Survey&quot;</span></span>
-<span id="cb8-14"><a href="inputs.html#cb8-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-15"><a href="inputs.html#cb8-15" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb8-16"><a href="inputs.html#cb8-16" tabindex="-1"></a>    <span class="at">intervention_selfreport =</span> <span class="fu">case_when</span>(</span>
-<span id="cb8-17"><a href="inputs.html#cb8-17" tabindex="-1"></a>      hh_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb8-18"><a href="inputs.html#cb8-18" tabindex="-1"></a>      hh_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb8-19"><a href="inputs.html#cb8-19" tabindex="-1"></a>    ),</span>
-<span id="cb8-20"><a href="inputs.html#cb8-20" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb8-21"><a href="inputs.html#cb8-21" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb8-22"><a href="inputs.html#cb8-22" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb8-23"><a href="inputs.html#cb8-23" tabindex="-1"></a>    )</span>
-<span id="cb8-24"><a href="inputs.html#cb8-24" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-25"><a href="inputs.html#cb8-25" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb8-26"><a href="inputs.html#cb8-26" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb8-27"><a href="inputs.html#cb8-27" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb250"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb250-1"><a href="monitoring-headline-results.html#cb250-1" tabindex="-1"></a>cor_data <span class="ot">&lt;-</span></span>
+<span id="cb250-2"><a href="monitoring-headline-results.html#cb250-2" tabindex="-1"></a>  mon_survey <span class="sc">%&gt;%</span></span>
+<span id="cb250-3"><a href="monitoring-headline-results.html#cb250-3" tabindex="-1"></a>  <span class="fu">select</span>(household_id, village_id, country, sample_group, wp_intervention, survey, wp_id, hh_members) <span class="sc">%&gt;%</span></span>
+<span id="cb250-4"><a href="monitoring-headline-results.html#cb250-4" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb250-5"><a href="monitoring-headline-results.html#cb250-5" tabindex="-1"></a>    wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb250-6"><a href="monitoring-headline-results.html#cb250-6" tabindex="-1"></a>      <span class="fu">select</span>(wp_id, pm_users)</span>
+<span id="cb250-7"><a href="monitoring-headline-results.html#cb250-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb250-8"><a href="monitoring-headline-results.html#cb250-8" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb250-9"><a href="monitoring-headline-results.html#cb250-9" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(hh_members),</span>
+<span id="cb250-10"><a href="monitoring-headline-results.html#cb250-10" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(pm_users)</span>
+<span id="cb250-11"><a href="monitoring-headline-results.html#cb250-11" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-</div>
-<div id="monitoring-survey" class="section level2 hasAnchor" number="2.5">
-<h2><span class="header-section-number">2.5</span> Monitoring survey<a href="inputs.html#monitoring-survey" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<pre><code>## Joining with `by = join_by(wp_id)`</code></pre>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="inputs.html#cb9-1" tabindex="-1"></a>mon_survey <span class="ot">&lt;-</span></span>
-<span id="cb9-2"><a href="inputs.html#cb9-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb9-3"><a href="inputs.html#cb9-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb9-4"><a href="inputs.html#cb9-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb9-5"><a href="inputs.html#cb9-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb9-6"><a href="inputs.html#cb9-6" tabindex="-1"></a>      <span class="st">&quot;HouseholdSurvey&quot;</span>,</span>
-<span id="cb9-7"><a href="inputs.html#cb9-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb9-8"><a href="inputs.html#cb9-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb9-9"><a href="inputs.html#cb9-9" tabindex="-1"></a>      <span class="st">&quot;hh-survey.rds&quot;</span></span>
-<span id="cb9-10"><a href="inputs.html#cb9-10" tabindex="-1"></a>    )</span>
-<span id="cb9-11"><a href="inputs.html#cb9-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-12"><a href="inputs.html#cb9-12" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb9-13"><a href="inputs.html#cb9-13" tabindex="-1"></a>    survey <span class="sc">==</span> <span class="st">&quot;Monitoring Survey&quot;</span></span>
-<span id="cb9-14"><a href="inputs.html#cb9-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-15"><a href="inputs.html#cb9-15" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-16"><a href="inputs.html#cb9-16" tabindex="-1"></a>    <span class="at">intervention_selfreport =</span> <span class="fu">case_when</span>(</span>
-<span id="cb9-17"><a href="inputs.html#cb9-17" tabindex="-1"></a>      hh_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb9-18"><a href="inputs.html#cb9-18" tabindex="-1"></a>      hh_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb9-19"><a href="inputs.html#cb9-19" tabindex="-1"></a>    ),</span>
-<span id="cb9-20"><a href="inputs.html#cb9-20" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb9-21"><a href="inputs.html#cb9-21" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb9-22"><a href="inputs.html#cb9-22" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb9-23"><a href="inputs.html#cb9-23" tabindex="-1"></a>    )</span>
-<span id="cb9-24"><a href="inputs.html#cb9-24" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-25"><a href="inputs.html#cb9-25" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb9-26"><a href="inputs.html#cb9-26" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb9-27"><a href="inputs.html#cb9-27" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb252"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb252-1"><a href="monitoring-headline-results.html#cb252-1" tabindex="-1"></a><span class="fu">cor</span>(cor_data<span class="sc">$</span>hh_members, cor_data<span class="sc">$</span>pm_users)</span></code></pre></div>
 </details>
-</div>
-<div id="water-point-census" class="section level2 hasAnchor" number="2.6">
-<h2><span class="header-section-number">2.6</span> Water point census<a href="inputs.html#water-point-census" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<pre><code>## [1] 0.01820092</code></pre>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="inputs.html#cb10-1" tabindex="-1"></a>wp_census <span class="ot">&lt;-</span></span>
-<span id="cb10-2"><a href="inputs.html#cb10-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb10-3"><a href="inputs.html#cb10-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb10-4"><a href="inputs.html#cb10-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb10-5"><a href="inputs.html#cb10-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb10-6"><a href="inputs.html#cb10-6" tabindex="-1"></a>      <span class="st">&quot;WaterPointCensus&quot;</span>,</span>
-<span id="cb10-7"><a href="inputs.html#cb10-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb10-8"><a href="inputs.html#cb10-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb10-9"><a href="inputs.html#cb10-9" tabindex="-1"></a>      <span class="st">&quot;wp-census.rds&quot;</span></span>
-<span id="cb10-10"><a href="inputs.html#cb10-10" tabindex="-1"></a>    )</span>
-<span id="cb10-11"><a href="inputs.html#cb10-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-12"><a href="inputs.html#cb10-12" tabindex="-1"></a>  st_drop_geometry  <span class="sc">%&gt;%</span></span>
-<span id="cb10-13"><a href="inputs.html#cb10-13" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb10-14"><a href="inputs.html#cb10-14" tabindex="-1"></a>    <span class="at">intervention_fo =</span> <span class="fu">case_when</span>(</span>
-<span id="cb10-15"><a href="inputs.html#cb10-15" tabindex="-1"></a>      wp_dsw <span class="sc">~</span> <span class="st">&quot;DSW&quot;</span>,</span>
-<span id="cb10-16"><a href="inputs.html#cb10-16" tabindex="-1"></a>      wp_ilc <span class="sc">~</span> <span class="st">&quot;ILC&quot;</span></span>
-<span id="cb10-17"><a href="inputs.html#cb10-17" tabindex="-1"></a>    )</span>
-<span id="cb10-18"><a href="inputs.html#cb10-18" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-19"><a href="inputs.html#cb10-19" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb10-20"><a href="inputs.html#cb10-20" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>)</span>
-<span id="cb10-21"><a href="inputs.html#cb10-21" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb254"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb254-1"><a href="monitoring-headline-results.html#cb254-1" tabindex="-1"></a><span class="fu">cor.test</span>(cor_data<span class="sc">$</span>hh_members, cor_data<span class="sc">$</span>pm_users)<span class="sc">$</span>conf.int</span></code></pre></div>
 </details>
+<pre><code>## [1] -0.04790596  0.08414904
+## attr(,&quot;conf.level&quot;)
+## [1] 0.95</code></pre>
 </div>
-<div id="promoter-survey" class="section level2 hasAnchor" number="2.7">
-<h2><span class="header-section-number">2.7</span> Promoter survey<a href="inputs.html#promoter-survey" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+</div>
+<div id="chlorination-rates-1" class="section level2 hasAnchor" number="6.2">
+<h2><span class="header-section-number">6.2</span> Chlorination rates<a href="monitoring-headline-results.html#chlorination-rates-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>we should not remove households that are not using program water points!</p>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="inputs.html#cb11-1" tabindex="-1"></a>pm_survey <span class="ot">&lt;-</span></span>
-<span id="cb11-2"><a href="inputs.html#cb11-2" tabindex="-1"></a>  <span class="fu">read_rds</span>(</span>
-<span id="cb11-3"><a href="inputs.html#cb11-3" tabindex="-1"></a>    <span class="fu">file.path</span>(</span>
-<span id="cb11-4"><a href="inputs.html#cb11-4" tabindex="-1"></a>      path_box,</span>
-<span id="cb11-5"><a href="inputs.html#cb11-5" tabindex="-1"></a>      <span class="st">&quot;Data&quot;</span>,</span>
-<span id="cb11-6"><a href="inputs.html#cb11-6" tabindex="-1"></a>      <span class="st">&quot;PromoterSurvey&quot;</span>,</span>
-<span id="cb11-7"><a href="inputs.html#cb11-7" tabindex="-1"></a>      <span class="st">&quot;DataSets&quot;</span>,</span>
-<span id="cb11-8"><a href="inputs.html#cb11-8" tabindex="-1"></a>      <span class="st">&quot;Final&quot;</span>,</span>
-<span id="cb11-9"><a href="inputs.html#cb11-9" tabindex="-1"></a>      <span class="st">&quot;pm-survey.rds&quot;</span></span>
-<span id="cb11-10"><a href="inputs.html#cb11-10" tabindex="-1"></a>    )</span>
-<span id="cb11-11"><a href="inputs.html#cb11-11" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb11-12"><a href="inputs.html#cb11-12" tabindex="-1"></a>  <span class="fu">left_join</span>(villages) <span class="sc">%&gt;%</span></span>
-<span id="cb11-13"><a href="inputs.html#cb11-13" tabindex="-1"></a>  st_drop_geometry  <span class="sc">%&gt;%</span></span>
-<span id="cb11-14"><a href="inputs.html#cb11-14" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
-<span id="cb11-15"><a href="inputs.html#cb11-15" tabindex="-1"></a>    <span class="sc">!</span>(sample_group <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span> <span class="sc">&amp;</span> country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span>),</span>
-<span id="cb11-16"><a href="inputs.html#cb11-16" tabindex="-1"></a>    <span class="sc">!</span>vil_replaced,</span>
-<span id="cb11-17"><a href="inputs.html#cb11-17" tabindex="-1"></a>    <span class="sc">!</span>vil_dropped</span>
-<span id="cb11-18"><a href="inputs.html#cb11-18" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="sourceCode" id="cb256"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb256-1"><a href="monitoring-headline-results.html#cb256-1" tabindex="-1"></a>chlorine_am <span class="ot">&lt;-</span></span>
+<span id="cb256-2"><a href="monitoring-headline-results.html#cb256-2" tabindex="-1"></a>  <span class="fu">mean_cis</span>(</span>
+<span id="cb256-3"><a href="monitoring-headline-results.html#cb256-3" tabindex="-1"></a>    <span class="at">outcomes =</span> <span class="fu">c</span>(<span class="st">&quot;disctcr_02&quot;</span>, <span class="st">&quot;discfcr_02&quot;</span>),</span>
+<span id="cb256-4"><a href="monitoring-headline-results.html#cb256-4" tabindex="-1"></a>    <span class="at">design =</span> <span class="fu">svydesign</span>(</span>
+<span id="cb256-5"><a href="monitoring-headline-results.html#cb256-5" tabindex="-1"></a>      <span class="at">id =</span> <span class="sc">~</span> village_id,</span>
+<span id="cb256-6"><a href="monitoring-headline-results.html#cb256-6" tabindex="-1"></a>      <span class="at">nest =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb256-7"><a href="monitoring-headline-results.html#cb256-7" tabindex="-1"></a>      <span class="at">data =</span> mon_survey <span class="sc">%&gt;%</span></span>
+<span id="cb256-8"><a href="monitoring-headline-results.html#cb256-8" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb256-9"><a href="monitoring-headline-results.html#cb256-9" tabindex="-1"></a>        wp_func,</span>
+<span id="cb256-10"><a href="monitoring-headline-results.html#cb256-10" tabindex="-1"></a>        country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span></span>
+<span id="cb256-11"><a href="monitoring-headline-results.html#cb256-11" tabindex="-1"></a>      )</span>
+<span id="cb256-12"><a href="monitoring-headline-results.html#cb256-12" tabindex="-1"></a>    )</span>
+<span id="cb256-13"><a href="monitoring-headline-results.html#cb256-13" tabindex="-1"></a>  )</span></code></pre></div>
 </details>
-<pre><code>## Joining with `by = join_by(village_id)`</code></pre>
+<pre><code>## Warning in svydesign.default(id = ~village_id, nest = TRUE, data = mon_survey
+## %&gt;% : No weights or probabilities supplied, assuming equal probability</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb258"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb258-1"><a href="monitoring-headline-results.html#cb258-1" tabindex="-1"></a>chlorine_am <span class="ot">&lt;-</span></span>
+<span id="cb258-2"><a href="monitoring-headline-results.html#cb258-2" tabindex="-1"></a>  mon_survey <span class="sc">%&gt;%</span></span>
+<span id="cb258-3"><a href="monitoring-headline-results.html#cb258-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb258-4"><a href="monitoring-headline-results.html#cb258-4" tabindex="-1"></a>    wp_func, </span>
+<span id="cb258-5"><a href="monitoring-headline-results.html#cb258-5" tabindex="-1"></a>    wp_intervention <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span>,</span>
+<span id="cb258-6"><a href="monitoring-headline-results.html#cb258-6" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(wp_intervention),</span>
+<span id="cb258-7"><a href="monitoring-headline-results.html#cb258-7" tabindex="-1"></a>    <span class="sc">!</span>(ilc <span class="sc">&amp;</span> sample_group <span class="sc">!=</span> <span class="st">&quot;ILC&quot;</span>)</span>
+<span id="cb258-8"><a href="monitoring-headline-results.html#cb258-8" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb258-9"><a href="monitoring-headline-results.html#cb258-9" tabindex="-1"></a>  <span class="fu">group_by</span>(country, wp_intervention) <span class="sc">%&gt;%</span></span>
+<span id="cb258-10"><a href="monitoring-headline-results.html#cb258-10" tabindex="-1"></a>  group_split <span class="sc">%&gt;%</span></span>
+<span id="cb258-11"><a href="monitoring-headline-results.html#cb258-11" tabindex="-1"></a>  <span class="fu">map</span>(</span>
+<span id="cb258-12"><a href="monitoring-headline-results.html#cb258-12" tabindex="-1"></a>    <span class="sc">~</span> <span class="fu">mean_cis</span>(</span>
+<span id="cb258-13"><a href="monitoring-headline-results.html#cb258-13" tabindex="-1"></a>        <span class="at">outcomes =</span> <span class="fu">c</span>(<span class="st">&quot;disctcr_02&quot;</span>, <span class="st">&quot;discfcr_02&quot;</span>),</span>
+<span id="cb258-14"><a href="monitoring-headline-results.html#cb258-14" tabindex="-1"></a>        <span class="at">design =</span> <span class="fu">svydesign</span>(</span>
+<span id="cb258-15"><a href="monitoring-headline-results.html#cb258-15" tabindex="-1"></a>          <span class="at">id =</span> <span class="sc">~</span> village_id,</span>
+<span id="cb258-16"><a href="monitoring-headline-results.html#cb258-16" tabindex="-1"></a>          <span class="at">data =</span> .x,</span>
+<span id="cb258-17"><a href="monitoring-headline-results.html#cb258-17" tabindex="-1"></a>          <span class="at">nest =</span> <span class="cn">TRUE</span></span>
+<span id="cb258-18"><a href="monitoring-headline-results.html#cb258-18" tabindex="-1"></a>        )</span>
+<span id="cb258-19"><a href="monitoring-headline-results.html#cb258-19" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb258-20"><a href="monitoring-headline-results.html#cb258-20" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb258-21"><a href="monitoring-headline-results.html#cb258-21" tabindex="-1"></a>        <span class="at">country =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(country) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb258-22"><a href="monitoring-headline-results.html#cb258-22" tabindex="-1"></a>        <span class="at">wp_intervention =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(wp_intervention) <span class="sc">%&gt;%</span> unique,</span>
+<span id="cb258-23"><a href="monitoring-headline-results.html#cb258-23" tabindex="-1"></a>        <span class="at">hhs =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(household_id) <span class="sc">%&gt;%</span> n_distinct,</span>
+<span id="cb258-24"><a href="monitoring-headline-results.html#cb258-24" tabindex="-1"></a>        <span class="at">villages =</span> .x <span class="sc">%&gt;%</span> <span class="fu">pull</span>(village_id) <span class="sc">%&gt;%</span> n_distinct,</span>
+<span id="cb258-25"><a href="monitoring-headline-results.html#cb258-25" tabindex="-1"></a>      )</span>
+<span id="cb258-26"><a href="monitoring-headline-results.html#cb258-26" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb258-27"><a href="monitoring-headline-results.html#cb258-27" tabindex="-1"></a>  bind_rows <span class="sc">%&gt;%</span></span>
+<span id="cb258-28"><a href="monitoring-headline-results.html#cb258-28" tabindex="-1"></a>  <span class="fu">select</span>(country, wp_intervention, outcome, <span class="fu">everything</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb258-29"><a href="monitoring-headline-results.html#cb258-29" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(outcome))</span></code></pre></div>
+</details>
+<pre><code>## Warning in svydesign.default(id = ~village_id, data = .x, nest = TRUE): No
+## weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, data = .x, nest = TRUE): No
+## weights or probabilities supplied, assuming equal probability
+## Warning in svydesign.default(id = ~village_id, data = .x, nest = TRUE): No
+## weights or probabilities supplied, assuming equal probability</code></pre>
+</div>
+<div id="table-2" class="section level2 hasAnchor" number="6.3">
+<h2><span class="header-section-number">6.3</span> Table<a href="monitoring-headline-results.html#table-2" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb260"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb260-1"><a href="monitoring-headline-results.html#cb260-1" tabindex="-1"></a>cl <span class="ot">&lt;-</span></span>
+<span id="cb260-2"><a href="monitoring-headline-results.html#cb260-2" tabindex="-1"></a>  chlorine_am <span class="sc">%&gt;%</span></span>
+<span id="cb260-3"><a href="monitoring-headline-results.html#cb260-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb260-4"><a href="monitoring-headline-results.html#cb260-4" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb260-5"><a href="monitoring-headline-results.html#cb260-5" tabindex="-1"></a>      <span class="fu">c</span>(mean, lb, ub),</span>
+<span id="cb260-6"><a href="monitoring-headline-results.html#cb260-6" tabindex="-1"></a>      <span class="sc">~</span> (. <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb260-7"><a href="monitoring-headline-results.html#cb260-7" tabindex="-1"></a>        <span class="fu">round</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb260-8"><a href="monitoring-headline-results.html#cb260-8" tabindex="-1"></a>        <span class="fu">str_remove_all</span>(<span class="st">&quot; &quot;</span>)</span>
+<span id="cb260-9"><a href="monitoring-headline-results.html#cb260-9" tabindex="-1"></a>    ),</span>
+<span id="cb260-10"><a href="monitoring-headline-results.html#cb260-10" tabindex="-1"></a>    <span class="at">ci =</span> <span class="fu">paste0</span>(<span class="st">&quot;(&quot;</span>, lb, <span class="st">&quot;, &quot;</span>, ub, <span class="st">&quot;)&quot;</span>) ,</span>
+<span id="cb260-11"><a href="monitoring-headline-results.html#cb260-11" tabindex="-1"></a>    <span class="at">hhs =</span> hhs <span class="sc">%&gt;%</span> <span class="fu">format</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>)</span>
+<span id="cb260-12"><a href="monitoring-headline-results.html#cb260-12" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb260-13"><a href="monitoring-headline-results.html#cb260-13" tabindex="-1"></a>  <span class="fu">select</span>(country, wp_intervention, outcome, hhs, <span class="at">est =</span> mean, ci) <span class="sc">%&gt;%</span></span>
+<span id="cb260-14"><a href="monitoring-headline-results.html#cb260-14" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb260-15"><a href="monitoring-headline-results.html#cb260-15" tabindex="-1"></a>    <span class="at">values_from =</span> <span class="fu">c</span>(est, ci),</span>
+<span id="cb260-16"><a href="monitoring-headline-results.html#cb260-16" tabindex="-1"></a>    <span class="at">names_from =</span> outcome</span>
+<span id="cb260-17"><a href="monitoring-headline-results.html#cb260-17" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb260-18"><a href="monitoring-headline-results.html#cb260-18" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb260-19"><a href="monitoring-headline-results.html#cb260-19" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">ends_with</span>(<span class="st">&quot;02&quot;</span>),</span>
+<span id="cb260-20"><a href="monitoring-headline-results.html#cb260-20" tabindex="-1"></a>    <span class="at">names_pattern =</span> <span class="st">&quot;(.*)_disc(.*)_02&quot;</span>,</span>
+<span id="cb260-21"><a href="monitoring-headline-results.html#cb260-21" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;.value&quot;</span>)</span>
+<span id="cb260-22"><a href="monitoring-headline-results.html#cb260-22" tabindex="-1"></a>  )</span>
+<span id="cb260-23"><a href="monitoring-headline-results.html#cb260-23" tabindex="-1"></a></span>
+<span id="cb260-24"><a href="monitoring-headline-results.html#cb260-24" tabindex="-1"></a>people <span class="ot">&lt;-</span></span>
+<span id="cb260-25"><a href="monitoring-headline-results.html#cb260-25" tabindex="-1"></a>  total_country <span class="sc">%&gt;%</span></span>
+<span id="cb260-26"><a href="monitoring-headline-results.html#cb260-26" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb260-27"><a href="monitoring-headline-results.html#cb260-27" tabindex="-1"></a>    wp_sample_sizes <span class="sc">%&gt;%</span></span>
+<span id="cb260-28"><a href="monitoring-headline-results.html#cb260-28" tabindex="-1"></a>      <span class="fu">group_by</span>(country, wp_intervention) <span class="sc">%&gt;%</span></span>
+<span id="cb260-29"><a href="monitoring-headline-results.html#cb260-29" tabindex="-1"></a>      <span class="fu">summarise</span>(<span class="at">pop =</span> <span class="fu">sum</span>(pop_points))</span>
+<span id="cb260-30"><a href="monitoring-headline-results.html#cb260-30" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb260-31"><a href="monitoring-headline-results.html#cb260-31" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb260-32"><a href="monitoring-headline-results.html#cb260-32" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb260-33"><a href="monitoring-headline-results.html#cb260-33" tabindex="-1"></a>      <span class="fu">c</span>(total_people, total_people_lb, total_people_ub, pop),</span>
+<span id="cb260-34"><a href="monitoring-headline-results.html#cb260-34" tabindex="-1"></a>      <span class="sc">~</span> . <span class="sc">%&gt;%</span> </span>
+<span id="cb260-35"><a href="monitoring-headline-results.html#cb260-35" tabindex="-1"></a>        round <span class="sc">%&gt;%</span> </span>
+<span id="cb260-36"><a href="monitoring-headline-results.html#cb260-36" tabindex="-1"></a>        <span class="fu">format</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb260-37"><a href="monitoring-headline-results.html#cb260-37" tabindex="-1"></a>        <span class="fu">str_remove_all</span>(<span class="st">&quot; &quot;</span>)</span>
+<span id="cb260-38"><a href="monitoring-headline-results.html#cb260-38" tabindex="-1"></a>    ),</span>
+<span id="cb260-39"><a href="monitoring-headline-results.html#cb260-39" tabindex="-1"></a>    <span class="at">ci =</span> <span class="fu">paste0</span>(<span class="st">&quot;(&quot;</span>, total_people_lb, <span class="st">&quot;, &quot;</span>, total_people_ub, <span class="st">&quot;)&quot;</span>) </span>
+<span id="cb260-40"><a href="monitoring-headline-results.html#cb260-40" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb260-41"><a href="monitoring-headline-results.html#cb260-41" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb260-42"><a href="monitoring-headline-results.html#cb260-42" tabindex="-1"></a>    country, wp_intervention, pop, <span class="at">est =</span> total_people, ci</span>
+<span id="cb260-43"><a href="monitoring-headline-results.html#cb260-43" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb260-44"><a href="monitoring-headline-results.html#cb260-44" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb260-45"><a href="monitoring-headline-results.html#cb260-45" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(est, ci),</span>
+<span id="cb260-46"><a href="monitoring-headline-results.html#cb260-46" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">&quot;people&quot;</span></span>
+<span id="cb260-47"><a href="monitoring-headline-results.html#cb260-47" tabindex="-1"></a>  ) </span></code></pre></div>
+</details>
+<pre><code>## `summarise()` has grouped output by &#39;country&#39;. You can override using the `.groups` argument.
+## Joining with `by = join_by(country, wp_intervention)`</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb262"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb262-1"><a href="monitoring-headline-results.html#cb262-1" tabindex="-1"></a>obs <span class="ot">&lt;-</span></span>
+<span id="cb262-2"><a href="monitoring-headline-results.html#cb262-2" tabindex="-1"></a>  wp_census <span class="sc">%&gt;%</span></span>
+<span id="cb262-3"><a href="monitoring-headline-results.html#cb262-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb262-4"><a href="monitoring-headline-results.html#cb262-4" tabindex="-1"></a>    promoter_surveyed,</span>
+<span id="cb262-5"><a href="monitoring-headline-results.html#cb262-5" tabindex="-1"></a>    intervention <span class="sc">!=</span> <span class="st">&quot;Non-program&quot;</span>,</span>
+<span id="cb262-6"><a href="monitoring-headline-results.html#cb262-6" tabindex="-1"></a>    <span class="sc">!</span>(country <span class="sc">==</span> <span class="st">&quot;Uganda&quot;</span> <span class="sc">&amp;</span> intervention <span class="sc">==</span> <span class="st">&quot;ILC&quot;</span>)</span>
+<span id="cb262-7"><a href="monitoring-headline-results.html#cb262-7" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb262-8"><a href="monitoring-headline-results.html#cb262-8" tabindex="-1"></a>  <span class="fu">group_by</span>(country, intervention) <span class="sc">%&gt;%</span></span>
+<span id="cb262-9"><a href="monitoring-headline-results.html#cb262-9" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb262-10"><a href="monitoring-headline-results.html#cb262-10" tabindex="-1"></a>    <span class="at">wps =</span> <span class="fu">n</span>(),</span>
+<span id="cb262-11"><a href="monitoring-headline-results.html#cb262-11" tabindex="-1"></a>    <span class="at">listed_hhs =</span> <span class="fu">sum</span>(pm_users, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> <span class="fu">format</span>(<span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>)</span>
+<span id="cb262-12"><a href="monitoring-headline-results.html#cb262-12" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb262-13"><a href="monitoring-headline-results.html#cb262-13" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">name =</span> <span class="st">&quot;est&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb262-14"><a href="monitoring-headline-results.html#cb262-14" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">wp_intervention =</span> intervention)</span></code></pre></div>
+</details>
+<pre><code>## `summarise()` has grouped output by &#39;country&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb264"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb264-1"><a href="monitoring-headline-results.html#cb264-1" tabindex="-1"></a>tab <span class="ot">&lt;-</span> </span>
+<span id="cb264-2"><a href="monitoring-headline-results.html#cb264-2" tabindex="-1"></a>  obs <span class="sc">%&gt;%</span> </span>
+<span id="cb264-3"><a href="monitoring-headline-results.html#cb264-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">wp_intervention =</span> <span class="fu">as.character</span>(wp_intervention)) <span class="sc">%&gt;%</span></span>
+<span id="cb264-4"><a href="monitoring-headline-results.html#cb264-4" tabindex="-1"></a>  <span class="fu">full_join</span>(people) <span class="sc">%&gt;%</span></span>
+<span id="cb264-5"><a href="monitoring-headline-results.html#cb264-5" tabindex="-1"></a>  <span class="fu">left_join</span>(cl) <span class="sc">%&gt;%</span></span>
+<span id="cb264-6"><a href="monitoring-headline-results.html#cb264-6" tabindex="-1"></a>  <span class="fu">arrange</span>(country, wp_intervention, <span class="fu">desc</span>(name)) <span class="sc">%&gt;%</span></span>
+<span id="cb264-7"><a href="monitoring-headline-results.html#cb264-7" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
+<span id="cb264-8"><a href="monitoring-headline-results.html#cb264-8" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb264-9"><a href="monitoring-headline-results.html#cb264-9" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb264-10"><a href="monitoring-headline-results.html#cb264-10" tabindex="-1"></a>      <span class="fu">everything</span>(),</span>
+<span id="cb264-11"><a href="monitoring-headline-results.html#cb264-11" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">as.character</span>(.)</span>
+<span id="cb264-12"><a href="monitoring-headline-results.html#cb264-12" tabindex="-1"></a>    ),</span>
+<span id="cb264-13"><a href="monitoring-headline-results.html#cb264-13" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb264-14"><a href="monitoring-headline-results.html#cb264-14" tabindex="-1"></a>      <span class="sc">-</span><span class="fu">c</span>(people, tcr, fcr),</span>
+<span id="cb264-15"><a href="monitoring-headline-results.html#cb264-15" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">case_when</span>(</span>
+<span id="cb264-16"><a href="monitoring-headline-results.html#cb264-16" tabindex="-1"></a>        name <span class="sc">==</span> <span class="st">&quot;est&quot;</span> <span class="sc">~</span> .,</span>
+<span id="cb264-17"><a href="monitoring-headline-results.html#cb264-17" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb264-18"><a href="monitoring-headline-results.html#cb264-18" tabindex="-1"></a>      )</span>
+<span id="cb264-19"><a href="monitoring-headline-results.html#cb264-19" tabindex="-1"></a>    )</span>
+<span id="cb264-20"><a href="monitoring-headline-results.html#cb264-20" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb264-21"><a href="monitoring-headline-results.html#cb264-21" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(country))<span class="sc">%&gt;%</span></span>
+<span id="cb264-22"><a href="monitoring-headline-results.html#cb264-22" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(name, country)) </span></code></pre></div>
+</details>
+<pre><code>## Joining with `by = join_by(country, wp_intervention, name)`
+## Joining with `by = join_by(country, wp_intervention, name)`</code></pre>
+<details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb266"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb266-1"><a href="monitoring-headline-results.html#cb266-1" tabindex="-1"></a>table <span class="ot">&lt;-</span></span>
+<span id="cb266-2"><a href="monitoring-headline-results.html#cb266-2" tabindex="-1"></a>  <span class="fu">kable</span>(</span>
+<span id="cb266-3"><a href="monitoring-headline-results.html#cb266-3" tabindex="-1"></a>    tab, </span>
+<span id="cb266-4"><a href="monitoring-headline-results.html#cb266-4" tabindex="-1"></a>    <span class="at">format =</span> <span class="st">&quot;latex&quot;</span>,</span>
+<span id="cb266-5"><a href="monitoring-headline-results.html#cb266-5" tabindex="-1"></a>    <span class="at">escape =</span> F,</span>
+<span id="cb266-6"><a href="monitoring-headline-results.html#cb266-6" tabindex="-1"></a>    <span class="at">align =</span> <span class="st">&quot;c&quot;</span>, </span>
+<span id="cb266-7"><a href="monitoring-headline-results.html#cb266-7" tabindex="-1"></a>    <span class="at">booktabs =</span> T,</span>
+<span id="cb266-8"><a href="monitoring-headline-results.html#cb266-8" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">linebreak</span>(</span>
+<span id="cb266-9"><a href="monitoring-headline-results.html#cb266-9" tabindex="-1"></a>      <span class="fu">c</span>(<span class="st">&quot;Intervention&quot;</span>, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">#WP&quot;</span>, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">#HH&quot;</span>, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">#WP&quot;</span>, <span class="st">&quot;People using</span><span class="sc">\n</span><span class="st">DSW/ILC</span><span class="sc">\n</span><span class="st">(95</span><span class="sc">\\</span><span class="st">% CI)&quot;</span>, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">#HH&quot;</span>, <span class="st">&quot;TCR</span><span class="sc">\n</span><span class="st">(95</span><span class="sc">\\</span><span class="st">% CI)&quot;</span>, <span class="st">&quot;FCR</span><span class="sc">\n</span><span class="st">(95</span><span class="sc">\\</span><span class="st">% CI)&quot;</span>),</span>
+<span id="cb266-10"><a href="monitoring-headline-results.html#cb266-10" tabindex="-1"></a>      <span class="at">align =</span> <span class="st">&quot;c&quot;</span></span>
+<span id="cb266-11"><a href="monitoring-headline-results.html#cb266-11" tabindex="-1"></a>    ),</span>
+<span id="cb266-12"><a href="monitoring-headline-results.html#cb266-12" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">&quot;Primary outcomes estimated following the monitoring method&quot;</span>,</span>
+<span id="cb266-13"><a href="monitoring-headline-results.html#cb266-13" tabindex="-1"></a>    <span class="at">label =</span> <span class="st">&quot;headlines-am&quot;</span></span>
+<span id="cb266-14"><a href="monitoring-headline-results.html#cb266-14" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb266-15"><a href="monitoring-headline-results.html#cb266-15" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">latex_options =</span> <span class="fu">c</span>(<span class="st">&quot;scale_down&quot;</span>, <span class="st">&quot;HOLD_position&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb266-16"><a href="monitoring-headline-results.html#cb266-16" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Malawi&quot;</span>, <span class="dv">1</span>, <span class="dv">4</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb266-17"><a href="monitoring-headline-results.html#cb266-17" tabindex="-1"></a>  <span class="fu">pack_rows</span>(<span class="st">&quot;Uganda&quot;</span>, <span class="dv">5</span>, <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb266-18"><a href="monitoring-headline-results.html#cb266-18" tabindex="-1"></a>  <span class="fu">add_header_above</span>(</span>
+<span id="cb266-19"><a href="monitoring-headline-results.html#cb266-19" tabindex="-1"></a>    <span class="fu">c</span>(</span>
+<span id="cb266-20"><a href="monitoring-headline-results.html#cb266-20" tabindex="-1"></a>      <span class="st">&quot; &quot;</span>, </span>
+<span id="cb266-21"><a href="monitoring-headline-results.html#cb266-21" tabindex="-1"></a>      <span class="st">&quot;Promoter survey&quot;</span> <span class="ot">=</span> <span class="dv">2</span>, </span>
+<span id="cb266-22"><a href="monitoring-headline-results.html#cb266-22" tabindex="-1"></a>      <span class="st">&quot;Country-level estimates&quot;</span> <span class="ot">=</span> <span class="dv">2</span>, </span>
+<span id="cb266-23"><a href="monitoring-headline-results.html#cb266-23" tabindex="-1"></a>      <span class="st">&quot;Percent of color wheel readings ≥ 0.2 ppm&quot;</span> <span class="ot">=</span> <span class="dv">3</span></span>
+<span id="cb266-24"><a href="monitoring-headline-results.html#cb266-24" tabindex="-1"></a>    )</span>
+<span id="cb266-25"><a href="monitoring-headline-results.html#cb266-25" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb266-26"><a href="monitoring-headline-results.html#cb266-26" tabindex="-1"></a>  <span class="fu">add_header_above</span>(<span class="fu">c</span>(<span class="st">&quot; &quot;</span>, <span class="st">&quot; &quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;(&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>,<span class="st">&quot;)&quot;</span>)), <span class="at">line =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb266-27"><a href="monitoring-headline-results.html#cb266-27" tabindex="-1"></a></span>
+<span id="cb266-28"><a href="monitoring-headline-results.html#cb266-28" tabindex="-1"></a><span class="fu">writeLines</span>(</span>
+<span id="cb266-29"><a href="monitoring-headline-results.html#cb266-29" tabindex="-1"></a>  table, </span>
+<span id="cb266-30"><a href="monitoring-headline-results.html#cb266-30" tabindex="-1"></a>  <span class="st">&quot;output/tables/headlines-am.tex&quot;</span></span>
+<span id="cb266-31"><a href="monitoring-headline-results.html#cb266-31" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+<!-- ## Sample -->
+<!-- ```{r} -->
+<!-- wp_table <-  -->
+<!--   wp_census %>% -->
+<!--   rename(wp_intervention = intervention) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   summarise( -->
+<!--     wp_census = n_distinct(wp_id), -->
+<!--     wp_functional = sum(wp_func), -->
+<!--     promoter_surveyed_f = sum(promoter_surveyed & wp_func), -->
+<!--     promoter_surveyed = sum(promoter_surveyed), -->
+<!--     ea_list = sum(pm_ea_list, na.rm = TRUE) -->
+<!--   )%>% -->
+<!--   left_join( -->
+<!--     wp_sample_sizes,  -->
+<!--     by = c("country", "sample_group", "wp_intervention") -->
+<!--   ) %>% -->
+<!--   dplyr::filter(!is.na(pop_points)) -->
+<!-- wp_table -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- # generate latex table -->
+<!-- wp_table_latex <- wp_table %>% -->
+<!--   mutate( -->
+<!--     ea_list_count = coalesce(ea_list_malawi_count, ea_list_uganda_count) -->
+<!--   ) %>% -->
+<!--   select(country, sample_group, wp_intervention, pop_points, wp_census, wp_functional, ea_list_count, promoter_surveyed, promoter_surveyed_f) -->
+<!-- malawi_footprint <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "Footprint", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Footprint") -->
+<!-- malawi_expansion <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "Expansion", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Expansion") -->
+<!-- malawi_dsw_ilc <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "DSW in ILC vill.") -->
+<!-- malawi_ilc <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Malawi", sample_group == "ILC", wp_intervention == "ILC") %>% -->
+<!--   mutate(sample_group = "ILC") -->
+<!-- malawi_data <- bind_rows(malawi_footprint, malawi_expansion, malawi_dsw_ilc, malawi_ilc) %>% -->
+<!--   select(-country, -wp_intervention) -->
+<!-- uganda_footprint <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Uganda", sample_group == "Footprint", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Footprint") -->
+<!-- uganda_expansion <- wp_table_latex %>% -->
+<!--   dplyr::filter(country == "Uganda", sample_group == "Expansion", wp_intervention == "DSW") %>% -->
+<!--   mutate(sample_group = "Expansion") -->
+<!-- uganda_data <- bind_rows(uganda_footprint, uganda_expansion) %>% -->
+<!--   select(-country, -wp_intervention) -->
+<!-- malawi_total <- malawi_data %>% -->
+<!--   summarise( -->
+<!--     sample_group = "\\textbf{Total EA points}", -->
+<!--     pop_points = sum(pop_points, na.rm = TRUE), -->
+<!--     wp_census = sum(wp_census, na.rm = TRUE), -->
+<!--     wp_functional = sum(wp_functional, na.rm = TRUE), -->
+<!--     ea_list_count = sum(ea_list_count, na.rm = TRUE), -->
+<!--     promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE), -->
+<!--     promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE) -->
+<!--   ) -->
+<!-- uganda_total <- uganda_data %>% -->
+<!--   summarise( -->
+<!--     sample_group = "\\textbf{Total EA points}", -->
+<!--     pop_points = sum(pop_points, na.rm = TRUE), -->
+<!--     wp_census = sum(wp_census, na.rm = TRUE), -->
+<!--     wp_functional = sum(wp_functional, na.rm = TRUE), -->
+<!--     ea_list_count = sum(ea_list_count, na.rm = TRUE), -->
+<!--     promoter_surveyed = sum(promoter_surveyed, na.rm = TRUE), -->
+<!--     promoter_surveyed_f = sum(promoter_surveyed_f, na.rm = TRUE) -->
+<!--   ) -->
+<!-- malawi_section <- bind_rows(malawi_data, malawi_total) -->
+<!-- uganda_section <- bind_rows(uganda_data, uganda_total) -->
+<!-- malawi_section <- malawi_section %>% -->
+<!--   mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE))) -->
+<!-- uganda_section <- uganda_section %>% -->
+<!--   mutate(across(where(is.numeric), ~format(.x, big.mark = ",", scientific = FALSE, trim = TRUE))) -->
+<!-- cat("\\begin{table}[htbp]\\centering\n") -->
+<!-- cat("\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}\n") -->
+<!-- cat("\\begin{tabular}{l*{6}c}\n") -->
+<!-- cat("\\hline\\hline\n") -->
+<!-- cat("& (1) & (2) & (3) & (4) & (5) & (6)\\\\\n") -->
+<!-- cat("                   & Country Total & WP Census & \\shortstack{WP Census \\\\Functional} & \\shortstack{Evidence Action \\\\ Promoter List} & \\shortstack{DIL Promoter \\\\Survey} & \\shortstack{DIL Promoter \\\\Survey Functional}\\n") -->
+<!-- cat("\\hline\n") -->
+<!-- cat("\\textbf{Malawi}                  &            &           &        &        &         &         \\\\\n") -->
+<!-- cat("\\hline\n") -->
+<!-- for(i in 1:nrow(malawi_section)) { -->
+<!--   row <- malawi_section[i,] -->
+<!--   cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n", -->
+<!--               row$sample_group, row$pop_points, row$wp_census,  -->
+<!--               row$wp_functional, row$ea_list_count, row$promoter_surveyed,  -->
+<!--               row$promoter_surveyed_f)) -->
+<!-- } -->
+<!-- cat("\\hline\n") -->
+<!-- cat("\\textbf{Uganda}                  &            &          &        &        &        &        \\\\\n") -->
+<!-- cat("\\hline\n") -->
+<!-- for(i in 1:nrow(uganda_section)) { -->
+<!--   row <- uganda_section[i,] -->
+<!--   cat(sprintf("%s & %s & %s & %s & %s & %s & %s \\\\\n", -->
+<!--               row$sample_group, row$pop_points, row$wp_census,  -->
+<!--               row$wp_functional, row$ea_list_count, row$promoter_surveyed, -->
+<!--               row$promoter_surveyed_f)) -->
+<!-- } -->
+<!-- cat("\\hline\\hline\n") -->
+<!-- cat("\\end{tabular}\n") -->
+<!-- cat("\\end{table}\n") -->
+<!-- ``` -->
+<!-- #### uganda text -->
+<!-- ```{r} -->
+<!-- ea_promoters_uganda <- -->
+<!--   ea_promoters_uganda %>% -->
+<!--   dplyr::filter(villageid %in% sampled_villages$village_id) %>% -->
+<!--   dplyr::filter(wp_intervention != "ILC") -->
+<!-- # Calculate metrics -->
+<!-- n_promoters <- nrow(ea_promoters_uganda) -->
+<!-- n_unique_wps <- ea_promoters_uganda %>% -->
+<!--   pull(i102_wpt_id) %>% -->
+<!--   n_distinct() -->
+<!-- n_in_wp_census <- ea_promoters_uganda %>% -->
+<!--   dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>% -->
+<!--   distinct(i102_wpt_id) %>% -->
+<!--   nrow() -->
+<!-- n_promoter_surveyed <- wp_census %>% -->
+<!--   dplyr::filter(ea_id %in% ea_promoters_uganda$i102_wpt_id, promoter_surveyed == TRUE) %>% -->
+<!--   distinct(ea_id) %>% -->
+<!--   nrow() -->
+<!-- n_surveyed_no_ea_info <- wp_census %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE,  -->
+<!--          !ea_id %in% ea_promoters_uganda$i102_wpt_id, -->
+<!--          country == "Uganda") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+<!-- n_total_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+<!-- n_program_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Uganda") %>% -->
+<!--   dplyr::filter(wp_intervention == "Non-program") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+<!-- glue("In Uganda, Evidence Action provided information for {n_promoters} promoters of non-ILC water points in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information, for a total of {n_total_promoter_surveys} promoter surveys in Uganda, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.") -->
+<!-- ``` -->
+<!-- #### malawi text -->
+<!-- ```{r} -->
+<!-- ea_promoters_malawi <- ea_promoters_malawi %>% -->
+<!--   # select(-wcp102_wpt_id) %>% -->
+<!--   dplyr::filter(villageid %in% sampled_villages$village_id) %>% -->
+<!--   unique -->
+<!-- # Calculate metrics -->
+<!-- n_promoters_ <- nrow(ea_promoters_malawi) -->
+<!-- n_unique_wps <- ea_promoters_malawi %>% -->
+<!--   pull(i102_wpt_id) %>% -->
+<!--   n_distinct() -->
+<!-- n_in_wp_census <- ea_promoters_malawi %>% -->
+<!--   dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>% -->
+<!--   distinct(i102_wpt_id) %>% -->
+<!--   nrow() -->
+<!-- n_in_wp_census_program <- ea_promoters_malawi %>% -->
+<!--   dplyr::filter(i102_wpt_id %in% wp_census$ea_id) %>% -->
+<!--   dplyr::filter(wp_intervention == "DSW" | wp_intervention == "ILC") %>% -->
+<!--   distinct(i102_wpt_id) %>% -->
+<!--   nrow() -->
+<!-- n_promoter_surveyed <- wp_census %>% -->
+<!--   dplyr::filter(ea_id %in% ea_promoters_malawi$i102_wpt_id, promoter_surveyed == TRUE) %>% -->
+<!--   distinct(ea_id) %>% -->
+<!--   nrow() -->
+<!-- n_surveyed_no_ea_info <- wp_census %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE,  -->
+<!--          !ea_id %in% ea_promoters_malawi$i102_wpt_id, -->
+<!--          country == "Malawi") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+<!-- n_total_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+<!-- n_program_promoter_surveys <- wp_census %>% -->
+<!--   group_by(sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE, country == "Malawi") %>% -->
+<!--   dplyr::filter(wp_intervention == "Non-program") %>% -->
+<!--   distinct(wp_id) %>% -->
+<!--   nrow() -->
+<!-- glue("In Malawi, Evidence Action provided information for {n_promoters} promoters in the sampled villages, representing {n_unique_wps} unique water points. Out of these, {n_in_wp_census} are in the water point census, and {n_promoter_surveyed} are included in the promoter survey. There are {n_surveyed_no_ea_info} promoter surveys for water points for which Evidence Action did not provide contact information (primarily ILC water collection points), for a total of {n_total_promoter_surveys} promoter surveys in Malawi, of which {n_program_promoter_surveys} concerned a water point that was deemed Non-program.") -->
+<!-- ``` -->
+<!-- ### hhs outside  -->
+<!-- ```{r} -->
+<!-- hh_outside <- wp_census %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE) %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarize( -->
+<!--     hh_outside = sum(pm_users_outside, na.rm = TRUE), -->
+<!--     hh_users = sum(pm_users, na.rm = TRUE), -->
+<!--     hh_outside_share = hh_outside/hh_users -->
+<!--   ) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     hh_outside_avg = mean(hh_outside), -->
+<!--     hh_users_avg = mean(hh_users), -->
+<!--     hh_outside_share = mean(hh_outside_share, na.rm = TRUE) -->
+<!--   )  -->
+<!-- hh_outside -->
+<!-- hh_outside_all <- hh_census %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarize( -->
+<!--     hh_outside = sum(inclusion == "Up to 200m outside of village boundaries"), -->
+<!--     hh_users = n_distinct(household_id), -->
+<!--     hh_outside_share = hh_outside/hh_users -->
+<!--   ) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     hh_outside_avg = mean(hh_outside), -->
+<!--     hh_users_avg = mean(hh_users), -->
+<!--     hh_outside_share = mean(hh_outside_share, na.rm = TRUE) -->
+<!--   )  -->
+<!-- hh_outside_all   -->
+<!-- ``` -->
+<!-- ### sample selection -->
+<!-- ## Users per water point -->
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   group_by(wp_id, village_id, sample_group, country, wp_intervention) %>% -->
+<!--   summarise(users = n()) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   feols( -->
+<!--     users ~ promoter_surveyed | sample_group + country + wp_intervention, -->
+<!--     cluster = ~ village_id -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   group_by(wp_id, village_id, sample_group, country, wp_intervention) %>% -->
+<!--   summarise(users = n()) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   group_by(country) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       users ~ promoter_surveyed | sample_group + wp_intervention, -->
+<!--       cluster = ~ village_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ## Household size -->
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   feols( -->
+<!--     hh_members ~ promoter_surveyed | sample_group + country + wp_intervention, -->
+<!--     cluster = ~ village_id -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       hh_members ~ promoter_list, -->
+<!--       cluster = ~ wp_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ## Household size across samples -->
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   bind_rows(mon_survey) %>% -->
+<!--   dplyr::filter(wp_id %in% wp_census_pm$wp_id) %>% -->
+<!--   feols( -->
+<!--     hh_members ~ survey | sample_group + country + wp_intervention, -->
+<!--     cluster = ~ village_id -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- hh_survey %>% -->
+<!--   bind_rows(mon_survey) %>% -->
+<!--   dplyr::filter(wp_id %in% wp_census_pm$wp_id) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   dplyr::filter(n() > 2) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       hh_members ~ survey, -->
+<!--       cluster = ~ village_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_func,  -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     promoter_surveyed = wp_id %in% wp_census_pm$wp_id -->
+<!--   ) %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map( -->
+<!--     ~ feols( -->
+<!--       hh_members ~ promoter_list, -->
+<!--       cluster = ~ wp_id, -->
+<!--       data = . -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ####hh size -->
+<!-- #####by promoter list -->
+<!-- ```{r} -->
+<!-- hh_size_promoter <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+<!-- # calculate CIs -->
+<!-- hh_size_promoter_avg <- calculate_mean_ci(hh_size_promoter, "hh_members", hh_weight) -->
+<!-- hh_size_nonpromoter <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == FALSE) %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+<!-- # calculate CIs -->
+<!-- hh_size_nonpromoter_avg <- calculate_mean_ci(hh_size_nonpromoter, "hh_members", hh_weight) -->
+<!-- hh_size_promoter_avg -->
+<!-- hh_size_nonpromoter_avg -->
+<!-- # combine the two datasets and run t-tests -->
+<!-- hh_size_comparison <- bind_rows( -->
+<!--   hh_size_promoter_avg %>% mutate(promoter_list = TRUE), -->
+<!--   hh_size_nonpromoter_avg %>% mutate(promoter_list = FALSE) -->
+<!-- ) -->
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- hh_size_ttest <- hh_size_comparison %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map_df( -->
+<!--     ~ { -->
+<!--       # extract the two means and SEs -->
+<!--       promoter_row <- .x %>% dplyr::filter(promoter_list == TRUE) -->
+<!--       nonpromoter_row <- .x %>% dplyr::filter(promoter_list == FALSE) -->
+<!--       # calculate n from original datasets -->
+<!--       n_prom <- hh_size_promoter %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       n_nonprom <- hh_size_nonpromoter %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       # calculate z-statistic (using normal approximation since we have SEs) -->
+<!--       diff <- promoter_row$mean - nonpromoter_row$mean -->
+<!--       se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2) -->
+<!--       z_stat <- diff / se_diff -->
+<!--       p_value <- 2 * (1 - pnorm(abs(z_stat))) -->
+<!--       tibble( -->
+<!--         country = unique(.x$country), -->
+<!--         sample_group = unique(.x$sample_group), -->
+<!--         wp_intervention = unique(.x$wp_intervention), -->
+<!--         mean_promoter = promoter_row$mean, -->
+<!--         mean_nonpromoter = nonpromoter_row$mean, -->
+<!--         n_promoter = n_prom, -->
+<!--         n_nonpromoter = n_nonprom, -->
+<!--         difference = diff, -->
+<!--         se_difference = se_diff, -->
+<!--         z_statistic = z_stat, -->
+<!--         p_value = p_value, -->
+<!--         significant = p_value < 0.1 -->
+<!--       ) -->
+<!--     } -->
+<!--   ) -->
+<!-- hh_size_ttest -->
+<!-- ``` -->
+<!-- ###### LaTeX table -->
+<!-- ```{r} -->
+<!-- # function to add significance stars -->
+<!-- add_stars <- function(p_value) { -->
+<!--   if (p_value < 0.01) return("\\sym{***}") -->
+<!--   if (p_value < 0.05) return("\\sym{**}") -->
+<!--   if (p_value < 0.10) return("\\sym{*}") -->
+<!--   return("") -->
+<!-- } -->
+<!-- # prepare data for table -->
+<!-- table_data <- hh_size_ttest %>% -->
+<!--   mutate( -->
+<!--     stars = map_chr(p_value, add_stars), -->
+<!--     # format the numbers to 2 decimal places -->
+<!--     mean_promoter_fmt = sprintf("%.2f", mean_promoter), -->
+<!--     mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter), -->
+<!--     difference_fmt = paste0(sprintf("%.2f", difference), stars) -->
+<!--   ) %>% -->
+<!--   # create row labels -->
+<!--   mutate( -->
+<!--     row_label = case_when( -->
+<!--       wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint", -->
+<!--       wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion", -->
+<!--       wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.", -->
+<!--       wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC", -->
+<!--       TRUE ~ paste(sample_group, wp_intervention) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC"))) -->
+<!-- # start building latex table -->
+<!-- latex_lines <- c( -->
+<!--   "\\begin{table}[htbp]\\centering", -->
+<!--   "\\caption{Difference in mean household size according to Household Census by whether household is in any promoter's list}", -->
+<!--   "\\label{tab:hh_size_pmsurvey}", -->
+<!--   "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", -->
+<!--   "\\begin{tabular}{l*{5}c}", -->
+<!--   "\\hline\\hline", -->
+<!--   "& \\multicolumn{2}{c}{Listed by Promoter} & \\multicolumn{2}{c}{Not Listed by Promoter} & \\\\", -->
+<!--   "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}", -->
+<!--   "& Mean & N & Mean & N & Difference\\\\", -->
+<!--   "\\hline" -->
+<!-- ) -->
+<!-- # add malawi section -->
+<!-- latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline") -->
+<!-- malawi_data <- table_data %>% dplyr::filter(country == "Malawi") -->
+<!-- for (i in 1:nrow(malawi_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       malawi_data$row_label[i], -->
+<!--       malawi_data$mean_promoter_fmt[i], -->
+<!--       malawi_data$n_promoter[i], -->
+<!--       malawi_data$mean_nonpromoter_fmt[i], -->
+<!--       malawi_data$n_nonpromoter[i], -->
+<!--       malawi_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+<!-- # add uganda section -->
+<!-- latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline") -->
+<!-- uganda_data <- table_data %>% dplyr::filter(country == "Uganda") -->
+<!-- for (i in 1:nrow(uganda_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       uganda_data$row_label[i], -->
+<!--       uganda_data$mean_promoter_fmt[i], -->
+<!--       uganda_data$n_promoter[i], -->
+<!--       uganda_data$mean_nonpromoter_fmt[i], -->
+<!--       uganda_data$n_nonpromoter[i], -->
+<!--       uganda_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+<!-- # close table -->
+<!-- latex_lines <- c(latex_lines, -->
+<!--   "\\hline\\hline", -->
+<!--   "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\", -->
+<!--   "\\end{tabular}", -->
+<!--   "\\end{table}" -->
+<!-- ) -->
+<!-- # print the table -->
+<!-- cat(latex_lines, sep = "\n") -->
+<!-- ``` -->
+<!-- #####by monitoring survey -->
+<!-- ```{r} -->
+<!-- hh_size_monitoring <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE) %>% -->
+<!--   dplyr::filter(survey == "Monitoring Survey") %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+<!-- # calculate CIs -->
+<!-- hh_size_monitoring_avg <- calculate_mean_ci(hh_size_monitoring, "hh_members", hh_weight) -->
+<!-- hh_size_household <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == TRUE) %>% -->
+<!--   dplyr::filter(survey == "Household Survey") %>% -->
+<!--   dplyr::filter(wp_func == "TRUE") %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") %>% -->
+<!--   mutate(hh_weight = 1) -->
+<!-- # calculate CIs -->
+<!-- hh_size_household_avg <- calculate_mean_ci(hh_size_household, "hh_members", hh_weight) -->
+<!-- hh_size_monitoring_avg -->
+<!-- hh_size_household_avg -->
+<!-- # combine the two datasets and run t-tests -->
+<!-- hh_size_comparison_survey <- bind_rows( -->
+<!--   hh_size_monitoring_avg %>% mutate(survey = "Monitoring Survey"), -->
+<!--   hh_size_household_avg %>% mutate(survey = "Household Survey") -->
+<!-- ) -->
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- hh_size_ttest_survey <- hh_size_comparison_survey %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map_df( -->
+<!--     ~ { -->
+<!--       # extract the two means and SEs -->
+<!--       monitoring_row <- .x %>% dplyr::filter(survey == "Monitoring Survey") -->
+<!--       household_row <- .x %>% dplyr::filter(survey == "Household Survey") -->
+<!--       # calculate n from original datasets -->
+<!--       n_monitoring <- hh_size_monitoring %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       n_household <- hh_size_household %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       # calculate z-statistic (using normal approximation since we have SEs) -->
+<!--       diff <- monitoring_row$mean - household_row$mean -->
+<!--       se_diff <- sqrt(monitoring_row$se^2 + household_row$se^2) -->
+<!--       z_stat <- diff / se_diff -->
+<!--       p_value <- 2 * (1 - pnorm(abs(z_stat))) -->
+<!--       tibble( -->
+<!--         country = unique(.x$country), -->
+<!--         sample_group = unique(.x$sample_group), -->
+<!--         wp_intervention = unique(.x$wp_intervention), -->
+<!--         mean_monitoring = monitoring_row$mean, -->
+<!--         mean_household = household_row$mean, -->
+<!--         n_monitoring = n_monitoring, -->
+<!--         n_household = n_household, -->
+<!--         difference = diff, -->
+<!--         se_difference = se_diff, -->
+<!--         z_statistic = z_stat, -->
+<!--         p_value = p_value, -->
+<!--         significant = p_value < 0.05 -->
+<!--       ) -->
+<!--     } -->
+<!--   ) -->
+<!-- hh_size_ttest_survey -->
+<!-- ``` -->
+<!-- ###### LaTeX table -->
+<!-- ```{r} -->
+<!-- # function to add significance stars -->
+<!-- add_stars <- function(p_value) { -->
+<!--   if (p_value < 0.01) return("\\sym{***}") -->
+<!--   if (p_value < 0.05) return("\\sym{**}") -->
+<!--   if (p_value < 0.10) return("\\sym{*}") -->
+<!--   return("") -->
+<!-- } -->
+<!-- # prepare data for table -->
+<!-- table_data <- hh_size_ttest_survey %>% -->
+<!--   mutate( -->
+<!--     stars = map_chr(p_value, add_stars), -->
+<!--     # format the numbers to 2 decimal places -->
+<!--     mean_monitoring_fmt = sprintf("%.2f", mean_monitoring), -->
+<!--     mean_household_fmt = sprintf("%.2f", mean_household), -->
+<!--     difference_fmt = paste0(sprintf("%.2f", difference), stars) -->
+<!--   ) %>% -->
+<!--   # create row labels -->
+<!--   mutate( -->
+<!--     row_label = case_when( -->
+<!--       wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint", -->
+<!--       wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion", -->
+<!--       wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.", -->
+<!--       wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC", -->
+<!--       TRUE ~ paste(sample_group, wp_intervention) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC"))) -->
+<!-- # start building latex table -->
+<!-- latex_lines <- c( -->
+<!--   "\\begin{table}[htbp]\\centering", -->
+<!--   "\\caption{Difference in mean household size by survey type among promoter survey water points}", -->
+<!--   "\\label{tab:hh_size_survey_comparison}", -->
+<!--   "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", -->
+<!--   "\\begin{tabular}{l*{5}c}", -->
+<!--   "\\hline\\hline", -->
+<!--   "& \\multicolumn{2}{c}{Monitoring Survey} & \\multicolumn{2}{c}{Household Survey} & \\\\", -->
+<!--   "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}", -->
+<!--   "& Mean & N & Mean & N & Difference\\\\", -->
+<!--   "\\hline" -->
+<!-- ) -->
+<!-- # add malawi section -->
+<!-- latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline") -->
+<!-- malawi_data <- table_data %>% dplyr::filter(country == "Malawi") -->
+<!-- for (i in 1:nrow(malawi_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       malawi_data$row_label[i], -->
+<!--       malawi_data$mean_monitoring_fmt[i], -->
+<!--       malawi_data$n_monitoring[i], -->
+<!--       malawi_data$mean_household_fmt[i], -->
+<!--       malawi_data$n_household[i], -->
+<!--       malawi_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+<!-- # add uganda section -->
+<!-- latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline") -->
+<!-- uganda_data <- table_data %>% dplyr::filter(country == "Uganda") -->
+<!-- for (i in 1:nrow(uganda_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       uganda_data$row_label[i], -->
+<!--       uganda_data$mean_monitoring_fmt[i], -->
+<!--       uganda_data$n_monitoring[i], -->
+<!--       uganda_data$mean_household_fmt[i], -->
+<!--       uganda_data$n_household[i], -->
+<!--       uganda_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+<!-- # close table -->
+<!-- latex_lines <- c(latex_lines, -->
+<!--   "\\hline\\hline", -->
+<!--   "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\", -->
+<!--   "\\end{tabular}", -->
+<!--   "\\end{table}" -->
+<!-- ) -->
+<!-- # print the table -->
+<!-- cat(latex_lines, sep = "\n") -->
+<!-- ``` -->
+<!-- #### hh count -->
+<!-- ```{r} -->
+<!-- # household count for promoter surveyed -->
+<!-- hh_count_promoter_from_census <- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     promoter_surveyed == TRUE, -->
+<!--     wp_func == TRUE, -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   # count unique households per water point -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarise( -->
+<!--     village_id = dplyr::first(village_id), -->
+<!--     # hh_count = n_distinct(household_id), -->
+<!--     hh_count = n(), -->
+<!--     .groups = "drop" -->
+<!--   ) -->
+<!-- # now calculate mean CI on these counts -->
+<!-- hh_count_promoter_avg <- calculate_mean_ci(hh_count_promoter_from_census, "hh_count", 1) -->
+<!-- hh_count_promoter_avg -->
+<!-- # for non-promoter surveyed WPs, calculate HH count from household census -->
+<!-- hh_count_nonpromoter_from_census <- hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     promoter_surveyed == FALSE, -->
+<!--     wp_func == TRUE, -->
+<!--     wp_intervention != "Non-program" -->
+<!--   ) %>% -->
+<!--   # count unique households per water point -->
+<!--   group_by(country, sample_group, wp_intervention, wp_id) %>% -->
+<!--   summarise( -->
+<!--     village_id = dplyr::first(village_id), -->
+<!--     # hh_count = n_distinct(household_id), -->
+<!--     hh_count = n(), -->
+<!--     .groups = "drop" -->
+<!--   ) -->
+<!-- # now calculate mean CI on these counts -->
+<!-- hh_count_nonpromoter_avg <- calculate_mean_ci(hh_count_nonpromoter_from_census, "hh_count", 1) -->
+<!-- hh_count_nonpromoter_avg -->
+<!-- # combine with promoter data and run t-tests -->
+<!-- hh_count_comparison <- bind_rows( -->
+<!--   hh_count_promoter_avg %>% mutate(promoter_surveyed = TRUE), -->
+<!--   hh_count_nonpromoter_avg %>% mutate(promoter_surveyed = FALSE) -->
+<!-- ) -->
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- # run t-tests for each country/sample_group/intervention combination -->
+<!-- hh_count_ttest <- hh_count_comparison %>% -->
+<!--   group_by(country, sample_group, wp_intervention) %>% -->
+<!--   group_split() %>% -->
+<!--   map_df( -->
+<!--     ~ { -->
+<!--       # extract the two means and SEs -->
+<!--       promoter_row <- .x %>% dplyr::filter(promoter_surveyed == TRUE) -->
+<!--       nonpromoter_row <- .x %>% dplyr::filter(promoter_surveyed == FALSE) -->
+<!--       # calculate n from original datasets -->
+<!--       n_prom <- hh_count_promoter_from_census %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       n_nonprom <- hh_count_nonpromoter_from_census %>% -->
+<!--         dplyr::filter(country == unique(.x$country), -->
+<!--                      sample_group == unique(.x$sample_group), -->
+<!--                      wp_intervention == unique(.x$wp_intervention)) %>% -->
+<!--         nrow() -->
+<!--       # calculate z-statistic (using normal approximation since we have SEs) -->
+<!--       diff <- promoter_row$mean - nonpromoter_row$mean -->
+<!--       se_diff <- sqrt(promoter_row$se^2 + nonpromoter_row$se^2) -->
+<!--       z_stat <- diff / se_diff -->
+<!--       p_value <- 2 * (1 - pnorm(abs(z_stat))) -->
+<!--       tibble( -->
+<!--         country = unique(.x$country), -->
+<!--         sample_group = unique(.x$sample_group), -->
+<!--         wp_intervention = unique(.x$wp_intervention), -->
+<!--         mean_promoter = promoter_row$mean, -->
+<!--         mean_nonpromoter = nonpromoter_row$mean, -->
+<!--         n_promoter = n_prom, -->
+<!--         n_nonpromoter = n_nonprom, -->
+<!--         difference = diff, -->
+<!--         se_difference = se_diff, -->
+<!--         z_statistic = z_stat, -->
+<!--         p_value = p_value, -->
+<!--         significant = p_value < 0.1 -->
+<!--       ) -->
+<!--     } -->
+<!--   ) -->
+<!-- hh_count_ttest -->
+<!-- ``` -->
+<!-- #####LaTeX table -->
+<!-- ```{r} -->
+<!-- # function to add significance stars -->
+<!-- add_stars <- function(p_value) { -->
+<!--   if (p_value < 0.01) return("\\sym{***}") -->
+<!--   if (p_value < 0.05) return("\\sym{**}") -->
+<!--   if (p_value < 0.10) return("\\sym{*}") -->
+<!--   return("") -->
+<!-- } -->
+<!-- # prepare data for table -->
+<!-- table_data <- hh_count_ttest %>% -->
+<!--   mutate( -->
+<!--     stars = map_chr(p_value, add_stars), -->
+<!--     # format the numbers to 2 decimal places -->
+<!--     mean_promoter_fmt = sprintf("%.2f", mean_promoter), -->
+<!--     mean_nonpromoter_fmt = sprintf("%.2f", mean_nonpromoter), -->
+<!--     difference_fmt = paste0(sprintf("%.2f", difference), stars) -->
+<!--   ) %>% -->
+<!--   # create row labels -->
+<!--   mutate( -->
+<!--     row_label = case_when( -->
+<!--       wp_intervention == "DSW" & sample_group == "Footprint" ~ "Footprint", -->
+<!--       wp_intervention == "DSW" & sample_group == "Expansion" ~ "Expansion", -->
+<!--       wp_intervention == "DSW" & sample_group == "ILC" ~ "DSW in ILC vill.", -->
+<!--       wp_intervention == "ILC" & sample_group == "ILC" ~ "ILC", -->
+<!--       TRUE ~ paste(sample_group, wp_intervention) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   arrange(country, match(sample_group, c("Footprint", "Expansion", "ILC"))) -->
+<!-- # start building latex table -->
+<!-- latex_lines <- c( -->
+<!--   "\\begin{table}[htbp]\\centering", -->
+<!--   "\\caption{Difference in mean household count per water point according to Household Census by whether water point is in Promoter Survey}", -->
+<!--   "\\label{tab:hh_count_pmsurvey}", -->
+<!--   "\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}", -->
+<!--   "\\begin{tabular}{l*{5}c}", -->
+<!--   "\\hline\\hline", -->
+<!--   "& \\multicolumn{2}{c}{Promoter Survey} & \\multicolumn{2}{c}{Not In Promoter Survey} & \\\\", -->
+<!--   "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}", -->
+<!--   "& Mean & N & Mean & N & Difference\\\\", -->
+<!--   "\\hline" -->
+<!-- ) -->
+<!-- # add malawi section -->
+<!-- latex_lines <- c(latex_lines, "\\textbf{Malawi} & & & & & \\\\", "\\hline") -->
+<!-- malawi_data <- table_data %>% dplyr::filter(country == "Malawi") -->
+<!-- for (i in 1:nrow(malawi_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       malawi_data$row_label[i], -->
+<!--       malawi_data$mean_promoter_fmt[i], -->
+<!--       malawi_data$n_promoter[i], -->
+<!--       malawi_data$mean_nonpromoter_fmt[i], -->
+<!--       malawi_data$n_nonpromoter[i], -->
+<!--       malawi_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+<!-- # add uganda section -->
+<!-- latex_lines <- c(latex_lines, "\\hline", "\\textbf{Uganda} & & & & & \\\\", "\\hline") -->
+<!-- uganda_data <- table_data %>% dplyr::filter(country == "Uganda") -->
+<!-- for (i in 1:nrow(uganda_data)) { -->
+<!--   latex_lines <- c(latex_lines,  -->
+<!--     sprintf("%s & %s & %d & %s & %d & %s \\\\",  -->
+<!--       uganda_data$row_label[i], -->
+<!--       uganda_data$mean_promoter_fmt[i], -->
+<!--       uganda_data$n_promoter[i], -->
+<!--       uganda_data$mean_nonpromoter_fmt[i], -->
+<!--       uganda_data$n_nonpromoter[i], -->
+<!--       uganda_data$difference_fmt[i] -->
+<!--     ) -->
+<!--   ) -->
+<!-- } -->
+<!-- # close table -->
+<!-- latex_lines <- c(latex_lines, -->
+<!--   "\\hline\\hline", -->
+<!--   "\\multicolumn{6}{l}{\\footnotesize \\sym{*} \\(p<0.10\\), \\sym{**} \\(p<0.05\\), \\sym{***} \\(p<0.01\\)}\\\\", -->
+<!--   "\\end{tabular}", -->
+<!--   "\\end{table}" -->
+<!-- ) -->
+<!-- # print the table -->
+<!-- cat(latex_lines, sep = "\n") -->
+<!-- ``` -->
+<!-- ### non primary users -->
+<!-- ```{r} -->
+<!-- hh_number_wps <- hh_census %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     multiple_wps = mean(wp_secweek, na.rm = TRUE), -->
+<!--     n = n() -->
+<!--   ) -->
+<!-- hh_number_wps -->
+<!-- hh_number_wps_pmlist <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     multiple_wps = mean(wp_secweek, na.rm = TRUE), -->
+<!--     n = n() -->
+<!--   ) -->
+<!-- hh_number_wps_pmlist -->
+<!-- ``` -->
+<!-- ####what if we count all households that report using more than 1 water point as using DSW/ILC  -->
+<!-- ```{r} -->
+<!-- users_data_alt <- -->
+<!--   hh_census %>% -->
+<!--   dplyr::filter( -->
+<!--     wp_invillage, -->
+<!--     !(sample_group != "ILC" & wp_intervention == "ILC") -->
+<!--     ) %>% -->
+<!--   mutate( -->
+<!--   wp_intervention = if_else( -->
+<!--     wp_secweek == TRUE & wp_intervention == "Non-program", -->
+<!--     "DSW", -->
+<!--     wp_intervention -->
+<!--   ) -->
+<!--   ) %>% -->
+<!--   dplyr::filter(wp_intervention != "Non-program") -->
+<!-- users_data_alt <- -->
+<!--   users_data_alt %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   mutate( -->
+<!--     hh_members = if_else( -->
+<!--       !is.na(hh_members),  -->
+<!--       hh_members,  -->
+<!--       mean(hh_members, na.rm = TRUE) -->
+<!--     ) -->
+<!--   ) -->
+<!-- users_data_alt <- -->
+<!--   users_data_alt %>% -->
+<!--   full_join( -->
+<!--     village_intervention %>%  -->
+<!--       select(village_id, country, sample_group, wp_intervention) -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     hh_members = replace_na(hh_members, 0) -->
+<!--   ) -->
+<!-- users_village_alt <- -->
+<!--   users_data_alt %>% -->
+<!--   group_by(village_id, country, sample_group, wp_intervention) %>% -->
+<!--   summarise( -->
+<!--     response_rate = unique(response_rate), -->
+<!--     hhs = n(), -->
+<!--     users = sum(hh_members) -->
+<!--   ) %>% -->
+<!--   mutate( -->
+<!--     users_increased = users/response_rate -->
+<!--   ) -->
+<!-- users_village_alt <- -->
+<!--   users_village_alt %>% -->
+<!--   left_join(sample_sizes) %>% -->
+<!--   group_by(country, sample_group) %>% -->
+<!--   mutate( -->
+<!--     weight = n_villages/n_distinct(village_id) -->
+<!--   ) %>% -->
+<!--   ungroup -->
+<!-- users_village_alt <- -->
+<!--   users_village_alt %>% -->
+<!--   dplyr::filter(hhs > 1) -->
+<!-- people_per_country_alt <- -->
+<!--   map( -->
+<!--     users_village_alt %>% -->
+<!--       group_by(country, wp_intervention) %>% -->
+<!--       group_split(), -->
+<!--     ~ total_ci( -->
+<!--         var = "users_increased", -->
+<!--         design = svydesign( -->
+<!--           id = ~ village_id, -->
+<!--           data = .x,  -->
+<!--           weights = ~ weight -->
+<!--         ) -->
+<!--       ) %>% -->
+<!--       mutate( -->
+<!--         country = .x %>% pull(country) %>% unique, -->
+<!--         wp_intervention = .x %>% pull(wp_intervention) %>% unique, -->
+<!--         villages = .x %>% pull(village_id) %>% n_distinct, -->
+<!--         hhs = .x %>% pull(hhs) %>% sum, -->
+<!--         pop = .x %>% pull(n_villages) %>% unique %>% sum -->
+<!--       ) -->
+<!--   ) %>%  -->
+<!--   bind_rows() %>% -->
+<!--   select( -->
+<!--     country, wp_intervention,  -->
+<!--     outcome,  -->
+<!--     villages, -->
+<!--     everything() -->
+<!--   ) %>% -->
+<!--   arrange(outcome) -->
+<!-- table1_alt <- people_per_country_alt %>% -->
+<!--   select(country, wp_intervention, total, lb, ub, se) %>% -->
+<!--   mutate( -->
+<!--     indiv_access_popn = total -->
+<!--   ) %>% -->
+<!--   select(-total)  -->
+<!-- table1_alt -->
+<!-- table1country_alt <- table1_alt %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarise( -->
+<!--     indiv_access_popn = sum(indiv_access_popn), -->
+<!--     # SE of sum: sqrt(sum of squared SEs) assuming independence -->
+<!--     se = sqrt(sum(se^2, na.rm = TRUE)) -->
+<!--   ) %>% -->
+<!--   # CI -->
+<!--   mutate( -->
+<!--     lb = indiv_access_popn - 1.96 * se, -->
+<!--     ub = indiv_access_popn + 1.96 * se -->
+<!--   ) -->
+<!-- table1country_alt -->
+<!-- ``` -->
+<!-- ### double counting -->
+<!-- ```{r} -->
+<!-- hh_double_count_stats <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   summarise( -->
+<!--     total_hh = n_distinct(household_id), -->
+<!--     hh_multiple_mentions = sum(promoter_list_mentions > 1, na.rm = TRUE), -->
+<!--     share_multiple_mentions = hh_multiple_mentions / total_hh, -->
+<!--     share_pct = round(share_multiple_mentions * 100, 1), -->
+<!--     # calculate average mentions for those with multiple mentions -->
+<!--     avg_mentions = mean(promoter_list_mentions[promoter_list_mentions > 1], na.rm = TRUE), -->
+<!--     # wp_secweek is TRUE -> hh reports using additional water sources -->
+<!--     hh_report_multiple = sum(promoter_list_mentions > 1 & wp_secweek == TRUE, na.rm = TRUE), -->
+<!--     share_report_multiple = hh_report_multiple / hh_multiple_mentions, -->
+<!--     share_report_multiple_pct = round(share_report_multiple * 100, 0), -->
+<!--     # wp_secweek is FALSE -> hh reports not using any additional water sources (double counted) -->
+<!--     hh_double_counted = sum(promoter_list_mentions > 1 & wp_secweek == FALSE, na.rm = TRUE) -->
+<!--   ) -->
+<!-- # auto-generate text summary -->
+<!-- cat(sprintf("Among the %s distinct households listed by promoters across Evidence Action water points that were matched to the household census, we identified %d households (around %s%%) as listed to be using more than one (on average %s) of these water points. Of these %d, only %d%% self-report using more than one water point in the household census: in the remaining %d cases, promoters are double-counting households.\n", -->
+<!--             format(hh_double_count_stats$total_hh, big.mark = ","), -->
+<!--             hh_double_count_stats$hh_multiple_mentions, -->
+<!--             hh_double_count_stats$share_pct, -->
+<!--             round(hh_double_count_stats$avg_mentions, 0), -->
+<!--             hh_double_count_stats$hh_multiple_mentions, -->
+<!--             hh_double_count_stats$share_report_multiple_pct, -->
+<!--             hh_double_count_stats$hh_double_counted)) -->
+<!-- ``` -->
+<!-- ### hhs that report not using DSW/ILC -->
+<!-- ```{r} -->
+<!-- pm_list_nonprogram <- hh_census %>% -->
+<!--   dplyr::filter(promoter_list == TRUE) %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarize( -->
+<!--     non_program = sum(wp_intervention == "Non-program", na.rm = TRUE), -->
+<!--     non_program_one = sum(wp_intervention == "Non-program" & wp_secweek == FALSE, na.rm = TRUE), -->
+<!--     program = sum(wp_intervention == "DSW" | wp_intervention == "ILC", na.rm = TRUE), -->
+<!--     share_non_program = non_program/program, -->
+<!--     share_non_program_one = non_program_one/program -->
+<!--   ) -->
+<!-- pm_list_nonprogram -->
+<!-- ``` -->
+<!-- ###response rates -->
+<!-- ```{r} -->
+<!-- hh_census_response <- hh_census %>% -->
+<!--   group_by(country) %>% -->
+<!--   summarise( -->
+<!--     response_rate = mean(response) -->
+<!--   ) -->
+<!-- hh_census_response -->
+<!-- ``` -->
+<!-- ##---------------EXPLORATORY--------------- -->
+<!-- ## Regressions of chlorination on being listed by promoter -->
+<!-- ###  tcr, control for promoter surveyed -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+<!-- promoter_wp_households <- hh_survey #%>% -->
+<!--   # dplyr::filter(promoter_surveyed == 1)  -->
+<!-- uganda_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+<!-- malawi_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+<!-- uganda_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- malawi_model <- lm_robust(disctcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp) -->
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination", -->
+<!--           dep.var.labels = "disctcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+<!-- ### fcr, control for promoter surveyed -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+<!-- promoter_wp_households <- hh_survey #%>% -->
+<!--   # dplyr::filter(promoter_surveyed == 1)  -->
+<!-- uganda_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+<!-- malawi_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+<!-- uganda_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- malawi_model <- lm_robust(discfcr_02 ~ promoter_list + promoter_surveyed,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(discfcr_02 ~ promoter_list + promoter_surveyed, data = malawi_promoter_wp) -->
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter, Water Point in Promoter Survey, and Chlorination", -->
+<!--           dep.var.labels = "discfcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+<!-- ### tcr, no controls -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+<!-- uganda_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+<!-- malawi_promoter_wp <- hh_survey %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+<!-- uganda_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- malawi_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp) -->
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter and Chlorination", -->
+<!--           dep.var.labels = "disctcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+<!-- ### tcr, limit sample to promoter surveyed -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+<!-- promoter_wp_households <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == 1) -->
+<!-- uganda_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+<!-- malawi_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+<!-- uganda_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- malawi_model <- lm_robust(disctcr_02 ~ promoter_list,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr_02 ~ promoter_list, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr_02 ~ promoter_list, data = malawi_promoter_wp) -->
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users", -->
+<!--           dep.var.labels = "disctcr 02", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+<!-- ### tcr continuous (as opposed to disctcr_02) -->
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+<!-- promoter_wp_households <- hh_survey %>% -->
+<!--   dplyr::filter(promoter_surveyed == 1) -->
+<!-- uganda_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+<!-- malawi_promoter_wp <- promoter_wp_households %>% -->
+<!--   dplyr::filter(country == "Malawi") -->
+<!-- uganda_model <- lm_robust(disctcr ~ promoter_list,  -->
+<!--                           data = uganda_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- malawi_model <- lm_robust(disctcr ~ promoter_list,  -->
+<!--                           data = malawi_promoter_wp, -->
+<!--                           clusters = wp_id) -->
+<!-- # convert to regular lm objects for stargazer -->
+<!-- uganda_lm <- lm(disctcr ~ promoter_list, data = uganda_promoter_wp) -->
+<!-- malawi_lm <- lm(disctcr ~ promoter_list, data = malawi_promoter_wp) -->
+<!-- stargazer(uganda_lm, malawi_lm, -->
+<!--           type = "text", -->
+<!--           title = "Association between Being Listed by Promoter and Chlorination among Promoter Survey Water Point Users", -->
+<!--           dep.var.labels = "disctcr", -->
+<!--           # covariate.labels = c("Listed by Promoter"), -->
+<!--           column.labels = c("Uganda", "Malawi"), -->
+<!--           model.numbers = FALSE, -->
+<!--           se = list(uganda_model$std.error, malawi_model$std.error), -->
+<!--           p = list(uganda_model$p.value, malawi_model$p.value), -->
+<!--           keep.stat = c("n", "rsq", "adj.rsq"), -->
+<!--           add.lines = list(c("Clustered SE", "Waterpoint", "Waterpoint"))) -->
+<!-- ``` -->
+<!-- ## Do households surveyed after the promoter respond differently? -->
+<!-- ### load rank dataset -->
+<!-- ```{r} -->
+<!-- pm_survey_clean <- -->
+<!--   read_rds( -->
+<!--     file.path( -->
+<!--       path_box, -->
+<!--       "Data", -->
+<!--       "PromoterSurvey", -->
+<!--       "DataSets", -->
+<!--       "Clean", -->
+<!--       "pm-survey-clean.rds" -->
+<!--     ) -->
+<!--   ) -->
+<!-- randomization <- pm_survey_clean %>%  -->
+<!--   dplyr::select( -->
+<!--     wp_id, village_id, country, -->
+<!--     contains("rand_hh") -->
+<!--   ) %>% -->
+<!--   pivot_longer( -->
+<!--     cols = starts_with("rand_hh"), -->
+<!--     names_prefix = "rand_hh_", -->
+<!--     names_to = "rank", -->
+<!--     values_to = "household_name", -->
+<!--     values_drop_na = TRUE -->
+<!--   ) %>% -->
+<!--   mutate(household_name = household_name %>% str_squish %>% str_trim) -->
+<!-- hhc <- -->
+<!--   read_rds( -->
+<!--     file.path( -->
+<!--       path_box, -->
+<!--       "Data", -->
+<!--       "HouseholdCensus", -->
+<!--       "DataSets", -->
+<!--       "Constructed", -->
+<!--       "hh-census-constructed.rds" -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   select(village_id, household_id, household_name) -->
+<!-- randomization_id <- -->
+<!--   randomization %>% -->
+<!--   left_join(hhc) -->
+<!-- hh_survey <- hh_survey %>% -->
+<!--   left_join( -->
+<!--     randomization_id %>% select(household_id, rank), -->
+<!--     by = "household_id" -->
+<!--   ) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- table(hh_survey$survey, hh_survey$rank, useNA = "always") -->
+<!-- ``` -->
+<!-- ### test -->
+<!-- ```{r} -->
+<!-- chlor <- hh_survey %>% -->
+<!--   dplyr::filter(!is.na(rank)) %>% # only HHs randomized into monitoring -->
+<!--   dplyr::filter(survey == "Household Survey" & rank < 5 | survey == "Monitoring Survey")  -->
+<!-- table <- chlor_uganda %>% -->
+<!--   group_by(survey) %>% -->
+<!--   summarize( -->
+<!--     disctcr_02 = mean(disctcr_02, na.rm = TRUE), -->
+<!--     discfcr_02 = mean(discfcr_02, na.rm = TRUE) -->
+<!--   ) -->
+<!-- table -->
+<!-- chlor_uganda <- chlor %>% -->
+<!--   dplyr::filter(country == "Uganda") -->
+<!-- # run regressions -->
+<!-- model1 <- lm_robust(disctcr_02 ~ survey, -->
+<!--                     data = chlor_uganda, -->
+<!--                     clusters = wp_id) -->
+<!-- model2 <- lm_robust(discfcr_02 ~ survey, -->
+<!--                     data = chlor_uganda, -->
+<!--                     clusters = wp_id) -->
+<!-- # extract components from lm_robust objects -->
+<!-- coef1 <- model1$coefficients -->
+<!-- se1 <- model1$std.error -->
+<!-- coef2 <- model2$coefficients -->
+<!-- se2 <- model2$std.error -->
+<!-- # fit regular lm models (just for stargazer structure) -->
+<!-- model1_lm <- lm(disctcr_02 ~ survey, data = chlor_uganda) -->
+<!-- model2_lm <- lm(discfcr_02 ~ survey, data = chlor_uganda) -->
+<!-- # create stargazer table with clustered SEs from lm_robust -->
+<!-- stargazer(model1_lm, model2_lm, -->
+<!--           se = list(se1, se2), -->
+<!--           type = "text", -->
+<!--           title = "Uganda Association between Survey and Chlorination (Monitoring vs Household Survey & Rank <=4)", -->
+<!--           column.labels = c("DISCTCR", "DISCFCR"), -->
+<!--           covariate.labels = c("Monitoring Survey"), -->
+<!--           dep.var.labels = c(" ", " ")) -->
+<!-- ``` -->
 
 </div>
 </div>
@@ -2550,8 +3960,8 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
           </div>
         </div>
       </div>
-<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="sample-sizes-and-descriptives.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="water-point-level-headline-results.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
     </div>
   </div>
 <script>/*! jQuery v3.6.0 | (c) OpenJS Foundation and other contributors | jquery.org/license */

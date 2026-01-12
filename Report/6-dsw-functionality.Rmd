@@ -294,7 +294,7 @@ kable(
   align = "c", 
   booktabs = T,
   caption = "Post-treatment Chlorine detection rates at water points with DSW",
-  label = "dsw-cl-group"
+  label = "dsw-cl"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%

@@ -1,8 +1,6 @@
 # ILC water points
 
 
-This analysis is restricted to ILC water points in Malawi.
-
 ```{r}
 pacman::p_load(
   tidyverse,
@@ -11,17 +9,442 @@ pacman::p_load(
 )
 ```
 
+## Functionality
 
-## Sampled villages
 
 ```{r}
 ilc_villages <-
-  villages %>%
+  wp_census %>%
   dplyr::filter(
-    sample_group == "ILC",
-    country == "Malawi"
+    country == "Malawi",
+    sample_group == "ILC"
   )
 ```
+
+### Clusters
+
+```{r}
+ilc_villages %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(
+    (!is.na(wp_func) & ilc_wp) |
+      (wp_func & ilc_wcp)
+  ) %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(wp_func) %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(
+    !is.na(ilc_devicefunc)
+  ) %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(
+    ilc_devicefunc
+  ) %>%
+  pull(ea_ilc_wpt) %>%
+  n_distinct
+```
+
+### Water points
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc_wp) %>%
+  tabyl(wp_func) %>%
+  adorn_totals()
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc_wp) %>%
+  tabyl(ilc_devicefunc) %>%
+  adorn_totals()
+```
+
+### Water collection points
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc_wcp) %>%
+  tabyl(wp_func) %>%
+  adorn_totals()
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(ilc_wcp) %>%
+  tabyl(wp_func) %>%
+  adorn_totals()
+```
+
+```{r}
+ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(any(ilc_wp & wp_func)) %>%
+  ungroup %>%
+  summarise(
+    wcp = sum(ilc_wcp),
+    func = sum(ilc_wcp & wp_func)
+  )
+```
+
+
+```{r}
+ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(any(wp_func)) %>%
+  ungroup %>%
+  summarise(
+    wcp = sum(ilc_wcp),
+    func = sum(ilc_wcp & wp_func)
+  )
+```
+
+```{r}
+ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(any(!is.na(ilc_devicefunc))) %>%
+  ungroup %>%
+  summarise(
+    wcp = sum(ilc_wcp)
+  )
+```
+
+```{r}
+ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(any(wp_func)) %>%
+  ungroup %>%
+  summarise(
+    wcp = sum(ilc_wcp),
+    func = sum(ilc_wcp & wp_func)
+  )
+```
+
+```{r}
+ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  dplyr::filter(any(ilc_devicefunc)) %>%
+  ungroup %>%
+  summarise(
+    wcp = sum(ilc_wcp)
+  )
+```
+
+## Dosing
+
+### Clusters
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), closer) %>%
+  summarise(
+    n = n(),
+    clusters = n_distinct(ea_ilc_wpt),
+    across(
+      c(disctcr_02, discfcr_02),
+      list(
+        mean = ~ mean(., na.rm = TRUE),
+        n = ~ sum(!is.na(.))
+      )
+    )
+  )
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
+  summarise(
+    n = n(),
+    clusters = n_distinct(ea_ilc_wpt),
+    across(
+      c(disctcr_02, discfcr_02),
+      list(
+        mean = ~ mean(., na.rm = TRUE),
+        n = ~ sum(!is.na(.))
+      )
+    )
+  )
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    across(
+      c(disctcr_02, discfcr_02),
+      ~ mean(., na.rm = TRUE)
+    )
+  ) %>%
+  summarise(
+    across(
+      c(disctcr_02, discfcr_02),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    across(
+      c(disctcr_02, discfcr_02),
+      ~ any(., na.rm = TRUE)
+    )
+  ) %>%
+  ungroup %>%
+  summarise(
+    n = n(),
+    across(
+      c(disctcr_02, discfcr_02),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+ilc_villages %>%
+  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
+  summarise(
+    n = n(),
+    clusters = n_distinct(ea_ilc_wpt),
+    across(
+      c(disctcr_02, discfcr_02),
+      list(
+        mean = ~ mean(any(.))
+        )
+      )
+    )
+  )
+```
+
+
+
+#scrap
+
+```{r}
+evac_dsw <-
+  villages %>%
+  dplyr::filter(village_id %in% ilc_villages$village_id, dsw) %>%
+  summarise(
+    group = "DSW",
+    evac_villages = n_distinct(village_id),
+    evac_wps = sum(dsw_wpt)
+  )
+
+evac_wpt <-
+  villages %>%
+  dplyr::filter(village_id %in% ilc_villages$village_id, ilc_wpt_yn == 1) %>%
+  summarise(
+    group = "ILC Water Point",
+    evac_villages = n_distinct(village_id),
+    evac_wps = sum(ilc_wpt)
+  )
+
+evac_wcp <-
+  villages %>%
+  dplyr::filter(village_id %in% ilc_villages$village_id, ilc_wcp_yn == 1) %>%
+  summarise(
+    group = "ILC Water Collection Point",
+    evac_villages = n_distinct(village_id),
+    evac_wps = sum(ilc_wcp)
+  )
+  
+dsw <-
+  wp_census %>% 
+  dplyr::filter(dsw, sample_group == "ILC") %>%
+  summarise(
+    group = "DSW",
+    wpc_villages = n_distinct(village_id),
+    wpc_wps = n(),
+    communal = sum(wp_multicompound),
+    matched = sum(!is.na(ea_id)),
+    func = sum(wp_func),
+    func_pct = func/wpc_wps
+  ) %>%
+  transmute(
+    group,
+    wpc_villages, wpc_wps, clusters = "",
+    communal, matched, 
+    func = paste0(" ", func, " (", round(func_pct * 100, 1), "%)"),
+    wpt_checked = "",
+    device_func = "",
+  )
+
+ilc_wpt <-
+  wp_census %>% 
+  dplyr::filter(ilc_wp, sample_group == "ILC") %>%
+  summarise(
+    group = "ILC Water Point",
+    wpc_villages = n_distinct(village_id),
+    wpc_wps = n(),
+    communal = sum(wp_multicompound),
+    matched = sum(!is.na(ea_id)),
+    clusters = n_distinct(ilc_cluster_id),
+    func = sum(wp_func),
+    func_pct = func/wpc_wps,
+    wpt_checked = sum(!is.na(ilc_devicefunc)),
+    device_func = sum(ilc_devicefunc, na.rm = TRUE),
+    device_func_pct = device_func/func
+  ) %>%
+  transmute(
+    group,
+    wpc_villages, wpc_wps,
+    communal, matched, 
+    clusters = as.character(clusters),
+    func = paste0(" ", func, " (", round(func_pct * 100, 1), "%)"),
+    wpt_checked = wpt_checked %>% as.character,
+    device_func = paste0(device_func, " (", round(device_func_pct * 100, 1), "%)"),
+  )
+
+ilc_wcp <-
+  ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  mutate(ilc_devicefunc = max(ilc_devicefunc)) %>%
+  dplyr::filter(ilc_wcp, sample_group == "ILC") %>%
+  ungroup %>%
+  summarise(
+    group = "ILC Water Collection Point",
+    wpc_villages = n_distinct(village_id),
+    wpc_wps = n(),
+    communal = sum(wp_multicompound),
+    matched = sum(!is.na(ea_id)),
+    clusters = n_distinct(ilc_cluster_id),
+    func = sum(wp_func),
+    func_pct = func/wpc_wps,
+    wpt_checked = sum(!is.na(ilc_devicefunc)),
+    device_func = sum(ilc_devicefunc, na.rm = TRUE),
+    device_func_pct = device_func/wpt_checked
+  ) %>%
+  transmute(
+    group,
+    wpc_villages, wpc_wps,
+    communal, matched, 
+    clusters = as.character(clusters),
+    func = paste0(func, " (", round(func_pct * 100, 1), "%)"),
+    wpt_checked = as.character(wpt_checked),
+    device_func = paste0(device_func, " (", round(device_func_pct * 100, 1), "%)"),
+  )
+
+ilc_func <-
+  evac_dsw %>%
+  bind_rows(evac_wpt) %>%
+  bind_rows(evac_wcp) %>%
+  left_join(
+    dsw %>%
+    bind_rows(ilc_wpt) %>%
+    bind_rows(ilc_wcp)
+  )
+
+ilc_func %>%
+  kable(
+    format = "html"
+  ) %>%
+  kable_paper("striped", full_width = TRUE)
+  # add_header_above(
+  #   c(
+  #     " " = 2,
+  #     "Number of WPs" = 2,
+  #     "Percent of water points in the census" = 6
+  #   ),
+  #   line = TRUE
+  # ) %>%
+  # add_header_above(
+  #   c(" ", paste0("(", 1:9,")")), 
+  #   line = FALSE
+  # )
+```
+
+there are missing values on closer for WCPs!
+
+```{r}
+ilc_wpt <-
+  wp_census %>% 
+  dplyr::filter(ilc_wp, sample_group == "ILC") %>%
+  summarise(
+    group = "ILC Water Point",
+    villages = n_distinct(village_id),
+    wpc_wps = n(),
+    func = sum(wp_func),
+    func_pct = func/wpc_wps,
+    device_func = sum(ilc_devicefunc, na.rm = TRUE),
+    device_func_pct = device_func/func
+  )
+
+ilc_wcp <-
+  ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  mutate(ilc_devicefunc = max(ilc_devicefunc)) %>%
+  dplyr::filter(ilc_wcp, sample_group == "ILC") %>%
+  ungroup %>%
+  summarise(
+    group = "ILC Water Collection Point",
+    villages = n_distinct(village_id),
+    wpc_wps = n(),
+    func = sum(wp_func),
+    func_pct = func/wpc_wps,
+    wpt_checked = sum(!is.na(ilc_devicefunc)),
+    device_func = sum(ilc_devicefunc, na.rm = TRUE),
+    device_func_pct = device_func/wpt_checked,
+    tested = sum(wp_func & !is.na(disctcr_02)),
+    closer = sum(wp_func & closer & !is.na(disctcr_02)),
+    closer_tcr = sum(wp_func & closer & !is.na(disctcr_02) & disctcr_02),
+    not_closer = sum(!closer & !is.na(disctcr_02), na.rm = TRUE),
+    not_closer_pct = mean(not_closer & disctcr_02, na.rm = TRUE)/not_closer
+  )
+
+ilc_dosing <-
+  ilc_wpt %>%
+  bind_rows(ilc_wcp) %>%
+  mutate(
+    across(
+      ends_with("pct"),
+      ~ round(. * 100, 1) %>% paste0("%")
+    )
+  )
+
+ilc_dosing %>%
+  kable(
+    format = "html"
+  ) %>%
+  kable_paper("striped", full_width = TRUE)
+  # add_header_above(
+  #   c(
+  #     " " = 2,
+  #     "Number of WPs" = 2,
+  #     "Percent of water points in the census" = 6
+  #   ),
+  #   line = TRUE
+  # ) %>%
+  # add_header_above(
+  #   c(" ", paste0("(", 1:9,")")), 
+  #   line = FALSE
+  # )
+```
+
+# Scrap
 
 
 ## Villages
@@ -90,6 +513,7 @@ ilc_villages %>%
   pull(ea_ilc_wpt) %>%
   n_distinct
 ```
+
 ```{r}
 ilc_villages %>%
   dplyr::filter(str_detect(intervention_type, "ILC")) %>%
@@ -138,57 +562,7 @@ ilc_villages %>%
 ```
 
 ```{r}
-dsw <-
-  ilc_villages %>% 
-  dplyr::filter(dsw) %>%
-  group_by(country) %>%
-  summarise(
-    Type = "DSW",
-    Found = n(),
-    Functional = sum(wp_func),
-    `Functionality rate (%)` = Functional/Found,
-    Communal = sum(wp_multicompound),
-    Tested = sum(!is.na(disctcr))
-  )
 
-ilc_wp <-
-  ilc_villages %>% 
-  dplyr::filter(ilc_wp) %>%
-  group_by(country) %>%
-  summarise(
-    Type = "Water points with ILC device",
-    Found = n(),
-    Functional = sum(wp_func),
-    `Functionality rate (%)` = Functional/Found,
-    Communal = sum(wp_multicompound),
-    Tested = sum(!is.na(disctcr))
-  )
-
-ilc_wcp <-
-  ilc_villages %>% 
-  dplyr::filter(ilc_wcp) %>%
-  group_by(country, closer) %>%
-  summarise(
-    Type = "Water collection points connected to ILC",
-    Found = n(),
-    Functional = sum(wp_func),
-    `Functionality rate (%)` = Functional/Found,
-    Communal = sum(wp_multicompound),
-    Tested = sum(!is.na(disctcr)),
-    TCR = sum(disctcr_02, na.rm = TRUE),
-    FCR = sum(discfcr_02, na.rm = TRUE)
-  )
-
-dsw %>%
-  bind_rows(ilc_wp) %>%
-  bind_rows(ilc_wcp) %>%
-  mutate(
-    across(
-      `Functionality rate (%)`,
-      ~ round(. * 100, 1)
-    )
-  ) %>%
-  kable
 ```
 
 
