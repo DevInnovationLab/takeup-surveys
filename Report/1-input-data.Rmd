@@ -29,7 +29,8 @@ villages <-
       "Final",
       "villages.rds"
     )
-  ) 
+  ) %>%
+  dplyr::filter(!(country == "Uganda" & !dsw))
 ```
 
 ### Sampled villages
@@ -195,10 +196,32 @@ wp_census <-
     intervention_fo = case_when(
       wp_dsw ~ "DSW",
       wp_ilc ~ "ILC"
-    ),
-    closer = (ilc_wcp & str_detect(ea_id, "001^")) | ilc_wp
+    )
   ) %>%
   dplyr::filter(
     !(sample_group == "ILC" & country == "Uganda")
+  )
+```
+
+## Promoter survey
+
+```{r}
+pm_survey <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Final",
+      "pm-survey.rds"
+    )
+  ) %>%
+  left_join(villages) %>%
+  st_drop_geometry  %>%
+  dplyr::filter(
+    !(sample_group == "ILC" & country == "Uganda"),
+    !vil_replaced,
+    !vil_dropped
   )
 ```
