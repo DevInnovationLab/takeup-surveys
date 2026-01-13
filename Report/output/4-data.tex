@@ -1,6 +1,6 @@
 \section{Data}
 
-This Section describes the data obtained using the different survey instruments described in Section \ref{sec:design-instruments}. Section \ref{sec:data-admin} describes the data received from Evidence Action. Sections \ref{sec:data-uganda} and \ref{sec:data-malawi} describe the sample sizes in Uganda and Malawi, and describes the reasons for replacing villages. Section \ref{sec:descriptives} includes descriptive statistics. Section \ref{sec:data-bias} discusses observations from the field and deviations from survey protocols that may affect our estimates.
+This Section describes the data obtained using the different survey instruments described in Section \ref{sec:design-instruments}. Section \ref{sec:data-admin} describes the data received from Evidence Action. Sections \ref{sec:data-uganda} and \ref{sec:data-malawi} describe the sample sizes in Uganda and Malawi, respectively. Section \ref{sec:descriptives} includes descriptive statistics. Section \ref{sec:data-bias} discusses observations from the field and deviations from survey protocols that may affect our estimates.
 
 \subsection{Administrative data from Evidence Action}\label{sec:data-admin}
 
@@ -8,19 +8,7 @@ Our sample was selected based on administrative data received from Evidence Acti
 
 Since our unit of reference is the village, we conducted extensive data processing to harmonize the village names and other administrative unit information. This data seems to have originally been entered manually, with different spellings used by different enumerators, as well as different assignments of higher-level administrative units (such as group village head, parish, and district) to the same village. We relied mostly on names and GPS coordinates to do this. In Uganda, we also used a village-level shapefile from \textcite{ssentongo2018changes}.
 
-\noindent In Malawi, this database covers covers:
-\begin{itemize}
-    \item 6,607 villages in 10 districts
-    \item 16,198 water points with DSW across 6,245 villages in 8 districts
-    \item 352 water points with an ILC device across 285 villages in 10 districts;
-    \item 2,024 water collection points across 626 villages in 10 districts.
-\end{itemize}
-
-\noindent In Uganda, it covers:
-\begin{itemize}
-    \item 7,834 villages in 22 districts
-    \item 17,718 water points with DSW across 7,416 villages in 22 districts
-\end{itemize}
+In Malawi, this database covers 6,607 villages in 10 districts. In Uganda, it covers 7,834 villages in 22 districts. Table \ref{tab:population} summarizes the information on the population of villages and water points. The information on this database serves as our sampling universe, and the numbers of villages and water points are used as weights to calculate country-level estimates.
 
 \subsection{Uganda sample}\label{sec:data-uganda}
 
@@ -35,38 +23,35 @@ Since our unit of reference is the village, we conducted extensive data processi
   \end{itemize}
 \item In these 60 villages, 524 water points were identified during the census.
   \begin{itemize}
-  \item 452 were used for drinking by more than one household, and therefore
-    eligible to be included in the water point census.
+  \item 452 were used for drinking by more than one compound, and therefore eligible to be included in the water point census.
   \item 11 water points from 6 distinct villages were served by ILC. These
     water points are excluded from our analysis.
   \end{itemize}
 \item 185 water points with DSW were identified.
   \begin{itemize}
-  \item 172 were matched to the Evidence Action database using dispenser IDs
+  \item 188 were matched to the Evidence Action database using dispenser IDs
     and GPS locations.
   \item 13 could not be matched to water points in the Evidence Action data. Ten had pictures available from the water point census which confirmed the presence of a dispenser,\footnote{The bar codes and other identifying information on these water points were shared with Evidence Action.} and three were non-functional water points and data on dispenser identification was not collected.
-  \item \textcolor{red}{11 water points with DSW included in the Evidence Action data could not be matched to water points with DSW in the census}. Four were located by the field team, but no longer had dispensers, and seven were outside of the village boundaries according to the GPS data.
+  \item Nine water points with DSW included in the Evidence Action data could not be matched to water points with DSW in the census. One was located by the field team, but no longer had a dispenser, two were marked as ILC water points during the water points census, one was outside of the village boundaries established by the field team, and 5 seemed to have either incorrect coordinates or an incorrect village assignment.
   \end{itemize}
-\item Roughly 9.5 thousand households were listed in visited villages, and 8.5 thousand of them (88.9\%) were surveyed as part of the household census.
-\item 6 thousand (75.4\%) of the households in the census used water points with DSW as their primary source of drinking water, and 1,209 completed the household survey.
+\item Roughly 9.5 thousand households were identified in visited villages, and 8.5 thousand of them (88.9\%) were surveyed as part of the household census.
+   \begin{itemize}
+    \item Approximately 8 thousand households (96.3\% of those that responded to the census) were matched to a water point in the water point census.
+    \item Approximately 6 thousand (75.4\%) of the households in the census used water points with DSW as their primary source of drinking water
+  \end{itemize}
+\item 1,209 households completed the household survey
+    \begin{itemize}
+        \item 1,147 of these (94.9\%) were using water points that were confirmed to have DSW. The remaining households either used water points that were either re-classified as Non-program during data quality checks (3.2\%) or were using water points outside of the village and were surveyed by mistake (0.7\%). 
+        \item 1,067 (94.2\%) of the households surveyed had drinking water available at the time of the survey; 1,060 color wheel and 226 colorimeter tests were conducted.\footnote{For a description of the data quality checks conducted on chlorine tests and the reasons for removing tests from the data, see Section \ref{sec:design-chlorine}.}
+    \end{itemize}
+\item Our final dataset includes 119 promoter surveys, covering 62.7\% of the water points with DSW identified. The remaining water points with DSW are not included in estimates based on the promoter sample.
   \begin{itemize}
-  \item 1,133 of the household in the household census (93.7\%) were using water points that were confirmed to have DSW. The remaining households either used water points that were either re-classified as Non-program during data quality checks (2.1\%) or could not be matched to the water point census (4.2\%). 
-  \item 1,067 (94.2\%) of the households surveyed had drinking water available
-    at the time of the survey, and 1,059 valid color wheel tests were conducted.\footnote{For a description of the data quality checks conducted on chlorine tests and the reasons for removing tests from the data, see Section \ref{sec:design-chlorine}.}
+      \item Evidence Action provided information for promoters responsible for 112 of the water points in the census, and promoter surveys were conducted in 111.
+      \item One of the promoters was responsible for a water
+        points that is no longer being served by DSW. Observations linked to this water point are not included in our analysis.
+    \item 460 households listed by promoters as using water points with DSW completed the household survey.
   \end{itemize}
-\item
-  \textcolor{red}{117 promoter surveys were conducted}, representing
-  63.2\% of the water points with DSW identified. The remaining water points are not included in estimates based on the promoter sample.
-  \begin{itemize}
-      \item Evidence Action provided information for promoters responsible for \textcolor{red}{118} unique water points. All of these water points are included in the water point census, and promoter surveys were conducted in \textcolor{red}{110} of them (\textcolor{red}{84.7\%}).
-      \item The field team also identified another \textcolor{red}{7} promoters
-        for water points that were not included the Evidence Action contact
-        list.
-      \item \textcolor{red}{1} of the promoters was responsible for a water
-        points that is no longer being served by DSW. \textcolor{red}{Observations linked to this water point is not included in our analysis.}
-  \end{itemize}
-\item 460 households listed by promoters as using water points with ILC
-  completed the household survey.
+
   \begin{itemize}
   \item 400 valid color wheel tests are observed. The vast majority of households with missing test observations did not have water available in the household at the time of the survey.
   \end{itemize}
@@ -75,72 +60,89 @@ Since our unit of reference is the village, we conducted extensive data processi
 \subsection{Malawi sample}\label{sec:data-malawi}
 
 \begin{itemize}
-    \item 108 villages were visited. 
+    \item 107 villages were visited. 
     \begin{itemize}
-        \item Our original sample included 100 villages: 30 from the Footprint sample group, 30 from the Expansion sample group, and 41 from the ILC sample group. In the ILC sample group, 14 sampled villages were served by both ILC and DSW.
-        \item Three villages were replaced because boundaries were under dispute or the villages could not be found based on the information from the Evidence Action database
+        \item Our original sample included 100 villages: 30 from the Footprint sample group, 30 from the Expansion sample group, and 40 from the ILC sample group. In the ILC sample group, 21 sampled villages were served by both ILC and DSW.
+        \item Four villages were replaced because boundaries were under dispute or the villages could not be found based on the information available.
         \item One village was replaced because the water point with DSW was only used by a mosque and most households had municipality water supply.
-        \item Three ILC villages were replaced because all of the water collection points were out of order at the time of the visit, and a fourth one because the village guide reported that the village was not served by ILC.
-        \item Given the distance between villages, how difficult transportation with the country is, and how often replacements were needed, the protocols for replacing villages had to be adjusted. As a result, if a village was served by both ILC and DSW and at least one water points with DSW was functional and eligible for inclusion in the survey but no water points with ILC satisfied these conditions, the village was not replaced. Additionally, four villages were replaced by villages in a different sample group.
+        \item Three ILC villages were replaced because all of the water collection points were out of order at the time of the visit. All of these villages are part of large ILC clusters that are present in our data and functional.
+        \item Given the distance between villages, how difficult transportation within the country is, and how often replacements were needed, the protocols for replacing villages had to be adjusted. As a result, if a village was served by both ILC and DSW and at least one water point with DSW was functional and eligible for inclusion in the survey but no water points with ILC satisfied these conditions, the village was not replaced. Additionally, four villages were replaced by villages in a different sample group.
+        \item One ILC village had conflicting reports regarding whether the village was ever served by Evidence Action or not. This village is excluded from the sample.\footnote{The area mapped does not contains any water collection points in the Evidence Action database. The taps in the village are connected to a tank fed from the same water point and a tank with ILC. However, the tank with ILC is only connected to water collection points in a neighboring village.}
         \end{itemize}
-    \item 100 villages are included in our final data: 28 from the Footprint sample group, 28 from the Expansion sample group, and 44 from the ILC sample group.
+    \item 99 villages are included in our final data: 28 from the Footprint sample group, 28 from the Expansion sample group, and 43 from the ILC sample group.
+    \item In the ILC sample group, the water point census indicates 38 villages have water collection points connected to ILC and 24 villages had water points with DSW. 
     \begin{itemize}
-        \item In the ILC sample group, the water points census indicates 37 villages have water collection points connected to ILC and 24 villages had water points with DSW.
+        \item Therefore, from the 46 villages served by ILC visited, in eight of them no functional water points with ILC are present in the census.
+        \item The three replaced villages had one or two water collection points, all of which were out of order. These villages are taken into account for our estimates of functionality rate and people reached.
+        \item Four clusters covering seven water collection points distributed across four villages that are also served by DSW are missing from our data. The water collection points in these clusters were located outside of the identified village boundaries.
+        \item Another two ILC water collection points located in the same village and connected to a cluster whose water point that was not functional were also missed in the water point census. These are taken into account for our estimates of functionality rate and people reached.
     \end{itemize}
     \item 202 DSW water points were identified during the water point census 
     \begin{itemize}
         \item 66 were located in villages from the ILC sample group
-        \item 197 were matched to water points with DSW in the Evidence Action data, and remaining 5 were verified to have dispensers using photos.
-        \item \textcolor{red}{47 water points with DSW mapped to sampled villages in the Evidence Action could not be matched to water points with DSW in our data}. Out of these, 31 were located outside of the sampled villages, 13 had no dispensers installed at the time of the visit, 2 were duplicate entries for the same water point, and 1 was found to have ILC and not DSW.
+        \item 197 were matched to water points with DSW in the Evidence Action data, and the remaining 5 were verified to have dispensers using photos.
+        \item 47 water points with with DSW included in the Evidence Action data could not be matched to water points with DSW in the census. Out of these, 24 were located outside of the sampled villages, 7 had incorrect GPS coordinates or village assignment, 12 had no dispensers installed at the time of the visit, three were duplicate the same water point, and 1 was found to have ILC and not DSW.
     \end{itemize}
-    \item 26 water points that either had an ILC device installed at the time of the visit or used to have one in the past were identified during the water point census, as well as 176 water collection points connected to a tank with ILC.
+    \item The water point census covers 32 different ILC clusters, with observations from 178 water collection points. 
     \begin{itemize}
-        \item \textcolor{red}{The adimnistrative data we received suggested we should find 30 water points with an ILC device and 193 water collection points connected to them in the 38 villages included in our ILC sample.}
-        \item \textcolor{red}{TX} ILC water points feeding these water collection points were not mapped because they were located very far from the village.
-        \item Cross-referencing our data with the administrative data using GPS coordinates, we are able to identify \textcolor{red}{31} clusters with one of more water collection points in the villages sampled. Most clusters consist of one water point with an ILC device and one or two water collection points connected to it. However, larger clusters may have up to 34 water collection points present in our data across up to five different villages. 
-        \item A total of 60 water collection points had a water sample tested for chlorine residual using a color wheel, and 58 using a colorimeter.
-        \item \textcolor{red}{ In total, 22 clusters were tested. For the largest cluster in our sample, we have tested water samples from 11 different water collection points.}
+        \item Six clusters, connected to seven water collection points in our data, have limited available data. Five of these are used solely by schools or health facilities, and access is not allowed to the community at large. A sixth never had the ILC device installed.
+        \item The ILC water points feeding six different clusters were located very far from the visited villages and were not inspected directly by the field team.
+        \item Most clusters consist of one water point with an ILC device and one or two water collection points connected to it. However, larger clusters may have up to 34 water collection points present in our data across up to five different villages. 
+        \item 21 clusters had at least one functional water collection point, of which at least 19 and potentially 20\footnote{One of the large clusters only is represented by a single water collection point in the data and the water point with the tank was not inspected.} had an ILC device installed at the time of the water point census. Water samples from these 20 clusters were tested for chlorine residual. 
+        \item A total of 60 water collection points had a water sample tested for chlorine residual using a color wheel, and 58 using a colorimeter. For the largest cluster in our sample, we tested water samples from 11 different water collection points.
     \end{itemize}
-    \item Roughly 11.5 thousand households were listed in the household census
+    \item Roughly 11.4 thousand households were identified during in the household census.
     \begin{itemize}
-        \item 11.3 thousand households (98.1\%) responded to the household census\footnote{This may seem an unusually high response rate, but the field team repeatedly confirmed that there were very few non-responses.}
-        \item 5.3 thousand households (47\% of the households that answered the census questions) were using water points with DSW, and 1.2 thousand (10.7\%) were using water points with ILC.
+        \item 11.2 thousand households (98.1\%) responded to the household census\footnote{This may seem an unusually high response rate, but the field team repeatedly confirmed that there were very few non-responses.}
+        \item 5.3 thousand households (47.8\% of the households that answered the census questions) were using water points with DSW, and 1.2 thousand (10.4\%) were using water points with ILC.
     \end{itemize}
-    \item 1,967 households in 99 villages completed the household survey.\footnote{In one village, households reported that they do not use the water point with the chlorine dispenser to collect drinking water, due to its high salinity. Therefore, no household surveys were conducted in this village.}
+    \item 1,947 households in 98 villages completed the household survey.\footnote{In one village, households reported that they do not use the water point with the chlorine dispenser to collect drinking water, due to its high salinity. Therefore, no household surveys were conducted in this village.}
     \begin{itemize}
-        \item 1,952 had drinking water available at the household during the survey, and the data includes 1,913 valid color wheel test
+        \item 1,932 had drinking water available at the household during the survey, and the data includes 1,894 valid color wheel tests.
     \end{itemize}
+    \item A total of 196 promoters were surveyed, 
+    \begin{itemize}
+        \item 4 were responsible for water points that are no longer served by Evidence Action, and are therefore excluded from our sample
+        \item 42 are responsible for ILC water points or water collection points
+        \item 45 are responsible for DSW water points in ILC villages
+        \item 105 are responsible for DSW water points in Footprint or Expansion villages
+    \end{itemize}
+    \item 724 households listed by promoters as using water points with DSW completed the household survey.
 \end{itemize}
 
 \subsection{Qualitative observations from the field}\label{sec:data-bias}
 
-\textbf{Unseasonal rains occurred in Uganda during data collection, which could lead to an underestimation of chlorine adoption.} Data collection in Uganda and Malawi took place between July and August 2025. To avoid bias from increased use of untreated rainwater during the rainy season, the timing of the surveys was planned to avoid the peak rainy periods.\footnote{In Uganda, there are two rainy seasons: a main season from March to May and a shorter one from September to November. The data collection was scheduled shortly after the first rainy season. In Malawi, the country experiences a single, extended rainy season from November to April, with the heaviest rainfall occurring between January and March. The dry season follows, with a cool dry period from May to August and a hot dry period from September to October.} However, heavy rains occurred during data collection in 14 villages in Uganda, and lighter rains were reported in 6 others, meaning households in these villages may have been relying on rainwater more than regularly. Although chlorination rates in villages were rains occurred are not consistently different from those observed in villages were it did not rain, we include sensitivity checks that exclude the first group from chlorination rates estimates.  
+\textbf{Unseasonal rains occurred in Uganda during data collection, which could lead to an underestimation of chlorine adoption.} Data collection in Uganda and Malawi took place between July and August 2025. To avoid bias from increased use of untreated rainwater during the rainy season, the timing of the surveys was planned to avoid the peak rainy periods.\footnote{In Uganda, there are two rainy seasons: a main season from March to May and a shorter one from September to November. The data collection was scheduled shortly after the first rainy season. In Malawi, the country experiences a single, extended rainy season from November to April, with the heaviest rainfall occurring between January and March. The dry season follows, with a cool dry period from May to August and a hot dry period from September to October.} However, heavy rains occurred during data collection in 14 villages in Uganda, and lighter rains were reported in 6 others, meaning households in these villages may have been relying on rainwater more than usual for this season. Although chlorination rates in villages where rains occurred are not consistently different from those observed in villages where it did not rain, we include sensitivity checks that exclude the first group from chlorination rates estimates.  
 
-\textbf{In a few villages, we identified cases in Uganda where a household was not listed in the household census} because it could not be surveyed after three attempts and no neighbors were found to ask for the name of the head of the household, even though the survey protocol dictated that these households be recorded as non-responses. Therefore, we may underestimate the number of households living in sampled villages and using water points with DSW or ILC.
+\textbf{In Uganda, we identified cases where a household was not listed in the household census} because it could not be surveyed after three attempts and no neighbors were found to ask for the name of the head of the household, even though the survey protocol dictated that these households be recorded as non-responses. We do not have data to determine how commonly this occurred, but it may lead to an underestimation of the number of households living in sampled villages and using water points with DSW or ILC if a relevant portion of the households was missed or if household availability is correlated with water point choice, chlorine treatment adoption, or household size.
 
-\textbf{In Malawi, the final numbers of villages per group deviate slightly from the original targets due to the reasons discussed in Section \ref{sec:data-malawi}.} This deviation has three main implications. First, the number of villages served by ILC is smaller than originally planned, which adds noise to our estimates and increases the risk of small sample bias. Second, the share of villages served by DSW where ILC is available or was available at some point in time is larger than originally designed. Third, we observe a relatively small number of clusters, meaning are estimates may suffer from small sample bias.
+\textbf{In Malawi, the final numbers of villages per group deviate slightly from the original targets due to the reasons discussed in Section \ref{sec:data-malawi}.} This deviation has twp main implications. First, there is less data available on water points with ILC and households using them than originally planned, which adds noise to our estimates and increases the risk of small sample bias. Second, the share of villages served by DSW where ILC is available or was available at some point in time is larger than originally designed. 
 
-\textbf{In villages served by both DSW and ILC, the presence of ILC could lead to lower chlorination rates even when households use DSW water sources.} This could happen, for example, because households only use DSW water points when ILC water points are not functional, and therefore do not develop the habit of using the dispenser, or because they expect the water to already be treated, as is the case in ILC water points. Since the chlorination rates are calculated using the simple average of tested households, this could create a downward bias in chlorination rates among households using water points with DSW. We adopt two different strategies to address this issue: we report chlorination rates among households using water points with DSW separately for each sample group, and we present an alternatively DSW-wide estimate that weights village-level chlorination rates based on the number of water points in each sample group.
+\textbf{In villages served by both DSW and ILC, the presence of ILC could lead to lower chlorination rates even when households use DSW water sources.} This could happen, for example, because there is less of a culture of using the dispenser, or because they expect the water to already be treated, as is the case in ILC water points. Since the chlorination rates are calculated using the simple average of tested households, this could create a downward bias in chlorination rates among households using water points with DSW. Chlorination rates are not significantly different across sample groups (F-test p-value = 0.930), but we also report chlorination rates among households using water points with DSW separately from those using water points with ILC in the ILC sample group in Table \ref{tab:headlines-vil-by-group}.
 
-\textbf{In some villages in Uganda, villagers had previous knowledge about the upcoming data collection. } Survey protocols dictated that teams should not contact the village leaders until they arrived at the village, and the promoters until the time of the promoter survey, to avoid priming. Evidence Action also instructed local teams to not inform their village contacts about the survey activities, and keeping all communications restricted to usual operations. Still, in three villages in Uganda, the field team observed upon arrival that the chairperson and the local promoters had prepared for the survey, filling dispensers and reminding households to use chlorination. These three villages were replaced. In five other villages, the field team only learned that promoters and households had prepared for the survey at an advanced stage of the activities in the village. These villages were not replaced, but we conducted sensitivity checks and found that their inclusion does not meaningfully affect results. Therefore, these villages are included in our main estimates. Evidence Action was informed of these incidents and responded by reinforcing the message to avoid communications that could interfere with the data collection.
+\textbf{In some villages in Uganda, villagers had previous knowledge about the upcoming data collection.} Survey protocols dictated that teams should not contact the village leaders until they arrived at the village, and the promoters until the time of the promoter survey, to avoid priming. Evidence Action also instructed local teams to not inform their village contacts about the survey activities, and to keep all communications restricted to usual operations. Still, in three villages in Uganda, the field team observed upon arrival that the chairperson and the local promoters had prepared for the survey, filling dispensers and reminding households to use chlorination. These three villages were replaced. In five other villages, the field team only learned that promoters and households had prepared for the survey at an advanced stage of the activities in the village. These villages were not replaced, but we conducted sensitivity checks and found that their inclusion does not meaningfully affect results. Therefore, these villages are included in our main estimates. Evidence Action was informed of these incidents and responded by reinforcing the message to avoid communications that could interfere with the data collection.
 
-\textbf{A number of water points in Evidence Action database in Malawi were located outside of the boundaries of the villages where they should be located, which could lead to underestimation of the population reached.} Water points that the Evidence Action data indicated were in the same village turned out to be in different villages. If villages were split and this is not reflected in the Evidence Action data, or if the wrong village name was assigned, for example by replacing it with the group village head, then the number of villages used to scale estimated from our sample to the country underestimates Evidence Action's coverage, and therefore the number of people reached. \textcolor{red}{If that was the case, then we would see different estimates at the water point level, and we also looked at the data.}
+\textbf{A number of water points in the Evidence Action database in Malawi were located outside of the boundaries of the villages where they should be located, which could lead to underestimation of the population reached.} If villages have been divided since the water point installation and this is not reflected in the Evidence Action data, or if the wrong village name was assigned, for example by replacing it with the group village head, then the number of villages used to scale estimates from our sample to the country underestimates Evidence Action's coverage, and therefore the number of people reached. We may have missed up to 12\% ($\approx$ 24/(197+24))
+of the water points with DSW and around 5\% ($\approx$ 7/(178 + 7)) of the water collection points that should have been observed, when comparing the water points found in the water point census to those in the Evidence Action database. To account for this, we increase our estimate of the population reached by each program by the respective shares of missing water points in our sensitivity checks. Although the assumption that the number of users would increase linearly with the inclusion of more water points in the sample is a strong one, it is useful to compare this scenario to other potential factors affecting estimates.
 
-\textbf{lower quality data in malawi} 
+\textbf{We believe data from Malawi to be more noisy than data from Uganda.} This is due to three main factors. The first is the adjustment to the replacement protocol discussed in the Section \ref{sec:data-malawi}. The second is the definition of village boundaries. We were not able to find data on village boundaries for Malawi in advance of the data collection, and the administrative data we received was less standardized in how it recorded the administrative units for a given village. Additionally, due to lack of reception, the field teams were often unable to rely on the maps provided to ensure that all of the water points in the Evidence Action data had been covered. The third reason is that given the large number of villages to be visited for the time available, IPA had to hire more field officers with limited survey experience than usual. These sources of uncertainty cannot be incorporated into our estimates, but it is useful to have them in mind when comparing results using different methods and data sources.
 
 \subsection{Descriptive statistics}\label{sec:descriptives}
 
-\noindent\textbf{Average village sizes.} The number of households living in sampled villages in Malawi are comparable across all village groups, ranging from 111.4 in Expansion villages to 122.5 in Footprint villages. In Uganda, on the other hand, Expansion villages are considerably larger, with on average 203.5 households living in them, than Footprint villages, with an average of 114 households per village.
+\noindent\textbf{Average village sizes.} The number of households living in sampled villages in Malawi are comparable across all village groups, with averages ranging from 111.4 in Expansion villages to 122.4 in Footprint villages. In Uganda, on the other hand, Expansion villages are considerably larger, with 203.5 households living in them on average, than Footprint villages, which have an average of 114 households per village.
 
-\textcolor{red}{households living within the village}
+\noindent\textbf{Share of households living within village boundaries.} The different sample groups are also similar with regard to the share of households identified in the census that live inside the village boundaries (as opposed to within 200 meters outside of the boundaries). In Malawi, where villages are further from one another, on average between 90.4\% of the households identified in Footprint villages and 98.7\% in ILC villages are located within the village boundaries. In Uganda, where villages are less sparsely distributed, on average of roughly 80\% of the households in Footprint villages and 90\% of those in Expansion villages live within village boundaries.
 
-\textcolor{red}{households using water points within the village}
+\noindent\textbf{Share of households using water sources located within the village.} The increased proximity to other villages in Uganda compared to Malawi is also reflected on the use of water points outside of the village boundaries. In Malawi, the average share of households using water points inside the village varies between about 75\% in the Footprint group and 95\% in the Expansion group, while in Uganda roughly 70\% of the households in both group use a primary source of drinking water inside the village where they live.
 
+\noindent\textbf{Use of water points served by Evidence Action.} Around 60\% of the households living in sampled villages reported using a primary water source served by Evidence Action, with considerable heterogeneity across village groups. The average share of households whose primary source of drinking water has DSW/ILC ranges from 40\% (Footprint villages in Malawi) to 70\% (Expansion villages in Malawi). In Uganda, the average in both sample groups is around 60\%.
 
-\noindent\textbf{Use of water points served by Evidence Action.} Around 60\% of the households living in sampled villages reported using a primary water source served by Evidence Action, with considerable heterogeneity across village groups (Table 5, column (5)). The average share of households whose primary source of drinking water has DSW or ILC ranges from 35\% to 69\%, depending on the village type. The highest rate is observed among DSW Expansion villages in Malawi (69.1\%), while the lowest is recorded in Malawi ILC villages (35.2\%).
+\noindent\textbf{Number of water points used.} The majority of households using water points with DSW/ILC — about 80\% — relied on a single water point as their primary source of drinking water for the month before the interview, while the remaining 20 percent report using on average 2.2 water points. Prevalence of use of secondary water sources among these households varies across village categories, from 14\% in Expansion villages of Malawi (which also has the lowest average number of water points per village) to roughly 24\% in Footprint villages in Uganda as well as Footprint and ILC villages in Malawi. 
 
-\noindent\textbf{Number of water points used.} The majority of households—about 80 percent—rely on a single water point as their primary source, while the remaining 20 percent report using more than one. We find no significant differences in the prevalence of secondary water sources across village categories, which range from 74\% in footprint villages in Uganda to 85\% in expansion villages of Malawi. Likewise, the number of water sources used does not vary between households relying on DSW, ILC, or non-EA sources.
+In Malawi, households using water points with ILC are the most likely to use more than one water point (which is consistent with the lower functionality rate of these water points), although their are not significantly more likely than households using water points not served by DSW or ILC. Households using water points with DSW are the least likely to have collected drinking water from more than one water collection point in the month before data collection.
 
-\noindent\textbf{Average household size.} Households in Uganda tend to be larger than those in Malawi, with an average of 5.4 people living in a household in the former and 4.5 in the latter. Household size is comparable in household using water points with DSW and ILC and those who aren’t in households from the Expansion and Footprint village groups, but in ILC villages, households using water points with ILC have on average 0.5 less members. Due to a coding problem in our survey, the question on the number of people living in a household was only introduced around three weeks into data collection. Due to these two factors, we impute the number of users in villages where these information is missing using the village group average among households that use water points with DSW or ILC when calculating the number of people using water points with DSW or ILC.
+\noindent\textbf{Average household size.} Households in Uganda tend to be larger than those in Malawi, with an average of 5.4 people living in a household in the former and 4.5 in the latter (p-value of difference = 0.033). In Expansion and Footprint villages, household size is comparable between households using water points with DSW/ILC and those using water points without. In ILC villages, however, households using water points with ILC have 0.5 fewer members, on average, than household using water point not served by either program, and households using water points with DSW have 0.75 fewer members. 
 
 \noindent\textbf{Source of water sample tested.} Water samples for chlorine testing were drawn mainly from the households' primary water point, with the share of such cases ranging from 85\% in Uganda Footprint villages to 96\% in Malawi Expansion villages. A smaller share reported collecting water from another point inside the village (2–9\%), from outside the village (2–4\%), or from rainwater or piped sources (each under 3\%). These patterns indicate that the testing data largely reflect the water sources households rely on most.
+
+\textcolor{red}{\textbf{Self-reported water treatment.} In Uganda, households using water points with DSW are just are likely to report treating the drinking water as households using other water points, but they are twice as likely to using chlorine for treatment ($\sim$30\% vs $\sim$15\%). In Malawi, the share of households that report treating the drinking water with chlorine is similar among the two groups ($\sim$30\%), but households using water points with DSW are three times more likely to use the dilute chlorine solution from the dispenser ($\sim$30\%) as those using other water points ($\sim$10\%). Households using water points with ILC are less likely to report treating the water than any other group in our sample.}

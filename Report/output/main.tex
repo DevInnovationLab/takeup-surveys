@@ -1,100 +1,51 @@
 \documentclass[11pt, a4paper]{article}
-\usepackage[margin=2.5cm]{geometry}
-\usepackage[skip=2pt,font=footnotesize,justification=centering]{caption}
-\setlength\parindent{15pt} % Removes all indentation from paragraphs
 
-\usepackage[style=authoryear]{biblatex}
-\usepackage{array}
-\usepackage{tabularx}
-\usepackage{rotating}
-\usepackage{enumitem}
-\usepackage[multiple]{footmisc} 
-\usepackage{amsmath}
-\usepackage{mathrsfs}
-\usepackage{amsfonts}
-\usepackage{graphicx}
-\usepackage{caption}   
-\usepackage{subcaption}    
-\usepackage{breqn}
-\usepackage{makecell}
-\usepackage{booktabs}  
-\usepackage[toc,page]{appendix}  
-\usepackage{lscape} 
-\usepackage{ascmac}   
-\usepackage{rotating}   
-\usepackage{url}
-\usepackage{setspace}     
-\usepackage{adjustbox}
-\usepackage{pdfpages}    
-\usepackage{lastpage} % Required to determine the last page number for the footer
-\usepackage{float} 
-\usepackage{enumerate}
-\usepackage{amssymb}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{mathrsfs}
-\usepackage{graphicx} % Required to insert images
-\usepackage[most]{tcolorbox} % Required for boxes that split across pages
-\usepackage{booktabs} % Required for better horizontal rules in tables
-\usepackage{listings} % Required for insertion of code
-\usepackage{etoolbox} % Required for if statements
-\usepackage{mathrsfs}
-\usepackage{amssymb}
-\usepackage{capt-of}
-\usepackage{soul}
-\usepackage{pdfpages}
-\usepackage{hyperref}
-\usepackage[utf8]{inputenc} % Required for inputting international characters
-\usepackage[T1]{fontenc} % Output font encoding for international characters
-\usepackage{graphicx} % Required for inserting images
-\usepackage{tabularx} 
-\usepackage{caption}
-\usepackage{color}
-\usepackage{multirow}
-\usepackage{engord}
-\usepackage{soul}
-\usepackage{textcomp}
-\usepackage{parskip}
+% Formatting -----------------------
+\usepackage[margin=2.5cm]{geometry}
+\setlength\parindent{15pt} % Removes all indentation from paragraphs
 \usepackage{setspace}
-\usepackage{titlesec}
+\usepackage{parskip}
+
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\usepackage[UKenglish]{babel}
-\usepackage[UKenglish]{isodate}
 
+\usepackage[utf8]{inputenc}
+\usepackage{color}
+\usepackage{soul}
 
-% Make some additional useful commands
-\newcommand{\ie}{\emph{i.e.}\ }
-\newcommand{\eg}{\emph{e.g.}\ }
-\newcommand{\etal}{\emph{et al}}
-\newcommand{\sub}[1]{$_{\textrm{#1}}$}
-\newcommand{\super}[1]{$^{\textrm{#1}}$}
-\newcommand{\degC}{$^{\circ}$C}
-\newcommand{\wig}{$\sim$}
-\newcommand{\ord}[1]{\engordnumber{#1}}
-\newcommand{\num}[2]{$#1\,$#2}
-\newcommand{\range}[3]{$#1$-$#2\,$#3}
-\newcommand{\roughly}[2]{$\sim\!#1\,$#2}
-\newcommand{\area}[3]{$#1 \! \times \! #2\,$#3}
-\newcommand{\vol}[4]{$#1 \! \times \! #2 \! \times \! #3\,$#4}
-\newcommand{\cube}[1]{$#1 \! \times \! #1 \! \times \! #1$}
-\newcommand{\figref}[1]{Figure~\ref{#1}}
-\newcommand{\eqnref}[1]{Equation~\ref{#1}}
-\newcommand{\tableref}[1]{Table~\ref{#1}}
-\newcommand{\secref}[1]{Section \ref{#1}}
-\newcommand{\XC}{\emph{exchange-correlation}}
-\newcommand{\abinit}{\emph{ab initio}}
-\newcommand{\Abinit}{\emph{Ab initio}}
-\newcommand{\Lonetwo}{L1$_{2}$}
-\newcommand{\Dznt}{D0$_{19}$}
-\newcommand{\Dtf}{D8$_{5}$}
-\newcommand{\Btwo}{B$_{2}$}
-\newcommand{\fcc}{\emph{fcc}}
-\newcommand{\hcp}{\emph{hcp}}
-\newcommand{\bcc}{\emph{bcc}}
-\newcommand{\Ang}{{\AA}}
-\newcommand{\inverseAng}{{\AA}$^{-1}$}
+\usepackage{titlesec}
 
+% Links -------------------------------
+\usepackage{url}
+\usepackage{hyperref}
+
+% Lists ------------------------------
+\usepackage{enumerate}
+\usepackage{enumitem}
+
+% Sections ---------------------------
+\usepackage[style=authoryear]{biblatex}
+\usepackage[toc,page]{appendix}  
+
+% Tables ---------------------------
+\usepackage[skip=2pt,font=footnotesize,justification=centering]{caption}
+\usepackage{multirow}
+\usepackage{booktabs} % Required for better horizontal rules in tables
+\usepackage{adjustbox}
+\usepackage{threeparttable}
+\usepackage{makecell}
+\usepackage{float} 
+\usepackage{rotating}
+
+% Figures ---------------------------
+\usepackage{graphicx} % Required to insert images
+\usepackage{lastpage} % Required to determine the last page number for the footer
+
+% Special characters ------------
+\usepackage{textcomp}
+\usepackage{newunicodechar}
+\usepackage{amssymb}
+\newunicodechar{≥}{\ensuremath{\geq}}
 
 % Change this to modify look of header and footer
 \lhead{}
@@ -122,9 +73,9 @@
 \tableofcontents
 
 \newpage\input{2-introduction}
-\newpage\input{3-design}
+\newpage\input{3-design} % reviewed
 \newpage\input{4-data}
-\newpage\input{5-methods}
+\newpage\input{5-methods} % reviewed
 \newpage\input{6-results}
 \newpage\input{7-reach}
 \newpage\input{8-adoption}
@@ -133,6 +84,7 @@
 % ------------------------------------------------------------------------------
 \newpage
 
+%\input{tables/population}
 \input{tables/headlines-vil}
 \input{tables/headlines-wp}
 \input{tables/headlines-am}
@@ -158,11 +110,6 @@
 \includegraphics[width=\linewidth]{graphs/chlorine-vil.png}
 \label{fig:chlorine-vil}
 \end{figure}
-
-%\input{tables/ilc-wpt-nonfunc}
-%\input{tables/ilc-wpt-excluded}
-%\newpage
-%\input{tables/ilc-wpt-func}
 
 \begin{figure}[H]
 \centering
@@ -190,6 +137,7 @@
 
 \input{appendix-glossary}
 \newpage\input{appendix-tables}
+\newpage\input{appendix-ilc}
 \newpage\input{appendix-reach}
 
 \end{document}
