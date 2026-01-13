@@ -122,7 +122,7 @@ dsw_func <-
     `WP census` = n_distinct(wp_id),
     `Matched to EvAc data` = sum(!is.na(ea_id)),
     `WP functional` = sum(wp_func, na.rm = TRUE),
-    `Casing present` = sum(disp_casing_present, na.rm = TRUE),
+    #`Casing present` = sum(disp_casing_present, na.rm = TRUE),
     `Tank present` = sum(disp_tank_present, na.rm = TRUE),
     `Dispenser functional` = sum(disp_func, na.rm = TRUE),
     `Dispenser filled` = sum(disp_filled, na.rm = TRUE)
@@ -145,12 +145,12 @@ dsw_func %>%
     c(
       " " = 2,
       "Number of WPs" = 2,
-      "Percent of water points in the census" = 6
+      "Percent of water points in the census" = 5
     ),
     line = TRUE
   ) %>%
   add_header_above(
-    c(" ", paste0("(", 1:9,")")), 
+    c(" ", paste0("(", 1:8,")")), 
     line = FALSE
   )
 ```
@@ -170,19 +170,19 @@ kable(
     c(
       " " = 2,
       "Number of WPs" = 2,
-      "Percent of water points in the census" = 6
+      "Percent of water points in the census" = 5
     ),
     line = TRUE
   ) %>%
   add_header_above(
-    c(" ", paste0("(", 1:9,")")), 
+    c(" ", paste0("(", 1:8,")")), 
     line = FALSE
   ) %>%
-  column_spec(c(1, 2, 6:10), width = "1.5cm") %>%
-  column_spec(3:4, width = "1cm") %>%
-  column_spec(c(5), width = "2cm") %>%
+  column_spec(c(1:4), width = "1.5cm") %>%
+  column_spec(c(5:9), width = "2cm") %>%
   footnote(
-    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data." %>% str_wrap()
+    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. The denominator for columns (4) to (8) is column (3). A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (8) correspond to functional and filled dispensers in Evidence Action's data.",
+    threeparttable = TRUE
   ) %>%
   writeLines(
     "output/tables/dsw-func.tex"
