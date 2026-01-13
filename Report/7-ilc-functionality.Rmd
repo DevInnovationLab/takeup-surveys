@@ -9,9 +9,6 @@ pacman::p_load(
 )
 ```
 
-## Functionality
-
-
 ```{r}
 ilc_villages <-
   wp_census %>%
@@ -34,11 +31,90 @@ ilc_villages %>%
   dplyr::filter(
     (!is.na(wp_func) & ilc_wp) |
       (wp_func & ilc_wcp)
+## Chlorination
+
+```{r}
+table <-
+  list(
+    "All water collection points" = ilc_villages %>% dplyr::filter(ilc_wcp),
+    "Closest water collection point" = ilc_villages %>% dplyr::filter(ilc_wcp, closer),
+    "Other water collection point" = ilc_villages %>% dplyr::filter(ilc_wcp, !closer)
   ) %>%
-  pull(ea_ilc_wpt) %>%
-  n_distinct
+    map(
+      ~ summarise(
+        .,
+        across(
+          c(disctcr_02, discfcr_02, metertcr_02, meterfcr_02, metertcr_01, meterfcr_01),
+          list(
+            n = ~ sum(!is.na(.)),
+            pct = ~ round((mean(., na.rm = TRUE) * 100), 1)
+          )
+        )
+      )
+    ) %>%
+    bind_rows(.id = "group") %>%
+  select(
+    -c(discfcr_02_n, meterfcr_02_n, metertcr_01_n, meterfcr_01_n)
+  ) %>%
+  set_names(
+    c("Water points", "N", "TCR ≥ 0.2 ppm", "FCR ≥ 0.2 ppm", "N", "TCR ≥ 0.2 ppm", "TCR ≥ 0.1 ppm", "FCR ≥ 0.2 ppm", "FCR ≥ 0.1 ppm")
+  )
+    
+kable(
+  table, 
+  format = "html"
+) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
+  add_header_above(
+    c(
+      " ", 
+      "Color wheel" = 3, 
+      "Colorimeter" = 5
+    )
+  )
 ```
 
+```{r}
+kable(
+  dosing, 
+  format = "latex",
+  escape = F,
+  align = "c", 
+  booktabs = T,
+  caption = "Chlorine detection rates at water collection points connected to ILC",
+  label = "ilc-cl"
+) %>%
+  kable_styling(latex_options = c("HOLD_position")) %>%
+  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
+  add_header_above(
+    c(
+      " ", 
+      "Color wheel" = 3, 
+      "Colorimeter" = 5
+    )
+  ) %>%
+  writeLines(
+    "output/tables/ilc-cl.tex"
+  )
+```
+
+```{r}
+functionality <-
+  ilc_villages %>%
+  summarise(
+    ilc_wp = sum(ilc_wp & wp_func, na.rm = TRUE),
+    ilc_wcp = sum(ilc_wcp & wp_func, na.rm = TRUE)
+  )
+
+func_clusters <-
+  ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    clusters = 
+  )
+```
 ```{r}
 ilc_villages %>%
   dplyr::filter(wp_func) %>%
@@ -149,98 +225,6 @@ ilc_villages %>%
     wcp = sum(ilc_wcp)
   )
 ```
-
-## Dosing
-
-### Clusters
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), closer) %>%
-  summarise(
-    n = n(),
-    clusters = n_distinct(ea_ilc_wpt),
-    across(
-      c(disctcr_02, discfcr_02),
-      list(
-        mean = ~ mean(., na.rm = TRUE),
-        n = ~ sum(!is.na(.))
-      )
-    )
-  )
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
-  summarise(
-    n = n(),
-    clusters = n_distinct(ea_ilc_wpt),
-    across(
-      c(disctcr_02, discfcr_02),
-      list(
-        mean = ~ mean(., na.rm = TRUE),
-        n = ~ sum(!is.na(.))
-      )
-    )
-  )
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
-  group_by(ea_ilc_wpt) %>%
-  summarise(
-    across(
-      c(disctcr_02, discfcr_02),
-      ~ mean(., na.rm = TRUE)
-    )
-  ) %>%
-  summarise(
-    across(
-      c(disctcr_02, discfcr_02),
-      ~ mean(., na.rm = TRUE)
-    )
-  )
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
-  group_by(ea_ilc_wpt) %>%
-  summarise(
-    across(
-      c(disctcr_02, discfcr_02),
-      ~ any(., na.rm = TRUE)
-    )
-  ) %>%
-  ungroup %>%
-  summarise(
-    n = n(),
-    across(
-      c(disctcr_02, discfcr_02),
-      ~ mean(., na.rm = TRUE)
-    )
-  )
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(disctcr_02) | !is.na(discfcr_02), !closer) %>%
-  summarise(
-    n = n(),
-    clusters = n_distinct(ea_ilc_wpt),
-    across(
-      c(disctcr_02, discfcr_02),
-      list(
-        mean = ~ mean(any(.))
-        )
-      )
-    )
-  )
-```
-
-
 
 #scrap
 
