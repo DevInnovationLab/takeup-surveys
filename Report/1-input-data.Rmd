@@ -42,6 +42,7 @@ villages <-
 sampled_villages <-
   villages %>%
   dplyr::filter(
+    !vil_dropped,
     (sample_group == "ILC" & visited == "In sample") |
     (sample_group != "ILC" & visited == "In sample" & !vil_replaced)
   )
@@ -50,37 +51,6 @@ village_intervention <-
   sampled_villages %>%
   crossing(wp_intervention = c("DSW", "ILC")) %>%
   dplyr::filter(!(wp_intervention == "ILC" & sample_group != "ILC")) 
-```
-
-### Calculate village sample sizes for weighing
-
-```{r}
-sample_sizes <-
-  villages %>%
-  mutate(sampled_village = village_id %in% sampled_villages$village_id) %>%
-  group_by(country, sample_group) %>%
-  summarise(
-    n_villages = n_distinct(village_id),
-    visited_villages = sum(visited == "In sample" & !vil_replaced),
-    sampled_villages = sum(sampled_village)
-  )
-```
-
-## Water points
-
-```{r}
-wp_sample_sizes <-
-  tribble(
-    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_points,
-    "Uganda", "Expansion", "DSW", 12262,
-    "Uganda", "Footprint", "DSW", 5456,
-    "Uganda", "ILC", "DSW", 398,
-    "Uganda", "ILC", "ILC", 1229,
-    "Malawi", "Expansion", "DSW", 11292,
-    "Malawi", "Footprint", "DSW", 3844,
-    "Malawi", "ILC", "DSW", 1062,
-    "Malawi", "ILC", "ILC", 2024
-  )
 ```
 
 ## Household census

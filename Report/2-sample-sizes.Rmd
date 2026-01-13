@@ -48,7 +48,7 @@ evac <-
   set_names(
     c(
       "Village group",
-      "Active programs",
+      "Active interventions",
       "Districts",
       "Villages",
       "DSW water points",
@@ -66,6 +66,34 @@ evac %>%
   pack_rows("Malawi", 1, 4) %>%
   pack_rows("Uganda", 5, 8)
 ```
+
+```{r}
+wp_sample_sizes <-
+  tribble(
+    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_points,
+    "Malawi", "Expansion", "DSW", 12949,
+    "Malawi", "Footprint", "DSW", 2187,
+    "Malawi", "ILC", "DSW", 1062,
+    "Malawi", "ILC", "ILC", 2024,
+    "Uganda", "Expansion", "DSW", 12262,
+    "Uganda", "Footprint", "DSW", 5456,
+
+  )
+```
+
+```{r}
+sample_sizes <-
+  tribble(
+    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_vil, ~ sampled_villages,
+    "Malawi", "Expansion", "DSW", 1161, 28,
+    "Malawi", "Footprint", "DSW", 4809, 28,
+    "Malawi", "ILC",       "DSW", 275,  24,
+    "Malawi", "ILC",       "ILC", 637,  46,
+    "Uganda", "Expansion", "DSW", 3332, 30,
+    "Uganda", "Footprint", "DSW", 4084, 30
+  )
+```
+
 
 ```{r}
 table <-
@@ -243,6 +271,24 @@ villages %>%
     Footprint = sum(!vil_replaced & !vil_dropped & sample_group == "Footprint", na.rm = TRUE),
     Expansion = sum(!vil_replaced & !vil_dropped & sample_group == "Expansion", na.rm = TRUE),
     ILC = sum(!vil_replaced & !vil_dropped & sample_group == "ILC", na.rm = TRUE)
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(country == "Malawi", sample_group == "ILC") %>%
+  group_by(village_id) %>%
+  summarise(
+    ILC = any(ilc_wcp),
+    DSW = any(dsw),
+    `ILC & DSW` = ILC & DSW
+  ) %>%
+  ungroup %>%
+  summarise(
+    across(
+      -village_id,
+      ~ sum(.)
+    )
   )
 ```
 
