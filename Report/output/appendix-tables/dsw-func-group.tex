@@ -3,6 +3,7 @@
 \caption{\label{tab:dsw-func-group}DSW functionality indicators}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{threeparttable}
 \begin{tabular}[t]{>{\centering\arraybackslash}p{2cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{2cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{1.5cm}}
 \toprule
 \multicolumn{1}{c}{ } & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)} & \multicolumn{1}{c}{(4)} & \multicolumn{1}{c}{(5)} & \multicolumn{1}{c}{(6)} & \multicolumn{1}{c}{(7)} & \multicolumn{1}{c}{(8)} & \multicolumn{1}{c}{(9)} \\
@@ -20,7 +21,10 @@ Sample & Villages & EvAc data & WP census & Matched to EvAc data & WP functional
 \hspace{1em}Footprint & 30 & 44 & 61 & 91.8 & 98.4 & 96.7 & 95.1 & 93.4 & 70.5\\
 \hspace{1em}Expansion & 30 & 82 & 124 & 93.5 & 93.5 & 92.7 & 91.1 & 86.3 & 68.5\\
 \bottomrule
-\multicolumn{10}{l}{\rule{0pt}{1em}\textit{Note: }}\\
-\multicolumn{10}{l}{\rule{0pt}{1em}makecell[l]{The sample includes all water points in the water point census, some of which\are located outside of village boundaries. A dispenser is considered to be\filled if chlorine was released after turning the valve. This is different\from the definition used by Evidence Action in their Adoption Monitoring,\when surveyors open the dispenser casing to check if there is chlorine in the\tank. Therefore, the numbers in column (9) correspond to functional and filled\dispensers in Evidence Action's data.}}\\
-\end{tabular}}
+\end{tabular}
+\begin{tablenotes}
+\item \textit{Note: } 
+\item The sample includes all water points in the water point census, some of which are located outside of village boundaries. The denominator for columns (4) to (8) is the number of water points with DSW in the census, shown in column (3). A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data.
+\end{tablenotes}
+\end{threeparttable}}
 \end{table}

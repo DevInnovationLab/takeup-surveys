@@ -21,6 +21,10 @@ evac <-
     dsw_wpt = sum(dsw_wpt)
   )
 
+
+footnote_text <-
+  "The sample includes all water points in the water point census, some of which are located outside of village boundaries. The denominator for columns (4) to (8) is the number of water points with DSW in the census, shown in column (3). A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data."
+
 dsw_func <-
   dsw %>%
   group_by(country, sample_group) %>%
@@ -60,6 +64,10 @@ dsw_func %>%
     ),
     line = TRUE
   ) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
   add_header_above(
     c(" ", paste0("(", 1:9,")")), 
     line = FALSE
@@ -95,7 +103,8 @@ kable(
   column_spec(3:4, width = "1cm") %>%
   column_spec(c(1, 5), width = "2cm") %>%
   footnote(
-    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data."  %>% str_wrap()
+    general = footnote_text,
+    threeparttable = TRUE
   ) %>%
   writeLines(
     "output/appendix-tables/dsw-func-group.tex"
@@ -122,7 +131,7 @@ dsw_func <-
     `WP census` = n_distinct(wp_id),
     `Matched to EvAc data` = sum(!is.na(ea_id)),
     `WP functional` = sum(wp_func, na.rm = TRUE),
-    #`Casing present` = sum(disp_casing_present, na.rm = TRUE),
+    `Casing present` = sum(disp_casing_present, na.rm = TRUE),
     `Tank present` = sum(disp_tank_present, na.rm = TRUE),
     `Dispenser functional` = sum(disp_func, na.rm = TRUE),
     `Dispenser filled` = sum(disp_filled, na.rm = TRUE)
@@ -145,19 +154,22 @@ dsw_func %>%
     c(
       " " = 2,
       "Number of WPs" = 2,
-      "Percent of water points in the census" = 5
+      "Percent of water points in the census" = 6
     ),
     line = TRUE
   ) %>%
   add_header_above(
-    c(" ", paste0("(", 1:8,")")), 
+    c(" ", paste0("(", 1:9,")")), 
     line = FALSE
+  ) %>%
+  footnote(
+    general = footnote_text
   )
 ```
 
 ```{r}
 kable(
-  dsw_func, 
+  dsw_func %>% select(-`Casing present`), 
   format = "latex",
   escape = F,
   align = "c", 
@@ -181,7 +193,7 @@ kable(
   column_spec(c(1:4), width = "1.5cm") %>%
   column_spec(c(5:9), width = "2cm") %>%
   footnote(
-    general = "The sample includes all water points in the water point census, some of which are located outside of village boundaries. The denominator for columns (4) to (8) is column (3). A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (8) correspond to functional and filled dispensers in Evidence Action's data.",
+    general = footnote_text,
     threeparttable = TRUE
   ) %>%
   writeLines(
@@ -192,6 +204,9 @@ kable(
 
 ```{r}
 dsw %>%
+  mutate(
+    sample_group = factor(sample_group, ordered = FALSE)
+  ) %>%
   group_by(country) %>%
   group_split %>%
   map(
@@ -199,9 +214,23 @@ dsw %>%
       disp_filled ~ sample_group,
       cluster = ~ village_id,
       data = .
-    ) %>%
-      summary
-  )
+    ) 
+  ) %>%
+  set_names(
+    c("Malawi", "Uganda")
+  ) %>%
+  modelsummary(
+    stars = TRUE,
+    coef_map = 
+      c(
+        "(Intercept)" = "(Intercept)",
+        "sample_groupExpansion" = "Expansion",
+        "sample_groupILC" = "ILC"
+      ),
+    title = "Regression of indicator for filled dispenser on sample group",
+    gof_omit = "BIC|AIC|RMSE"
+  ) %>%
+  style_tt(bootstrap_class = "table caption-top")
 ```
 
 ## Dosing
@@ -222,6 +251,9 @@ dosing <-
   ungroup %>%
   select(-country) %>%
   set_names(c("Sample", "Filled dispenser", "TCR tests", "TCR ≥ 0.2 ppm", "FCR tests", "FCR ≥ 0.2 ppm"))
+
+footnote_text <-
+  "At each water point with a filled dispenser, water was collected using a 20 liter jerrycan, dilute chlorine solution from the dispenser was added to the water, and the chlorine residual was measured using a color wheel 30 minutes after the water water treated."
 ```
 
 ```{r}
@@ -233,7 +265,8 @@ kable(
   kable_paper("striped", full_width = TRUE) %>%
   pack_rows("Malawi", 1, 3) %>%
   pack_rows("Uganda", 4, 5) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  footnote(general = footnote_text)
 ```
 
 ```{r}
@@ -247,13 +280,17 @@ kable(
     c("Sample", "Filled dispenser", "TCR tests", "TCR ≥ 0.2 ppm", "FCR tests", "FCR ≥ 0.2 ppm"),
     align = "c"
   ),
-  caption = "Post-treatment Chlorine detection rates at water points with DSW",
+  caption = "Post-treatment chlorine detection rates at water points with DSW",
   label = "dsw-cl-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 2) %>%
   pack_rows("Uganda", 3, 4) %>%
   add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
   writeLines(
     "output/appendix-tables/dsw-cl-group.tex"
   )
@@ -279,10 +316,15 @@ dosing <-
 ```{r}
 kable(
   dosing, 
+  caption = "Post-treatment chlorine detection rates at water points with DSW",
   format = "html"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   kable_paper("striped", full_width = TRUE) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
   add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
 ```
 
@@ -298,6 +340,10 @@ kable(
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
   writeLines(
     "output/tables/dsw-cl.tex"
   )
@@ -313,7 +359,14 @@ kable(
 wp_census %>%
   dplyr::filter(intervention == "Non-program") %>%
   group_by(country) %>%
-  summarise(mean(wp_func, na.rm = TRUE))
+  summarise(
+    (mean(wp_func, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) %>%
+  kable(
+    format = "html",
+    col.names = c(" ", "Functional water points (%)")
+  )
 ```
 
 
