@@ -9,9 +9,9 @@ The number of people served by Evidence Action is calculated based on the number
 We use the R package \textit{survey} to estimate the country-level reach and the confidence interval around it.\footnote{\textcite{survey}.} The point estimates are equivalent to the procedure described below, but the package also calculates the standard errors clustered by village and corrected for sampling weights:
 
 \begin{enumerate}
-    \item \textbf{Restrict the household census data to households using water points with DSW/ILC as their primary source of drinking water.} 
-    \item \textbf{In each unit of reference (village, water point), calculate the total number of people living in these households.} Due to a survey coding error, the question on the number of household members was skipped during the first three weeks of data collection in Uganda. In these cases, we impute it using the sample group average.
-    \item \textbf{Take the sample group and intervention average and multiply by the number of units of reference in this group across the country.} 
+    \item \textit{Restrict the household census data to households using water points with DSW/ILC as their primary source of drinking water.} 
+    \item \textit{In each unit of reference (village, water point), calculate the total number of people living in these households.} Due to a survey coding error, the question on the number of household members was skipped during the first three weeks of data collection in Uganda. In these cases, we impute it using the sample group average.
+    \item \textit{Take the sample group and intervention average and multiply by the number of units of reference in this group across the country.} 
 \end{enumerate}
 
 Our main estimates also include the adjustments listed below. We also present sensitivity checks that change each of these at a time.
@@ -30,7 +30,7 @@ Since our unit of sampling is the village, our main estimates use the village as
 
 The chlorine adoption rate is estimated by calculating the share of households in the census sample of the Household Survey using a DSW/ILC water point that had chlorine detected in the water sample tested during the Household Survey.
 
-\textbf{We define chlorine detection as meeting the 0.2 mg/L threshold for Total Chlorine Residual, measured using a color wheel.}
+\textit{We define chlorine detection as meeting the 0.2 mg/L threshold for Total Chlorine Residual, measured using a color wheel.}
 \begin{itemize}
     \item We use the color wheel for the reasons discussed in Section \ref{sec:design-chlorine} and so our measures are more comparable with Evidence Action's.
     \item We adopt 0.2 mg/L as the threshold because this is the minimum concentration detected by the color wheel.
