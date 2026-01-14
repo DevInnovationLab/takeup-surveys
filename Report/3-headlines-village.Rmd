@@ -596,12 +596,12 @@ users_vil_fo <-
 plot_data <-
   list(
     "Main estimate" = people_per_country,
-    "Including households using water points\noutside of sampled villages" = users_vil_outside,
-    "Excluding households living outside of\nthe village boundaries" = users_vil_boundary,
-    "Without correction for non-responses" = users_vil_responseonly,
-    "Without corrections to DSW/ILC status\nfrom admin data" = users_vil_fo,
-    "Without correction for water point\nfunctionality" = users_vil_func,
-    "Correcting for potentially missed \nwater points" = users_vil_misspoints
+    "(1) Including households using water points\noutside of sampled villages" = users_vil_outside,
+    "(2) Excluding households living outside of\nthe village boundaries" = users_vil_boundary,
+    "(3) Without correction for non-responses" = users_vil_responseonly,
+    "(4) Without corrections to DSW/ILC status\nfrom admin data" = users_vil_fo,
+    "(5) Without correction for water point\nfunctionality" = users_vil_func,
+    "(6) Correcting for potentially missed \nwater points" = users_vil_misspoints
   ) %>%
     map(
       ~ .x %>%
@@ -1246,15 +1246,15 @@ cl_village_all <-
 ```{r warning = FALSE}
 plot_data <-
   list(
-    "Weighing each tested household equally" = cl_village_noweights_country,
-    "Weighing each village equally" = cl_village_vilweights,
-    "Weighing villages by number of users" = cl_village_userweights,
-    "Without corrections to DSW/ILC status\nfrom admin data" = cl_village_fo,
-    "Using self-report of DSW/ILC status" = cl_village_self,
-    "Including households with unconfirmed\nDSW/ILC status" = cl_village_all,
-    "Including households with no stored water" = cl_village_nottested,
-    "Excluding villages with unseasonable rain" = cl_village_rain,
-    "Excluding villages with potential \npromoter interference" = cl_village_int
+    "Main estimate" = cl_village_noweights_country,
+    "(1) Weighing each village equally" = cl_village_vilweights,
+    "(2) Weighing villages by number of users" = cl_village_userweights,
+    "(3) Using ield office report of DSW/ILC\npresence" = cl_village_fo,
+    "(4) Using self-report of DSW/ILC presence" = cl_village_self,
+    "(5) Including households with unconfirmed\nDSW/ILC status" = cl_village_all,
+    "(6) Including households with no stored water\n(assuming no chlorine detected)" = cl_village_nottested,
+    "(7) Excluding villages with unseasonable rain" = cl_village_rain,
+    "(8) Excluding villages with potential \npromoter interference" = cl_village_int
   ) %>%
     map(
       ~ .x %>%
@@ -1267,7 +1267,7 @@ plot_data <-
         c(mean, ub, lb),
         ~ . * 100
       ),
-      main = (label == "Weighing each tested household equally")
+      main = (label == "Main estimate")
   ) %>%
   dplyr::filter(wp_intervention != "Non-program")
   
