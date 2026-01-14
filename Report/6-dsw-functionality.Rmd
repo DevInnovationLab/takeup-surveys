@@ -372,7 +372,7 @@ kable(
   label = "dsw-cl"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  add_header_above(c(" ", paste0("(", 1:4,")")), line = FALSE) %>%
+  add_header_above(c(" ", paste0("(", 1:3,")")), line = FALSE) %>%
   footnote(
     general = footnote_text,
     threeparttable = TRUE

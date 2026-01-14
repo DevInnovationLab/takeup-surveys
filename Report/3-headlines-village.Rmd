@@ -299,7 +299,7 @@ users_outside <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = pop_vil/n_distinct(village_id)
+    weight = pop_vil/sampled_villages
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -373,7 +373,7 @@ users_vilboundary <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = pop_vil/n_distinct(village_id)
+    weight = pop_vil/sampled_villages
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -479,7 +479,7 @@ users_func <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = pop_vil/n_distinct(village_id)
+    weight = pop_vil/sampled_villages
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -554,7 +554,7 @@ users_fo <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = pop_vil/n_distinct(village_id)
+    weight = pop_vil/sampled_villages
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -835,6 +835,32 @@ feols(
     dplyr::filter(
       country == "Malawi",
       wp_intervention == "ILC"
+    )
+) %>% 
+  summary
+```
+
+```{r}
+feols(
+  discfcr_02 ~ wp_intervention,
+  cluster = ~ village_id,
+  data = chlorination_data %>%
+    dplyr::filter(
+      country == "Malawi",
+      sample_group == "ILC"
+    )
+) %>% 
+  summary
+```
+
+```{r}
+feols(
+  discfcr_02 ~ sample_group,
+  cluster = ~ village_id,
+  data = chlorination_data %>%
+    dplyr::filter(
+      country == "Malawi",
+      wp_intervention == "DSW"
     )
 ) %>% 
   summary
@@ -1225,7 +1251,8 @@ plot_data <-
     "Weighing villages by number of users" = cl_village_userweights,
     "Without corrections to DSW/ILC status\nfrom admin data" = cl_village_fo,
     "Using self-report of DSW/ILC status" = cl_village_self,
-    "Including household with unconfirmed\nDSW/ILC status" = cl_village_all,
+    "Including households with unconfirmed\nDSW/ILC status" = cl_village_all,
+    "Including households with no stored water" = cl_village_nottested,
     "Excluding villages with unseasonable rain" = cl_village_rain,
     "Excluding villages with potential \npromoter interference" = cl_village_int
   ) %>%

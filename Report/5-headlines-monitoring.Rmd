@@ -72,11 +72,10 @@ hh_per_wp <-
 people_per_hh <-
   mon_survey %>%
   dplyr::filter(
-    wp_func,
-    wp_intervention != "Non-program"
+    wp_func
   ) %>%
   group_by(
-    country, sample_group, wp_intervention
+    country, sample_group
   ) %>%
   dplyr::filter(n() > 2) %>%
   group_split %>%
@@ -93,12 +92,11 @@ people_per_hh <-
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique
+        sample_group = .x %>% pull(sample_group) %>% unique
       )
   ) %>%
   bind_rows() %>%
-  select(country, sample_group, wp_intervention, av_size = mean, av_size_se = se)
+  select(country, sample_group, av_size = mean, av_size_se = se)
 ```
 
 ### Total number of people per group
@@ -108,6 +106,15 @@ total_people <-
   hh_per_wp %>%
   left_join(people_per_hh) %>%
   # Calculate people per WP and its SE using delta method
+  left_join(
+    wp_census %>%
+      dplyr::filter(dsw | ilc_wcp) %>%
+      rename(wp_intervention = intervention) %>%
+      group_by(country, sample_group, wp_intervention) %>%
+      summarise(
+        func_rate = mean(wp_func, na.rm = TRUE)
+      )
+  ) %>%
   mutate(
     av_people = av_hhs * av_size,
     # delta method: SE(X*Y) = sqrt((Y^2 * SE_X^2) + (X^2 * SE_Y^2))
@@ -123,9 +130,9 @@ total_people <-
   ) %>%
   # scale up to population
   mutate(
-    total_people = av_people * pop_points,
+    total_people = av_people * pop_points * func_rate,
     # SE scales linearly with constant: SE(c*X) = c * SE(X)
-    total_people_se = av_people_se * pop_points,
+    total_people_se = av_people_se * pop_points * func_rate,
     # 95% CI for popn_users
     total_people_lb = total_people - 1.96 * total_people_se,
     total_people_ub = total_people + 1.96 * total_people_se
@@ -191,33 +198,63 @@ cor.test(cor_data$hh_members, cor_data$pm_users)$conf.int
 
 ## Chlorination rates
 
+```{r}
+feols(
+  discfcr_02 ~ wp_intervention,
+  cluster = ~ village_id,
+  data = mon_survey %>%
+    dplyr::filter(
+      country == "Malawi",
+      sample_group == "ILC",
+      !is.na(wp_intervention)
+    )
+) %>% 
+  summary
+```
+
+
+```{r}
+mon_survey %>%
+  tabyl(sample_group, wp_intervention)
+```
+
+```{r}
+mon_survey %>%
+  tabyl(sample_group, wp_intervention) %>%
+  adorn_percentages() %>%
+  adorn_pct_formatting()
+```
+
+```{r}
+mon_survey %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(
+    n = sum(!is.na(disctcr_02)),
+    mean = mean(disctcr_02, na.rm = TRUE)
+  )
+```
+
 we should not remove households that are not using program water points!
 
 ```{r}
-chlorine_am <-
-  mean_cis(
-    outcomes = c("disctcr_02", "discfcr_02"),
-    design = svydesign(
-      id = ~ village_id,
-      nest = TRUE,
-      data = mon_survey %>%
-      dplyr::filter(
-        wp_func,
-        country == "Uganda"
+mon_survey_cl <-
+  mon_survey %>%
+  dplyr::filter(
+    !(ilc & sample_group != "ILC"),
+    !(!(wp_intervention %in% c("DSW", "ILC")) & sample_group == "ILC")
+  ) %>%
+  mutate(
+    wp_intervention = 
+      case_when(
+        sample_group != "ILC" ~ "DSW",
+        TRUE ~ wp_intervention
       )
-    )
   )
 ```
 
 ```{r}
 chlorine_am <-
-  mon_survey %>%
-  dplyr::filter(
-    wp_func, 
-    wp_intervention != "Non-program",
-    !is.na(wp_intervention),
-    !(ilc & sample_group != "ILC")
-  ) %>%
+  mon_survey_cl %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
   map(
@@ -240,6 +277,7 @@ chlorine_am <-
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
+
 ## Table
 
 ```{r}
@@ -351,7 +389,7 @@ table <-
       " ", 
       "Promoter survey" = 2, 
       "Country-level estimates" = 2, 
-      "Percent of color wheel readings ≥ 0.2 ppm" = 3
+      "Percent of color wheel readings ≥ 0.2 mg/L" = 3
     )
   ) %>%
   add_header_above(c(" ", " ", paste0("(", 1:6,")")), line = FALSE)
