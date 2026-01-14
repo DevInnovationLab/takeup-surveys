@@ -18,19 +18,62 @@ ilc_villages <-
   )
 ```
 
-### Clusters
+## Clusters
 
 ```{r}
-ilc_villages %>%
-  pull(ea_ilc_wpt) %>%
-  n_distinct
+cluster_data <-
+  ilc_villages %>%
+  group_by(ea_ilc_wpt) %>%
+  summarise(
+    wp_id = if_else(ilc_wp, wp_id, NA) %>% na.omit %>% paste0(., collapse = "; ") %>% str_trim,
+    wp_functional = any(wp_func, na.rm = TRUE),
+    ilcdevice_func = any(ilc_devicefunc, na.rm = TRUE),
+    wcps = sum(ilc_wcp)
+  )
 ```
 
+## Functionality table
+
+
 ```{r}
-ilc_villages %>%
-  dplyr::filter(
-    (!is.na(wp_func) & ilc_wp) |
-      (wp_func & ilc_wcp)
+wp <-
+  ilc_villages %>%
+  dplyr::filter(ilc_wp) %>%
+  summarise(
+    N = n(),
+    func_available = sum(!is.na(wp_func)),
+    functional = sum(wp_func, na.rm = TRUE),
+    functional_pct = mean(wp_func, na.rm = TRUE),
+    ilc_device = sum(ilc_deviceclamped, na.rm = TRUE),
+    ilc_device_func = sum(ilc_devicefunc, na.rm = TRUE),
+    ilc_device_pct = mean(ilc_devicefunc, na.rm = TRUE)
+  )
+
+wcp <-
+  ilc_villages %>%
+  dplyr::filter(ilc_wcp) %>%
+  summarise(
+    N = n(),
+    func_available = sum(!is.na(wp_func)),
+    functional = sum(wp_func, na.rm = TRUE),
+    functional_pct = mean(wp_func, na.rm = TRUE),
+    ilc_device = sum(ilc_deviceclamped, na.rm = TRUE),
+    ilc_device_func = sum(ilc_devicefunc, na.rm = TRUE),
+    ilc_device_pct = mean(ilc_devicefunc, na.rm = TRUE)
+  ) 
+# 
+# cluster <-
+#   ilc_villages %>%
+#   dplyr::filter(ea_ilc_wpt) %>%
+#   summarise(
+#     N = n(),
+#     func_available = sum(!(is.na(wp_func))),
+#     functional = sum(wp_func, na.rm = TRUE),
+#     ilc_device = sum(ilc_deviceclamped, na.rm = TRUE),
+#     ilc_device_func = sum(ilc_devicefunc, na.rm = TRUE)
+#   ) 
+```
+
 ## Chlorination
 
 ```{r}
@@ -47,7 +90,7 @@ table <-
           c(disctcr_02, discfcr_02, metertcr_02, meterfcr_02, metertcr_01, meterfcr_01),
           list(
             n = ~ sum(!is.na(.)),
-            pct = ~ round((mean(., na.rm = TRUE) * 100), 1)
+            pct = ~ round((mean(., na.rm = TRUE) * 100), 1) %>% paste0("%")
           )
         )
       )
@@ -57,37 +100,18 @@ table <-
     -c(discfcr_02_n, meterfcr_02_n, metertcr_01_n, meterfcr_01_n)
   ) %>%
   set_names(
-    c("Water points", "N", "TCR ≥ 0.2 ppm", "FCR ≥ 0.2 ppm", "N", "TCR ≥ 0.2 ppm", "TCR ≥ 0.1 ppm", "FCR ≥ 0.2 ppm", "FCR ≥ 0.1 ppm")
+    c(" ", "N", "TCR ≥ 0.2 mg/L", "FCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "FCR ≥ 0.2 mg/L", "TCR ≥ 0.1 mg/L", "FCR ≥ 0.1 mg/L")
   )
     
+footnote_text <-
+  "In each village, the closest and the furthest water collection point from the ILC device are tested. The sample in the first line includes all water collection points tested. The sample in the second line includes only the water collection points that were the closest to the tank in their cluster. The third line excludes the water collection points that were the closest to the tank in their cluster. Large clusters cover multiple villages. Therefore, there may be multiple water collection points in a single cluster included in lines one and three."
+
 kable(
   table, 
   format = "html"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
-  add_header_above(
-    c(
-      " ", 
-      "Color wheel" = 3, 
-      "Colorimeter" = 5
-    )
-  )
-```
-
-```{r}
-kable(
-  dosing, 
-  format = "latex",
-  escape = F,
-  align = "c", 
-  booktabs = T,
-  caption = "Chlorine detection rates at water collection points connected to ILC",
-  label = "ilc-cl"
-) %>%
-  kable_styling(latex_options = c("HOLD_position")) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
   add_header_above(
     c(
       " ", 
@@ -95,32 +119,36 @@ kable(
       "Colorimeter" = 5
     )
   ) %>%
+  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  )
+```
+
+```{r}
+kable(
+  table %>% select(1:4), 
+  format = "latex",
+  align = "c", 
+  booktabs = T,
+  caption = "Chlorine detection rates at water collection points connected to ILC",
+  label = "ilc-cl"
+) %>%
+  kable_styling(latex_options = c("HOLD_position")) %>%
+  add_header_above(c(" ", paste0("(", 1:3,")")), line = FALSE) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
   writeLines(
     "output/tables/ilc-cl.tex"
   )
 ```
 
-```{r}
-functionality <-
-  ilc_villages %>%
-  summarise(
-    ilc_wp = sum(ilc_wp & wp_func, na.rm = TRUE),
-    ilc_wcp = sum(ilc_wcp & wp_func, na.rm = TRUE)
-  )
+## Functionality
 
-func_clusters <-
-  ilc_villages %>%
-  group_by(ea_ilc_wpt) %>%
-  summarise(
-    clusters = 
-  )
-```
-```{r}
-ilc_villages %>%
-  dplyr::filter(wp_func) %>%
-  pull(ea_ilc_wpt) %>%
-  n_distinct
-```
+
 
 ```{r}
 ilc_villages %>%
@@ -138,38 +166,6 @@ ilc_villages %>%
   ) %>%
   pull(ea_ilc_wpt) %>%
   n_distinct
-```
-
-### Water points
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc_wp) %>%
-  tabyl(wp_func) %>%
-  adorn_totals()
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc_wp) %>%
-  tabyl(ilc_devicefunc) %>%
-  adorn_totals()
-```
-
-### Water collection points
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc_wcp) %>%
-  tabyl(wp_func) %>%
-  adorn_totals()
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc_wcp) %>%
-  tabyl(wp_func) %>%
-  adorn_totals()
 ```
 
 ```{r}
@@ -361,8 +357,6 @@ ilc_func %>%
   # )
 ```
 
-there are missing values on closer for WCPs!
-
 ```{r}
 ilc_wpt <-
   wp_census %>% 
@@ -434,22 +428,6 @@ ilc_dosing %>%
 ## Villages
 
 ```{r}
-wp_census %>%
-  dplyr::filter(sample_group == "ILC") %>%
-  group_by(country) %>%
-  summarise(
-    villages = n_distinct(village_id),
-    ilc_villages = case_when(
-      ilc ~ village_id
-    ) %>% na.omit %>% n_distinct,
-    wps = n_distinct(wp_id),
-    ilc = sum(ilc),
-    dsw = sum(dsw)
-  )
-```
-
-
-```{r}
 wps_ilc_villages <-
   wp_census %>%
   dplyr::filter(sample_group == "ILC", country == "Malawi") %>%
@@ -469,26 +447,6 @@ wps_ilc_villages <-
 wps_ilc_villages %>% tabyl(ilc_wp, ilc_wcp)
 ```
 
-
-```{r}
-wps_ilc_villages %>% 
-  group_by(village_id, country) %>%
-  summarise(
-    villages = n(),
-    across(
-      c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
-      ~ any(.)
-    )
-  ) %>%
-  group_by(country) %>%
-  summarise(
-    count = n(),
-    across(
-      c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
-      ~ sum(.)
-    )
-  )
-```
 
 ## Clusters
 
@@ -533,22 +491,6 @@ ilc_villages %>%
 
 ## Functionality 
 
-```{r}
-ilc_villages %>%
-  group_by(country) %>%
-  summarise(
-    wps = n(),
-    across(
-      c(dsw, dsw_func, ilc_wp, ilc_wp_func, ilc_wcp, ilc_wcp_func),
-      ~ sum(.)
-    )
-  )
-```
-
-```{r}
-
-```
-
 
 ```{r}
 ilc_villages %>% mutate(tested = !is.na(disctcr)) %>%
@@ -576,53 +518,6 @@ ilc_villages %>%
 
 ## Expected sample
 
-```{r}
-villages <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "Villages",
-      "DataSets",
-      "Final",
-      "villages.rds"
-    )
-  )
-```
-
-```{r}
-villages %>%
-  dplyr::filter(village_id %in% ilc_villages$village_id) %>%
-  summarise(
-    n = n(),
-    across(
-      c(dsw_wpt, ilc_wpt, ilc_wcp),
-      ~ sum(.)
-    )
-  )
-```
-
-## Number of WPs and WCPs
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(ea_id)) %>% tabyl(ilc_wp, ilc_wcp) %>%
-  group_by(ea_ilc_wpt) %>%
-  summarise(n = n()) %>%
-  tabyl(n) %>%
-  adorn_totals()
-```
-
-
-
-## Water testing
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc, closer) %>%
-  mutate(id = coalesce(ea_id, wp_id)) %>%
-  summarise()
-```
 
 
 
@@ -980,135 +875,3 @@ ilc_villages %>%
   dplyr::filter(!is.na(`FALSE`), !is.na(`TRUE`)) %>%
   arrange(desc(threshold), measure)
 ```
-
-## donté now
-
-
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc_wp) %>%
-  select(wp_id, village_id, wp_drink, wp_multicompound, wp_func, meterfcr_01, metertcr_01, discfcr_02, disctcr_02, contains("comments")) %>%
-  view
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(ilc_wp, analysis) %>%
-  select(wp_id, village) %>%
-  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
-  select(wp_id, ea_id, ea_ilc_wpt, village_id, wp_drink, wp_multicompound, wp_func, wp_ilc_device_c, wp_ilc_evac ,contains("comments")) %>%
-  view
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(meterfcr) | !is.na(metertcr) | !is.na(discfcr) | !is.na(disctcr)) %>% 
-  select(wp_id, village) %>%
-  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
-  summarise(
-    count = n(),
-    wps = n_distinct(ea_ilc_wpt)
-  )
-```
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(meterfcr) | !is.na(metertcr) | !is.na(discfcr) | !is.na(disctcr)) %>% 
-  select(wp_id, village) %>%
-  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
-  summarise(
-    count = n(),
-    wps = n_distinct(ea_ilc_wpt)
-  )
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(!is.na(meterfcr) | !is.na(metertcr) | !is.na(discfcr) | !is.na(disctcr), intervention_type != "DSW") %>% 
-  select(wp_id, village) %>%
-  left_join(constructed, by = c("wp_id" = "wp_id_c")) %>%
-  select(wp_id, ea_id, ea_ilc_wpt, village_id, meterfcr, metertcr, discfcr, disctcr, contains("comments")) %>%
-  write_csv(
-    "C:/Users/luizaandrade/Downloads/ilc.csv"
-  )
-```
-
-```{r}
-cluster_level <-
-  ilc_villages %>%
-  dplyr::filter(str_detect(intervention_type, "ILC")) %>% 
-  group_by(ea_ilc_wpt) %>%
-  mutate(
-    across(
-      c(wp_func, wp_drink, wp_multicompound),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  skim(meterfcr, metertcr, discfcr, disctcr, wp_func, wp_drink, wp_multicompound)
-
-    found = n(),
-    across(
-      c(meterfcr, metertcr, discfcr, disctcr),
-      list(
-        tests = ~sum(!is.na(.)),
-        min = ~ min(.),
-        max = ~ max(.),
-        mean = ~ mean(., na.rm = TRUE),
-        var = ~ var(., na.rm = TRUE)
-      )
-    )
-  )
-```
-
-```{r}
-ilc_villages %>%
-  dplyr::filter(intervention_type != "DSW") %>% 
-  summarise(
-    across(
-      c()
-    )
-  ) select(wp_id, ea_id, ea_ilc_wpt, village_id, meterfcr, metertcr, discfcr, disctcr, contains("comments")) %>%
-  write_csv(
-    "C:/Users/luizaandrade/Downloads/ilc.csv"
-  )
-```
-
-
-```{r}
-ilc %>%
-  dplyr::filter(
-    country == "Malawi",
-    str_detect(intervention_type, "ILC water point"),
-    sample_group == "ILC",
-  ) %>%
-  select(wp_id, village_id, intervention_type, ea_id, ea_ilc_wpt, wp_func, everything()) %>%
-  view
-```
-
-
-
-
-## Number of tests
-
-```{r}
-ilc %>%
-  group_by(intervention_type) %>%
-  summarise(
-    found = n(),
-    functional = sum(wp_func),
-    across(
-      c(disctcr, discfcr, metertcr, meterfcr),
-      ~ sum(!is.na(.))
-    )
-  )
-```
-
-
-```{r}
-ilc %>%
-  dplyr::filter(intervention_type == "ILC water point", wp_func) %>%
-  view
-```
-
-
-
