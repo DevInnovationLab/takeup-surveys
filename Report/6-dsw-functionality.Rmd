@@ -1,5 +1,12 @@
 # DSW water points
 
+```{r}
+pacman::p_load(
+  tinytable
+)
+```
+
+
 
 ```{r}
 dsw <-
@@ -243,14 +250,23 @@ dosing <-
   group_by(country, sample_group) %>%
   summarise(
     disp_filled = sum(disp_filled, na.rm = TRUE),
-    n_tcr = sum(!is.na(disctcr_02)),
-    tcr = (mean(disctcr_02, na.rm = TRUE) * 100) %>% round(1) %>% paste0("\\%"),
-    n_fcr = sum(!is.na(discfcr_02)),
-    fcr = (mean(discfcr_02, na.rm = TRUE) * 100) %>% round(1) %>% paste0("\\%"),
+    across(
+      c(disctcr_02, discfcr_02, metertcr_02, meterfcr_02, metertcr_01, meterfcr_01),
+      list(
+        n = ~ sum(!is.na(.)),
+        pct = ~ paste0(round((mean(., na.rm = TRUE) * 100), 1), "%")
+      )
+    )
   ) %>%
   ungroup %>%
-  select(-country) %>%
-  set_names(c("Sample", "Filled dispenser", "TCR tests", "TCR ≥ 0.2 ppm", "FCR tests", "FCR ≥ 0.2 ppm"))
+  select(
+    sample_group, disp_filled, 
+    contains("disctcr"), contains("discfcr"), 
+    contains("metertcr"), contains("meterfcr"),
+    -matches("meter()(.*)_01_n"),
+    -discfcr_02_n, -meterfcr_02_n
+  ) %>%
+  set_names(c(" ", "Filled dispenser", "N", "TCR ≥ 0.2 mg/L", "FCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "TCR ≥ 0.1 mg/L", "FCR ≥ 0.2 mg/L", "FCR ≥ 0.1 mg/L"))
 
 footnote_text <-
   "At each water point with a filled dispenser, water was collected using a 20 liter jerrycan, dilute chlorine solution from the dispenser was added to the water, and the chlorine residual was measured using a color wheel 30 minutes after the water water treated."
@@ -265,28 +281,30 @@ kable(
   kable_paper("striped", full_width = TRUE) %>%
   pack_rows("Malawi", 1, 3) %>%
   pack_rows("Uganda", 4, 5) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  add_header_above(
+    c(
+      " " = 2,
+      "Color wheel" = 3,
+      "Colorimeter" = 5
+    )
+  ) %>%
+  add_header_above(c(" ", paste0("(", 1:9,")")), line = FALSE) %>%
   footnote(general = footnote_text)
 ```
 
 ```{r}
 kable(
-  dosing, 
+  dosing %>% select(1:5), 
   format = "latex",
-  escape = F,
   align = "c", 
   booktabs = T,
-  col.names = linebreak(
-    c("Sample", "Filled dispenser", "TCR tests", "TCR ≥ 0.2 ppm", "FCR tests", "FCR ≥ 0.2 ppm"),
-    align = "c"
-  ),
-  caption = "Post-treatment chlorine detection rates at water points with DSW",
+  caption = "Chlorine detection rates at water points with DSW",
   label = "dsw-cl-group"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 2) %>%
   pack_rows("Uganda", 3, 4) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  add_header_above(c(" ", paste0("(", 1:4,")")), line = FALSE) %>%
   footnote(
     general = footnote_text,
     threeparttable = TRUE
@@ -304,42 +322,57 @@ dosing <-
   group_by(country) %>%
   summarise(
     disp_filled = sum(disp_filled, na.rm = TRUE),
-    n_tcr = sum(!is.na(disctcr_02)),
-    tcr = (mean(disctcr_02, na.rm = TRUE) * 100) %>% round(1) %>% paste0("\\%"),
-    n_fcr = sum(!is.na(discfcr_02)),
-    fcr = (mean(discfcr_02, na.rm = TRUE) * 100) %>% round(1) %>% paste0("\\%"),
+    across(
+      c(disctcr_02, discfcr_02, metertcr_02, meterfcr_02, metertcr_01, meterfcr_01),
+      list(
+        n = ~ sum(!is.na(.)),
+        pct = ~ paste0(round((mean(., na.rm = TRUE) * 100), 1), "%")
+      )
+    )
   ) %>%
-  ungroup %>%
-  set_names(c("Country", "Filled dispenser", "TCR tests", "TCR ≥ 0.2 ppm", "FCR tests", "FCR ≥ 0.2 ppm"))
+  select(
+    disp_filled, 
+    contains("disctcr"), contains("discfcr"), 
+    contains("metertcr"), contains("meterfcr"),
+    -matches("meter()(.*)_01_n"),
+    -discfcr_02_n, -meterfcr_02_n
+  ) %>%
+  set_names(c("Filled dispenser", "N", "TCR ≥ 0.2 mg/L", "FCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "TCR ≥ 0.1 mg/L", "FCR ≥ 0.2 mg/L", "FCR ≥ 0.1 mg/L"))
 ```
 
 ```{r}
 kable(
   dosing, 
-  caption = "Post-treatment chlorine detection rates at water points with DSW",
+  caption = "Chlorine detection rates at water points with DSW",
   format = "html"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   kable_paper("striped", full_width = TRUE) %>%
+  add_header_above(
+    c(
+      " ",
+      "Color wheel" = 3,
+      "Colorimeter" = 5
+    )
+  ) %>%
   footnote(
     general = footnote_text,
     threeparttable = TRUE
   ) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
+  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE)
 ```
 
 ```{r}
 kable(
-  dosing, 
+  dosing %>% select(1:4), 
   format = "latex",
-  escape = F,
   align = "c", 
   booktabs = T,
-  caption = "Post-treatment Chlorine detection rates at water points with DSW",
+  caption = "Chlorine detection rates at water points with DSW",
   label = "dsw-cl"
 ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  add_header_above(c(" ", paste0("(", 1:4,")")), line = FALSE) %>%
   footnote(
     general = footnote_text,
     threeparttable = TRUE
