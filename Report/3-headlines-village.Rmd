@@ -31,7 +31,7 @@ We start by restricting the household census data to households using water poin
 users_data <-
   hh_census %>%
   dplyr::filter(
-    wp_intervention_type != "Non-program",
+    wp_intervention %in% c("ILC", "DSW"),
     wp_invillage,
     !(sample_group != "ILC" & wp_intervention == "ILC")
   ) 
@@ -61,20 +61,6 @@ users_data <-
   )
 ```
 
-To account for the villages where all the water points with ILC were out of order, we add them to the data, but with zero households using water points with ILC.
-
-```{r}
-users_data <-
-  users_data %>%
-  full_join(
-    village_intervention %>% 
-      select(village_id, country, sample_group, wp_intervention)
-  ) %>%
-  mutate(
-    hh_members = replace_na(hh_members, 0)
-  )
-```
-
 Since the unit of reference for our analysis is the village, we calculate the number of people whose primary water source has DSW or ILC by adding the number of household members across all such households in a village.
 
 ```{r}
@@ -91,19 +77,6 @@ users_village <-
   )
 ```
 
-To scale to the country level, we combine this data with the number of sampled villages and the number of villages in the admin data per group.
-
-```{r}
-users_village <-
-  users_village %>%
-  left_join(sample_sizes) %>%
-  group_by(country, sample_group) %>%
-  mutate(
-    weight = n_villages/n_distinct(village_id)
-  ) %>%
-  ungroup
-```
-
 There is one village in Malawi with only one household using ILC:
 
 ```{r}
@@ -111,7 +84,7 @@ users_village %>%
   dplyr::filter(hhs == 1)
 ```
 
-To simplify the calculation of standard errors, we remove it from the estimates. 
+To simplify the calculation of standard errors, we remove it from the estimates. In practice, this means we're assigning zero users to this village.
 
 ```{r}
 users_village <-
@@ -119,27 +92,58 @@ users_village <-
   dplyr::filter(hhs > 1)
 ```
 
+To scale to the country level, we combine this data with the number of sampled villages and the number of villages in the admin data per group. To account for the villages where all the water points with ILC were out of order, we weigh each village using the number of villages in the group divided by the number of _sampled_ villages in the group, including those that were replaced because there were no users.
+
+```{r}
+users_village <-
+  users_village %>%
+  left_join(sample_sizes) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(
+    weight = pop_vil/sampled_villages
+  ) %>%
+  ungroup
+```
+
+
 ### Sanity check
 
 Here we just calculate the total number of people without CIs. The point estimate should be the same as the one calculated with a canned function.
 
 ```{r}
-users_village %>%
+sanity_users <-
+  users_village %>%
   group_by(country, sample_group, wp_intervention) %>%
   summarise(
     n = n_distinct(village_id),
     hhs = mean(hhs),
     av_people = mean(users),
     av_people_non = mean(users_increased),
-    sampled_villages = unique(sampled_villages),
-    vil_weight = n/sampled_villages,
-    group_weight = unique(n_villages)
+    across(
+      c(pop_vil, sampled_villages),
+      ~ unique(.)
+    )
   ) %>%
   mutate(
     total_people = round(av_people * group_weight * vil_weight),
     total_people_non = round(av_people_non * group_weight * vil_weight)
   )
+  select(country, sample_group, wp_intervention, sampled_villages, villages = n, pop_vil, av_people_non, total_people_non, av_people, total_people)
 ```
+
+
+```{r}
+sanity_users %>%
+  group_by(country, wp_intervention) %>%
+  summarise(
+    villages = sum(villages),
+    total_people = sum(total_people)
+  ) %>%
+  ungroup %>%
+  select(-country) %>%
+  kable_by_country
+```
+
 
 ### Final numbers
 
@@ -167,6 +171,7 @@ people_per_group <-
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct,
         households = .x %>% pull(hhs) %>% mean,
+        households = .x %>% pull(hhs) %>% sum,
         weight = .x %>% pull(weight) %>% unique
       )
   ) %>% 
@@ -179,7 +184,9 @@ people_per_group <-
   ) %>%
   arrange(outcome)
 
-people_per_group
+people_per_group %>%
+  select(sample_group, wp_intervention, villages, households, weight, total) %>%
+  kable_by_group()
 ```
 
 #### By program 
@@ -203,7 +210,7 @@ people_per_country <-
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct,
         hhs = .x %>% pull(hhs) %>% sum,
-        pop = .x %>% pull(n_villages) %>% unique %>% sum
+        pop = .x %>% pull(pop_vil) %>% unique %>% sum
       )
   ) %>% 
   bind_rows() %>%
@@ -1298,9 +1305,9 @@ obs <-
 people <-
   people_per_country %>%
   left_join(
-    wp_sample_sizes %>%
+    sample_sizes %>%
       group_by(country, wp_intervention) %>%
-      summarise(pop = sum(pop_points))
+      summarise(pop = sum(pop_vil))
   ) %>%
   mutate(
     across(
@@ -1417,8 +1424,9 @@ people <-
   people_per_group %>%
   left_join(
     wp_sample_sizes %>%
+    sample_sizes %>%
       group_by(country, wp_intervention, sample_group) %>%
-      summarise(pop = sum(pop_points))
+      summarise(pop = sum(pop_vil))
   ) %>%
   mutate(
     across(

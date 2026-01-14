@@ -19,20 +19,13 @@ pacman::p_load(
 )
 ```
 
-## Summary table
+## Population
+
+### Summary table
 
 ```{r}
 evac <-
   villages %>%
-  mutate(
-    sample_group = 
-      if_else(
-        country == "Uganda", 
-        pre_expansion %>% as.character, 
-        sample_group %>% as.character
-      ) %>%
-      factor(levels = c("Footprint", "Expansion", "ILC"), ordered = TRUE)
-  ) %>%
   group_by(
     country, sample_group, ea_program_vil
   ) %>%
@@ -43,21 +36,75 @@ evac <-
     ilc_wpt = sum(ilc_wpt),
     ilc_wcp = sum(ilc_wcp)
   ) %>%
-  ungroup %>%
-  select(-country) %>%
-  set_names(
+  ungroup 
+
+headers <-
     c(
-      "Village group",
-      "Active interventions",
+      " ",
+      "Active\ninterventions",
       "Districts",
       "Villages",
-      "DSW water points",
-      "ILC water points",
-      "ILC water collection points"
+      "DSW water\npoints",
+      "ILC water\npoints",
+      "ILC water\ncollection points"
     )
-  )
 
 evac %>%
+  select(-country) %>%
+  kable(
+    format = "html",
+    format.args = list(big.mark = ",", decimal.mark = "."),
+    col.names = headers
+  ) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 8)
+```
+
+```{r}
+table <-
+  evac %>%
+  select(-country) %>%
+  kable(
+    format = "latex",
+    format.args = list(big.mark = ",", decimal.mark = "."),
+    align = "c", 
+    booktabs = T,
+    escape = F,
+    caption = "Summary of Evidence Action administrative data",
+    label = "population",
+    col.names = linebreak(headers, align = "c")
+  ) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 8) %>%
+  add_header_above(c(" ", paste0("(", 1:6,")")), line = FALSE)
+
+writeLines(
+  table, 
+  "output/appendix-tables/population.tex"
+)
+```
+
+
+### Water point-level weights
+
+```{r}
+wp_sample_sizes <-
+  evac %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    DSW = sum(dsw, na.rm = TRUE),
+    ILC = sum(ilc_wcp, na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(DSW, ILC),
+    names_to = "wp_intervention",
+    values_to = "pop_points"
+  ) %>%
+  dplyr::filter(pop_points > 0)
+
+wp_sample_sizes %>%
   kable(
     format = "html",
     format.args = list(big.mark = ",", decimal.mark = ".")
@@ -68,54 +115,51 @@ evac %>%
 ```
 
 ```{r}
-wp_sample_sizes <-
+sampled_villages <-
   tribble(
-    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_points,
-    "Malawi", "Expansion", "DSW", 12949,
-    "Malawi", "Footprint", "DSW", 2187,
-    "Malawi", "ILC", "DSW", 1062,
-    "Malawi", "ILC", "ILC", 2024,
-    "Uganda", "Expansion", "DSW", 12262,
-    "Uganda", "Footprint", "DSW", 5456,
-
+    ~ country, ~ sample_group, ~ wp_intervention, ~ sampled_villages,
+    "Malawi" , "Expansion"   , "DSW"            , 28,
+    "Malawi" , "Footprint"   , "DSW"            , 28,
+    "Malawi" , "ILC"         , "DSW"            , 24,
+    "Malawi" , "ILC"         , "ILC"            , 46,
+    "Uganda" , "Expansion"   , "DSW"            , 30,
+    "Uganda" , "Footprint"   , "DSW"            , 30
+  ) %>%
+  mutate(
+    sample_group = 
+      factor(
+        sample_group, 
+        levels = c("Footprint", "Expansion", "ILC"),
+        ordered = TRUE
+      )
   )
 ```
 
 ```{r}
 sample_sizes <-
-  tribble(
-    ~ country, ~ sample_group, ~ wp_intervention, ~ pop_vil, ~ sampled_villages,
-    "Malawi", "Expansion", "DSW", 1161, 28,
-    "Malawi", "Footprint", "DSW", 4809, 28,
-    "Malawi", "ILC",       "DSW", 275,  24,
-    "Malawi", "ILC",       "ILC", 637,  46,
-    "Uganda", "Expansion", "DSW", 3332, 30,
-    "Uganda", "Footprint", "DSW", 4084, 30
-  )
-```
-
-
-```{r}
-table <-
-  evac %>%
-  kable(
-    format = "latex",
-    format.args = list(big.mark = ",", decimal.mark = "."),
-    align = "c", 
-    booktabs = T,
-    caption = "Summary of Evidence Action administrative data",
-    label = "population"
+  villages %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    DSW = sum(dsw, na.rm = TRUE),
+    ILC = sum(ilc & country == "Malawi", na.rm = TRUE)
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pivot_longer(
+    cols = c(DSW, ILC),
+    names_to = "wp_intervention",
+    values_to = "pop_vil"
+  ) %>%
+  dplyr::filter(pop_vil > 0) %>%
+  left_join(sampled_villages)
+
+sample_sizes %>%
+  kable(
+    format = "html",
+    format.args = list(big.mark = ",", decimal.mark = ".")
+  ) %>%
+  kable_paper("striped", full_width = TRUE) %>%
   pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 8)
-
-writeLines(
-  table, 
-  "output/appendix-tables/population.tex"
-)
+  pack_rows("Uganda", 5, 6)
 ```
-
 
 ## Uganda
 

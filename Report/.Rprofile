@@ -147,3 +147,29 @@ total_cis <-
       bind_rows
   }
   
+kable_by_group <- function(x, ...) {
+  kable(
+    x,
+    format = "html",
+    format.args = list(big.mark = ",", decimal.mark = "."),
+    ...
+  ) %>%
+    kable_paper("striped", full_width = TRUE) %>%
+    pack_rows("Malawi", 1, 4) %>%
+    pack_rows("Uganda", 5, 6)
+  
+}
+  
+kable_by_country <- function(x, ...) {
+  kable(
+    x,
+    format = "html",
+    format.args = list(big.mark = ",", decimal.mark = "."),
+    ...
+  ) %>%
+    kable_paper("striped", full_width = TRUE) %>%
+    pack_rows("Malawi", 1, 2) %>%
+    pack_rows("Uganda", 3, 3)
+  
+}
+
