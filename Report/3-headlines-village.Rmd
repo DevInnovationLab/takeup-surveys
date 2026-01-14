@@ -116,7 +116,6 @@ sanity_users <-
   group_by(country, sample_group, wp_intervention) %>%
   summarise(
     n = n_distinct(village_id),
-    hhs = mean(hhs),
     av_people = mean(users),
     av_people_non = mean(users_increased),
     across(
@@ -125,10 +124,16 @@ sanity_users <-
     )
   ) %>%
   mutate(
-    total_people = round(av_people * group_weight * vil_weight),
-    total_people_non = round(av_people_non * group_weight * vil_weight)
-  )
+    total_people = round(av_people * pop_vil * n / sampled_villages),
+    total_people_non = round(av_people_non * pop_vil * n / sampled_villages)
+  ) %>%
   select(country, sample_group, wp_intervention, sampled_villages, villages = n, pop_vil, av_people_non, total_people_non, av_people, total_people)
+```
+
+```{r}
+sanity_users %>%
+  select(-country) %>%
+  kable_by_group
 ```
 
 
@@ -170,7 +175,6 @@ people_per_group <-
         sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct,
-        households = .x %>% pull(hhs) %>% mean,
         households = .x %>% pull(hhs) %>% sum,
         weight = .x %>% pull(weight) %>% unique
       )
@@ -265,7 +269,7 @@ users_vil_responseonly <-
 users_outside <-
   hh_census %>%
   dplyr::filter(
-    !is.na(wp_intervention),
+    wp_intervention %in% c("ILC", "DSW"),
     !(sample_group != "ILC" & wp_intervention == "ILC")
   ) %>%
   group_by(country, sample_group) %>%
@@ -295,7 +299,7 @@ users_outside <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = n_villages/n_distinct(village_id)
+    weight = pop_vil/n_distinct(village_id)
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -337,10 +341,10 @@ users_vil_outside <-
 users_vilboundary <-
   hh_census %>%
   dplyr::filter(
-    !is.na(wp_intervention),
+    wp_intervention %in% c("ILC", "DSW"),
+    !(sample_group != "ILC" & wp_intervention == "ILC"),
     wp_invillage,
-    inclusion == "Within village boundaries",
-    !(sample_group != "ILC" & wp_intervention == "ILC")
+    inclusion == "Within village boundaries"
   ) %>%
   group_by(country, sample_group) %>%
   mutate(
@@ -369,7 +373,7 @@ users_vilboundary <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = n_villages/n_distinct(village_id)
+    weight = pop_vil/n_distinct(village_id)
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -410,7 +414,7 @@ users_vil_boundary <-
 ```{r}
 users_vil_misspoints <-
   map(
-    users_vilboundary %>%
+    users_village %>%
       mutate(
         users_increased = 
           case_when(
@@ -451,9 +455,9 @@ users_vil_misspoints <-
 users_func <-
   hh_census %>%
   dplyr::filter(
-    !is.na(wp_intervention),
-    wp_invillage,
-    !(sample_group != "ILC" & wp_intervention == "ILC")
+    wp_intervention %in% c("ILC", "DSW"),
+    !(sample_group != "ILC" & wp_intervention == "ILC"),
+    wp_invillage
   ) %>%
   group_by(country, sample_group) %>%
   mutate(
@@ -475,7 +479,7 @@ users_func <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = n_villages/n_distinct(village_id)
+    weight = pop_vil/n_distinct(village_id)
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -485,6 +489,7 @@ users_func <-
 users_vil_func <-
   map(
     users_func %>%
+      dplyr::filter(wp_intervention != "Non-program") %>%
       group_by(country, wp_intervention) %>%
       group_split(),
     ~ total_ci(
@@ -549,7 +554,7 @@ users_fo <-
   left_join(sample_sizes) %>%
   group_by(country, sample_group) %>%
   mutate(
-    weight = n_villages/n_distinct(village_id)
+    weight = pop_vil/n_distinct(village_id)
   ) %>%
   dplyr::filter(hhs > 1) %>%
   ungroup
@@ -628,7 +633,7 @@ plot_data %>%
   ) +
   facet_grid(
     country ~ wp_intervention,
-    scales = "free_x"
+    scales = "free"
   ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
   scale_fill_brewer(palette = "Dark2") +
@@ -648,7 +653,7 @@ ggplot2::ggsave(
   filename = "output/graphs/users-vil.png",  
   plot     = ggplot2::last_plot(),            
   width    = 8,
-  height   = 4.5,
+  height   = 6,
   units    = "in",
   dpi      = 300
 )
@@ -1259,7 +1264,7 @@ plot_data %>%
   ) +
   facet_grid(
     country ~ wp_intervention,
-    scales = "free_x"
+    scales = "free"
   ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
   scale_fill_brewer(palette = "Dark2") +
@@ -1267,7 +1272,7 @@ plot_data %>%
   theme +
   labs(
     y = NULL,
-    x = "Percent of tested households where color wheel\nTCR reading was at least 0.2 ppm"
+    x = "Percent of tested households where color wheel\nTCR reading was at least 0.2 mg/L"
   )
 ```
 
@@ -1278,7 +1283,7 @@ ggplot2::ggsave(
   filename = "output/graphs/chlorine-vil.png",  
   plot     = ggplot2::last_plot(),            
   width    = 8,
-  height   = 5,
+  height   = 6,
   units    = "in",
   dpi      = 300
 )
@@ -1393,7 +1398,7 @@ table <-
       " ", 
       "Household census" = 2, 
       "Country-level estimates" = 2, 
-      "Percent of color wheel readings ≥ 0.2 ppm" = 4
+      "Percent of color wheel readings ≥ 0.2 mg/L" = 4
     )
   ) %>%
   add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE)
@@ -1403,6 +1408,12 @@ writeLines(
   "output/tables/headlines-vil.tex"
 )
 ```
+
+```{r}
+table %>%
+  kable_by_country
+```
+
 
 ### By program and sample group
 
@@ -1423,7 +1434,6 @@ obs <-
 people <-
   people_per_group %>%
   left_join(
-    wp_sample_sizes %>%
     sample_sizes %>%
       group_by(country, wp_intervention, sample_group) %>%
       summarise(pop = sum(pop_vil))
@@ -1512,7 +1522,7 @@ table <-
       " " = 2, 
       "Household census" = 2, 
       "Country-level estimates" = 2, 
-      "Percent of color wheel readings ≥ 0.2 ppm" = 4
+      "Percent of color wheel readings ≥ 0.2 mg/L" = 4
     )
   ) %>%
   add_header_above(c(" ", " ", paste0("(", 1:8,")")), line = FALSE)
