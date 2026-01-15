@@ -636,8 +636,8 @@ plot_data %>%
     scales = "free"
   ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
-  scale_fill_brewer(palette = "Dark2") +
-  scale_color_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
+  scale_color_manual(values = c("#4575b4", "#FDB462")) +
   theme + 
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
   theme(legend.position = "none") +
@@ -1294,8 +1294,8 @@ plot_data %>%
     scales = "free"
   ) +
   scale_x_continuous(labels = ~ format(., big.mark = ",", scientific = FALSE)) +
-  scale_fill_brewer(palette = "Dark2") +
-  scale_color_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462"))+
+  scale_color_manual(values = c("#4575b4", "#FDB462"))+
   theme +
   labs(
     y = NULL,

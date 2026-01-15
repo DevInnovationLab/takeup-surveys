@@ -53,10 +53,30 @@ table.table-borderless {
 </style>')
 ```
 
+```{r}
+hh_census %>%
+  group_by(wp_id, wp_intervention, country, sample_group) %>%
+  summarise(
+    households_census = n()
+  ) %>%
+  inner_join(
+    wp_census %>%
+      select(wp_id, pm_users, wp_func, discfcr_02) %>%
+      dplyr::filter(!is.na(pm_users))
+  ) %>%
+  mutate(
+    proportion = pm_users/households_census
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(
+    n = n(),
+    mean = mean(proportion),
+    functional = mean(wp_func),
+    FCR = mean(discfcr_02, na.rm = TRUE)
+  ) %>%
+  dplyr::filter(wp_intervention %in% c("ILC", "DSW"))
+```
 # To-dos
-
-- the small difference between TCR and FCR in Evidence Action data points to people haing chlorinated recently
-- bring weights from main analysis so that numbers become the same
 
 ```{r}
 wp_census <-
@@ -861,7 +881,7 @@ plot <-
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme_minimal() +
   theme(
     legend.position = "none",
@@ -949,7 +969,7 @@ plot <-
     ncol = 1,
     scale = "free_x"
   ) +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme_minimal() +
   theme(
     legend.position = "none",
@@ -1042,7 +1062,7 @@ plot <-
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme_minimal() +
   theme(
     legend.position = "none",
@@ -1137,7 +1157,7 @@ plot <-
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme + 
   labs(
     x = NULL,
@@ -1229,7 +1249,7 @@ plot <-
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme_minimal() +
   theme(
     legend.position = "none",
@@ -1329,7 +1349,7 @@ hh_survey %>%
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme(
     legend.position = "none"
   ) + 
@@ -1416,7 +1436,7 @@ hh_survey %>%
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme(
     legend.position = "none"
   ) + 
@@ -1508,7 +1528,7 @@ by_country %>%
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462"))scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme(
     legend.position = "none"
   ) + 
@@ -1592,7 +1612,7 @@ hh_survey %>%
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme(
     legend.position = "none"
   ) + 
@@ -1676,7 +1696,7 @@ hh_survey %>%
   geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid(~ country, scale = "free_x") +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme(
     legend.position = "none"
   ) + 

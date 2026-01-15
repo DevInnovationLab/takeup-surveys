@@ -1,5 +1,44 @@
 # Reach estimates comparisons
 
+```{r}
+mon_survey_cl %>%
+  tabyl(wp_intervention_mon, wp_intervention) %>%
+  adorn_percentages %>%
+  adorn_pct_formatting()
+```
+```{r}
+hh_census %>%
+  group_by(wp_id, wp_intervention, country, sample_group) %>%
+  summarise(
+    households_census = n()
+  ) %>%
+  inner_join(
+    wp_census %>%
+      transmute(
+        wp_id, 
+        pm_users, 
+        outside = pm_users_outside/pm_users
+      ) %>%
+      dplyr::filter(!is.na(pm_users))
+  ) %>%
+  mutate(
+    proportion = pm_users/households_census
+  ) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  summarise(
+    n = n(),
+    users_prop = mean(proportion),
+    n_outside = sum(!(is.na(outside))),
+    outside_pop = mean(outside, na.rm = TRUE)
+  ) %>%
+  dplyr::filter(
+    wp_intervention %in% c("ILC", "DSW"),
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  )
+```
+
+
+
 ## All estimates
 
 ### Village-level
@@ -75,7 +114,7 @@ comparison <-
   geom_col() +
   geom_errorbar(width  = .2) +
   facet_wrap(~ country) + 
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
   theme + 
   labs(
     x = NULL,
@@ -111,7 +150,7 @@ users_outside_census <-
     ~ total_cis(
       outcomes = c("hh_members_increased"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
+        id = ~ village_id, # cluster IDs
         strata = ~ sample_group,
         prob = ~ weight,
         data = .x,
@@ -241,6 +280,14 @@ wf_step2 <-
 ### Water point-level, remove out-of-village households, promoter water points
 
 ```{r}
+pm_wps <-
+  wp_census %>%
+  dplyr::filter(promoter_surveyed) %>%
+  pull(wp_id)
+```
+
+
+```{r}
 wf_step3 <-
   hh_census_wp %>%
   dplyr::filter(
@@ -248,11 +295,11 @@ wf_step3 <-
     inclusion == "Within village boundaries",
     !(sample_group != "ILC" & wp_intervention == "ILC"),
     !is.na(wp_id),
-    wp_id %in% wp_census_pm$wp_id
+    wp_id %in% pm_wps
   ) %>%
   left_join(
     wp_census %>%
-      dplyr::filter(wp_id %in% wp_census_pm$wp_id) %>%
+      dplyr::filter(wp_id %in% pm_wps) %>%
       rename(wp_intervention = intervention) %>%
       group_by(country, sample_group, wp_intervention) %>%
       summarise(
@@ -281,7 +328,7 @@ wf_step3 <-
     ~ total_cis(
       outcomes = c("hh_members_increased"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
+        id = ~ village_id, # cluster IDs
         strata = ~ sample_group,
         prob = ~ weight,
         data = .x,
@@ -300,7 +347,7 @@ wf_step3 <-
 
 ```{r}
 wf_step4 <-
-  wp_census_pm %>%
+  wp_census %>%
   dplyr::filter(
     wp_func,
     intervention != "Non-program", 
@@ -363,13 +410,13 @@ wf_step4 <-
 
 ```{r}
 wf_data <-
-  start %>%
+  main %>%
   bind_rows(wf_step1) %>%
   bind_rows(wf_step2) %>%
   bind_rows(wf_step3) %>%
   bind_rows(wf_step4) %>%
-  bind_rows(end %>% select(-ub,-lb)) %>%
-  bind_rows(end %>% mutate(step = 6)) %>%
+  bind_rows(monitoring %>% select(-ub,-lb)) %>%
+  bind_rows(monitoring %>% mutate(step = 6)) %>%
   arrange(country, step) %>%
   group_by(country) %>%
   mutate(
