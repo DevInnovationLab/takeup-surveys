@@ -194,4 +194,21 @@ pm_survey <-
     !vil_replaced,
     !vil_dropped
   )
+
+pm_list <-
+  read_rds(
+    file.path(
+      path_box,
+      "Data",
+      "PromoterSurvey",
+      "DataSets",
+      "Constructed",
+      "pm-survey-households.rds"
+    )
+  ) %>% 
+  inner_join(
+    wp_census %>%
+      dplyr::filter(wp_func) %>%
+      transmute(wp_pm = wp_id)
+  )
 ```

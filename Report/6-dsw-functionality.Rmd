@@ -390,7 +390,30 @@ kable(
 
 ```{r}
 wp_census %>%
-  dplyr::filter(intervention == "Non-program") %>%
+  dplyr::filter(intervention == "DSW") %>%
+  summarise(
+    (mean(disp_filled, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) 
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention == "Non-program", sample_group == "ILC") %>%
+  group_by(country) %>%
+  summarise(
+    (mean(wp_func, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) %>%
+  kable(
+    format = "html",
+    col.names = c(" ", "Functional water points (%)")
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention == "Non-program", sample_group != "ILC") %>%
   group_by(country) %>%
   summarise(
     (mean(wp_func, na.rm = TRUE) * 100) %>% 
@@ -403,3 +426,82 @@ wp_census %>%
 ```
 
 
+```{r}
+wp_census %>%
+  dplyr::filter(
+    intervention == "DSW"
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    (mean(disp_func, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) %>%
+  kable(
+    format = "html",
+    col.names = c("Country", "Sample group", "Functional water points (%)")
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    intervention == "DSW",
+    disp_func
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    (mean(disp_filled, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) %>%
+  kable(
+    format = "html",
+    col.names = c("Country", "Sample group", "Functional water points (%)")
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    intervention == "DSW",
+    disp_func
+  ) %>%
+  group_by(country) %>%
+  summarise(
+    (mean(disp_filled, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) %>%
+  kable(
+    format = "html",
+    col.names = c("Country", "Functional water points (%)")
+  )
+```
+
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    intervention == "DSW"
+  ) %>%
+  mutate(discfcr_02 = replace_na(discfcr_02, FALSE)) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    (mean(discfcr_02, na.rm = TRUE) * 100) %>% 
+      round(1)
+  ) %>%
+  kable(
+    format = "html",
+    col.names = c("Country", "Sample group", "Functional water points (%)")
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(
+    intervention == "DSW"
+  ) %>%
+  mutate(discfcr_02 = replace_na(discfcr_02, FALSE)) %>%
+  summarise(
+    (mean(discfcr_02, na.rm = TRUE) * 100) %>% 
+      round(1)
+  )
+```

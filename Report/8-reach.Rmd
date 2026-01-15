@@ -510,6 +510,52 @@ ggsave(
 ```
 
 
+## Text
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    wp_func,
+    wp_intervention != "Non-program"
+    # country == "Malawi", 
+    # sample_group == "ILC", 
+    # wp_intervention == "ILC"
+  ) %>%
+  sumtable(
+    vars = "hh_members",
+    group = "promoter_list",
+    group.test = TRUE
+  )
+  
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    wp_func,
+    wp_intervention != "Non-program"
+  ) %>%
+  mutate(
+    group = paste(country, sample_group, wp_intervention, promoter_list)  
+  ) %>%
+  sumtable(
+    vars = "hh_members",
+    group = "group",
+    group.test = TRUE
+  )
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    wp_func,
+    wp_intervention != "Non-program"
+  ) %>%
+  feols(
+    hh_members ~ promoter_list | country + sample_group + wp_intervention,
+    cluster = ~ village_id
+  )
+```
 
 
 

@@ -3,8 +3,10 @@
 \caption{\label{tab:headlines-am}Primary outcomes estimated following the monitoring method}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{threeparttable}
 \begin{tabular}[t]{cccccccc}
 \toprule
+\multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)} & \multicolumn{1}{c}{(4)} & \multicolumn{1}{c}{(5)} & \multicolumn{1}{c}{(6)} & \multicolumn{1}{c}{(7)} & \multicolumn{1}{c}{(8)} \\
 \multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)} & \multicolumn{1}{c}{(4)} & \multicolumn{1}{c}{(5)} & \multicolumn{1}{c}{(6)} \\
 \multicolumn{1}{c}{ } & \multicolumn{2}{c}{Promoter survey} & \multicolumn{2}{c}{Country-level estimates} & \multicolumn{3}{c}{Percent of color wheel readings ≥ 0.2 mg/L} \\
 \cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-8}
@@ -12,14 +14,23 @@ Intervention & \#WP & \#HH & \#WP & \makecell[c]{People using\\DSW/ILC\\(95\% CI
 \midrule
 \addlinespace[0.3em]
 \multicolumn{8}{l}{\textbf{Malawi}}\\
-\hspace{1em}DSW & 150 & 6,162 & 16,198 & 2,921,319 & 490 & 28.5 & 24.3\\
-\hspace{1em} &  &  &  & (2,581,887, 3,260,751) &  & (22.6, 34.3) & (18.8, 29.8)\\
-\hspace{1em}ILC & 44 & 971 & 2,024 & 174,071 & 133 & 23.8 & 17.5\\
-\hspace{1em} &  &  &  & (147,217, 200,924) &  & (12.2, 35.4) & (7.5, 27.4)\\
+\hspace{1em}DSW & 150 & 6,162 & 16,198 & 2,899,109 & 556 & 28.5 & 23.6\\
+\hspace{1em} &  &  &  & (2,561,291, 3,236,926) &  & (23, 34.1) & (18.4, 28.9)\\
+\hspace{1em}ILC & 44 & 971 & 2,024 & 180,219 & 164 & 15.4 & 13\\
+\hspace{1em} &  &  &  & (152,316, 208,122) &  & (6.6, 24.2) & (4.4, 21.5)\\
 \addlinespace[0.3em]
 \multicolumn{8}{l}{\textbf{Uganda}}\\
-\hspace{1em}DSW & 116 & 4,500 & 17,718 & 4,023,065 & 441 & 43.6 & 30.6\\
-\hspace{1em} &  &  &  & (3,472,169, 4,573,961) &  & (36, 51.2) & (24.7, 36.6)\\
+\hspace{1em}DSW & 116 & 4,500 & 17,718 & 4,012,161 & 444 & 43.4 & 31.2\\
+\hspace{1em} &  &  &  & (3,459,260, 4,565,061) &  & (35.9, 50.9) & (25.2, 37.2)\\
 \bottomrule
-\end{tabular}}
+\end{tabular}
+\begin{tablenotes}
+\item[1] Confidence intervals are calculated based on standard errors clustered at the village level.
+\item[2] We limit the sample to functional water points present in the Promoter Survey for water point data, and to households in the Monitoring Survey for household data. In both cases, we exclude households using water points with ILC in DSW villages, since we did not design the sample to be representative of these cases.
+\item[3] The number of people using water points with DSW or ILC in the country is estimated by multiplying (1) the average number of households per water point, by (2) the average household size of a household using a water point, and by (3) the country number of water points of a given intervention.
+\item[4] In calculating the average number of households per water point for a given intervention, we take a simple average of the number of households per water point among water points of a given category. This means that each water point has weight 1. In calculating the average household size of households using water points in a given category, we take a simple average of the household sizes of households using water points in a given category. This means that each household with an observation receives a weight of 1.
+\item[5] To calculate the number of people using ILC water points in Malawi, we scale the country number of ILC water points (2024) by a factor of 0.85 (2025 \$	imes\$ 0.85 = 1720). This is to account for the fact that in our data collection process, if an ILC village had a non-functional water point, it was replaced. The functionality rate we identified was 85\%. We want to avoid biasing our estimates by not having villages with non-functional ILC in our sample of visited villages. We assume that the share of villages with non-functional ILC is the same in the population as it was in our sample. These villages will have 0 users and 0\% chlorination rates from Evidence Action interventions. Multiplying by 0.85 is thus equivalent to giving a 15\% weight to villages with no users and no chlorination.
+\item[6] The chlorination rates express the estimated average share of households with detected chlorine per functional water point, among households reported to be using the water point (by the promoter). We limit the sample to households in the Monitoring Survey. In calculating average chlorination rates, we take a simple mean of the chlorine test outcomes for a given category. This means that each household receives a weight of 1.
+\end{tablenotes}
+\end{threeparttable}}
 \end{table}

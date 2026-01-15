@@ -497,7 +497,81 @@ hh_census %>%
   adorn_pct_formatting()
 ```
 
+### Number of program water sources per village
+
+```{r}
+wp_census %>%
+  group_by(village_id, country, sample_group) %>%
+  summarise(
+    across(
+      c(dsw, ilc),
+      ~ sum(., na.rm = TRUE)
+    )
+  ) %>%
+  group_by(country, sample_group) %>%
+  summarise(
+    across(
+      c(dsw, ilc),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+  
+```
+
 ### Use of water points served by Evidence Action
+
+```{r}
+hh_census %>%
+  dplyr::filter(response) %>%
+  group_by(
+    country, sample_group 
+  ) %>%
+  summarise(
+    across(
+      c(dsw, ilc),
+      ~ mean(., na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(response) %>%
+  tabyl(wp_intervention) %>%
+  adorn_pct_formatting()
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    response,
+    !(wp_intervention %in% c("DSW", "ILC"))
+  ) %>%
+  tabyl(wp_secweek) %>%
+  adorn_pct_formatting() %>%
+  adorn_totals
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    response
+  ) %>%
+  mutate(nonprogram = !(wp_intervention %in% c("DSW", "ILC"))) %>%
+  tabyl(wp_secweek, nonprogram) %>%
+  adorn_totals
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    response,
+    !(wp_intervention %in% c("DSW", "ILC")),
+    wp_secweek
+  ) %>%
+  tabyl(wtmt_dispcl) %>%
+  adorn_pct_formatting()
+```
 
 ```{r}
 hh_census %>%
@@ -527,7 +601,7 @@ hh_census <-
   hh_census %>%
   mutate(
     wp_single = wp_count_pastmonth == 1,
-    wp_nonprogram = wp_intervention == "Non-program",
+    wp_nonprogram = !(wp_intervention %in% c("DSW", "ILC")),
     wp_intervention = fct_relevel(wp_intervention, "Non-program")
   )
 
@@ -541,11 +615,50 @@ hh_census %>%
 
 ```{r}
 hh_census %>%
-  dplyr::filter(!wp_nonprogram) %>%
-  group_by(country, sample_group) %>%
+  dplyr::filter(
+    response,
+    !(ilc & sample_group != "ILC")
+  ) %>%
+  mutate(wp_intervention = if_else(wp_nonprogram, "None", as.character(wp_intervention))) %>%
+  group_by(country, sample_group, wp_intervention) %>%
   summarise(
     mean = mean(wp_secweek, na.rm = TRUE)
   )
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    response,
+    !(ilc & sample_group != "ILC")
+  ) %>%
+  mutate(wp_intervention = if_else(wp_nonprogram, "None", as.character(wp_intervention))) %>%
+  group_by(wp_intervention) %>%
+  summarise(
+    mean = mean(wp_secweek, na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_census %>%
+  dplyr::filter(
+    response,
+    !(ilc & sample_group != "ILC")
+  ) %>%
+  mutate(
+    wp_intervention = 
+      if_else(
+        wp_nonprogram, 
+        "None", 
+        as.character(wp_intervention)
+      ) %>%
+      fct_relevel("None")
+  ) %>%
+  feols(
+    wp_secweek ~ wp_intervention | country + sample_group,
+    cluster = ~ village_id
+  ) %>%
+  summary
 ```
 
 Difference between interventions
@@ -579,9 +692,37 @@ feols(
 ```
 
 
+```{r}
+hh_survey %>%
+  dplyr::filter(wp_intervention %in% c("DSW", "ILC")) %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  mutate(primary = where_collect == "From the water point primary water point (${wp_name_pl})") %>%
+  summarise(mean(primary, na.rm = TRUE))
+```
 
 
+```{r}
+hh_survey %>%
+  dplyr::filter(
+    wp_intervention %in% c("DSW", "ILC"),
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  ) %>%
+  group_by(country, wp_intervention) %>%
+  mutate(primary = where_collect == "From the water point primary water point (${wp_name_pl})") %>%
+  summarise(mean(primary, na.rm = TRUE))
+```
 
+
+```{r}
+hh_survey %>%
+  dplyr::filter(
+    water_sample,
+    wp_intervention %in% c("DSW", "ILC"),
+    !(sample_group != "ILC" & wp_intervention == "ILC")
+  ) %>%
+  tabyl(where_collect) %>%
+  adorn_pct_formatting()
+```
 
 
 ### Average household size

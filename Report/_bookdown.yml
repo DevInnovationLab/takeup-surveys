@@ -7,4 +7,5 @@ rmd_files: [
   "3-headlines-village.Rmd",
   "4-headlines-wp.Rmd",
   "5-headlines-monitoring.Rmd",
+  "6-dsw-functionality.Rmd"
 ]
