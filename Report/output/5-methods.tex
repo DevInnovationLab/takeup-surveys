@@ -2,9 +2,9 @@
 
 This Section describes the methods followed to calculate our two main outcomes. Program reach is estimated using the number of people whose primary source of drinking water has DSW/ILC, and Section \ref{sec:methods-people} describes how this number is calculated. Section \ref{sec:methods-cl} describes how we use the TCR detection rate from household water samples to estimate adoption rates for chlorine treatment of drinking water. Section \ref{sec:methods-mon} describes how these methods are adapted to calculate estimates that approximate those that would be obtained under Evidence Action Adoption.
 
-\subsection{Number of people using water points with DSW/ILC}\label{sec:methods-people}
+\subsection{Reach estimates}\label{sec:methods-people}
 
-The number of people served by Evidence Action is calculated based on the number of people living in households whose self-reported primary source of drinking water has a DSW dispenser or is connected to ILC. Standard errors are clustered by village, and sample group weights are based on the population of villages and water points in each country.
+The number of people reacher by Evidence Action safe water program is calculated based on the number of people living in households whose self-reported primary source of drinking water has a DSW dispenser or is connected to ILC. Standard errors are clustered by village, and sample group weights are based on the population of villages and water points in each country.
 
 We use the R package \textit{survey} to estimate the country-level reach and the confidence interval around it.\footnote{\textcite{survey}.} The point estimates are equivalent to the procedure described below, but the package also calculates the standard errors clustered by village and corrected for sampling weights:
 
@@ -17,19 +17,19 @@ We use the R package \textit{survey} to estimate the country-level reach and the
 Our estimates also include the adjustments listed below. We also present sensitivity checks that change each of these at a time.
 
 \begin{itemize}
-    \item \textcolor{blue}{We include villages where no ILC water collection points were functional -- for example if they were replaced for this reason or if they also had water points with DSW -- in the calculation of the average number of households using water points with ILC in our sample, assigning zero ILC users to each of them.} 
-    \item \textcolor{blue}{We exclude households using water points with DSW/ILC located outside of village boundaries from village-level estimates. This is to avoid double counting these households when multiplying the average number of users per village by the number of villages served in the country (that is, we assume this household would have been counted in the village where the water point it uses is located).}
+    \item We include visited villages where no ILC water collection points were functional -- which were generally replaced for this reason, unless they had water points with DSW -- in the calculation of the average number of households using water points with ILC in our sample, assigning zero ILC users to each of them.
+    \item We exclude households that use water points with DSW/ILC if the water points are located outside of village boundaries from village-level estimates. This is to avoid double counting these households when multiplying the average number of users per village by the number of villages served in the country (that is, we assume this household would have been counted in the village where the water point it uses is located).
     \item We include households living up to 200 meters outside of the village boundaries.
     \item We restrict the sample to households using water points that were confirmed to have DSW/ILC in the Evidence Action database, as opposed to relying only on field officers' reports.
     \item We account for non-responses by assuming that the share of households using a water point with DSW/ILC is the same for non-respondents as for respondents. Therefore, between Step 2 and Step 3, we divide the village-level estimate by the response rate in the same village.
-    \item \textcolor{blue}{In Step 3, when using the water point as the unit of reference, we multiply the number of water points in the country by the functionality rate within each village group and intervention.}
+    \item In Step 3, when using the water point as the unit of reference, we multiply the number of water points in the country by the functionality rate within each village group and intervention. We thus assume that the functionality rate in the country is the same as that identified in our sample.
 \end{itemize}
 
 Since our unit of sampling is the village, our main estimates use the village as the unit of reference in Step 2. We also report estimates using the water point as the unit of reference, as those may be more comparable to Evidence Action's Adoption Monitoring estimates.
 
-\subsection{Share of households using water points with DSW/ILC where chlorine was detected in the drinking water sample}\label{sec:methods-cl}
+\subsection{Adoption estimates}\label{sec:methods-cl}
 
-The chlorine adoption rate is estimated by calculating the share of households in the census sample of the Household Survey using a DSW/ILC water point that had chlorine detected in the water sample tested during the Household Survey.
+The chlorine treatment adoption rate is estimated by calculating the share of households in the census sample of the Household Survey using a DSW/ILC water point that had chlorine detected in the water sample tested during the Household Survey.
 
 \textit{We define chlorine detection as meeting the 0.2 mg/L threshold for Total Chlorine Residual, measured using a color wheel.}
 \begin{itemize}
