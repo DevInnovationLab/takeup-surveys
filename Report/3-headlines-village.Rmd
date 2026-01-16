@@ -142,7 +142,7 @@ sanity_users %>%
   group_by(country, wp_intervention) %>%
   summarise(
     villages = sum(villages),
-    total_people = sum(total_people)
+    total_people = sum(total_people_non)
   ) %>%
   ungroup %>%
   select(-country) %>%
@@ -167,7 +167,8 @@ people_per_group <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -206,7 +207,8 @@ people_per_country <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -244,7 +246,8 @@ users_vil_responseonly <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -316,7 +319,8 @@ users_vil_outside <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -390,7 +394,8 @@ users_vil_boundary <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -430,7 +435,8 @@ users_vil_misspoints <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -497,7 +503,8 @@ users_vil_func <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -571,7 +578,8 @@ users_vil_fo <-
         design = svydesign(
           id = ~ village_id,
           data = .x, 
-          weights = ~ weight
+          weights = ~ weight,
+          strata = ~ sample_group
         )
       ) %>%
       mutate(
@@ -692,30 +700,23 @@ chlorination_data <-
 
 ### Sanity check
 
+
 ```{r}
 chlorination_data %>%
-  group_by(village_id, sample_group, wp_intervention_type, country) %>%
+  group_by(country, wp_intervention, sample_group) %>%
   summarise(
     across(
       c("disctcr_02", "discfcr_02"),
       ~ mean(., na.rm = TRUE)
     ),
-    hhs = n()
-  ) %>%
-  group_by(country, sample_group, wp_intervention_type) %>%
-  summarise(
-    across(
-      c("disctcr_02", "discfcr_02"),
-      ~ mean(., na.rm = TRUE)
-    ),
-    hhs = sum(hhs),
-    villages = n()
+    hhs = n(), 
+    villages = n_distinct(village_id)
   )
 ```
 
 ```{r}
 chlorination_data %>%
-  group_by(country, sample_group, wp_intervention_type) %>%
+  group_by(country, wp_intervention) %>%
   summarise(
     across(
       c("disctcr_02", "discfcr_02"),
@@ -728,35 +729,6 @@ chlorination_data %>%
 
 ### Final numbers
 
-#### Separating ILC WP and ILC WCP
-
-```{r}
-cl_village_noweights_ilc <-
-  chlorination_data %>%
-  group_by(country, sample_group, wp_intervention_type) %>%
-  group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE
-        )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention_type) %>% unique,
-        hhs = .x %>% pull(household_id) %>% n_distinct,
-        villages = .x %>% pull(village_id) %>% n_distinct,
-      )
-  ) %>%
-  bind_rows %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
-  arrange(desc(outcome))
-```
-
 #### By sample group and program
 
 ```{r}
@@ -768,7 +740,7 @@ cl_village_noweights_samplegroup <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           nest = TRUE
         )
@@ -879,7 +851,7 @@ cl_village_noweights_country <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           nest = TRUE,
           strata = ~ sample_group
@@ -919,7 +891,7 @@ cl_village_nottested <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           strata = ~ sample_group,
           nest = TRUE
@@ -948,7 +920,7 @@ cl_village_vilweights <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           strata = ~ sample_group,
           prob = ~ weight_equal,
@@ -979,7 +951,7 @@ cl_village_userweights <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           prob = ~ weight_users,
           strata = ~ sample_group,
@@ -1010,7 +982,7 @@ cl_village_rain <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           nest = TRUE,
           strata = ~ sample_group
@@ -1048,7 +1020,7 @@ cl_village_int <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
           nest = TRUE,
           strata = ~ sample_group
@@ -1104,7 +1076,7 @@ cl_village_fo <-
     ~ mean_cis(
         outcomes = c("discfcr_02", "disctcr_02"),
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           strata = ~ sample_group,
           data = .,
           nest = TRUE

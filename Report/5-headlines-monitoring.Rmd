@@ -136,7 +136,8 @@ people_per_hh <-
       design = svydesign(
         id = ~ village_id,      # PSU (here: villages)
         data = .,
-        nest = TRUE
+        nest = TRUE,
+        strata = ~ sample_group
       )
     ) %>%
       mutate(
@@ -295,7 +296,8 @@ chlorine_am <-
         design = svydesign(
           id = ~ village_id,
           data = .x,
-          nest = TRUE
+          nest = TRUE,
+          strata = ~ sample_group
         )
     ) %>%
       mutate(

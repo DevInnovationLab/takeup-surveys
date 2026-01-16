@@ -142,9 +142,10 @@ cl_criteria_group <-
     ~ mean_cis(
         outcomes = criteria,
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
-          nest = TRUE
+          nest = TRUE,
+          strata = ~ sample_group
         )
     ) %>%
       mutate(
@@ -254,9 +255,10 @@ est <-
     ~ mean_cis(
         outcomes = criteria,
         design = svydesign(
-          id = ~ village_id + wp_id,      # PSU (here: villages)
+          id = ~ village_id,      # PSU (here: villages)
           data = .,
-          nest = TRUE
+          nest = TRUE,
+          strata = ~ sample_group
         )
     ) %>%
       mutate(

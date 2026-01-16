@@ -29,14 +29,14 @@ users_data_wp <-
       rename(wp_intervention = intervention) %>%
       group_by(country, sample_group, wp_intervention) %>%
       summarise(
+        sampled_points = n(),
         func_rate = mean(wp_func, na.rm = TRUE)
       )
   ) %>%
   group_by(country, sample_group, wp_intervention) %>%
   mutate(
-    func_points = func_rate * pop_points,
-    weight = n_distinct(wp_id)/func_points,
-    weight_nofunc = n_distinct(wp_id)/pop_points
+    weight = pop_points/sampled_points,
+    weight_nofunc = pop_points
   ) %>% 
   ungroup
 ```
@@ -61,16 +61,16 @@ users_data_wp <-
 group <-
   users_data_wp %>%
   group_by(
-    wp_id, wp_intervention, sample_group, country, pop_points, func_points
+    wp_id, wp_intervention, sample_group, country, pop_points, sampled_points, func_rate
   ) %>%
   summarise(
     users = sum(hh_members),
     users_increased = sum(hh_members_increased)
   ) %>%
   group_by(
-    country, sample_group, wp_intervention, pop_points, func_points
-  ) %>%
+    country, sample_group, wp_intervention, pop_points, sampled_points, func_rate) %>%
   summarise(
+    n = n_distinct(wp_id),
     across(
       c(users, users_increased),
       ~ mean(.)
@@ -84,12 +84,10 @@ group <-
     ),
     across(
       c(users, users_increased),
-      ~ . * func_points,
+      ~ . * pop_points * n / sampled_points,
       .names = "{.col}_func"
     )
   )
-
-group
 ```
 
 ```{r}
@@ -117,11 +115,11 @@ users_wp <-
     ~ total_cis(
       outcomes = c("hh_members_increased"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
+        id = ~ village_id, # cluster IDs
+        weights = ~ weight,
         data = .x,
-        nest = TRUE
+        nest = TRUE,
+        strata = ~ sample_group
       )
     ) %>%
       mutate(
@@ -136,6 +134,8 @@ users_wp <-
   bind_rows() %>%
   select(country, sample_group, wp_intervention, outcome, everything()) %>%
   arrange(outcome)
+
+users_wp
 ```
 
 ```{r}
@@ -149,11 +149,11 @@ users_wp_country <-
     ~ total_cis(
       outcomes = c("hh_members_increased"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
+        id = ~ village_id, # cluster IDs
+        weights = ~ weight,
         data = .x,
-        nest = TRUE
+        nest = TRUE,
+        strata = ~ sample_group
       )
     ) %>%
       mutate(
@@ -167,6 +167,8 @@ users_wp_country <-
   bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(outcome)
+
+users_wp_country
 ```
 
 ```{r}
@@ -264,9 +266,10 @@ cl_wp_sample <-
     ~ mean_cis(
       outcomes = c("disctcr_02", "discfcr_02"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
+        id = ~ village_id, # cluster IDs
         data = .x,
-        nest = TRUE
+        nest = TRUE,
+        strata = ~ sample_group
       ) 
     ) %>%
       mutate(
@@ -296,9 +299,10 @@ cl_wp_ilc <-
     ~ mean_cis(
       outcomes = c("disctcr_02", "discfcr_02"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
+        id = ~ village_id, # cluster IDs
         data = .x,
-        nest = TRUE
+        nest = TRUE,
+        strata = ~ sample_group
       ) 
     ) %>%
       mutate(
@@ -327,9 +331,10 @@ cl_wp_noweights <-
     ~ mean_cis(
       outcomes = c("disctcr_02", "discfcr_02"),
       design = svydesign(
-        id = ~ village_id + wp_id, # cluster IDs
+        id = ~ village_id, # cluster IDs
         data = .x,
-        nest = TRUE
+        nest = TRUE,
+        strata = ~ sample_group
       ) 
     ) %>%
       mutate(
