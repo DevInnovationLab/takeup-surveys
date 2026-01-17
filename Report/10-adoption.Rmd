@@ -1,842 +1,5 @@
 # Comparsion of chlorine adoption estimates
 
-## Are estimates different?
-
-```{r}
-plot_data <-
-  list(
-    "Census sample,\nvillage-level\n(main estimate)" = cl_village_noweights_country,
-    "Census sample,\nwater point-level" = cl_wp_noweights,
-    "Promoter sample\n(Adoption Monitoring\nmethod)" = chlorine_am %>% rename(wp_intervention = wp_intervention_mon)
-  ) %>%
-  map(
-    ~ .x %>%
-      dplyr::filter(outcome == "disctcr_02") %>%
-      select(country, wp_intervention, outcome, mean, ub, lb)
-  ) %>%
-  bind_rows(.id = "label") %>%
-  mutate(
-    across(
-      c(mean, ub, lb),
-      ~ . * 100
-    ),
-    main = (label == "Census sample,\nvillage-level\n(main estimate)")
-  ) %>%
-  dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC")) 
-
-plot <-
-  plot_data %>%
-  ggplot(
-    aes(
-      x = label,
-      y = mean,
-      ymin = lb,
-      ymax = ub,
-      fill = main
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width  = .2) +
-  facet_grid(wp_intervention ~ country) + 
-  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
-  theme + 
-  labs(
-    x = NULL,
-    y = NULL
-  )  +
-  scale_y_continuous(labels = scales::comma)
-
-plot
-```
-
-```{r}
-ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-methods.png",  
-  plot     = plot,            
-  width    = 8,
-  height   = 6,
-  units    = "in",
-  dpi      = 300
-)
-```
-
-
-
-# Scrap
-
-## ILC
-
-
-```{r}
-mon_survey_cl %>%
-  mutate(
-    wp_intervention_self = case_when(
-      hh_ilc ~ "ILC",
-      hh_dsw ~ "DSW",
-      !is.na(hh_ilc) ~ "Non-program"
-    ),
-    confirmed = 
-      wp_intervention_mon == wp_intervention |
-      wp_intervention_mon == wp_intervention_self
-  ) %>%
-  group_by(country, wp_intervention_mon, confirmed) %>%
-  summarise(
-    n = n(),
-    across(
-      c(disctcr_02, disctcr_02),
-      ~ mean(., na.rm = TRUE)
-    )
-  ) %>%
-  group_by(country, wp_intervention_mon) %>%
-  mutate(
-    pct = n/sum(n)
-  )
-```
-
-```{r}
-wp_census %>%
-  mutate(
-    wpt_disctcr_02 = case_when(closer ~ disctcr_02),
-    wpt_disctcr_02 = case_when(closer ~ disctcr_02)
-  ) %>%
-  group_by(ea_ilc_wpt) %>%
-  mutate(
-    across(
-      c(wpt_disctcr_02, wpt_disctcr_02),
-      ~ any(., na.rm = TRUE)
-    )
-  ) %>%
-  ungroup %>%
-  mutate(
-    across(
-      c(wpt_disctcr_02, wpt_disctcr_02),
-      ~ case_when(
-        intervention == "ILC" ~ .
-      )
-    )
-  ) %>%
-  dplyr::filter(intervention %in% c("ILC", "DSW")) %>%
-  group_by(country, intervention, promoter_surveyed) %>%
-  summarise(
-    across(
-      c(wp_func, disctcr_02, disctcr_02, wpt_disctcr_02, wpt_disctcr_02),
-      list(
-        n = ~ sum(!is.na(.)),
-        mean = ~ mean(., na.rm = TRUE)
-      )
-    )
-  )
-```
-
-```{r}
-mon_survey_cl %>%
-  mutate(
-    wp_intervention_self = case_when(
-      hh_ilc ~ "ILC",
-      hh_dsw ~ "DSW",
-      !is.na(hh_ilc) ~ "Non-program"
-    ),
-    confirmed = 
-      wp_intervention_mon == wp_intervention |
-      wp_intervention_mon == wp_intervention_self
-  ) %>%
-  dplyr::filter(
-    wp_intervention_mon == "ILC", confirmed
-  ) %>%
-  feols(
-    disctcr_02 ~ 1,
-    cluster = ~ village_id,
-    data = .
-  ) %>%
-  tidy(conf.int = TRUE)
-```
-
-
-```{r}
-mon_survey_cl %>%
-  mutate(
-    wp_intervention_self = case_when(
-      hh_ilc ~ "ILC",
-      hh_dsw ~ "DSW",
-      !is.na(hh_ilc) ~ "Non-program"
-    ),
-    confirmed = 
-      wp_intervention_mon == wp_intervention |
-      wp_intervention_mon == wp_intervention_self
-  ) %>%
-  dplyr::filter(
-    wp_intervention_mon == "ILC",
-    confirmed
-  ) %>%
-  summarise(
-    across(
-      c(wp_func, wp_disctcr_02, wp_disctcr_02),
-      list(
-        n = ~ sum(!is.na(.)),
-        mean = ~ mean(., na.rm = TRUE)
-      )
-    )
-  )
-```
-
-
-```{r}
-pacman::p_load(
-  tidyverse,
-  broom,
-  broom.helpers,
-  fixest,
-  estimatr,
-  stargazer,
-  modelsummary,
-  kableExtra,
-  sf, 
-  vtable,
-  janitor,
-  ggtext
-)
-
-knitr::opts_chunk$set(
-  warning = FALSE,
-  message = FALSE,
-  echo = FALSE
-)
-```
-
-```{r, echo=FALSE, results='asis'}
-cat('<style>
-/* Target the tinytable container */
-.container:has(table.table-borderless) {
-  display: flex !important;
-  justify-content: center !important;
-  width: 100% !important;
-  overflow-x: auto !important;
-}
-
-/* Ensure the table itself scales properly */
-table.table-borderless {
-  width: auto !important;
-  margin: 0 auto !important;
-  font-size: 1em !important;  /* Changed from 0.85em to 1em (normal size) */
-}
-
-/* Make sure table cells have adequate padding */
-.table-borderless td, .table-borderless th {
-  white-space: nowrap !important;
-}
-</style>')
-```
-
-```{r}
-hh_census %>%
-  group_by(wp_id, wp_intervention, country, sample_group) %>%
-  summarise(
-    households_census = n()
-  ) %>%
-  inner_join(
-    wp_census %>%
-      select(wp_id, pm_users, wp_func, disctcr_02) %>%
-      dplyr::filter(!is.na(pm_users))
-  ) %>%
-  mutate(
-    proportion = pm_users/households_census
-  ) %>%
-  group_by(country, sample_group, wp_intervention) %>%
-  summarise(
-    n = n(),
-    mean = mean(proportion),
-    functional = mean(wp_func),
-    FCR = mean(disctcr_02, na.rm = TRUE)
-  ) %>%
-  dplyr::filter(wp_intervention %in% c("ILC", "DSW"))
-```
-# To-dos
-
-```{r}
-wp_census <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "WaterPointCensus",
-      "DataSets",
-      "Final",
-      "wp-census.rds"
-    )
-  ) %>%
-  st_drop_geometry  %>%
-  mutate(
-    intervention_fo = case_when(
-      wp_dsw ~ "DSW",
-      wp_ilc ~ "ILC"
-    ),
-    closer = (ilc_wcp & str_detect(ea_id, "001^")) | ilc_wp
-  )
-```
-
-```{r}
-promoter_survey <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "PromoterSurvey",
-      "DataSets",
-      "Constructed",
-      "pm-survey-households.rds"
-    )
-  ) %>%
-  select(-village_id)
-```
-
-```{r}
-hh_census_all <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdCensus",
-      "DataSets",
-      "Final",
-      "hh-census.rds"
-    )
-  ) %>%
-  mutate(
-    hhh_fem = hhh_gender == "Female",
-    hhh_primary_educ = !(hhh_educ %in% c("No formal education / Never attended school", "None", "Pre-primary", "Some Primary School (Did not complete Standard 8)")),
-    inclusionyn = str_detect(inclusion, "Within"),
-    wp_source = wp_source == "From a water point in this village",
-    any_rank = household_id %in% (promoter_survey %>% dplyr::filter(!is.na(rank)) %>% pull(household_id))
-  )
-
-hh_census <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdCensus",
-      "DataSets",
-      "Final",
-      "hh-census.rds"
-    )
-  ) %>%
-  select(
-    household_id,
-    inclusion,
-    #visit,
-    dsw,
-    country,
-    wp_count_pastmonth
-  )
-
-```
-
-
-```{r}
-hh_survey <-
-  read_rds(
-    file.path(
-      path_box,
-      "Data",
-      "HouseholdSurvey",
-      "DataSets",
-      "Final",
-      "hh-survey.rds"
-    )
-  ) %>%
-  group_by(village_id, survey) %>%
-  mutate(not_first_day = date > min(date)) %>%
-  group_by(household_id, survey) %>%
-  mutate(
-    intervention_selfreport = case_when(
-      hh_dsw ~ "DSW",
-      hh_ilc ~ "ILC"
-    ),
-    intervention_fo = case_when(
-      wp_dsw ~ "DSW",
-      wp_ilc ~ "ILC"
-    ),
-    resp_fem = resp_sex == "Female",
-    resp_primary_educ = resp_educ >= "Primary",
-    hhh_fem = hhh_sex == "Female",
-    hhh_primary_educ = !(hhh_educ %in% c("No formal education / Never attended school", "None", "Pre-primary", "Some Primary School (Did not complete Standard 8)")),
-    collect_primary = where_collect == "From the water point primary water point (${wp_name_pl})",
-    waterprep_12minus = howlong_waterprep == "Less than 12 hrs ago [today]",
-    collect_child = str_detect(who_collected, "18"),
-    collect_resp = who_collected == "The respondent",
-    across(
-      c(hh_pregnant, hh_under2, hh_under5),
-      ~ . > 0
-    ),
-    promoter_list = household_id %in% promoter_survey$household_id,
-    rank_u5 = household_id %in% (promoter_survey %>% dplyr::filter(rank <= 4) %>% pull(household_id)),
-    any_rank = household_id %in% (promoter_survey %>% dplyr::filter(!is.na(rank)) %>% pull(household_id)),
-    in_monitoring = any(survey == "Monitoring Survey"),
-    in_household = any(survey == "Household Survey")
-  ) %>%
-  left_join(hh_census) %>%
-  dplyr::filter(
-    !(survey == "Household Survey" & wp_intervention != "DSW"),
-    wp_intervention != "ILC",
-    sample_group != "ILC"
-  )
-```
-
-```{r}
-
-matched <- 
-  hh_survey %>%
-  left_join(
-    promoter_survey,
-    by = "household_id",
-    relationship = "many-to-many"
-  ) %>%
-  left_join(
-    hh_census %>% 
-      select(
-        household_id, 
-        inclusion
-      ),
-    by = "household_id",
-    relationship = "many-to-many"
-  ) %>%
-  left_join(
-    wp_census %>%
-      transmute(
-        wp_pm = wp_id, 
-        wp_pm_intervention = intervention
-      )
-  ) %>%
-  group_by(wp_pm) %>%
-  mutate(max_rank = max(rank, na.rm = TRUE)) %>%
-  group_by(village_id, survey) %>%
-  mutate(not_first_day = date > min(date)) %>%
-  group_by(household_id) %>%
-  mutate(
-    in_monitoring = any(survey == "Monitoring Survey"),
-    in_household = any(survey == "Household Survey")
-  ) %>%
-  ungroup %>%
-  mutate(
-    program = case_when(
-      survey == "Household Survey" ~ wp_intervention,
-      survey == "Monitoring Survey" ~ wp_pm_intervention
-    ),
-    rank = as.numeric(rank),
-    replacement = rank > 4,
-    replaced = rank < max_rank,
-    replacement_status = case_when(
-      replaced & !in_monitoring & survey == "Household Survey" ~  "Replaced",
-      replacement & survey == "Monitoring Survey" ~  "Replacement",
-    ),
-    promoter_right = wp_pm == wp_id,
-    across(
-      c(hh_pregnant, hh_under2, hh_under5),
-      ~ . > 0
-    )
-  ) 
-
-by_country <-
-  matched %>%
-  group_by(country) %>%
-  group_split() %>%
-  set_names(c("Malawi", "Uganda"))
-
-marginal_effects <- function(data, x, cluster) {
-  c("disctcr_02") %>%
-    map(
-      ~ feols(
-        paste(., "~", x) %>% as.formula,
-        cluster = paste("~ ", cluster),
-        data = data
-      )
-    ) 
-}
-```
-
-```{r}
-balance_vars <-
-  c(
-    # "resp_age",
-    # "resp_fem",
-    # "resp_primary_educ",
-    "Age of household head (years)" = "hhh_age", 
-    "Household head is a woman" = "hhh_fem", 
-    "Household head completed primary education" = "hhh_primary_educ",
-    "Number of household members" = "hh_members", 
-    "At least one household member is pregnant" = "hh_pregnant", 
-    "At least one household member is under 2 yo" = "hh_under2",
-    "At least one household member is under 2 yo" = "hh_under5",
-    "Inclusion criterion" = "inclusion",
-    "Distance to primary source of drinkig water (m)" = "wp_dist", 
-    "Distance to nearest water point with DSW (m)" = "evac_dist",
-    #"pm_dist",
-    "Household pays to use the primary source of drinking water" = "wp_pay",
-    #"wp_func", 
-    "Dispenser was filled" = "wp_dsw_chlorine", 
-    "Dispenser had TCR > 0.2 mg/L" = "wp_disctcr_02", 
-    "Dispenser had FCR > 0.2 mg/L" = "wp_disctcr_02",
-    "Water for children is prepared differently" = "prep_different", 
-    "Water was prepared less than 12h before testing" = "waterprep_12minus", 
-    "Water tested was combined with old or untreated water" = "mix", 
-    "Tested water was collected from primary water source" = "collect_primary", 
-    "Tested water was collected by the respondent" = "collect_resp", 
-    "Tested water was collected by a child" = "collect_child",
-    "Household was aware of upcoming data collection" = "int_warned", 
-    "Promoter informed the household of upcoming data collection" = "int_promoter"
-  )
-```
-
-
-```{r}
-balance_vars_census <-
-  c(
-    "Age of household head (years)" = "hhh_age", 
-    "Household head is a woman" = "hhh_fem", 
-    "Household head completed primary education" = "hhh_primary_educ",
-    "Number of household members" = "hh_members", 
-    "At least one household member is pregnant" = "hh_pregnant", 
-    "At least one household member is under 2 yo" = "hh_under2yn",
-    "At least one household member is under 2 yo" = "hh_under5yn",
-    "Within village boundaries" = "inclusionyn",
-    "Distance to primary source of drinkig water (m)" = "wp_dist", 
-    "Distance to nearest water point with DSW (m)" = "evac_dist",
-    #"pm_dist",
-    "Primary source of drinking water within village boundaries" = "wp_source",
-    "Uses more than one water source for drinking water" = "wp_secweek",
-    "Number of water sources used in the past month" = "wp_count_pastmonth",
-    "Household pays to use the primary source of drinking water" = "wp_pay",
-    "Primary water point is functional" = "wp_func", 
-    "Dispenser was filled" = "wp_disp_filled", 
-    "Dispenser had TCR > 0.2 mg/L" = "wp_disctcr_02", 
-    "Dispenser had FCR > 0.2 mg/L" = "wp_disctcr_02",
-    "Number of promoter lists mentioned" = "promoter_list_mentions"
-  )
-```
-
-
-## 1.2 Represented water points
-
-```{r}
-wp_counts <-
-  wp_census %>%
-  dplyr::filter(
-    sample_group != "ILC",
-    intervention == "DSW"
-  ) %>%
-  group_by(country) %>%
-  summarise(
-    N = n(),
-    count = sum(promoter_surveyed),
-    pct = (mean(promoter_surveyed) %>% round(3)) * 100
-  )
-```
-
-
-Tables [2](#tab:wp-balance-mw) and [3](#tab:wp-balance-ug) compare characteristics of water points for which promoters were surveyed versus those for which no promoter was found in Malawi and Uganda, respectively. Promoter surveys were conducted in `r round(11500/136, 1)`% of the water points with 136 DSW identified in Malawi, and in `r round(11600/185, 1)`% of the 185 water points in Uganda. In both countries, an F-test for joint orthogonality indicates that water points excluded from the promoter survey are not significantly different from those covered. However, there are imbalances in individual characteristics, particularly those linked to dispenser functionality.
-
-```{r}
-wp_cl_counts <-
-  hh_survey %>%
-  group_by(country, survey) %>%
-  summarise(
-    promoter_surveyed = round((1 - mean(promoter_surveyed, na.rm = TRUE)) * 100, 1),
-    wps = n_distinct(wp_id)
-  )
-```
-
-
-Although this difference is large and significant, the weight of these households in Household Survey estimates is small in Malawi (only `r wp_cl_counts %>% dplyr::filter(country == "Malawi", survey == "Household Survey") %>% pull(promoter_surveyed)`% of households in the Household Survey sample use water points not included in the promoter survey) and the differences between Household and Monitoring estimates are correspondingly small. 
-
-In Uganda, by contrast, only `r wp_cl_counts %>% dplyr::filter(country == "Uganda", survey == "Household Survey") %>% pull(promoter_surveyed)`% of households in the Household Survey sample use water points included in the promoter survey. This is also visible in the reduction in sample size between columns (1) and (2) in [Figure 3](#fig:decomposition). Nonetheless, restricting the Household Survey sample to households using water points included in the 
-
-```{r}
-notlisted <-
-  hh_census_all %>%
-  dplyr:::filter(
-    sample_group != "ILC",
-    wp_intervention == "DSW",
-    promoter_surveyed
-  ) %>%
-  group_by(country) %>%
-  summarise(
-    hhs = n_distinct(household_id),
-    listed = mean(promoter_list, na.rm = TRUE) %>% round(3) * 100
-  )
-```
-
-```{r}
-using_dsw <-
-  hh_census_all %>%
-  dplyr:::filter(promoter_list) %>%
-  group_by(country) %>%
-  summarise(
-    hhs = n_distinct(household_id),
-    dsw = mean(dsw, na.rm = TRUE) %>% round(3) * 100,
-    multiple_wps = mean(wp_count_pastmonth > 1, na.rm = TRUE) %>% round(3) * 100
-  )
-```
-
-
-The data shows that promoters are effective at identifying households using water points with dispensers. In Malawi, out of the `r using_dsw %>% dplyr::filter(country == "Malawi") %>% pull(hhs)` households included in the promoter list who were identified in the household census, `r using_dsw %>% dplyr::filter(country == "Malawi") %>% pull(dsw)`% self-report using a water point with a dispenser as their primary source of drinking water.  In Uganda, this figure was `r  using_dsw %>% dplyr::filter(country == "Uganda") %>% pull(dsw)`%  out of `r using_dsw %>% dplyr::filter(country == "Uganda") %>% pull(hhs)` households.
-
-However, promoters are less effective at identifying all of the users. Among the households mapped in the household census who self-reported using water points in the promoter survey as their primary source of drinking water, `r notlisted %>% dplyr::filter(country == "Malawi") %>% pull(listed)`% are included in the promoter list in Malawi, while in Uganda the figure is just `r notlisted %>% dplyr::filter(country == "Uganda") %>% pull(listed)`%.
-
-
-## Table 2 - Characteristics of DSW water points in Malawi {#tab:wp-balance-mw}
-
-```{r}
-balance_vars_wp <-
-  c(
-    "Water point is functional" = "wp_func",
-    "Dispenser tank is present" = "disp_tank_present",
-    "Dispenser is functional" = "disp_func",
-    "Dispenser is filled" = "disp_filled",
-    "Dose dispensed (mL)" = "disp_dose",
-    "TCR > 0.2 mg/L" = "disctcr_02",
-    "FCR > 0.2 mg/L" = "disctcr_02",
-    "Users pay to use water point" = "wp_pay"
-  )
-```
-
-```{r eval = FALSE}
-wp_census %>%
-  dplyr::filter(
-    country == "Malawi",
-    sample_group != "ILC",
-    intervention == "DSW"
-  ) %>%
-  feols(
-    paste("promoter_surveyed ~", paste(balance_vars_wp, collapse = "+")) %>% as.formula
-  ) %>%
-  fitstat(type = "f")
-```
-
-```{r}
-wp_census %>%
-  dplyr::filter(
-    country == "Malawi",
-    sample_group != "ILC",
-    intervention == "DSW"
-  ) %>%
-  mutate(
-    promoter_surveyed = if_else(promoter_surveyed, "Promoter surveyed", "Promoter not surveyed"),
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars_wp,
-    labels = names(balance_vars_wp),
-    group = "promoter_surveyed",
-    group.test = TRUE
-  )
-```
-
-## Table 3 - Characteristics of Characteristics of DSW water points in Uganda  {#tab:wp-balance-ug}
-
-```{r eval = FALSE}
-wp_census %>%
-  dplyr::filter(
-    country == "Uganda",
-    sample_group != "ILC",
-    intervention == "DSW"
-  ) %>%
-  feols(
-    paste("promoter_surveyed ~", paste(balance_vars_wp, collapse = "+")) %>% as.formula
-  ) %>%
-  fitstat(type = "f")
-```
-
-```{r}
-wp_census %>%
-  dplyr::filter(
-    country == "Uganda",
-    sample_group != "ILC",
-    intervention == "DSW"
-  ) %>%
-  mutate(
-    promoter_surveyed = if_else(promoter_surveyed, "Promoter surveyed", "Promoter not surveyed"),
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars_wp,
-    labels = names(balance_vars_wp),
-    group = "promoter_surveyed",
-    group.test = TRUE
-  )
-```
-
-## Table 4 - Comparison of households using water points covered by the Promoter Survey in Malawi {#tab:hh-selection-mw}
-
-```{r}
-hh_census_all %>%
-  dplyr::filter(
-    country == "Malawi",
-    wp_intervention == "DSW",
-    promoter_surveyed
-  )  %>%
-  mutate(
-    promoter_list = if_else(promoter_list, "Listed by promoter", "Not listed by promoter"),
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars_census,
-    labels = names(balance_vars_census),
-    group = "promoter_list",
-    group.test = TRUE
-  )
-
-
-hh_census_all %>%
-  dplyr::filter(
-   country == "Malawi",
-    wp_intervention == "DSW",
-    promoter_surveyed
-  ) %>%
-  feols(
-    paste("promoter_list ~", paste(balance_vars_census, collapse = "+")) %>% as.formula,
-    cluster = ~ village_id
-  ) %>%
-  fitstat(type = "f")
-```
-
-## Table 5 - Comparison of households using water points covered by the Promoter Survey in Uganda {#tab:hh-selection-ug}
-
-```{r}
-hh_census_all %>%
-  dplyr::filter(
-    country == "Uganda",
-    wp_intervention == "DSW",
-    promoter_surveyed
-  )  %>%
-  mutate(
-    promoter_list = if_else(promoter_list, "Listed by promoter", "Not listed by promoter"),
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars_census,
-    labels = names(balance_vars_census),
-    group = "promoter_list",
-    group.test = TRUE
-  )
-
-hh_census_all %>%
-  dplyr::filter(
-   country == "Uganda",
-    wp_intervention == "DSW",
-    promoter_surveyed
-  ) %>%
-  feols(
-    paste("promoter_list ~", paste(balance_vars_census, collapse = "+")) %>% as.formula,
-    cluster = ~ village_id
-  ) %>%
-  fitstat(type = "f")
-```
-
-## Table 6 - Comparison of households in Household and Monitoring surveys for Malawi {#tab:balance-mw}
-
-```{r}
-matched %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    ),
-  ) %>%
-  dplyr::filter(country == "Malawi") %>%
-  sumtable(
-    vars = balance_vars,
-    labels = names(balance_vars),
-    group = "survey",
-    group.test = TRUE
-  )
-```
-
-## Table 7 - Comparison of households in Household and Monitoring surveys for Malawi {#tab:balance-ug}
-
-```{r}
-hh_survey %>%
-  dplyr::filter(
-    country == "Uganda",
-    survey == "Monitoring Survey" | promoter_surveyed,
-  )  %>%
-  mutate(
-    across(
-      where(is.logical),
-      ~ as.numeric(.)
-    )
-  ) %>%
-  sumtable(
-    vars = balance_vars,
-    labels = names(balance_vars),
-    group = "survey",
-    group.test = TRUE
-  )
-
-hh_survey %>%
-  dplyr::filter(
-     country == "Uganda",
-     survey == "Monitoring Survey" | promoter_surveyed
-  ) %>%
-  mutate(survey = survey == "Monitoring Survey") %>%
-  feols(
-    paste("survey ~", paste(balance_vars, collapse = "+")) %>% as.formula
-  ) %>%
-  fitstat(type = "f")
-```
-
-# Figures 
-
-## Are estimates different?
-
-```{r}
-adoption_mon_hh <-
-  hh_survey %>%
-  dplyr::filter(
-    wp_intervention %in% c("DSW", "ILC"),
-    !(sample_group != "ILC" & wp_intervention == "ILC")
-  ) %>%
-  bind_rows(
-    mon_survey_cl %>%
-      mutate(wp_intervention = wp_intervention_mon)
-  )
-```
-
-```{r}
-adoption_mon_hh %>%
-  group_by(country, wp_intervention) %>%
-  group_split() %>%
-  set_names(c("Malawi DSW", "Malawi ILC", "Uganda DSW")) %>%
-  map(
-    ~ marginal_effects(
-      data = .,
-      x = "survey", 
-      cluster = "village_id"
-    )
-  ) %>%
-  unlist(recursive = FALSE) %>%
-  map(~ tidy(.)) %>%
-  bind_rows(.id = "country") %>%
-  dplyr::filter(term != "(Intercept)") %>%
-  transmute(
-    country, 
-    `P-value` = p.value %>% round(3)
-  )
-```
-
-### Can promoters identify households correctly?
-
 ## Prepare data
 
 ```{r}
@@ -868,15 +31,214 @@ adoption_data <-
   dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC"))
 ```
 
-## Household sample selection
+
+## Are estimates different?
+
+### Plot difference
+
+```{r}
+plot_data <-
+  list(
+    "(1)\nCensus sample,\nvillage-level\n(main estimate)\n" = cl_village_noweights_country %>% rename(N = hhs),
+    "(2)\nCensus sample,\nwater point-level\n" = cl_wp_noweights  %>% rename(N = households),
+    "(3)\nPromoter sample\n(Adoption Monitoring\nmethod)\n" = chlorine_am %>% rename(wp_intervention = wp_intervention_mon)  %>% rename(N = hhs)
+  ) %>%
+  map(
+    ~ .x %>%
+      dplyr::filter(outcome == "disctcr_02") %>%
+      select(country, wp_intervention, N, outcome, mean, ub, lb)
+  ) %>%
+  bind_rows(.id = "label") %>%
+  mutate(
+    across(
+      c(mean, ub, lb),
+      ~ . * 100
+    ),
+    main = str_detect(label, "main"),
+    label = label %>% paste0(" (N = ", N %>% format(big.mark = ","), ")") %>% str_trim
+  ) %>%
+  dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC")) 
+
+plot <-
+  plot_data %>%
+  ggplot(
+    aes(
+      x = label,
+      y = mean,
+      label = mean %>% round(1) %>% paste0("%"),
+      ymin = lb,
+      ymax = ub,
+      fill = main
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width  = .2) +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid2(
+    wp_intervention ~ country,
+    scales = "free_x",
+    independent = "x"
+  ) + 
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
+  theme + 
+  labs(
+    x = NULL,
+    y = NULL
+  )  +
+  scale_y_continuous(labels = scales::comma)
+
+ggplot2::ggsave(
+  filename = "output/appendix-graphs/adoption-comparison.png",  
+  plot     = plot,            
+  width    = 8,
+  height   = 6,
+  units    = "in",
+  dpi      = 300
+)
+
+plot
+```
+
+### Test differences
+
+```{r}
+adoption_data %>%
+  bind_rows(
+    mon_survey_cl %>%
+      mutate(wp_intervention = wp_intervention_mon)
+  ) %>%
+  group_by(country, wp_intervention) %>%
+  group_split %>%
+  map(
+    ~ .x %>%
+      feols(
+        disctcr_02 ~ survey | sample_group,
+        cluster = ~ village_id
+      ) %>%
+      tidy
+  ) %>%
+  bind_rows() %>%
+  mutate(
+    country = c("Malawi", "Malawi", "Uganda"),
+    wp_intervention = c("DSW", "ILC", "DSW")
+  )
+```
+
+
+## Can promoters identify households correctly?
+
+```{r}
+mon_survey_cl %>%
+  mutate(confirmed = wp_intervention == wp_intervention_mon) %>%
+  group_by(country, wp_intervention_mon) %>%
+  summarise(
+    N = sum(!is.na(confirmed)),
+    mean = mean(confirmed, na.rm = TRUE)
+  )
+```
+
+```{r}
+plot_data <-
+  mon_survey_cl %>%
+  mutate(confirmed = wp_intervention == wp_intervention_mon) %>%
+  dplyr::filter(confirmed) %>%
+  group_by(country, wp_intervention_mon) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+      outcomes = c("disctcr_02"),
+      design = svydesign(
+        id = ~ village_id,
+        data = .,
+        nest = TRUE,
+        strata = ~ sample_group
+      )
+    ) %>%
+    mutate(
+      country = .x %>% pull(country) %>% unique,
+      wp_intervention = .x %>% pull(wp_intervention_mon) %>% unique,
+      N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+    )
+  ) %>%
+  bind_rows() %>%
+  mutate(label = "(2)\nPromoter sample,\nconfirmed to be using water point\n") %>%
+  bind_rows(
+    cl_village_noweights_country %>%
+      mutate(
+        label = "(1)\nCensus sample\n(main estimate)\n",
+        N = hhs
+      )
+  ) %>%
+  bind_rows(
+    chlorine_am %>% 
+      rename(
+        wp_intervention = wp_intervention_mon,
+        N = hhs
+      ) %>%
+      mutate(label = "(3)\nPromoter sample\n")
+  ) %>%
+  mutate(
+    across(
+      c(mean, ub, lb),
+      ~ . * 100
+    ),
+    main = str_detect(label, "main"),
+    label = label %>% paste0("(N = ", N %>% format(big.mark = ","), ")")
+  ) %>%
+  dplyr::filter(
+    !(country == "Uganda" & wp_intervention == "ILC"),
+    outcome == "disctcr_02"
+  ) 
+
+plot <-
+  plot_data %>%
+  ggplot(
+    aes(
+      x = label,
+      y = mean,
+      label = mean %>% round(1) %>% paste0("%"),
+      ymin = lb,
+      ymax = ub,
+      fill = main
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width  = .2) +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid2(
+    wp_intervention ~ country,
+    scales = "free_x",
+    independent = "x"
+  ) + 
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
+  theme + 
+  labs(
+    x = NULL,
+    y = NULL
+  )  +
+  scale_y_continuous(labels = scales::comma)
+
+ggplot2::ggsave(
+  filename = "output/appendix-graphs/adoption-cofirmed.png",  
+  plot     = plot,            
+  width    = 8,
+  height   = 6,
+  units    = "in",
+  dpi      = 300
+)
+
+plot
+```
+
+## Sample selection
 
 ```{r}
 plot <-
   list(
-    "(1) All households" = adoption_data,
-    "(2) Using water points in promoter survey" = adoption_data %>% dplyr::filter(promoter_surveyed),
-    "(3) In promoter list" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list),
-    "(4) Randomized into monitoring" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list, any_rank)
+    "(1)\nAll households\n" = adoption_data,
+    "(2)\nUsing water points\nin promoter survey\n" = adoption_data %>% dplyr::filter(promoter_surveyed),
+    "(3)\nIn promoter list\n" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list),
+    "(4)\nRandomized into\nmonitoring\n" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list, any_rank)
   ) %>%
   map(
     ~ .x %>% 
@@ -903,110 +265,7 @@ plot <-
   map(~ bind_rows(.)) %>%
   bind_rows(.id = "sample") %>%
   mutate(
-    sample = sample %>% paste0(" (N = ", N, ")") %>% str_wrap(29),
-    across(
-      c(mean, lb, ub),
-      ~ (. * 100) %>% round(1)
-    )
-  ) %>%
-  ggplot(
-    aes(
-      x = sample,
-      y = mean,
-      label = mean %>% paste0("%"),
-      ymin = lb,
-      ymax = ub,
-      fill = country
-    )
-  ) +
-  geom_col() +
-  geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
-   facet_grid2(
-      wp_intervention ~ country, 
-      scale = "free_x",
-      independent = "x"
-    ) +
-    scale_fill_manual(values = c("#4575b4", "#FDB462")) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      strip.background = element_rect(fill = "gray80", color = NA)
-    ) + 
-    labs(
-      x = NULL,
-      y = NULL
-    )
-
-plot
-```
-
-
-## Timing of survey
-
-```{r}
-timing <-
-  adoption_data %>%
-  group_by(country, wp_intervention, first_day) %>%
-  group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        first_day = .x %>% pull(first_day) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
-      )
-  ) %>%
-  bind_rows 
-```
-
-## Interaction with promoter
-
-
-Households that interacted with the promoter show higher chlorination rates
-
-```{r}
-plot <-
-  list(
-    "(1) All households asked\nabout awareness" = adoption_data %>% dplyr::filter(!is.na(int_promoter)),
-    "(2) Households that reported\nprevious awareness" = adoption_data %>% dplyr::filter(int_warned),
-    "(3) Households made aware\nby the promoter" = adoption_data %>% dplyr::filter(int_promoter)
-  ) %>%
-  map(
-    ~ .x %>%
-      group_by(country, wp_intervention) %>%
-      group_split
-  ) %>%
-  map_depth(
-    2,
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
-      )
-  ) %>%
-  map(~ bind_rows(.)) %>%
-  bind_rows(.id = "sample") %>%
-  mutate(
-    sample = sample %>% paste0(" (N = ", N, ")") %>% str_wrap(29),
+    sample = sample %>% paste0(" (N = ", N %>% format(big.mark = ","), ")"),
     across(
       c(mean, lb, ub),
       ~ (. * 100) %>% round(1)
@@ -1041,16 +300,162 @@ plot <-
     y = NULL
   )
 
+ggplot2::ggsave(
+  filename = "output/appendix-graphs/adoption-selection.png",  
+  plot     = plot,            
+  width    = 8,
+  height   = 6,
+  units    = "in",
+  dpi      = 300
+)
+
 plot
 ```
 
+## Timing of survey
+
 ```{r}
-int_warned <-
+timing <-
   adoption_data %>%
-  dplyr::filter(int_warned) %>%
+  group_by(country, wp_intervention, first_day) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+        outcomes = c("disctcr_02"),
+        design = svydesign(
+          id = ~ village_id,
+          data = .,
+          nest = TRUE,
+          strata = ~ sample_group
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        first_day = .x %>% pull(first_day) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    across(
+      c(mean, lb, ub),
+      ~ round(. * 100, 1)
+    ),
+    across(
+      c(mean, N),
+      ~ as.character(.)
+    ),
+    mean = paste0(mean, "%"),
+    ci = paste0("(", lb, ", ", ub, ")") 
+  ) %>%
+  select(country, wp_intervention, N, mean, ci, first_day) %>%
+  pivot_longer(
+    cols = c(mean, ci),
+    names_to = "est"
+  ) %>%
+  pivot_wider(
+    names_from = first_day,
+    values_from = c(N, value)
+  ) %>%
+  mutate(
+    across(
+      c(wp_intervention, starts_with("N")),
+      ~ if_else(est == "mean", ., "")
+    )
+  ) %>%
+  select(country, wp_intervention, matches("(.*)_First"), matches("(.*)_Not"))
+
+timing_p <-
+  adoption_data %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
   map(
+    ~ feols(
+      disctcr_02 ~ first_day | sample_group,
+      data = ., 
+      cluster = ~ village_id
+    ) %>%
+      tidy
+  ) %>%
+  bind_rows() %>%
+  transmute(
+    country = c("Malawi", "Malawi", "Uganda"),
+    wp_intervention = c("DSW", "ILC", "DSW"),
+    p = round(p.value, 3) %>% 
+      as.character()
+  )
+  
+timing_table <-
+  timing %>%
+  left_join(timing_p) %>%
+  select(-country) %>%
+  mutate(
+    p = p %>% replace_na("")
+  )
+
+col_names <- c("", "N", "TCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "p-value")
+headers <- c(
+      " ",
+      "First day" = 2,
+      "After first day" = 2,
+      "Difference"
+    )
+
+table <-
+  timing_table %>%
+  kable(
+    format = "latex",
+    align = "c", 
+    booktabs = T,
+    col.names = col_names,
+    caption = "TCR detection rates in census sample by day of interview",
+    label = "adoption-day"
+  ) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 6) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(c(" ", " ", paste0("(", 1:5,")")), line = FALSE)
+
+writeLines(
+  table, 
+  "output/appendix-tables/adoption-day.tex"
+)
+
+timing_table %>%
+  kable_by_group(
+    col.names = col_names
+  ) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
+```
+
+## Interaction with promoter
+
+
+Households that interacted with the promoter show higher chlorination rates
+
+```{r}
+plot <-
+  list(
+    "(1)\nAll households\nwith available data\n" = adoption_data %>% dplyr::filter(!is.na(int_promoter)),
+    "(2)\nDiscussed survey\nwith anyone\n" = adoption_data %>% dplyr::filter(int_warned),
+    "(3)\nDiscussed survey\nwith promoter\n" = adoption_data %>% dplyr::filter(int_promoter)
+  ) %>%
+  map(
+    ~ .x %>%
+      group_by(country, wp_intervention) %>%
+      group_split
+  ) %>%
+  map_depth(
+    2,
     ~ mean_cis(
         outcomes = c("disctcr_02"),
         design = svydesign(
@@ -1066,10 +471,54 @@ int_warned <-
         N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
       )
   ) %>%
-  bind_rows %>%
+  map(~ bind_rows(.)) %>%
+  bind_rows(.id = "sample") %>%
   mutate(
-    sample = 
+    sample = sample %>% paste0(" (N = ", N, ")"),
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% round(1)
+    )
+  ) %>%
+  ggplot(
+    aes(
+      x = sample,
+      y = mean,
+      label = mean %>% paste0("%"),
+      ymin = lb,
+      ymax = ub,
+      fill = country
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid2(
+    wp_intervention ~ country, 
+    scale = "free_x",
+    independent = "x"
+  ) +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "gray80", color = NA)
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
   )
+
+ggplot2::ggsave(
+  filename = "output/appendix-graphs/adoption-promoter.png",  
+  plot     = plot,            
+  width    = 8,
+  height   = 6,
+  units    = "in",
+  dpi      = 300
+)
+
+plot
 ```
 
 Households in Uganda were three time more likely to have been warned about the upcoming survey and two times more likely to have been warned by the promoter
@@ -1092,18 +541,27 @@ interference <-
       )
   ) %>%
   bind_cols %>%
-  select(c(1:5, 8:10)) 
+  select(c(2:5, 8:10)) 
 
-kable(
-  interference, 
-  caption = "Chlorine detection rates at water points with DSW",
-  format = "html",
-  col.names = 
-    c(
-      "Country", "Intervention", 
+col_names <- c(
+      "Intervention", 
       "N", "With anyone in the village", "With the promoter",
       "N", "With anyone in the village", "With the promoter"
     )
+
+header <- c(" ", "Census sample" = 3, "Promoter sample" = 3)  
+caption <- "Chlorine detection rates at water points with DSW"
+cols <- length(col_names) - 1
+footnote_text <- NULL
+
+table <- 
+  kable(
+    interference, 
+    caption = caption,
+    format = "latex",
+    col.names = col_names,
+    align = "c", 
+    booktabs = T
   ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   kable_paper("striped", full_width = TRUE) %>%
@@ -1111,45 +569,61 @@ kable(
     general = footnote_text,
     threeparttable = TRUE
   ) %>%
-  add_header_above(c(" " = 2, "Census sample" = 3, "Promoter sample" = 3), line = TRUE) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:6,")")), line = FALSE)
+  add_header_above(, line = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:cols,")")), line = FALSE) %>%
+  pack_rows("Malawi", 1, 2) %>%
+  pack_rows("Uganda", 3, 3)
+
+writeLines(
+  table, 
+  "output/appendix-tables/adoption-promoter.tex"
+)
+
+kable(
+  interference, 
+  caption = caption,
+  format = "html",
+  col.names = col_names
+) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
+  add_header_above(, line = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:cols,")")), line = FALSE) %>%
+  pack_rows("Malawi", 1, 2) %>%
+  pack_rows("Uganda", 3, 3)
 ```
-
-
-
-
 
 
 ## Household outside of village boundaries
 
+### Do they chlorinate more?
+
+No. They chlorinate less and the difference is significant. There are no households outside of the village using ILC water points.
+
 ```{r}
-hh_boundaries <-
-  adoption_data %>%
-  group_by(country, wp_intervention, inclusion, village_id) %>%
-  dplyr::filter(!is.na(disctcr_02), n() >1 ) %>%
-  group_by(country, wp_intervention, inclusion) %>%
+adoption_data %>%
+  dplyr::filter(wp_intervention != "ILC") %>% # No households outside of village boundaries included
+  group_by(country, wp_intervention) %>%
   group_split %>%
   map(
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        inclusion = .x %>% pull(inclusion) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+    ~ .x %>%
+      feols(
+        disctcr_02 ~ inclusion | sample_group,
+        cluster = ~ village_id
       )
   ) %>%
-  bind_rows
+  modelsummary(
+    stars = TRUE
+  )
 ```
 
-Are there more households outside of the village boundaries in the monitoring survey? No
+### Are there more households outside of the village boundaries in the monitoring survey? 
+
+No
 
 ```{r}
 list(
@@ -1160,8 +634,17 @@ list(
     ~ .x %>%
       mutate(within = (inclusion == "Within village boundaries")) %>%
       group_by(country, wp_intervention) %>%
-      summarise(within = mean(within, na.rm = TRUE))
+      summarise(within = mean(within * 100, na.rm = TRUE) %>% round(1) %>% paste0("%"))
   ) %>%
-  bind_rows(.id = "survey")
-
+  bind_rows(.id = "survey") %>%
+  pivot_wider(
+    values_from = within,
+    names_from = survey
+  ) %>%
+  ungroup %>%
+  select(-country) %>%
+  rename(` ` = wp_intervention) %>%
+  kable_by_country(
+    caption = "Share of households living within village boundaries"
+  )
 ```
