@@ -128,14 +128,33 @@ adoption_data %>%
 ## Can promoters identify households correctly?
 
 ```{r}
-mon_survey_cl %>%
+confirmed <-
+  mon_survey_cl %>%
   mutate(confirmed = wp_intervention == wp_intervention_mon) %>%
   group_by(country, wp_intervention_mon) %>%
   summarise(
     N = sum(!is.na(confirmed)),
     mean = mean(confirmed, na.rm = TRUE)
+  ) %>%
+  rename(wp_intervention = wp_intervention_mon)
+```
+
+```{r}
+listed <-
+  hh_census %>%
+  dplyr::filter(promoter_surveyed) %>%
+  group_by(country, wp_intervention) %>%
+  summarise(
+    pm_wp = sum(!is.na(promoter_list)),
+    listed = mean(promoter_list, na.rm = TRUE)
   )
 ```
+
+```{r}
+confirmed %>%
+  left_join(listed)
+```
+
 
 ```{r}
 plot_data <-
@@ -232,6 +251,8 @@ plot
 
 ## Sample selection
 
+### Plot
+
 ```{r}
 plot <-
   list(
@@ -311,6 +332,251 @@ ggplot2::ggsave(
 
 plot
 ```
+
+### Water point selection
+
+```{r}
+timing <-
+  adoption_data %>%
+  group_by(country, wp_intervention, promoter_surveyed) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+        outcomes = c("disctcr_02"),
+        design = svydesign(
+          id = ~ village_id,
+          data = .,
+          nest = TRUE,
+          strata = ~ sample_group
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        promoter_surveyed = .x %>% pull(promoter_surveyed) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    across(
+      c(mean, lb, ub),
+      ~ round(. * 100, 1)
+    ),
+    across(
+      c(mean, N),
+      ~ as.character(.)
+    ),
+    mean = paste0(mean, "%"),
+    ci = paste0("(", lb, ", ", ub, ")") 
+  ) %>%
+  select(country, wp_intervention, N, mean, ci, promoter_surveyed) %>%
+  pivot_longer(
+    cols = c(mean, ci),
+    names_to = "est"
+  ) %>%
+  pivot_wider(
+    names_from = promoter_surveyed,
+    values_from = c(N, value)
+  ) %>%
+  mutate(
+    across(
+      c(wp_intervention, starts_with("N")),
+      ~ if_else(est == "mean", ., "")
+    )
+  ) %>%
+  select(country, wp_intervention, matches("TRUE"), matches("FALSE"))
+
+timing_p <-
+  adoption_data %>%
+  group_by(country, wp_intervention) %>%
+  group_split %>%
+  map(
+    ~ feols(
+      disctcr_02 ~ promoter_surveyed | sample_group,
+      data = ., 
+      cluster = ~ village_id
+    ) %>%
+      tidy
+  ) %>%
+  bind_rows() %>%
+  transmute(
+    country = c("Malawi", "Malawi", "Uganda"),
+    wp_intervention = c("DSW", "ILC", "DSW"),
+    p = round(p.value, 3) %>% 
+      as.character()
+  )
+  
+timing_table <-
+  timing %>%
+  left_join(timing_p) %>%
+  select(-country) %>%
+  mutate(
+    p = p %>% replace_na("")
+  )
+
+col_names <- c("", "N", "TCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "p-value")
+headers <- c(
+      " ",
+      "Promoter surveyed" = 2,
+      "Promoter not surveyed" = 2,
+      "Difference"
+    )
+
+
+table <-
+  timing_table %>%
+  kable(
+    format = "latex",
+    align = "c", 
+    booktabs = T,
+    col.names = col_names,
+    caption = xaption,
+    label = "adoption-wp"
+  ) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 6) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(c(" ", " ", paste0("(", 1:5,")")), line = FALSE)
+
+writeLines(
+  table, 
+  "output/appendix-tables/adoption-wp.tex"
+)
+
+timing_table %>%
+  kable_by_group(
+    col.names = col_names
+  ) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
+```
+
+### Household selection
+
+```{r}
+timing <-
+  adoption_data %>%
+  dplyr::filter(promoter_surveyed, !is.na(disctcr_02)) %>%
+  group_by(country, wp_intervention, promoter_list, village_id) %>%
+  dplyr::filter(n() > 1) %>%
+  group_by(country, wp_intervention, promoter_list) %>%
+  group_split %>%
+  map(
+    ~ mean_cis(
+        outcomes = c("disctcr_02"),
+        design = svydesign(
+          id = ~ village_id,
+          data = .,
+          nest = TRUE,
+          strata = ~ sample_group
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        promoter_list = .x %>% pull(promoter_list) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+      )
+  ) %>%
+  bind_rows %>%
+  mutate(
+    across(
+      c(mean, lb, ub),
+      ~ round(. * 100, 1)
+    ),
+    across(
+      c(mean, N),
+      ~ as.character(.)
+    ),
+    mean = paste0(mean, "%"),
+    ci = paste0("(", lb, ", ", ub, ")") 
+  ) %>%
+  select(country, wp_intervention, N, mean, ci, promoter_list) %>%
+  pivot_longer(
+    cols = c(mean, ci),
+    names_to = "est"
+  ) %>%
+  pivot_wider(
+    names_from = promoter_list,
+    values_from = c(N, value)
+  ) %>%
+  mutate(
+    across(
+      c(wp_intervention, starts_with("N")),
+      ~ if_else(est == "mean", ., "")
+    )
+  ) %>%
+  select(country, wp_intervention, matches("TRUE"), matches("FALSE"))
+
+timing_p <-
+  adoption_data %>%
+  dplyr::filter(promoter_surveyed) %>%
+  group_by(country, wp_intervention) %>%
+  group_split %>%
+  map(
+    ~ feols(
+      disctcr_02 ~ promoter_list | sample_group,
+      data = ., 
+      cluster = ~ village_id
+    ) %>%
+      tidy
+  ) %>%
+  bind_rows() %>%
+  transmute(
+    country = c("Malawi", "Malawi", "Uganda"),
+    wp_intervention = c("DSW", "ILC", "DSW"),
+    p = round(p.value, 3) %>% 
+      as.character()
+  )
+  
+timing_table <-
+  timing %>%
+  left_join(timing_p) %>%
+  select(-country) %>%
+  mutate(
+    p = p %>% replace_na("")
+  )
+
+col_names <- c("", "N", "TCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "p-value")
+
+headers <- 
+  c(
+    " ",
+    "Included in the promoter list" = 2,
+    "Not included in the promoter list" = 2,
+    "Difference"
+  )
+
+footnote_text <- "Sample includes all households in the census sample that self-report using a water point covered by the Promoter Survey. Columns 1 and 2 show the TCR detection rates among households that were also matched to the promoter's list of users, while columns 3 and 4 show rates among households that were not. All estimates cluster standard errors at the village level and control for sample group stratification."
+
+caption <- "Chlorine Residual detection rates among households in the census sample using water points covered by the Promoter Survey"
+
+
+timing_table %>%
+  kable_by_group(
+    col.names = col_names,
+    caption = caption
+  ) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
+```
+
+
 
 ## Timing of survey
 
@@ -434,7 +700,7 @@ timing_table %>%
     headers,
     line = TRUE
   ) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
+  add_header_above(c(" ", paste0("(", 1:4,")")), line = FALSE)
 ```
 
 ## Interaction with promoter
