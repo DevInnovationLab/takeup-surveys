@@ -874,10 +874,11 @@ timing_table %>%
 
 ## Interaction with promoter
 
-### 
+### Who interacts more?
 
 ```{r}
-adoption_data %>%
+census_sample <- 
+  adoption_data %>%
   dplyr::filter(!is.na(int_promoter), !is.na(promoter_list)) %>%
   group_by(country, wp_intervention, promoter_list) %>%
   summarise(
@@ -890,7 +891,96 @@ adoption_data %>%
     names_from = promoter_list
   ) %>%
   ungroup %>%
-  select(wp_intervention, ends_with("FALSE"), ends_with("TRUE"))
+  select(country, wp_intervention, ends_with("FALSE"), ends_with("TRUE"))
+
+monitoring_sample <- 
+  mon_survey_cl %>%
+  mutate(wp_intervention = wp_intervention_mon) %>%
+  dplyr::filter(!is.na(int_promoter), !is.na(promoter_list)) %>%
+  group_by(country, wp_intervention) %>%
+  summarise(
+    n = n(),
+    anyone = mean(int_warned),
+    promoter = mean(int_promoter)
+  )
+
+table <-
+  census_sample %>%
+  left_join(monitoring_sample) %>%
+  select(-country) %>%
+  mutate(
+    across(
+      contains(c("promoter", "anyone")),
+      ~ round(. * 100, 1) %>% paste0("%")
+    )
+  )
+
+col_names <- c("", rep(c("N", "Discussed\nsurvey", "Talked to\npromoter"), 3))
+headers <- c(
+  " ", 
+  "Census Sample\nNot in promoter list" = 3 , 
+  "Census Sample\nIn promoter list" = 3, 
+  "Promoter Sample" = 3
+)
+caption <-  "Percent of households with available data on priming who discussed the survey or water treatment prior to water testing"
+columns <- c(" ", paste0("(", 1:9,")"))
+footnote_text <- "Sample in columns (1)-(6) includes all households in the Census Sample with available data on priming. Sample in columns (7)-(9) includes all households in the Promoter Sample with available data on priming."
+
+table %>%
+  kable(
+    format = "html",
+    col.names = col_names,
+    caption = caption
+  ) %>%
+  kable_paper("striped", full_width = TRUE) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(
+    columns,
+    line = FALSE
+  ) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
+  pack_rows("Malawi", 1, 2) %>%
+  pack_rows("Uganda", 3, 3)
+```
+
+```{r}
+table <-
+  timing_table %>%
+  kable(
+    format = "latex",
+    align = "c", 
+    booktabs = T,
+    col.names = col_names,
+    caption = caption,
+    label = "adoption-priming"
+  ) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pack_rows("Malawi", 1, 2) %>%
+  pack_rows("Uganda", 3, 3) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(
+    columns, 
+    line = FALSE
+  )
+
+writeLines(
+  table, 
+  "output/appendix-tables/adoption-priming"
+)
+
 ```
 
 
@@ -971,6 +1061,87 @@ ggplot2::ggsave(
   units    = "in",
   dpi      = 300
 )
+
+plot
+```
+
+```{r}
+plot <-
+  list(
+    "(1)\nAll households\nwith available data\n" = mon_survey_cl %>% dplyr::filter(!is.na(int_promoter)),
+    "(2)\nDiscussed survey\nwith anyone\n" = mon_survey_cl %>% dplyr::filter(int_warned),
+    "(3)\nDiscussed water treatment\nwith promoter\n" = mon_survey_cl %>% dplyr::filter(int_promoter)
+  ) %>%
+  map(
+    ~ .x %>%
+      dplyr::filter(!is.na(disctcr_02)) %>%
+      group_by(country, wp_intervention_mon) %>%
+      dplyr::filter(n() > 1) %>%
+      group_split
+  ) %>%
+  map_depth(
+    2,
+    ~ mean_cis(
+        outcomes = c("disctcr_02"),
+        design = svydesign(
+          id = ~ household_id,
+          data = .,
+          nest = TRUE
+        )
+    ) %>%
+      mutate(
+        country = .x %>% pull(country) %>% unique,
+        wp_intervention = .x %>% pull(wp_intervention_mon) %>% unique,
+        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+      )
+  ) %>%
+  map(~ bind_rows(.)) %>%
+  bind_rows(.id = "sample") %>%
+  mutate(
+    sample = sample %>% paste0(" (N = ", N, ")"),
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% round(1)
+    )
+  ) %>%
+  ggplot(
+    aes(
+      x = sample,
+      y = mean,
+      label = mean %>% paste0("%"),
+      ymin = lb,
+      ymax = ub,
+      fill = country
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid2(
+    wp_intervention ~ country, 
+    scale = "free_x",
+    independent = "x"
+  ) +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "gray80", color = NA)
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+
+ggplot2::ggsave(
+  filename = "output/appendix-graphs/adoption-promotermon.png",  
+  plot     = plot,            
+  width    = 8,
+  height   = 6,
+  units    = "in",
+  dpi      = 300
+)
+
 
 plot
 ```
