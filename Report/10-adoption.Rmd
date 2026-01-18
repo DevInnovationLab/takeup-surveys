@@ -151,9 +151,79 @@ listed <-
 ```
 
 ```{r}
-confirmed %>%
-  left_join(listed)
+table <- 
+  confirmed %>%
+  left_join(listed) %>%
+  ungroup %>%
+  transmute(
+    wp_intervention,
+    pm_wp = pm_wp %>% format(big.mark = ","),
+    listed,
+    N, mean
+  ) %>%
+  mutate(
+    across(
+      c(mean, listed),
+      ~ round(. * 100, 1) %>% paste0("%")
+    )
+  )
 ```
+
+```{r}
+col_names <- c("", "N", "Included in the promoter list", "N", "Water point with DSW/ILC is\nthe primary source of drinking water")
+
+headers <- 
+  c(
+    " ",
+    "Households using water points with DSW/ILC" = 2,
+    "Households included in the promoter list" = 2
+  )
+
+columns <- c(" ", paste0("(", 1:4,")"))
+
+footnote_text <- "Column (1) shows the number of households who self-report using a water points with DSW/ILC covered by the Promoter Survey. Column (2) shows the percent of households in this sample who were also matched to households listed by the promoters as using a water points with DSW/ILC. Column (3) shows the number of households in the Promoter Sample of the Household Survey. All of these households confirmed that they use the water point in the Promoter Survey. Column (4) indicates the percent of these households that also say this is their primary source of drinking water. "
+
+
+table <-
+  timing_table %>%
+  kable(
+    format = "latex",
+    align = "c", 
+    booktabs = T,
+    col.names = col_names,
+    caption = caption,
+    label = "adoption-hhs"
+  ) %>%
+  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+  pack_rows("Malawi", 1, 4) %>%
+  pack_rows("Uganda", 5, 6) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns, line = FALSE)
+
+writeLines(
+  table, 
+  "output/appendix-tables/adoption-hhs.tex"
+)
+
+table %>%
+  kable_by_country(
+    col.names = col_names
+  ) %>%
+  add_header_above(
+    headers,
+    line = TRUE
+  ) %>%
+  add_header_above(columns, line = FALSE)
+```
+
 
 
 ```{r}
@@ -354,7 +424,7 @@ timing <-
         country = .x %>% pull(country) %>% unique,
         promoter_surveyed = .x %>% pull(promoter_surveyed) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow %>% format(big.mark = ",")
       )
   ) %>%
   bind_rows %>%
@@ -431,7 +501,7 @@ table <-
     align = "c", 
     booktabs = T,
     col.names = col_names,
-    caption = xaption,
+    caption = caption,
     label = "adoption-wp"
   ) %>%
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
@@ -441,7 +511,11 @@ table <-
     headers,
     line = TRUE
   ) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:5,")")), line = FALSE)
+  footnote(
+    general = footnote_text,
+    threeparttable = TRUE
+  ) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
 
 writeLines(
   table, 
@@ -685,7 +759,7 @@ table <-
     headers,
     line = TRUE
   ) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:5,")")), line = FALSE)
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
 
 writeLines(
   table, 
@@ -700,7 +774,7 @@ timing_table %>%
     headers,
     line = TRUE
   ) %>%
-  add_header_above(c(" ", paste0("(", 1:4,")")), line = FALSE)
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
 ```
 
 ## Interaction with promoter
