@@ -132,8 +132,10 @@ sanity_users <-
 
 ```{r}
 sanity_users %>%
+  ungroup %>%
   select(-country) %>%
-  kable_by_group
+  html_table %>%
+  pack_intervention_se()
 ```
 
 
@@ -146,7 +148,8 @@ sanity_users %>%
   ) %>%
   ungroup %>%
   select(-country) %>%
-  kable_by_country
+  html_table %>%
+  pack_intervention()
 ```
 
 
@@ -158,18 +161,14 @@ We the total number of users per sample group and the confidence intervals aroun
 
 ```{r}
 people_per_group <-
-  map(
-    users_village %>%
-      group_by(country, sample_group, wp_intervention) %>%
-      group_split(),
+  users_village %>%
+  group_by(country, sample_group, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -180,7 +179,6 @@ people_per_group <-
         weight = .x %>% pull(weight) %>% unique
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, sample_group, wp_intervention, 
     outcome, 
@@ -191,25 +189,22 @@ people_per_group <-
 
 people_per_group %>%
   select(sample_group, wp_intervention, villages, households, weight, total) %>%
-  kable_by_group()
+  html_table %>%
+  pack_intervention_se
 ```
 
 #### By program 
 
 ```{r}
 people_per_country <-
-  map(
-    users_village %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_village %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -219,7 +214,6 @@ people_per_country <-
         pop = .x %>% pull(pop_vil) %>% unique %>% sum
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -228,7 +222,10 @@ people_per_country <-
   ) %>%
   arrange(outcome)
 
-people_per_country
+people_per_country %>%
+  select(-c(outcome, country)) %>%
+  html_table %>%
+  pack_intervention
 ```
 
 ### Sensitivity checks
@@ -237,18 +234,14 @@ people_per_country
 
 ```{r}
 users_vil_responseonly <-
-  map(
-    users_village %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_village %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -256,7 +249,6 @@ users_vil_responseonly <-
         villages = .x %>% pull(village_id) %>% n_distinct
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -310,18 +302,14 @@ users_outside <-
 
 ```{r}
 users_vil_outside <-
-  map(
-    users_outside %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_outside %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -329,7 +317,6 @@ users_vil_outside <-
         villages = .x %>% pull(village_id) %>% n_distinct
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -385,18 +372,14 @@ users_vilboundary <-
 
 ```{r}
 users_vil_boundary <-
-  map(
-    users_vilboundary %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_vilboundary %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -404,7 +387,6 @@ users_vil_boundary <-
         villages = .x %>% pull(village_id) %>% n_distinct
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -418,26 +400,22 @@ users_vil_boundary <-
 
 ```{r}
 users_vil_misspoints <-
-  map(
-    users_village %>%
-      mutate(
-        users_increased = 
-          case_when(
-            wp_intervention == "DSW" ~ users_increased * 1.12,
-            wp_intervention == "ILC" ~ users_increased * 1.05
-          )
-      ) %>%
-      dplyr::filter(country == "Malawi") %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_village %>%
+  mutate(
+    users_increased = 
+      case_when(
+        wp_intervention == "DSW" ~ users_increased * 1.12,
+        wp_intervention == "ILC" ~ users_increased * 1.05
+      )
+  ) %>%
+  dplyr::filter(country == "Malawi") %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -445,7 +423,6 @@ users_vil_misspoints <-
         villages = .x %>% pull(village_id) %>% n_distinct
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -493,19 +470,15 @@ users_func <-
 
 ```{r}
 users_vil_func <-
-  map(
-    users_func %>%
-      dplyr::filter(wp_intervention != "Non-program") %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_func %>%
+  dplyr::filter(wp_intervention != "Non-program") %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -513,7 +486,6 @@ users_vil_func <-
         villages = .x %>% pull(village_id) %>% n_distinct
       )
   ) %>% 
-  bind_rows() %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -569,26 +541,21 @@ users_fo <-
 
 ```{r}
 users_vil_fo <-
-  map(
-    users_fo %>%
-      group_by(country, wp_intervention) %>%
-      group_split(),
+  users_fo %>%
+  group_by(country, wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
     ~ total_ci(
         var = "users_increased",
-        design = svydesign(
-          id = ~ village_id,
-          data = .x, 
-          weights = ~ weight,
-          strata = ~ sample_group
-        )
+        data = .x,
+        weights = ~ weight
       ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         villages = .x %>% pull(village_id) %>% n_distinct
       )
-  ) %>% 
-  bind_rows() %>%
+  ) %>%
   select(
     country, wp_intervention, 
     outcome, 
@@ -611,11 +578,11 @@ plot_data <-
     "(5) Without correction for water point\nfunctionality" = users_vil_func,
     "(6) Correcting for potentially missed \nwater points" = users_vil_misspoints
   ) %>%
-    map(
+    map_dfr(
       ~ .x %>%
-        select(country, wp_intervention, outcome, total, ub, lb)
+        select(country, wp_intervention, outcome, total, ub, lb),
+      .id = "label"
     ) %>%
-    bind_rows(.id = "label") %>%
     mutate(
       main = label == "Main estimate"
     ) %>%
@@ -691,15 +658,16 @@ chlorination_data <-
   group_by(village_id) %>%
   mutate(
     # This is if we weigh each village equally
-    weight_equal = n_distinct(household_id)/20,
+    weight_equal = 1/n_distinct(household_id),
     # This is if we apply sampling weights
-    weight_users = n_distinct(household_id)/pop_users,
+    weight_users = pop_users/n_distinct(household_id)
   ) %>% 
   ungroup
 ```
 
 ### Sanity check
 
+#### By sample group
 
 ```{r}
 chlorination_data %>%
@@ -711,8 +679,14 @@ chlorination_data %>%
     ),
     hhs = n(), 
     villages = n_distinct(village_id)
-  )
+  ) %>%
+  ungroup %>%
+  select(-country) %>%
+  html_table %>%
+  pack_intervention_se()
 ```
+
+#### By country
 
 ```{r}
 chlorination_data %>%
@@ -724,8 +698,62 @@ chlorination_data %>%
     ),
     hhs = n(), 
     villages = n_distinct(village_id)
+  ) %>%
+  ungroup %>%
+  select(-country) %>%
+  html_table %>%
+  pack_intervention()
+```
+
+#### Weighing observations 
+
+```{r}
+weights <-
+  users_data %>%
+  group_by(village_id, wp_intervention, sample_group) %>%
+  summarise(village_users = sum(hh_members, na.rm = TRUE)) %>%
+  group_by(wp_intervention, sample_group) %>%
+  mutate(group_users = sum(village_users))
+
+chlorination_data_w <-
+  chlorination_data %>%
+  left_join(weights) %>%
+  group_by(village_id) %>%
+  mutate(
+    tests_village = n()
+  ) %>%
+  group_by(sample_group, wp_intervention) %>%
+  mutate(
+    tests_group = n(),
+    prob = tests_village/village_users,
+    pop_proportion = village_users/group_users,
+    sample_proportion = tests_village/tests_group
   )
 ```
+
+```{r}
+chlorination_data %>%
+  group_by(village_id) %>%
+  mutate(
+    across(
+      c("disctcr_02", "discfcr_02"),
+      ~ 20/sum(!is.na(.)),
+      .names = "w_{.col}"
+    )
+  ) %>%
+  group_by(country, wp_intervention) %>%
+  summarise(
+    disctcr_02 = weighted.mean(disctcr_02, w_disctcr_02, na.rm = TRUE),
+    discfcr_02 = weighted.mean(discfcr_02, w_discfcr_02, na.rm = TRUE),
+    hhs = n(), 
+    villages = n_distinct(village_id)
+  ) %>%
+  ungroup %>%
+  select(-country) %>%
+  html_table %>%
+  pack_intervention()
+```
+
 
 ### Final numbers
 
@@ -736,25 +764,23 @@ cl_village_noweights_samplegroup <-
   chlorination_data %>%
   group_by(country, sample_group, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
+        sample_group = .x %>% pull(sample_group) %>% unique,
       )
+    )
   ) %>%
-  bind_rows %>%
-  select(country, sample_group, wp_intervention, outcome, everything()) %>%
+  select(country, wp_intervention, sample_group, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
 
@@ -769,7 +795,7 @@ feols(
   data = chlorination_data %>%
     dplyr::filter(country == "Uganda")
 ) %>% 
-  summary
+  modelsummary(stars = TRUE)
 ```
 
 ```{r}
@@ -779,7 +805,9 @@ feols(
   data = chlorination_data %>%
     dplyr::filter(country == "Malawi")
 ) %>% 
-  summary
+  modelsummary(
+    stars = TRUE
+  )
 ```
 ```{r}
 model <-
@@ -792,8 +820,12 @@ model <-
       )
   )
 
-summary(model)
+modelsummary(
+  model,
+  stars = TRUE
+)
 ```
+
 ```{r}
 fitstat(model, type = "f") 
 ```
@@ -801,7 +833,7 @@ fitstat(model, type = "f")
 
 ```{r}
 feols(
-  discfcr_02 ~ wp_intervention_type,
+  discfcr_02 ~ ilc_wp,
   cluster = ~ village_id,
   data = chlorination_data %>%
     dplyr::filter(
@@ -809,7 +841,9 @@ feols(
       wp_intervention == "ILC"
     )
 ) %>% 
-  summary
+  modelsummary(
+    stars = TRUE
+  )
 ```
 
 ```{r}
@@ -822,7 +856,7 @@ feols(
       sample_group == "ILC"
     )
 ) %>% 
-  summary
+  modelsummary(stars = TRUE)
 ```
 
 ```{r}
@@ -835,7 +869,7 @@ feols(
       wp_intervention == "DSW"
     )
 ) %>% 
-  summary
+  modelsummary(stars = TRUE)
 ```
 
 
@@ -847,24 +881,21 @@ cl_village_noweights_country <-
   chlorination_data %>%
   group_by(country, wp_intervention) %>%
   group_split() %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -887,24 +918,21 @@ cl_village_nottested <-
   ) %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          strata = ~ sample_group,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -916,25 +944,22 @@ cl_village_vilweights <-
   chlorination_data %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          strata = ~ sample_group,
-          prob = ~ weight_equal,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome, 
+        weights = ~ weight_equal
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -947,25 +972,22 @@ cl_village_userweights <-
   dplyr::filter(!is.na(weight_users)) %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          prob = ~ weight_users,
-          strata = ~ sample_group,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome, 
+        weights = ~ weight_users
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -978,24 +1000,21 @@ cl_village_rain <-
   dplyr::filter(is.na(vil_rain), country == "Uganda") %>%
   group_by(country, wp_intervention) %>%
   group_split() %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -1016,24 +1035,21 @@ cl_village_int <-
   ) %>%
   group_by(country, wp_intervention) %>%
   group_split() %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
-        villages = .x %>% pull(village_id) %>% n_distinct,
+        villages = .x %>% pull(village_id) %>% n_distinct
       )
+    )
   ) %>%
-  bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -1061,9 +1077,9 @@ chlorination_fo <-
   group_by(village_id) %>%
   mutate(
     # This is if we weigh each village equally
-    weight_equal = n_distinct(household_id)/20,
+    weight_equal = 1/n_distinct(household_id),
     # This is if we apply sampling weights
-    weight_users = n_distinct(household_id)/pop_users,
+    weight_users = pop_users/n_distinct(household_id)
   )
 ```
 
@@ -1072,24 +1088,21 @@ cl_village_fo <-
   chlorination_fo %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          strata = ~ sample_group,
-          data = .,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -1117,9 +1130,9 @@ chlorination_self <-
   group_by(village_id) %>%
   mutate(
     # This is if we weigh each village equally
-    weight_equal = n_distinct(household_id)/20,
+    weight_equal = 1/n_distinct(household_id),
     # This is if we apply sampling weights
-    weight_users = n_distinct(household_id)/pop_users,
+    weight_users = pop_users/n_distinct(household_id)
   )
 ```
 
@@ -1128,24 +1141,21 @@ cl_village_self <-
   chlorination_self %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          strata = ~ sample_group,
-          data = .,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -1179,9 +1189,9 @@ chlorination_all <-
   group_by(village_id) %>%
   mutate(
     # This is if we weigh each village equally
-    weight_equal = n_distinct(household_id)/20,
+    weight_equal = 1/n_distinct(household_id),
     # This is if we apply sampling weights
-    weight_users = n_distinct(household_id)/pop_users,
+    weight_users = pop_users/n_distinct(household_id)
   )
 ```
 
@@ -1190,30 +1200,26 @@ cl_village_all <-
   chlorination_all %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("discfcr_02", "disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          strata = ~ sample_group,
-          data = .,
-          nest = TRUE
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
 
 #### Plot
-
 
 ```{r warning = FALSE}
 plot_data <-
@@ -1221,19 +1227,19 @@ plot_data <-
     "Main estimate" = cl_village_noweights_country,
     "(1) Weighing each village equally" = cl_village_vilweights,
     "(2) Weighing villages by number of users" = cl_village_userweights,
-    "(3) Using ield office report of DSW/ILC\npresence" = cl_village_fo,
+    "(3) Using field officer report of DSW/ILC\npresence" = cl_village_fo,
     "(4) Using self-report of DSW/ILC presence" = cl_village_self,
     "(5) Including households with unconfirmed\nDSW/ILC status" = cl_village_all,
     "(6) Including households with no stored water\n(assuming no chlorine detected)" = cl_village_nottested,
     "(7) Excluding villages with unseasonable rain" = cl_village_rain,
     "(8) Excluding villages with potential \npromoter interference" = cl_village_int
   ) %>%
-    map(
+    map_dfr(
       ~ .x %>%
         dplyr::filter(outcome == "disctcr_02") %>%
-        select(country, wp_intervention, outcome, mean, ub, lb)
+        select(country, wp_intervention, outcome, mean, ub, lb),
+      .id = "label"
     ) %>%
-    bind_rows(.id = "label") %>%
     mutate(
       across(
         c(mean, ub, lb),
@@ -1295,7 +1301,7 @@ ggplot2::ggsave(
 ```{r}
 footnote_text <-
   c(
-    "Confidence intervals are calculated based on standard errors clustered at the village level.",
+    "Confidence intervals are calculated based on standard errors clustered at the village level and stratification at the sample group level.",
     "The number of people using water points with DSW or ILC in a village is defined as the sum of all people living in households that use water points with DSW or ILC as their primary source of drinking water. During the first two weeks of data collection, data on the number of people living in a household was not collected due to a survey coding error. This affects eight villages in Uganda. For households in these villages, we impute the number of household members as the average across all households using water points with DSW in the same country and sample group (Expansion or Footprint).",
     "The data used for columns (1), (2), and (4) includes all households using a water point with DSW or ILC within the boundaries of sampled villages, except for households using water points with ILC in DSW villages."
   )
@@ -1383,38 +1389,33 @@ tab <-
   ) %>%
   ungroup %>%
   select(-c(name, country))
+```
 
-table <-
-  kable(
-    tab, 
-    format = "latex",
-    escape = F,
-    align = "c", 
-    booktabs = T,
-    col.names = linebreak(
-      c("Intervention", "\\#Vil", "\\#HH", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
-      align = "c"
-    ),
-    caption = "Primary outcomes estimated using the village as the unit of reference",
-    label = "headlines-vil"
-  ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
-  add_header_above(
-    c(
+```{r}
+col_names <- c("Intervention", "\\#Vil", "\\#HH", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)")
+caption <- "Primary outcomes estimated using the village as the unit of reference"
+label <- "headlines-vil"
+main_header <- c(
       " ", 
       "Household census" = 2, 
       "Country-level estimates" = 2, 
       "Percent of color wheel readings ≥ 0.2 mg/L" = 4
     )
+columns_8 <- c(" ", paste0("(", 1:8,")"))
+
+table <-
+  tab %>%
+  latex_table(
+    escape = F,
+    align = "lcccccccc",
+    col.names = linebreak(col_names, align = "c"),
+    caption = paste(caption, "(main estimates)"),
+    label = label,
+    numbered_footnote = footnote_text
   ) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    number = footnote_text,
-    threeparttable = TRUE,
-    footnote_as_chunk = FALSE
-  )
+  pack_intervention_se %>%
+  add_header_above(main_header, line = TRUE) %>%
+  add_header_above(columns_8, line = FALSE) 
 
 writeLines(
   table, 
@@ -1509,36 +1510,18 @@ tab <-
   select(-c(name, country)) 
 
 table <-
-  kable(
-    tab, 
-    format = "latex",
+  tab %>%
+  latex_table(
     escape = F,
-    align = "c", 
-    booktabs = T,
-    col.names = linebreak(
-      c(" ", "Sample group", "\\#Vil", "\\#HH", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
-      align = "c"
-    ),
-    caption = "Primary outcomes estimated using the village as the unit of reference",
-    label = "headlines-vil-by-group"
+    align = "llcccccccc",
+    col.names = linebreak(c("Sample group", col_names), align = "c"),
+    caption = paste(caption),
+    label = "headlines-vil-by-group",
+    numbered_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 8) %>%
-  pack_rows("Uganda", 9, 12) %>%
-  add_header_above(
-    c(
-      " " = 2, 
-      "Household census" = 2, 
-      "Country-level estimates" = 2, 
-      "Percent of color wheel readings ≥ 0.2 mg/L" = 4
-    )
-  ) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    number = footnote_text,
-    threeparttable = TRUE,
-    footnote_as_chunk = FALSE
-  )
+  pack_sample_se %>%
+  add_header_above(c(" ", main_header), line = TRUE) %>%
+  add_header_above(c(" ", columns_8), line = FALSE)
 
 
 writeLines(

@@ -21,7 +21,7 @@ pacman::p_load(
 
 ## Population
 
-### Summary table
+### Summary table (B1)
 
 ```{r}
 evac <-
@@ -37,7 +37,11 @@ evac <-
     ilc_wcp = sum(ilc_wcp)
   ) %>%
   ungroup 
+```
 
+```{r}
+caption <- "Summary of Evidence Action administrative data"
+label <- "population"
 headers <-
     c(
       " ",
@@ -48,43 +52,67 @@ headers <-
       "ILC water\npoints",
       "ILC water\ncollection points"
     )
+footnote_text <- "Data on each water point with DSW/ILC was provided by Evidence Action. Village names were harmonized by us. Villages in Uganda that do are not part of DSW are excluded from the sample."
 
-evac %>%
-  select(-country) %>%
-  kable(
-    format = "html",
-    format.args = list(big.mark = ",", decimal.mark = "."),
-    col.names = headers
-  ) %>%
-  kable_paper("striped", full_width = TRUE) %>%
+columns <- c(" ", paste0("(", 1:6,")"))
+
+panels <- function(kable) {
+  kable %>%
   pack_rows("Malawi", 1, 4) %>%
   pack_rows("Uganda", 5, 8)
+}
+```
+
+```{r}
+evac %>%
+  select(-country) %>%
+  html_table(
+    col.names = headers
+  ) %>%
+  add_header_above(columns, line = TRUE) %>%
+  panels
 ```
 
 ```{r}
 table <-
   evac %>%
   select(-country) %>%
-  kable(
-    format = "latex",
-    format.args = list(big.mark = ",", decimal.mark = "."),
-    align = "c", 
-    booktabs = T,
-    escape = F,
-    caption = "Summary of Evidence Action administrative data",
-    label = "population",
-    col.names = linebreak(headers, align = "c")
+  mutate(ea_program_vil = str_replace_all(ea_program_vil, "&", "+")) %>%
+  latex_table(
+    align = "llccccc",
+    caption = caption,
+    label = label,
+    col.names = linebreak(headers, align = "c"),
+    escape = FALSE,
+    single_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 8) %>%
-  add_header_above(c(" ", paste0("(", 1:6,")")), line = FALSE)
+  add_header_above(columns, line = FALSE) %>%
+  panels
 
 writeLines(
   table, 
   "output/appendix-tables/population.tex"
 )
 ```
+
+### By country (text)
+```{r}
+villages %>%
+  group_by(country) %>%
+  summarise(
+    districts = n_distinct(district_id),
+    villages = n_distinct(village_id),
+    across(
+      c(dsw, ilc_wpt, ilc_wcp),
+      ~ sum(.)
+    )
+  ) %>%
+  html_table(
+    col.names = c("Country", "Districts", "Villages", "Water points with DSW", "ILC water points", "ILC water collection points")
+  ) %>%
+  add_header_above(c("", paste0("(", 1:5, ")")))
+```
+
 
 
 ### Water point-level weights
@@ -150,15 +178,15 @@ sample_sizes <-
   ) %>%
   dplyr::filter(pop_vil > 0) %>%
   left_join(sampled_villages)
+```
 
+```{r}
 sample_sizes %>%
-  kable(
-    format = "html",
-    format.args = list(big.mark = ",", decimal.mark = ".")
-  ) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6)
+  ungroup %>%
+  select(-country) %>%
+  html_table(col.names = c("Sample group", "Intervention", "Population of villages", "Sample villages")) %>%
+  pack_intervention_se %>%
+  add_header_above(paste0("(", 1:4, ")"))
 ```
 
 ## Uganda
@@ -194,10 +222,7 @@ wp_census %>%
     `Unmatched with no ID` = sum(dsw & is.na(ea_id) & !wp_func)
   )
 ```
-  - \textcolor{red}{11 water points with DSW mapped to sampled villages in the Evidence Action data could not be matched to water points with DSW in our data}.
-    - 4 were located, but no longer had dispensers when the water point census took place.
-    - 7 are outside of the village boundaries according to the GPS data.
-    
+
 ### Water samples tested
 
 ```{r}
@@ -471,6 +496,7 @@ hh_census %>%
   group_by(country, sample_group) %>%
   summarise(mean(size))
 ```
+
 ### Households living inside the village
 
 ```{r}
