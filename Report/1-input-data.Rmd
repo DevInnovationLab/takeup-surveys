@@ -6,8 +6,11 @@ pacman::p_load(
   tidyverse,
   viridis,
   fixest,
+  vtable,
   janitor,
   broom,
+  broom.helpers,
+  tidyr,
   car,
   modelsummary,
   survey,
@@ -20,7 +23,7 @@ pacman::p_load(
 ### All villages in admin data
 
 ```{r}
-villages <-
+villages_all <-
   read_rds(
       file.path(
       path_box,
@@ -30,7 +33,10 @@ villages <-
       "Final",
       "villages.rds"
     )
-  ) %>%
+  ) 
+
+villages <-
+  villages_all %>%
   dplyr::filter(!(country == "Uganda" & !dsw))
 ```
 
