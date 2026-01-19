@@ -1509,13 +1509,15 @@ tab <-
   ) %>%
   select(-c(name, country)) 
 
+col_names <- c("Intervention", "Sample group", "\\#Vil", "\\#HH", "\\#Vil", "People using\nDSW/ILC\n(95\\% CI)", "\\#Vil", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)")
+
 table <-
   tab %>%
   latex_table(
     escape = F,
     align = "llcccccccc",
-    col.names = linebreak(c("Sample group", col_names), align = "c"),
-    caption = paste(caption),
+    col.names = linebreak(col_names, align = "c"),
+    caption = caption,
     label = "headlines-vil-by-group",
     numbered_footnote = footnote_text
   ) %>%
