@@ -111,16 +111,11 @@ users_wp <-
     country, sample_group, wp_intervention
   ) %>%
   group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        weights = ~ weight,
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+  map_dfr(
+    ~ total_ci(
+      var = "hh_members_increased",
+      data = .x,
+      weights = ~ weight
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -145,16 +140,11 @@ users_wp_country <-
     country, wp_intervention
   ) %>%
   group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        weights = ~ weight,
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+  map_dfr(
+    ~ total_ci(
+      var = "hh_members_increased",
+      data = .x,
+      weights = ~ weight
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -169,16 +159,6 @@ users_wp_country <-
   arrange(outcome)
 
 users_wp_country
-```
-
-```{r}
-users_wp %>%
-  bind_rows(users_wp_country) %>%
-  write_csv(
-    here(
-      "../output/tables/users-wp.csv"
-    )
-  )
 ```
 
 ## Chlorination rates
@@ -262,16 +242,13 @@ cl_wp_sample <-
     country, wp_intervention, sample_group
   ) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      ) 
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
@@ -279,6 +256,7 @@ cl_wp_sample <-
         wps = .x %>% pull(wp_id) %>% n_distinct,
         households = .x %>% pull(household_id) %>% n_distinct,
       )
+    )
   ) %>% 
   bind_rows() %>%
   select(country, wp_intervention, sample_group, outcome, everything()) %>%
@@ -295,16 +273,13 @@ cl_wp_ilc <-
     country, wp_intervention_type
   ) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      ) 
-    ) %>%
+  map_dfr(
+   ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention_type) %>% unique,
@@ -312,6 +287,7 @@ cl_wp_ilc <-
         wps = .x %>% pull(wp_id) %>% n_distinct,
         households = .x %>% pull(household_id) %>% n_distinct,
       )
+   )
   ) %>% 
   bind_rows() %>%
   select(country, wp_intervention, sample_group, outcome, everything()) %>%
@@ -327,16 +303,13 @@ cl_wp_noweights <-
     country, wp_intervention
   ) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02", "discfcr_02"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      ) 
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique,
@@ -346,6 +319,7 @@ cl_wp_noweights <-
           pull(household_id) %>% 
           n_distinct
       )
+    )
   ) %>% 
   bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
@@ -369,6 +343,13 @@ footnote_text <-
     "The data used for these estimates includes all water points within the boundaries of sampled villages, as well as all households identified in the household census that self-report using these water points as their primary source of drinking water (regardless of whether the households live inside village boundaries or not).",
     "Confidence intervals are calculated based on standard errors clustered at the village level.",
     "The number of people using each water point is defined as the sum of all people living in households that report using it as their primary source of drinking water. During the first two weeks of data collection, data on the number of people living in a household was not collected due to a survey coding error. This affects eight villages in Uganda. For households in these villages, we impute the number of household members as the average across all households using water points with DSW in the same country and sample group (Expansion or Footprint)."
+  )
+
+caption <- "Primary outcomes estimated using the water point as the unit of reference"
+col_names <- 
+  linebreak(
+    c("Intervention", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#WP", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+    align = "c"
   )
 ```
 
@@ -460,36 +441,18 @@ tab <-
   select(-c(name, country))
 
 table <-
-  kable(
-    tab, 
-    format = "latex",
+  tab %>%
+  latex_table(
+    col.names = col_names,
+    caption = caption,
     escape = F,
-    align = "c", 
-    booktabs = T,
-    col.names = linebreak(
-      c("Intervention", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#WP", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
-      align = "c"
-    ),
-    caption = "Primary outcomes estimated using the water point as the unit of reference",
-    label = "headlines-wp"
+    label = "headlines-wp",
+    align = "lcccccccc",
+    numbered_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
-  add_header_above(
-    c(
-      " ", 
-      "Household census" = 2, 
-      "Country-level estimates" = 2, 
-      "Percent of color wheel readings ≥ 0.2 mg/L" = 4
-    )
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    number = footnote_text,
-    threeparttable = TRUE,
-    footnote_as_chunk = FALSE
-  )
+  pack_intervention_se %>%
+  add_header_above(main_header, line = TRUE) %>%
+  add_header_above(columns_8, line = FALSE)
 
 writeLines(
   table, 
@@ -583,37 +546,25 @@ tab <-
   ) %>%
   select(-c(name, country)) 
 
-table <-
-  kable(
-    tab, 
-    format = "latex",
-    escape = F,
-    align = "c", 
-    booktabs = T,
-    col.names = linebreak(
-      c(" ", "Sample group", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#WP", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
-      align = "c"
-    ),
-    caption = "Primary outcomes estimated using the water point as the unit of reference",
-    label = "headlines-wp-by-group"
-  ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 8) %>%
-  pack_rows("Uganda", 9, 12) %>%
-  add_header_above(
-    c(
-      " " = 2, 
-      "Household census" = 2, 
-      "Country-level estimates" = 2, 
-      "Percent of color wheel readings ≥ 0.2 mg/L" = 4
-    )
-  ) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    number = footnote_text,
-    threeparttable = TRUE,
-    footnote_as_chunk = FALSE
+col_names <- 
+  linebreak(
+    c("Intervention", "Sample group", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#WP", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
+    align = "c"
   )
+
+table <-
+  tab %>%
+  latex_table(
+   escape = F,
+    align = "llcccccccc",
+    col.names = linebreak(col_names, align = "c"),
+    caption = caption,
+    label = "headlines-wp-by-group",
+    numbered_footnote = footnote_text
+  ) %>%
+  pack_sample_se %>%
+  add_header_above(c(" ", main_header), line = TRUE) %>%
+  add_header_above(c(" ", columns_8), line = FALSE)
 
 writeLines(
   table, 
