@@ -153,7 +153,10 @@
 \newpage
 
 \appendix
+\counterwithin{table}{section}
 \renewcommand{\thetable}{\Alph{section}\arabic{table}}
+\counterwithin{figure}{section}
+\renewcommand{\thefigure}{\Alph{section}\arabic{figure}}
 
 \input{appendix-glossary}
 \newpage\input{appendix-tables}
