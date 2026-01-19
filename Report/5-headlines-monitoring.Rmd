@@ -1,34 +1,6 @@
 # Monitoring headline results
 
 ```{r}
-packages <-
-  c(
-    "stringr",
-    "sf",
-    "tidyverse",
-    "viridis",
-    "glue",
-    "patchwork",
-    "tidyr",
-    "dplyr",
-    "knitr",
-    "kableExtra",
-    "vtable",
-    "stargazer",
-    "ggplot2",
-    "haven",
-    "estimatr",
-    "janitor",
-    "survey"
-  )
-
-pacman::p_load(
-  packages,
-  character.only = TRUE
-)
-```
-
-```{r}
 mon_survey_cl <-
   mon_survey %>%
   left_join(pm_list) %>%
@@ -93,20 +65,16 @@ hh_per_wp <-
     intervention != "Non-program", 
     !is.na(pm_users)
   ) %>%
+  mutate(weight = 1) %>%
   group_by(
     country, sample_group, intervention
   ) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("pm_users"),
+  map_dfr(
+    ~ mean_ci(
+      var = "pm_users",
       dummy = FALSE,
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        strata = ~ sample_group,
-        data = .x,
-        nest = TRUE
-      )
+      data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -115,7 +83,6 @@ hh_per_wp <-
         wps = .x %>% pull(wp_id) %>% n_distinct,
       )
   ) %>%
-  bind_rows() %>%
   select(country, sample_group, wp_intervention_mon, av_hhs = mean, av_hhs_se = se)
 ```
 
@@ -129,23 +96,17 @@ people_per_hh <-
   ) %>%
   dplyr::filter(n() > 2) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("hh_members"),
+  map_dfr(
+    ~ mean_ci(
+      var = "hh_members",
       dummy = FALSE,
-      design = svydesign(
-        id = ~ village_id,      # PSU (here: villages)
-        data = .,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+      data = .x
     ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        sample_group = .x %>% pull(sample_group) %>% unique
-      )
+    mutate(
+      country = .x %>% pull(country) %>% unique,
+      sample_group = .x %>% pull(sample_group) %>% unique
+    )
   ) %>%
-  bind_rows() %>%
   select(country, sample_group, av_size = mean, av_size_se = se)
 ```
 
@@ -288,26 +249,24 @@ mon_survey_cl %>%
 ```{r}
 chlorine_am <-
   mon_survey_cl %>%
+  mutate(weight = 1) %>%
   group_by(country, wp_intervention_mon) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("disctcr_02", "discfcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .x,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention_mon = .x %>% pull(wp_intervention_mon) %>% unique,
         hhs = .x %>% pull(household_id) %>% n_distinct,
         villages = .x %>% pull(village_id) %>% n_distinct,
       )
+    )
   ) %>%
-  bind_rows %>%
   select(country, wp_intervention_mon, outcome, everything()) %>%
   arrange(desc(outcome))
 ```
@@ -321,7 +280,7 @@ footnote_text <-
     "We limit the sample to functional water points present in the Promoter Survey for water point data, and to households in the Monitoring Survey for household data. In both cases, we exclude households using water points with ILC in DSW villages, since we did not design the sample to be representative of these cases.",
     "The number of people using water points with DSW or ILC in the country is estimated by multiplying (1) the average number of households per water point, by (2) the average household size of a household using a water point, and by (3) the country number of water points of a given intervention.",
     "In calculating the average number of households per water point for a given intervention, we take a simple average of the number of households per water point among water points of a given category. This means that each water point has weight 1. In calculating the average household size of households using water points in a given category, we take a simple average of the household sizes of households using water points in a given category. This means that each household with an observation receives a weight of 1.",
-    "To calculate the number of people using ILC water points in Malawi, we scale the country number of ILC water points (2024) by a factor of 0.85 (2025 $\times$ 0.85 = 1720). This is to account for the fact that in our data collection process, if an ILC village had a non-functional water point, it was replaced. The functionality rate we identified was 85%. We want to avoid biasing our estimates by not having villages with non-functional ILC in our sample of visited villages. We assume that the share of villages with non-functional ILC is the same in the population as it was in our sample. These villages will have 0 users and 0% chlorination rates from Evidence Action interventions. Multiplying by 0.85 is thus equivalent to giving a 15% weight to villages with no users and no chlorination.",
+    "To calculate the number of people using ILC water points in Malawi, we scale the country number of ILC water points (2024) by a factor of 0.85 (2025 × 0.85 = 1720). This is to account for the fact that in our data collection process, if an ILC village had a non-functional water point, it was replaced. The functionality rate we identified was 85%. We want to avoid biasing our estimates by not having villages with non-functional ILC in our sample of visited villages. We assume that the share of villages with non-functional ILC is the same in the population as it was in our sample. These villages will have 0 users and 0% chlorination rates from Evidence Action interventions. Multiplying by 0.85 is thus equivalent to giving a 15% weight to villages with no users and no chlorination.",
     "The chlorination rates express the estimated average share of households with detected chlorine per functional water point, among households reported to be using the water point (by the promoter). We limit the sample to households in the Monitoring Survey. In calculating average chlorination rates, we take a simple mean of the chlorine test outcomes for a given category. This means that each household receives a weight of 1."
   )
 
@@ -413,22 +372,19 @@ tab <-
   select(-c(name, country)) 
 
 table <-
-  kable(
+  latex_table(
     tab, 
-    format = "latex",
     escape = F,
-    align = "c", 
-    booktabs = T,
+    align = "lccccccc", 
     col.names = linebreak(
       c("Intervention", "\\#WP", "\\#HH", "\\#WP", "People using\nDSW/ILC\n(95\\% CI)", "\\#HH", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)"),
       align = "c"
     ),
-    caption = "Primary outcomes estimated following the monitoring method",
-    label = "headlines-am"
+    caption = "Primary outcomes estimated following the Adoption Monitoring method",
+    label = "headlines-am",
+    numbered_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
+  pack_intervention_se %>%
   add_header_above(
     c(
       " ", 
@@ -437,14 +393,7 @@ table <-
       "Percent of color wheel readings ≥ 0.2 mg/L" = 3
     )
   ) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:6,")")), line = FALSE) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    number = footnote_text,
-    threeparttable = TRUE,
-    footnote_as_chunk = FALSE
-  )
-  
+  add_header_above(c(" ", " ", paste0("(", 1:7,")")), line = FALSE)
 
 writeLines(
   table, 

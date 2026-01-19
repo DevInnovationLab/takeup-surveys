@@ -126,7 +126,6 @@ users_wp <-
         wps = .x %>% pull(wp_id) %>% n_distinct,
       )
   ) %>% 
-  bind_rows() %>%
   select(country, sample_group, wp_intervention, outcome, everything()) %>%
   arrange(outcome)
 
@@ -154,7 +153,6 @@ users_wp_country <-
         wps = .x %>% pull(wp_id) %>% n_distinct,
       )
   ) %>% 
-  bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(outcome)
 
@@ -258,7 +256,6 @@ cl_wp_sample <-
       )
     )
   ) %>% 
-  bind_rows() %>%
   select(country, wp_intervention, sample_group, outcome, everything()) %>%
   arrange(desc(outcome))
 ``` 
@@ -289,7 +286,6 @@ cl_wp_ilc <-
       )
    )
   ) %>% 
-  bind_rows() %>%
   select(country, wp_intervention, sample_group, outcome, everything()) %>%
   arrange(desc(outcome))
 ``` 
@@ -321,7 +317,6 @@ cl_wp_noweights <-
       )
     )
   ) %>% 
-  bind_rows() %>%
   select(country, wp_intervention, outcome, everything()) %>%
   arrange(desc(outcome))
 ``` 
