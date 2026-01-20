@@ -393,7 +393,7 @@ table <-
       "Percent of color wheel readings ≥ 0.2 mg/L" = 3
     )
   ) %>%
-  add_header_above(c(" ", " ", paste0("(", 1:7,")")), line = FALSE)
+  add_header_above(c(" ", paste0("(", 1:7,")")), line = FALSE)
 
 writeLines(
   table, 
