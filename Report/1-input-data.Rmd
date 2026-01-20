@@ -14,7 +14,8 @@ pacman::p_load(
   car,
   modelsummary,
   survey,
-  ggh4x
+  ggh4x,
+  tinytable
 )
 ```
 

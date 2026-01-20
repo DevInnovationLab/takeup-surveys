@@ -1,14 +1,6 @@
 # DSW water points
 
 ```{r}
-pacman::p_load(
-  tinytable
-)
-```
-
-
-
-```{r}
 dsw <-
   wp_census %>%
   dplyr::filter(intervention_type == "DSW")
@@ -28,7 +20,13 @@ evac <-
     dsw_wpt = sum(dsw_wpt)
   )
 
-
+headers <- c(
+  " " = 2,
+  "Number of WPs" = 2,
+  "Percent of water points in the census" = 6
+)
+columns_9 <- c(" ", paste0("(", 1:9,")"))
+caption <- "DSW functionality indicators"
 footnote_text <-
   "The sample includes all water points in the water point census, some of which are located outside of village boundaries. The denominator for columns (4) to (8) is the number of water points with DSW in the census, shown in column (3). A dispenser is considered to be filled if chlorine was released after turning the valve. This is different from the definition used by Evidence Action in their Adoption Monitoring, when surveyors open the dispenser casing to check if there is chlorine in the tank. Therefore, the numbers in column (9) correspond to functional and filled dispensers in Evidence Action's data."
 
@@ -56,63 +54,32 @@ dsw_func <-
   select(-country) %>%
   select(Sample = sample_group, Villages, `EvAc data` = dsw_wpt, everything())
 
+
+
 dsw_func %>%
-  kable(
-    format = "html"
+  html_table(
+    single_footnote = footnote_text,
+    caption = caption
   ) %>%
-  pack_rows("Malawi", 1, 3) %>%
-  pack_rows("Uganda", 4, 5) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(
-    c(
-      " " = 2,
-      "Number of WPs" = 2,
-      "Percent of water points in the census" = 6
-    ),
-    line = TRUE
-  ) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  add_header_above(
-    c(" ", paste0("(", 1:9,")")), 
-    line = FALSE
-  )
+  pack_sample %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_9, line = FALSE)
 ```
 
 ```{r}
-kable(
+latex_table(
   dsw_func,
-  format = "latex",
-  escape = F,
-  align = "c", 
-  booktabs = T,
-  caption = "DSW functionality indicators",
-  label = "dsw-func-group"
+  align = "lccccccccc", 
+  caption = caption,
+  label = "dsw-func-group",
+  single_footnote = footnote_text
 ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 3) %>%
-  pack_rows("Uganda", 4, 5) %>%
-  add_header_above(
-    c(
-      " " = 2,
-      "Number of WPs" = 2,
-      "Percent of water points in the census" = 6
-    ),
-    line = TRUE
-  ) %>%
-  add_header_above(
-    c(" ", paste0("(", 1:9,")")), 
-    line = FALSE
-  ) %>%
+  pack_sample %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_9, line = FALSE) %>%
   column_spec(c(2, 6:10), width = "1.5cm") %>%
   column_spec(3:4, width = "1cm") %>%
   column_spec(c(1, 5), width = "2cm") %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
   writeLines(
     "output/appendix-tables/dsw-func-group.tex"
   )
@@ -152,39 +119,31 @@ dsw_func <-
   left_join(evac) %>%
   select(Country = country, Villages, `EvAc data` = dsw_wpt, everything())
 
+headers <- c(
+  " " = 2,
+  "Number of WPs" = 2,
+  "Percent of water points in the census" = 6
+)
+caption <- "DSW functionality indicators"
+
 dsw_func %>%
-  kable(
-    format = "html"
+  html_table(
+    single_footnote = footnote_text,
+    caption = caption
   ) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(
-    c(
-      " " = 2,
-      "Number of WPs" = 2,
-      "Percent of water points in the census" = 6
-    ),
-    line = TRUE
-  ) %>%
-  add_header_above(
-    c(" ", paste0("(", 1:9,")")), 
-    line = FALSE
-  ) %>%
-  footnote(
-    general = footnote_text
-  )
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_9, line = FALSE)
 ```
 
 ```{r}
-kable(
-  dsw_func %>% select(-`Casing present`), 
-  format = "latex",
-  escape = F,
-  align = "c", 
-  booktabs = T,
-  caption = "DSW functionality indicators",
-  label = "dsw-func"
-) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+dsw_func %>% 
+  select(-`Casing present`) %>%
+  latex_table(
+    align = "lccccccccc",
+    caption = caption,
+    label = "dsw-func",
+    single_footnote = footnote_text
+  ) %>%
   add_header_above(
     c(
       " " = 2,
@@ -193,16 +152,9 @@ kable(
     ),
     line = TRUE
   ) %>%
-  add_header_above(
-    c(" ", paste0("(", 1:8,")")), 
-    line = FALSE
-  ) %>%
+  add_header_above(columns_8, line = FALSE) %>%
   column_spec(c(1:4), width = "1.5cm") %>%
   column_spec(c(5:9), width = "2cm") %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
   writeLines(
     "output/tables/dsw-func.tex"
   )
@@ -266,49 +218,42 @@ dosing <-
     -matches("meter()(.*)_01_n"),
     -discfcr_02_n, -meterfcr_02_n
   ) %>%
-  set_names(c(" ", "Filled dispenser", "N", "TCR ≥ 0.2 mg/L", "FCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "TCR ≥ 0.1 mg/L", "FCR ≥ 0.2 mg/L", "FCR ≥ 0.1 mg/L"))
+  set_names(c("Sample group", "Filled dispenser", "N", "TCR ≥ 0.2 mg/L", "FCR ≥ 0.2 mg/L", "N", "TCR ≥ 0.2 mg/L", "TCR ≥ 0.1 mg/L", "FCR ≥ 0.2 mg/L", "FCR ≥ 0.1 mg/L"))
 
 footnote_text <-
   "At each water point with a filled dispenser, water was collected using a 20 liter jerrycan, dilute chlorine solution from the dispenser was added to the water, and the chlorine residual was measured using a color wheel 30 minutes after the water water treated."
+caption <- "Chlorine detection rates at water points with DSW"
+headers <- 
+  c(
+    " " = 2,
+    "Color wheel" = 3,
+    "Colorimeter" = 5
+  )
 ```
 
 ```{r}
-kable(
-  dosing, 
-  format = "html"
-) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  pack_rows("Malawi", 1, 3) %>%
-  pack_rows("Uganda", 4, 5) %>%
-  add_header_above(
-    c(
-      " " = 2,
-      "Color wheel" = 3,
-      "Colorimeter" = 5
-    )
+dosing %>%
+  html_table(
+    single_footnote = footnote_text
   ) %>%
-  add_header_above(c(" ", paste0("(", 1:9,")")), line = FALSE) %>%
-  footnote(general = footnote_text)
+  pack_sample %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_9, line = FALSE) 
 ```
 
 ```{r}
-kable(
-  dosing %>% select(1:5), 
-  format = "latex",
-  align = "c", 
-  booktabs = T,
-  caption = "Chlorine detection rates at water points with DSW",
-  label = "dsw-cl-group"
-) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 2) %>%
-  pack_rows("Uganda", 3, 4) %>%
-  add_header_above(c(" ", paste0("(", 1:4,")")), line = FALSE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
+columns_4 <- c(" ", paste0("(", 1:4,")"))
+
+dosing %>%
+  select(1:5) %>%
+  latex_table(
+    numbered_footnote = c("All TCR readings were taken with a color wheel.", footnote_text),
+    label = "dsw-cl-group",
+    align = "lcccc",
+    caption = caption
   ) %>%
+  pack_sample %>%
+  add_header_above(columns_4, line = FALSE) %>%
   writeLines(
     "output/appendix-tables/dsw-cl-group.tex"
   )
@@ -341,42 +286,35 @@ dosing <-
 ```
 
 ```{r}
-kable(
-  dosing, 
-  caption = "Chlorine detection rates at water points with DSW",
-  format = "html"
-) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(
-    c(
-      " ",
-      "Color wheel" = 3,
-      "Colorimeter" = 5
-    )
+caption <- "Chlorine detection rates at water points with DSW"
+header <- 
+  c(
+    " ",
+    "Color wheel" = 3,
+    "Colorimeter" = 5
+  )
+
+dosing %>%
+  html_table(
+    caption = caption,
+    single_footnote = footnote_text
   ) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE)
+  add_header_above(header, line = TRUE) %>%
+  add_header_above(columns_8, line = FALSE)
 ```
 
 ```{r}
-kable(
-  dosing %>% select(1:4), 
-  format = "latex",
-  align = "c", 
-  booktabs = T,
-  caption = "Chlorine detection rates at water points with DSW",
-  label = "dsw-cl"
-) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  add_header_above(c(" ", paste0("(", 1:3,")")), line = FALSE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
+dosing %>%
+  select(1:4) %>%
+  mutate(Country = c("Malawi", "Uganda")) %>%
+  select(Country, everything()) %>%
+  latex_table(
+    align = "lcccc",
+    label = "dsw-cl",
+    caption = caption,
+    numbered_footnote = c("All TCR readings were taken with a color wheel.", footnote_text)
   ) %>%
+  add_header_above(columns_4, line = FALSE) %>%
   writeLines(
     "output/tables/dsw-cl.tex"
   )
