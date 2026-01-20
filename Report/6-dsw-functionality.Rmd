@@ -79,7 +79,7 @@ latex_table(
   add_header_above(columns_9, line = FALSE) %>%
   column_spec(c(2, 4, 7, 8, 10), width = "1.5cm") %>%
   column_spec(3, width = "1cm") %>%
-  column_spec(c(1, 5, 6, 9), width = "2cm") %>%
+  column_spec(c(5, 6, 9), width = "2cm") %>%
   writeLines(
     "output/appendix-tables/dsw-func-group.tex"
   )
