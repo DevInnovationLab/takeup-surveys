@@ -352,34 +352,23 @@ table %>%
 ```
 
 ```{r}
-table <-
-  table %>%
-  kable(
-    format = "latex",
-    align = "c", 
-    booktabs = T,
+table %>%
+  latex_table(
+    align = "lcccc", 
     col.names = col_names,
     caption = caption,
-    label = "adoption-hhs"
+    label = "adoption-hhs",
+    single_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 2) %>%
-  pack_rows("Uganda", 3, 3) %>%
-  add_header_above(
-    headers,
-    line = TRUE
-  ) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
+  pack_intervention %>%
   add_header_above(headers, line = TRUE) %>%
-  add_header_above(columns, line = FALSE)
-
-writeLines(
-  table, 
-  "output/appendix-tables/adoption-hhs.tex"
-)
+  add_header_above(columns, line = FALSE) %>%
+  column_spec(c(2, 4, 7, 8, 10), width = "1.5cm") %>%
+  column_spec(3, width = "1cm") %>%
+  column_spec(c(5, 6, 9), width = "2cm") %>%
+  writeLines(
+    "output/appendix-tables/adoption-hhs.tex"
+  )
 ```
 
 
@@ -1238,41 +1227,29 @@ interference <-
   bind_cols %>%
   select(c(2:5, 8:10)) 
 
-col_names <- c(
-      "Intervention", 
-      "N", "With anyone in the village", "With the promoter",
-      "N", "With anyone in the village", "With the promoter"
-    )
-
+col_names <- 
+  c(
+    "Intervention", 
+    "N", "With anyone in the village", "With the promoter",
+    "N", "With anyone in the village", "With the promoter"
+  )
 header <- c(" ", "Census sample" = 3, "Promoter sample" = 3)  
 caption <- "Chlorine detection rates at water points with DSW"
-cols <- length(col_names) - 1
 footnote_text <- NULL
 
-table <- 
-  kable(
-    interference, 
-    caption = caption,
-    format = "latex",
-    col.names = col_names,
-    align = "c", 
-    booktabs = T
-  ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  add_header_above(, line = TRUE) %>%
-  add_header_above(c(" ", paste0("(", 1:cols,")")), line = FALSE) %>%
-  pack_rows("Malawi", 1, 2) %>%
-  pack_rows("Uganda", 3, 3)
-
-writeLines(
-  table, 
-  "output/appendix-tables/adoption-promoter.tex"
-)
+latex_table(
+  interference, 
+  caption = caption,
+  col.names = col_names,
+  align = "lcccccc",
+  single_footnote = footnote_text
+) %>%
+  add_header_above(header, line = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:6,")")), line = FALSE) %>%
+  pack_intervention %>%
+  writeLines(
+    "output/appendix-tables/adoption-promoter.tex"
+  )
 
 kable(
   interference, 
