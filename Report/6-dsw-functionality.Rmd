@@ -367,23 +367,32 @@ hh_survey %>%
     values_from = value,
     names_from = outcome
   ) %>%
+  pivot_wider(
+    id_cols = c(sample_group, est),
+    values_from = c(hhs, disctcr_02, discfcr_02),
+    names_from = country
+  ) %>%
   mutate(
     across(
-      c(sample_group, hhs),
+      c(sample_group, contains("hhs")),
       ~ if_else(est == "mean", as.character(.), "")
+    ),
+    across(
+      everything(),
+      ~ . %>% replace_na("")
     )
   ) %>%
-  select(sample_group, hhs, disctcr_02, discfcr_02) %>%
+  select(sample_group, contains("Malawi"), contains("Uganda")) %>%
   latex_table(
     caption = "Percent of color wheel readings ≥ 0.2 mg/L among households using water points with empty dispensers",
+    align = "lcccccc",
     label = "dsw-empty",
     escape = FALSE,
-    col.names = linebreak(c("Sample group", "N", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)")),
+    col.names = linebreak(c("Sample group", "N", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)", "N", "TCR\n(95\\% CI)", "FCR\n(95\\% CI)")),
     single_footnote = "Sample includes all households in the Census Sample that were matched to a water points with DSW that was found to be functional (the valve could be turned), but empty (no chlorine was dispensed when turning the valve) during the Water Point Census."
   ) %>%
-  pack_rows("Malawi", 1, 6) %>%
-  pack_rows("Uganda", 7, 10) %>%
-  add_header_above(c(" ", paste0("(", 1:3, ")")), line = FALSE) %>%
+  add_header_above(c(" ", "Malawi" = 3, "Uganda" = 3), line = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:6, ")")), line = FALSE) %>%
   writeLines(
     "output/appendix-tables/dsw-empty.tex"
   )
