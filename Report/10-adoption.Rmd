@@ -363,9 +363,7 @@ table %>%
   pack_intervention %>%
   add_header_above(headers, line = TRUE) %>%
   add_header_above(columns, line = FALSE) %>%
-  column_spec(c(2, 4, 7, 8, 10), width = "1.5cm") %>%
-  column_spec(3, width = "1cm") %>%
-  column_spec(c(5, 6, 9), width = "2cm") %>%
+  column_spec(c(3, 5), width = "4cm") %>%
   writeLines(
     "output/appendix-tables/adoption-hhs.tex"
   )
@@ -960,7 +958,7 @@ table <-
   mutate(
     across(
       contains(c("promoter", "anyone")),
-      ~ round(. * 100, 1) %>% paste0("%")
+      ~ round(. * 100, 1) %>% paste0("\\%")
     )
   )
 
@@ -976,60 +974,32 @@ columns <- c(" ", paste0("(", 1:9,")"))
 footnote_text <- "Sample in columns (1)-(6) includes all households in the Census Sample with available data on priming. Sample in columns (7)-(9) includes all households in the Promoter Sample with available data on priming."
 
 table %>%
-  kable(
-    format = "html",
+  html_table(
     col.names = col_names,
-    caption = caption
+    caption = caption,
+    single_footnote = footnote_text
   ) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(
-    headers,
-    line = TRUE
-  ) %>%
-  add_header_above(
-    columns,
-    line = FALSE
-  ) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  pack_rows("Malawi", 1, 2) %>%
-  pack_rows("Uganda", 3, 3)
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns, line = FALSE) %>%
+  pack_intervention
 ```
 
 ```{r}
-table <-
-  table %>%
-  kable(
-    format = "latex",
-    align = "c", 
-    booktabs = T,
-    col.names = col_names,
+table %>%
+  latex_table(
+    col.names = linebreak(col_names),
+    single_footnote = footnote_text,
     caption = caption,
+    align = "lccccccccc",
+    escape = FALSE,
     label = "adoption-priming"
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 2) %>%
-  pack_rows("Uganda", 3, 3) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  add_header_above(
-    headers,
-    line = TRUE
-  ) %>%
-  add_header_above(
-    columns, 
-    line = FALSE
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns, line = FALSE) %>%
+  pack_intervention %>%
+  writeLines(
+    "output/appendix-tables/adoption-priming.tex"
   )
-
-writeLines(
-  table, 
-  "output/appendix-tables/adoption-priming.tex"
-)
-
 ```
 
 
