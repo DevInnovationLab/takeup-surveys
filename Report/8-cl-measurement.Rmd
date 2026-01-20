@@ -9,7 +9,7 @@ cluster by enumerator
 
 ```{r}
 c(
-  "disctcr_un_02", 'metertcr_un_02', "metertcr_un_01",
+  "disctcr_un_02", "metertcr_un_02", "metertcr_un_01",
   "discfcr_un_02", "meterfcr_un_02", "meterfcr_un_01"
 ) %>%
   map(
@@ -138,23 +138,20 @@ cl_criteria_group <-
   chlorination_data %>%
   group_by(country, sample_group, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = criteria,
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      criteria,
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         sample_group = .x %>% pull(sample_group) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique
       )
+    )
   ) %>%
-  bind_rows %>%
   mutate(
     across(
       c(mean, lb, ub),
@@ -185,48 +182,46 @@ cl_criteria_group <-
     matches(criteria)
   )
 
-table <-
-  kable(
-    cl_criteria_group, 
-    format = "latex",
-    escape = F,
-    align = "c", 
-    booktabs = T,
-    col.names = linebreak(
-      c("Sample group", "Intervention", 
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)"
-      ),
-      align = "c"
-    ),
-    caption = "Percent of households where chlorine residual was detected under different thresholds, by sample group and intervention",
-    label = "cl-criteria-sample"
-  ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 8) %>%
-  pack_rows("Uganda", 9, 12) %>%
-  add_header_above(
-    c(
-      " " = 2, 
-      "Self-report" = 2,
-      "TCR ≥ 0.2 pmg/L" = 2,
-      "FCR ≥ 0.2 pmg/L" = 2,
-      "TCR ≥ 0.2 pmg/L" = 2,
-      "FCR ≥ 0.2 pmg/L" = 2,
-      "TCR ≥ 0.1 pmg/L" = 2,
-      "FCR ≥ 0.1 pmg/L" = 2
-    )
+col_names <-
+  c(
+    "Sample group", "Intervention", 
+    "N", "\\%\n(95\\% CI)",
+    "N", "\\%\n(95\\% CI)",
+    "N", "\\%\n(95\\% CI)",
+    "N", "\\%\n(95\\% CI)",
+    "N", "\\%\n(95\\% CI)",
+    "N", "\\%\n(95\\% CI)",
+    "N", "\\%\n(95\\% CI)"
+  )
+caption <- "Percent of households where chlorine residual was detected under different thresholds, by sample group and intervention"
+header <-
+  c(
+    " " = 2, 
+    "Self-report" = 2,
+    "TCR ≥ 0.2 mg/L" = 2,
+    "FCR ≥ 0.2 mg/L" = 2,
+    "TCR ≥ 0.2 mg/L" = 2,
+    "FCR ≥ 0.2 mg/L" = 2,
+    "TCR ≥ 0.1 mg/L" = 2,
+    "FCR ≥ 0.1 mg/L" = 2
   )
 
-writeLines(
-  table, 
-  "output/appendix-tables/cl-criteria-sample.tex"
-)
+columns_14 <- c(" ", " ", paste0("(", 1:14, ")"))
+
+latex_table(
+  cl_criteria_group, 
+  align = "llcccccccccccccc", 
+  col.names = linebreak(col_names, align = "c"),
+  caption = caption,
+  escape = FALSE,
+  label = "cl-criteria-sample"
+) %>%
+  pack_sample_se %>%
+  add_header_above(header, line = TRUE) %>%
+  add_header_above(columns_14, line = FALSE) %>%
+  writeLines(
+    "output/appendix-tables/cl-criteria-sample.tex"
+  )
 ```
 
 ### By country and program
@@ -251,22 +246,19 @@ est <-
   chlorination_data %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = criteria,
-        design = svydesign(
-          id = ~ village_id,      # PSU (here: villages)
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
-    ) %>%
+  map_dfr(
+    ~ map_dfr(
+      criteria,
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
         wp_intervention = .x %>% pull(wp_intervention) %>% unique
       )
+    )
   ) %>%
-  bind_rows %>%
   mutate(
     across(
       c(mean, lb, ub),
@@ -296,48 +288,22 @@ est <-
     matches(criteria)
   )
   
-table <-
-  kable(
-    est, 
-    format = "latex",
-    escape = F,
-    align = "c", 
-    booktabs = T,
-    col.names = linebreak(
-      c("Intervention", 
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)",
-        "N", "\\%\n(95\\% CI)"
-      ),
-      align = "c"
-    ),
-    caption = "Percent of households where chlorine residual was detected under different thresholds, by intervention",
-    label = "cl-criteria-country"
-  ) %>%
-  kable_styling(latex_options = c("scale_up")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
-  add_header_above(
-    c(
-      " ", 
-      "Self-report" = 2,
-      "TCR ≥ 0.2 pmg/L" = 2,
-      "FCR ≥ 0.2 pmg/L" = 2,
-      "TCR ≥ 0.2 pmg/L" = 2,
-      "FCR ≥ 0.2 pmg/L" = 2,
-      "TCR ≥ 0.1 pmg/L" = 2,
-      "FCR ≥ 0.1 pmg/L" = 2
-    )
+caption <- "Percent of households where chlorine residual was detected under different thresholds, by intervention"
+  
+latex_table(
+  est, 
+  align = "lcccccccccccccc", 
+  col.names = linebreak(col_names[2:16], align = "c"),
+  caption = caption,
+  escape = FALSE,
+  label = "cl-criteria-country"
+) %>%
+  pack_intervention_se %>%
+  add_header_above(c(" ", header[2:8]), line = TRUE) %>%
+  add_header_above(columns_14, line = FALSE) %>%
+  writeLines(
+    "output/appendix-tables/cl-criteria-country.tex"
   )
-
-writeLines(
-  table, 
-  "output/appendix-tables/cl-criteria-country.tex"
-)
 ```
 
 ## Text
@@ -359,6 +325,7 @@ hh_survey %>%
     )
   )
 ```
+
 ```{r}
 hh_survey %>%
   dplyr::filter(
@@ -416,27 +383,28 @@ hh_survey %>%
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_none)
 ```
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_anycl)
 ```
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_dispcl)
 ```
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_boil)
 ```
+
 ```{r}
 hh_survey %>%
   dplyr::filter(wp_intervention != "Non-program") %>%
@@ -457,6 +425,7 @@ hh_survey %>%
   ) %>%
   dplyr::filter(n > 100)
 ```
+
 ```{r}
 hh_survey %>%
   dplyr::filter(country == "Malawi", wp_intervention == "DSW") %>%
@@ -467,7 +436,7 @@ hh_survey %>%
 
 ```{r}
 hh_census %>%
-  dplyr::filter(wp_nonprogram) %>%
+  dplyr::filter(!(wp_intervention %in% c("DSW", "ILC"))) %>%
   group_by(country, ea_program_vil) %>%
   summarise(
     n = n(),
@@ -488,7 +457,7 @@ hh_census %>%
 
 ```{r}
 hh_census %>%
-  dplyr::filter(wp_nonprogram, sample_group == "ILC") %>%
+  dplyr::filter(!(wp_intervention %in% c("DSW", "ILC")), sample_group == "ILC") %>%
   group_by(country, ea_program_vil) %>%
   summarise(
     any = mean(!wtmt_none, na.rm = TRUE),
@@ -501,19 +470,19 @@ hh_census %>%
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_anycl)
 ```
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_dispcl)
 ```
 
 ```{r}
 hh_census %>%
-  dplyr::filter(country == "Uganda", wp_nonprogram) %>%
+  dplyr::filter(country == "Uganda", !(wp_intervention %in% c("DSW", "ILC"))) %>%
   tabyl(wtmt_boil)
 ```
 
@@ -558,10 +527,6 @@ hh_survey %>%
   )
 ```
 
-
-
-
-
 ```{r}
 hh_survey %>%
   mutate(watertreat_cl = watertreat_dispcl | watertreat_othercl) %>%
@@ -574,11 +539,6 @@ hh_survey %>%
   tabyl(
     watertreat_cl, disctcr_02
   )
-
-444/(1601  + 294 + 219 + 444)
-1601/(1601  + 294 + 219 + 444)
-444/(219 + 444)
-294/(1601  + 294)
 ```
 
 
@@ -594,11 +554,6 @@ hh_survey %>%
   tabyl(
     watertreat_cl, metertcr_02
   )
-
-127/(592 + 127)
-1601/(1601  + 294 + 219 + 444)
-444/(219 + 444)
-294/(1601  + 294)
 ```
 
 ```{r}
@@ -631,11 +586,6 @@ hh_survey %>%
   tabyl(
     watertreat_cl, metertcr_01
   )
-
-127/(592 + 127)
-1601/(1601  + 294 + 219 + 444)
-444/(219 + 444)
-294/(1601  + 294)
 ```
 
 
