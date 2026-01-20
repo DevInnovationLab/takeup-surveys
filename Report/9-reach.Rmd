@@ -100,7 +100,7 @@ plot
 
 ```{r}
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/reach-comparison.png",  
+  filename = "output/appendix-graphs/reach-comparison.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -478,7 +478,7 @@ wf_malawi <-
 
 ```{r}
 ggsave(
-  "output/graphs/waterfall_uganda.png", 
+  "output/graphs/waterfall_uganda.pdf", 
    plot = wf_uganda, 
    width = 8, 
    height = 6, 
@@ -486,7 +486,7 @@ ggsave(
 )
 
 ggsave(
-  "output/graphs/waterfall_malawi.png", 
+  "output/graphs/waterfall_malawi.pdf", 
    plot = wf_malawi, 
    width = 8, 
    height = 6, 

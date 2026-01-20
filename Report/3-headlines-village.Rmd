@@ -625,7 +625,7 @@ plot_data %>%
 #### Save Plot
 ```{r}
 ggplot2::ggsave(
-  filename = "output/graphs/users-vil.png",  
+  filename = "output/graphs/users-vil.pdf",  
   plot     = ggplot2::last_plot(),            
   width    = 8,
   height   = 6,
@@ -1285,7 +1285,7 @@ plot_data %>%
 
 ```{r}
 ggplot2::ggsave(
-  filename = "output/graphs/chlorine-vil.png",  
+  filename = "output/graphs/chlorine-vil.pdf",  
   plot     = ggplot2::last_plot(),            
   width    = 8,
   height   = 6,
