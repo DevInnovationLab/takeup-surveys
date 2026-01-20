@@ -93,52 +93,34 @@ table <-
 ```{r}
 footnote_text <-
   "Some of the water points for observed clusters were located far from the villages sampled, and are not observed in our data. However, functionality can be inferred for these cases when we observe at least one functional water collection point. Data on ILC device presence and functionality was sometimes obtained from an operator or vilalge guide when the water point was not visited or could not be observed from the ground. These survey protocols result in non-measurable noise in the percentages presented in the table."
+caption <- "ILC functionality indicators"
+headers <- c(
+  " " = 3, 
+  "Water point functionality" = 2,
+  "ILC device presence" = 2,
+  "ILC device functionality" = 2
+)
 
-kable(
+latex_table(
   table, 
-  format = "latex",
-  caption = "ILC functionality indicators",
+  caption = caption,
   label = "ilc-func",
-  align = "c", 
-  booktabs = T
+  align = "lcccccccc",
+  single_footnote = footnote_text
 ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  add_header_above(
-    c(
-      " " = 3, 
-      "Water point functionality" = 2,
-      "ILC device presence" = 2,
-      "ILC device functionality" = 2
-    )
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_8, line = FALSE) %>%
   writeLines(
     "output/tables/ilc-func.tex"
   )
 
 kable(
   table, 
-  format = "html",
-  caption = "ILC functionality indicators"
+  caption = caption,
+  single_footnote = footnote_text
 ) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(
-    c(
-      " " = 3, 
-      "Water point functionality" = 2,
-      "ILC device presence" = 2,
-      "ILC device functionality" = 2
-    )
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  )
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_8, line = FALSE)
 ```
 
 
@@ -173,42 +155,32 @@ table <-
     
 footnote_text <-
   "In each village, the closest and the furthest water collection point from the ILC device are tested. The sample in the first line includes all water collection points tested. The sample in the second line includes only the water collection points that were the closest to the tank in their cluster. The third line excludes the water collection points that were the closest to the tank in their cluster. Large clusters cover multiple villages. Therefore, there may be multiple water collection points in a single cluster included in lines one and three."
+headers <- c(
+  " ", 
+  "Color wheel" = 3, 
+  "Colorimeter" = 5
+)
+caption <- "Chlorine detection rates at water collection points connected to ILC"
 
-kable(
+html_table(
   table, 
-  format = "html"
+  caption = caption,
+  single_footnote = footnote_text
 ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  kable_paper("striped", full_width = TRUE) %>%
-  add_header_above(
-    c(
-      " ", 
-      "Color wheel" = 3, 
-      "Colorimeter" = 5
-    )
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:8,")")), line = FALSE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  )
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(columns_8, line = FALSE)
 ```
 
 ```{r}
-kable(
-  table %>% select(1:4), 
-  format = "latex",
-  align = "c", 
-  booktabs = T,
-  caption = "Chlorine detection rates at water collection points connected to ILC",
-  label = "ilc-cl"
-) %>%
-  kable_styling(latex_options = c("HOLD_position")) %>%
-  add_header_above(c(" ", paste0("(", 1:3,")")), line = FALSE) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
+table %>% 
+  select(1:4) %>%
+  latex_table(
+    label = "ilc-cl",
+    align = "lcccc",
+    caption = caption,
+    single_footnote = footnote_text
   ) %>%
+  add_header_above(columns_3, line = FALSE) %>%
   writeLines(
     "output/tables/ilc-cl.tex"
   )
