@@ -327,13 +327,13 @@ table <-
 ```
 
 ```{r}
-col_names <- c("", "N", "Included in the promoter list", "N", "Water point with DSW/ILC is the primary source of drinking water")
+col_names <- c("", "N", "Included in\nthe promoter list", "N", "Water point with DSW/ILC is\nthe primary source of drinking water")
 
 headers <- 
   c(
     " ",
-    "Households using water points with DSW/ILC" = 2,
-    "Households in the Promoter Sample" = 2
+    "Households using water\npoints with DSW/ILC" = 2,
+    "Households in the\nPromoter Sample" = 2
   )
 
 columns <- c(" ", paste0("(", 1:4,")"))
@@ -355,7 +355,7 @@ table %>%
 table %>%
   latex_table(
     align = "lcccc", 
-    col.names = col_names,
+    col.names = linebreak(col_names),
     caption = caption,
     label = "adoption-hhs",
     single_footnote = footnote_text
@@ -363,7 +363,6 @@ table %>%
   pack_intervention %>%
   add_header_above(headers, line = TRUE) %>%
   add_header_above(columns, line = FALSE) %>%
-  column_spec(c(3, 5), width = "4cm") %>%
   writeLines(
     "output/appendix-tables/adoption-hhs.tex"
   )
@@ -619,35 +618,22 @@ headers <- c(
       "Promoter not surveyed" = 2,
       "Difference"
     )
+footnote_text <- "All TCR readings were taken with a color wheel."
 
-
-table <-
-  timing_table %>%
-  kable(
-    format = "latex",
-    align = "c", 
-    booktabs = T,
+timing_table %>%
+  latex_table(
+    align = "lccccc", 
     col.names = col_names,
     caption = caption,
-    label = "adoption-wp"
+    label = "adoption-wp",
+    single_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
-  add_header_above(
-    headers,
-    line = TRUE
-  ) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
-
-writeLines(
-  table, 
-  "output/appendix-tables/adoption-wp.tex"
-)
+  pack_intervention_se %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  writeLines(
+    "output/appendix-tables/adoption-wp.tex"
+  )
 
 timing_table %>%
   kable_by_group(
@@ -883,30 +869,22 @@ headers <- c(
       "After first day" = 2,
       "Difference"
     )
+footnote_text <- "All TCR readings were taken with a color wheel."
 
-table <-
-  timing_table %>%
-  kable(
-    format = "latex",
-    align = "c", 
-    booktabs = T,
+timing_table %>%
+  latex_table(
+    align = "lccccc", 
     col.names = col_names,
-    caption = "TCR detection rates in census sample by day of interview",
-    label = "adoption-day"
+    caption = "TCR detection rates in Census Sample by day of interview",
+    label = "adoption-day",
+    numbered_footnote = footnote_text
   ) %>%
-  kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
-  pack_rows("Malawi", 1, 4) %>%
-  pack_rows("Uganda", 5, 6) %>%
-  add_header_above(
-    headers,
-    line = TRUE
-  ) %>%
-  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE)
-
-writeLines(
-  table, 
-  "output/appendix-tables/adoption-day.tex"
-)
+  pack_intervention_se %>%
+  add_header_above(headers, line = TRUE) %>%
+  add_header_above(c(" ", paste0("(", 1:5,")")), line = FALSE) %>%
+  writeLines(
+    "output/appendix-tables/adoption-day.tex"
+  )
 
 timing_table %>%
   kable_by_group(
