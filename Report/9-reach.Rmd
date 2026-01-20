@@ -43,39 +43,58 @@ hh_census %>%
 ## All estimates
 
 ```{r}
+monitoring <-
+  total_country %>% 
+  rename(
+    total = total_people, 
+    ub = total_people_ub, 
+    lb = total_people_lb, 
+    wp_intervention = wp_intervention_mon
+  )
+```
+
+
+```{r}
 plot_data <-
   list(
-    "Census sample,\nvillage-level\n(main estimate)" = people_per_country,
-    "Census sample,\nwater point-level" = users_wp_country,
-    "Promoter sample\n(Adoption Monitoring\nmethod)" = total_country %>% rename(total = total_people, ub = total_people_ub, lb = total_people_lb, wp_intervention = wp_intervention_mon)
+    "(1)\nCensus Sample,\nvillage-level\n(main estimate)" = people_per_country,
+    "(2)\nCensus Sample,\nwater point-level" = users_wp_country,
+    "(3)\nPromoter Sample\n(Adoption Monitoring\nmethod)" = monitoring
   ) %>%
-  bind_rows(.id = "label") %>%
-  mutate(
-    main = (label == "Census sample,\nvillage-level\n(main estimate)")
-  ) %>%
+  bind_rows(.id = "sample") %>%
+  mutate(main = str_detect(sample, "main")) %>%
   dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC")) 
 
 plot <-
   plot_data %>%
   ggplot(
     aes(
-      x = label,
+      x = sample,
       y = total,
+      label = total %>% round %>% format(big.mark = ","),
       ymin = lb,
       ymax = ub,
       fill = main
     )
   ) +
   geom_col() +
-  geom_errorbar(width  = .2) +
-  facet_grid(wp_intervention ~ country, scales = "free_y") + 
+  geom_errorbar(width = .2, color = "gray30") +
+  facet_grid2(
+    wp_intervention ~ country, 
+    scale = "free",
+    independent = "x"
+  ) +
+  scale_y_continuous(labels = scales::comma) +
   scale_fill_manual(values = c("#4575b4", "#FDB462")) +
-  theme + 
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "gray80", color = NA)
+  ) + 
   labs(
     x = NULL,
     y = NULL
-  )  +
-  scale_y_continuous(labels = scales::comma)
+  )
 
 plot
 ```
@@ -102,22 +121,16 @@ users_outside_census <-
   dplyr::filter(inclusion != "Within village boundaries") %>%
   group_by(country) %>%
   group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        strata = ~ sample_group,
-        prob = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
+  map_dfr(
+    ~ total_ci(
+      var = "hh_members_increased",
+      data = .x,
+      weights = ~ weight,
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique
       )
   ) %>% 
-  bind_rows() %>%
   select(country, outcome, everything()) %>%
   arrange(outcome)
 ```
@@ -136,16 +149,11 @@ hhoutside_per_wp <-
     country, sample_group, intervention
   ) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("pm_users_outside"),
+  map_dfr(
+    ~ mean_ci(
+      var = "pm_users_outside",
       dummy = FALSE,
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        strata = ~ sample_group,
-        data = .x,
-        nest = TRUE
-      )
+      data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -154,7 +162,6 @@ hhoutside_per_wp <-
         wps = .x %>% pull(wp_id) %>% n_distinct,
       )
   ) %>%
-  bind_rows() %>%
   select(country, sample_group, wp_intervention, av_hhs = mean, av_hhs_se = se)
 ```
 
@@ -214,22 +221,16 @@ wf_step2 <-
   dplyr::filter(inclusion == "Within village boundaries") %>%
   group_by(country) %>%
   group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        weights = ~ weight,
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+  map_dfr(
+    ~ total_ci(
+      var = "hh_members_increased",
+      data = .x,
+      weights = ~ weight
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique
       )
   ) %>% 
-  bind_rows() %>%
   transmute(country, total, step = 2)
 
 wf_step2
@@ -268,21 +269,16 @@ wf_step3 <-
   mutate(weight = pop_points/pm_sampled_points) %>%
   group_by(country) %>%
   group_split %>%
-  map(
-    ~ total_cis(
-      outcomes = c("hh_members_increased"),
-      design = svydesign(
-        id = ~ village_id,
-        weights = ~ weight,
-        data = .x,
-        nest = TRUE
-      )
+  map_dfr(
+    ~ total_ci(
+      var = "hh_members_increased",
+      data = .x,
+      weights = ~ weight
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique
       )
   ) %>% 
-  bind_rows() %>% 
   transmute(country, total, step = 3)
 
 wf_step3
@@ -306,16 +302,11 @@ wf_step4 <-
     country, sample_group, intervention
   ) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("pm_users_inside"),
+  map_dfr(
+    ~ mean_ci(
+      var = "pm_users_inside",
       dummy = FALSE,
-      design = svydesign(
-        id = ~ village_id, # cluster IDs
-        data = .x,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+      data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -325,7 +316,6 @@ wf_step4 <-
         func_rate = .x %>% pull(func_rate) %>% unique,
       )
   ) %>%
-  bind_rows() %>%
   select(country, sample_group, wp_intervention, av_hhs = mean, av_hhs_se = se, func_rate) %>%
   left_join(people_per_hh) %>%
   # Calculate people per WP and its SE using delta method
@@ -357,15 +347,23 @@ wf_step4 <-
 
 ```{r}
 wf_data <-
-  main %>%
+  people_per_country %>%
+  mutate(step = 0) %>%
   bind_rows(wf_step1) %>%
   bind_rows(wf_step2) %>%
   bind_rows(wf_step3) %>%
   bind_rows(wf_step4) %>%
-  bind_rows(monitoring %>% select(-ub,-lb)) %>%
+  bind_rows(monitoring %>% select(-ub,-lb) %>% mutate(step = 5)) %>%
   bind_rows(monitoring %>% mutate(step = 6)) %>%
   arrange(country, step) %>%
-  group_by(country) %>%
+  group_by(country, step) %>%
+  summarise(
+    across(
+      c(total, ub, lb),
+      ~ sum(., na.rm = TRUE) %>% na_if(0)
+    )
+  ) %>%
+  ungroup %>%
   mutate(
     total = round(total/20000) * 20000,
     start = 
@@ -380,23 +378,17 @@ wf_data <-
       end < start ~ "#d73027",
       TRUE ~ "#4575b4"
     ),
-    label = rep(c(
-        "Table 1",
+    label = factor(
+      step,
+      levels = 0:6,
+      labels = c(
+        "Main results\n(Table 1)",
         "Exclude \ncensus\nout-of-village\nhouseholds",
         "Unit of\nobservation",
         "Sample \nselection\nof water points",
         "Dataset",
         "Promoter\nsurvey\nout-of-village\nhouseholds",
-        "Table 3"
-      )) %>% factor(
-      levels = c(
-        "Table 1",
-        "Exclude \ncensus\nout-of-village\nhouseholds",
-        "Unit of\nobservation",
-        "Sample \nselection\nof water points",
-        "Dataset",
-        "Promoter\nsurvey\nout-of-village\nhouseholds",
-        "Table 3"
+        "Promoter Sample\n(Table 3)"
       ),
       ordered = TRUE
     )
