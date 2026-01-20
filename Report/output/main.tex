@@ -105,7 +105,8 @@
 \caption{Sensitivity checks on estimates of the number of people using water points with DSW or ILC}
 \includegraphics[width=\linewidth]{graphs/users-vil.png}
 \label{fig:users-vil}
-\raggedright{\textit{Note:} All estimates use data from the Household Census and the Household Survey (census sample) with the village as the unit of reference.}
+\footnotesize
+\raggedright{\textit{Note:} Estimates use data from the Household Census and use the village as the unit of reference the scale the number of users to the country level.}
 \end{figure}
 
 \begin{figure}[H]
@@ -153,7 +154,10 @@
 \newpage
 
 \appendix
+\counterwithin{table}{section}
 \renewcommand{\thetable}{\Alph{section}\arabic{table}}
+\counterwithin{figure}{section}
+\renewcommand{\thefigure}{\Alph{section}\arabic{figure}}
 
 \input{appendix-glossary}
 \newpage\input{appendix-tables}
