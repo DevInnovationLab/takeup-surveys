@@ -181,7 +181,7 @@ plot <-
   scale_y_continuous(labels = scales::comma)
 
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-comparison.png",  
+  filename = "output/appendix-graphs/adoption-comparison.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -269,11 +269,6 @@ table <-
   kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
   pack_rows("Malawi", 1, 3) %>%
   pack_rows("Uganda", 4, 5) %>%
-  footnote(
-    general = footnote_text,
-    threeparttable = TRUE
-  ) %>%
-  add_header_above(headers, line = TRUE) %>%
   add_header_above(columns, line = FALSE)
 
 writeLines(
@@ -355,6 +350,7 @@ table %>%
 table %>%
   latex_table(
     align = "lcccc", 
+    escape = FALSE,
     col.names = linebreak(col_names),
     caption = caption,
     label = "adoption-hhs",
@@ -446,7 +442,7 @@ plot <-
   scale_y_continuous(labels = scales::comma)
 
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-cofirmed.png",  
+  filename = "output/appendix-graphs/adoption-cofirmed.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -525,7 +521,7 @@ plot <-
   )
 
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-selection.png",  
+  filename = "output/appendix-graphs/adoption-selection.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -1046,7 +1042,7 @@ plot <-
   )
 
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-promoter.png",  
+  filename = "output/appendix-graphs/adoption-promoter.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -1141,7 +1137,7 @@ design <- function(data, ...) {
 }
 
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-promotermon.png",  
+  filename = "output/appendix-graphs/adoption-promotermon.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -1212,7 +1208,7 @@ kable(
     threeparttable = TRUE
   ) %>%
   add_header_above(, line = TRUE) %>%
-  add_header_above(c(" ", paste0("(", 1:cols,")")), line = FALSE) %>%
+  add_header_above(c(" ", paste0("(", 1:6,")")), line = FALSE) %>%
   pack_rows("Malawi", 1, 2) %>%
   pack_rows("Uganda", 3, 3)
 ```
@@ -1308,7 +1304,7 @@ plot <-
   )
 
 ggplot2::ggsave(
-  filename = "output/appendix-graphs/adoption-boundaries.png",  
+  filename = "output/appendix-graphs/adoption-boundaries.pdf",  
   plot     = plot,            
   width    = 8,
   height   = 6,
@@ -1347,3 +1343,73 @@ list(
     caption = "Share of households living within village boundaries"
   )
 ```
+
+## ILC
+
+```{r}
+mon_survey_cl %>%
+  dplyr::filter(wp_intervention_mon == "ILC") %>%
+  mutate(
+    confirmed = wp_intervention_mon == wp_intervention,
+    primary = if_else(confirmed, str_detect(where_collect, "primary"), NA)
+  ) %>%
+  left_join(wp_census %>% select(wp_id, closer)) %>%
+  group_by(country) %>%
+  summarise(
+    confirmed = mean(confirmed, na.rm = TRUE),
+    primary = mean(primary, na.rm = TRUE),
+    ilc_device = mean(primary & wp_ilc_device & confirmed, na.rm = TRUE),
+    wp_fcr = mean(wp_discfcr_02, na.rm = TRUE),
+    closer = mean(closer, na.rm = TRUE),
+    tcr = mean(disctcr_02, na.rm = TRUE)
+  )
+```
+
+```{r}
+hh_survey %>%
+  dplyr::filter(
+    wp_intervention == "ILC"
+  ) %>%
+  left_join(wp_census %>% select(wp_id, closer)) %>%
+  mutate(primary = str_detect(where_collect, "primary")) %>%
+  summarise(
+    primary = mean(primary, na.rm = TRUE),
+    wp_ilc_device = mean(wp_ilc_device & primary, na.rm = TRUE),
+    wp_fcr = mean(wp_discfcr_02, na.rm = TRUE),
+    closer = mean(closer, na.rm = TRUE),
+    tcr = mean(disctcr_02, na.rm = TRUE)
+  )
+```
+
+
+```{r}
+mon_survey_cl %>%
+  dplyr::filter(
+    wp_intervention_mon == "ILC",
+    wp_intervention == "ILC",
+    str_detect(where_collect, "primary")
+  ) %>%
+  summarise(
+    n = n(),
+    wps = n_distinct(wp_id),
+    wp_ilc_device = mean(wp_ilc_device, na.rm = TRUE),
+    tcr = mean(disctcr_02, na.rm = TRUE)
+  )
+```
+
+
+
+```{r}
+hh_survey %>%
+  dplyr::filter(
+    wp_intervention == "ILC",
+    str_detect(where_collect, "primary")
+  ) %>%
+  summarise(
+    n = n(),
+    wps = n_distinct(wp_id),
+    wp_ilc_device = mean(wp_ilc_device, na.rm = TRUE),
+    tcr = mean(disctcr_02, na.rm = TRUE)
+  )
+```
+

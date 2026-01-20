@@ -172,6 +172,8 @@ html_table(
 ```
 
 ```{r}
+columns_3 <- c(" ", paste0("(", 1:3, ")"))
+
 table %>% 
   select(1:4) %>%
   latex_table(
@@ -191,20 +193,13 @@ table %>%
 ```{r}
 wp_census %>%
   dplyr::filter(
-    intervention == "DSW",
-    !disp_filled
+    ilc_wp,
+    wp_func
   ) %>%
-  select(wp_id) %>%
-  inner_join(hh_survey) %>%
-  group_by(sample_group, country) %>%
-  summarise(
-    across(
-      c(disctcr_02, discfcr_02),
-      list(
-        n = ~ sum(!is.na(.)),
-        mean = ~ mean(., na.rm = TRUE)
-      )
-    )
-  )
+  select(ea_ilc_wpt) %>%
+  inner_join(wp_census) %>%
+  dplyr::filter(ilc_wcp) %>%
+  summarise(mean(wp_func))
 ```
+
 
