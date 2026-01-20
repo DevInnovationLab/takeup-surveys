@@ -66,10 +66,21 @@ test_vars <-
     "meterfcr_01", "metertcr_01"
   )
 
-
 # Functions --------------------------------------------------------------------
 
-mean_ci <- function(var, design, dummy = TRUE) {
+design <- function(data, ...) {
+  svydesign(
+    id = ~ village_id,
+    data = data, 
+    strata = ~ country + sample_group,
+    nest = TRUE,
+    ...
+  )
+}
+
+mean_ci <- function(var, data, dummy = TRUE, ...) {
+  
+  design <- design(data, ...)
   
   formula <- paste("~", var) %>% as.formula()
   
@@ -101,17 +112,10 @@ mean_ci <- function(var, design, dummy = TRUE) {
   result
 }
 
-mean_cis <-
-  function(design, outcomes, dummy = TRUE) {
-    map(
-      outcomes,
-      ~ mean_ci(design, var = .x, dummy)
-    ) %>%
-      bind_rows
-  }
-
 total_ci <-
-  function(design, var) {
+  function(data, var, ...) {
+    
+    design <- design(data, ...)
     
     formula <- paste("~", var) %>% as.formula()
     
@@ -136,15 +140,6 @@ total_ci <-
   
     return(all)
     
-  }
-
-total_cis <-
-  function(design, outcomes) {
-    map(
-      outcomes,
-      ~ total_ci(design, var = .)
-    ) %>%
-      bind_rows
   }
   
 kable_by_group <- function(x, ...) {
@@ -173,3 +168,59 @@ kable_by_country <- function(x, ...) {
   
 }
 
+latex_table <- function(table, numbered_footnote = NULL, single_footnote = NULL, ...) {
+  table %>%
+    kable(
+      format = "latex",
+      format.args = list(big.mark = ",", decimal.mark = "."),
+      booktabs = T,
+      ...
+    ) %>%
+    kable_styling(latex_options = c("scale_down", "HOLD_position")) %>%
+    footnote(
+      number = numbered_footnote,
+      general = single_footnote,
+      threeparttable = TRUE,
+      footnote_as_chunk = FALSE
+    )
+}
+
+html_table <- function(table, numbered_footnote = NULL, single_footnote = NULL, ...) {
+  table %>%
+    kable(
+      format = "html",
+      format.args = list(big.mark = ",", decimal.mark = "."),
+      ...
+    ) %>%
+    footnote(
+      number = numbered_footnote,
+      general = single_footnote,
+      threeparttable = TRUE,
+      footnote_as_chunk = FALSE
+    ) %>%
+    kable_paper("striped", full_width = TRUE)
+}
+
+pack_intervention_se <- function(kable) {
+  kable %>%
+    pack_rows("Malawi", 1, 4) %>%
+    pack_rows("Uganda", 5, 6)
+}
+
+pack_intervention <- function(kable) {
+  kable %>%
+    pack_rows("Malawi", 1, 2) %>%
+    pack_rows("Uganda", 3, 3)
+}
+
+pack_sample_se <- function(kable) {
+  kable %>%
+    pack_rows("Malawi", 1, 8) %>%
+    pack_rows("Uganda", 9, 12)
+}
+
+pack_sample <- function(kable) {
+  kable %>%
+    pack_rows("Malawi", 1, 3) %>%
+    pack_rows("Uganda", 4, 5)
+}

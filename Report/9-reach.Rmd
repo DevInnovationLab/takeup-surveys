@@ -81,8 +81,7 @@ plot <-
   geom_errorbar(width = .2, color = "gray30") +
   facet_grid2(
     wp_intervention ~ country, 
-    scale = "free",
-    independent = "x"
+    scale = "free_y"
   ) +
   scale_y_continuous(labels = scales::comma) +
   scale_fill_manual(values = c("#4575b4", "#FDB462")) +

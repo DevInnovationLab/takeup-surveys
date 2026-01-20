@@ -244,6 +244,7 @@ obs <-
   
 est <-
   chlorination_data %>%
+  mutate(weight = 1) %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
   map_dfr(

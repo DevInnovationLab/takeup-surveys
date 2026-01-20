@@ -31,6 +31,88 @@ adoption_data <-
   dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC"))
 ```
 
+## Balance test in water points
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention == "DSW", country == "Malawi") %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = c(
+      "wp_func",
+      "wp_turbidity",
+      "disp_tank_present",
+      "disp_casing_present",
+      "disp_pvc_pole_present",
+      "disp_func",
+      "disp_filled",
+      "disp_dose",
+      "wp_pay",
+      "disctcr_02",
+      "disctcr_un_02",
+      "discfcr_02",
+      "discfcr_un_02"
+    ),
+    group = "promoter_surveyed",
+    group.test = TRUE
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention == "DSW", country == "Uganda", wp_func) %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = c(
+      "wp_turbidity",
+      "disp_tank_present",
+      "disp_func",
+      "disp_filled",
+      "disp_dose",
+      "wp_pay",
+      "disctcr_02",
+      "discfcr_02"
+    ),
+    group = "promoter_surveyed",
+    group.test = TRUE
+  )
+```
+
+```{r}
+wp_census %>%
+  dplyr::filter(intervention == "ILC", country == "Malawi", wp_func) %>%
+  mutate(
+    across(
+      where(is.logical),
+      ~ as.numeric(.)
+    )
+  ) %>%
+  sumtable(
+    vars = c(
+      "wp_pay",
+      "ilc_wcps",
+      "ilc_devicefunc",
+      "ilc_tabletstock",
+      "ilc_wpt_yn",
+      "closer",
+      "disctcr_02",
+      "discfcr_02"
+    ),
+    group = "promoter_surveyed",
+    group.test = TRUE
+  )
+```
+
 
 ## Are estimates different?
 
@@ -39,23 +121,34 @@ adoption_data <-
 ```{r}
 plot_data <-
   list(
-    "(1)\nCensus sample,\nvillage-level\n(main estimate)\n" = cl_village_noweights_country %>% rename(N = hhs),
-    "(2)\nCensus sample,\nwater point-level\n" = cl_wp_noweights  %>% rename(N = households),
-    "(3)\nPromoter sample\n(Adoption Monitoring\nmethod)\n" = chlorine_am %>% rename(wp_intervention = wp_intervention_mon)  %>% rename(N = hhs)
+    "(1)\nCensus sample,\nvillage-level\n(main estimate)\n" = 
+      cl_village_noweights_country %>% 
+      rename(N = hhs),
+    "(2)\nCensus sample,\nwater point-level\n" = 
+      cl_wp_noweights %>% 
+      rename(N = households),
+    "(3)\nPromoter sample\n(Adoption Monitoring\nmethod)\n" = 
+      chlorine_am %>% 
+      rename(
+        wp_intervention = wp_intervention_mon,
+        N = hhs
+      )
   ) %>%
-  map(
+  map_dfr(
     ~ .x %>%
       dplyr::filter(outcome == "disctcr_02") %>%
-      select(country, wp_intervention, N, outcome, mean, ub, lb)
+      select(country, wp_intervention, N, outcome, mean, ub, lb),
+    .id = "survey"
   ) %>%
-  bind_rows(.id = "label") %>%
   mutate(
     across(
       c(mean, ub, lb),
       ~ . * 100
     ),
-    main = str_detect(label, "main"),
-    label = label %>% paste0(" (N = ", N %>% format(big.mark = ","), ")") %>% str_trim
+    main = str_detect(survey, "main"),
+    label = survey %>% 
+      paste0("(N = ", N %>% format(big.mark = ","), ")") %>% 
+      str_trim
   ) %>%
   dplyr::filter(!(country == "Uganda" & wp_intervention == "ILC")) 
 
@@ -72,7 +165,7 @@ plot <-
     )
   ) +
   geom_col() +
-  geom_errorbar(width  = .2) +
+  geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid2(
     wp_intervention ~ country,
@@ -109,7 +202,7 @@ adoption_data %>%
   ) %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
+  map_dfr(
     ~ .x %>%
       feols(
         disctcr_02 ~ survey | sample_group,
@@ -117,7 +210,6 @@ adoption_data %>%
       ) %>%
       tidy
   ) %>%
-  bind_rows() %>%
   mutate(
     country = c("Malawi", "Malawi", "Uganda"),
     wp_intervention = c("DSW", "ILC", "DSW")
@@ -299,15 +391,10 @@ plot_data <-
   dplyr::filter(confirmed) %>%
   group_by(country, wp_intervention_mon) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-      outcomes = c("disctcr_02"),
-      design = svydesign(
-        id = ~ village_id,
-        data = .,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+  map_dfr(
+    ~ mean_ci(
+      var = "disctcr_02",
+      data = .x
     ) %>%
     mutate(
       country = .x %>% pull(country) %>% unique,
@@ -315,8 +402,7 @@ plot_data <-
       N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
     )
   ) %>%
-  bind_rows() %>%
-  mutate(label = "(2)\nPromoter sample,\nconfirmed to be using water point\n") %>%
+  mutate(label = "(2)\nPromoter sample,\nconfirmed to be using\nwater point with DSW/ILC\n") %>%
   bind_rows(
     cl_village_noweights_country %>%
       mutate(
@@ -358,7 +444,7 @@ plot <-
     )
   ) +
   geom_col() +
-  geom_errorbar(width  = .2) +
+  geom_errorbar(width = .2, color = "gray30") +
   geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
   facet_grid2(
     wp_intervention ~ country,
@@ -393,9 +479,9 @@ plot
 plot <-
   list(
     "(1)\nAll households\n" = adoption_data,
-    "(2)\nUsing water points\nin promoter survey\n" = adoption_data %>% dplyr::filter(promoter_surveyed),
+    "(2)\nUsing water\npoints in\npromoter survey\n" = adoption_data %>% dplyr::filter(promoter_surveyed),
     "(3)\nIn promoter list\n" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list),
-    "(4)\nRandomized into\nmonitoring\n" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list, any_rank)
+    "(4)\nRandomized\ninto\nmonitoring\n" = adoption_data %>% dplyr::filter(promoter_surveyed, promoter_list, any_rank)
   ) %>%
   map(
     ~ .x %>% 
@@ -404,14 +490,9 @@ plot <-
   ) %>%
   map_depth(
     2,
-    ~ mean_cis(
-      outcomes = c("disctcr_02"),
-      design = svydesign(
-        id = ~ village_id,
-        data = .,
-        nest = TRUE,
-        strata = ~ sample_group
-      )
+    ~ mean_ci(
+      var = "disctcr_02",
+      data = .x
     ) %>%
     mutate(
       country = .x %>% pull(country) %>% unique,
@@ -440,7 +521,7 @@ plot <-
   ) +
   geom_col() +
   geom_errorbar(width = .2, color = "gray30") +
-  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3) + 
   facet_grid2(
     wp_intervention ~ country, 
     scale = "free_x",
@@ -476,15 +557,10 @@ timing <-
   adoption_data %>%
   group_by(country, wp_intervention, promoter_surveyed) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
+  map_dfr(
+    ~ mean_ci(
+        var = "disctcr_02",
+        data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -493,7 +569,6 @@ timing <-
         N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow %>% format(big.mark = ",")
       )
   ) %>%
-  bind_rows %>%
   mutate(
     across(
       c(mean, lb, ub),
@@ -527,7 +602,7 @@ timing_p <-
   adoption_data %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
+  map_dfr(
     ~ feols(
       disctcr_02 ~ promoter_surveyed | sample_group,
       data = ., 
@@ -535,7 +610,6 @@ timing_p <-
     ) %>%
       tidy
   ) %>%
-  bind_rows() %>%
   transmute(
     country = c("Malawi", "Malawi", "Uganda"),
     wp_intervention = c("DSW", "ILC", "DSW"),
@@ -609,15 +683,10 @@ timing <-
   dplyr::filter(n() > 1) %>%
   group_by(country, wp_intervention, promoter_list) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
+  map_dfr(
+    ~ mean_ci(
+      var = "disctcr_02",
+      data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -626,7 +695,6 @@ timing <-
         N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
       )
   ) %>%
-  bind_rows %>%
   mutate(
     across(
       c(mean, lb, ub),
@@ -661,7 +729,7 @@ timing_p <-
   dplyr::filter(promoter_surveyed) %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
+  map_dfr(
     ~ feols(
       disctcr_02 ~ promoter_list | sample_group,
       data = ., 
@@ -669,7 +737,6 @@ timing_p <-
     ) %>%
       tidy
   ) %>%
-  bind_rows() %>%
   transmute(
     country = c("Malawi", "Malawi", "Uganda"),
     wp_intervention = c("DSW", "ILC", "DSW"),
@@ -754,24 +821,18 @@ timing <-
   adoption_data %>%
   group_by(country, wp_intervention, first_day) %>%
   group_split %>%
-  map(
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
+  map_dfr(
+    ~ mean_ci(
+      var = "disctcr_02",
+      data = .x
     ) %>%
-      mutate(
-        country = .x %>% pull(country) %>% unique,
-        first_day = .x %>% pull(first_day) %>% unique,
-        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
-        N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
-      )
+    mutate(
+      country = .x %>% pull(country) %>% unique,
+      first_day = .x %>% pull(first_day) %>% unique,
+      wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+      N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+    )
   ) %>%
-  bind_rows %>%
   mutate(
     across(
       c(mean, lb, ub),
@@ -805,7 +866,7 @@ timing_p <-
   adoption_data %>%
   group_by(country, wp_intervention) %>%
   group_split %>%
-  map(
+  map_dfr(
     ~ feols(
       disctcr_02 ~ first_day | sample_group,
       data = ., 
@@ -813,7 +874,6 @@ timing_p <-
     ) %>%
       tidy
   ) %>%
-  bind_rows() %>%
   transmute(
     country = c("Malawi", "Malawi", "Uganda"),
     wp_intervention = c("DSW", "ILC", "DSW"),
@@ -951,7 +1011,7 @@ table %>%
 
 ```{r}
 table <-
-  timing_table %>%
+  table %>%
   kable(
     format = "latex",
     align = "c", 
@@ -978,7 +1038,7 @@ table <-
 
 writeLines(
   table, 
-  "output/appendix-tables/adoption-priming"
+  "output/appendix-tables/adoption-priming.tex"
 )
 
 ```
@@ -991,7 +1051,7 @@ plot <-
   list(
     "(1)\nAll households\nwith available data\n" = adoption_data %>% dplyr::filter(!is.na(int_promoter)),
     "(2)\nDiscussed survey\nwith anyone\n" = adoption_data %>% dplyr::filter(int_warned),
-    "(3)\nDiscussed water treatment\nwith promoter\n" = adoption_data %>% dplyr::filter(int_promoter)
+    "(3)\nDiscussed water\ntreatment with promoter\n" = adoption_data %>% dplyr::filter(int_promoter)
   ) %>%
   map(
     ~ .x %>%
@@ -1000,14 +1060,9 @@ plot <-
   ) %>%
   map_depth(
     2,
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ village_id,
-          data = .,
-          nest = TRUE,
-          strata = ~ sample_group
-        )
+    ~ mean_ci(
+        var = "disctcr_02",
+        data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -1066,28 +1121,33 @@ plot
 ```
 
 ```{r}
+design <- function(data) {
+  svydesign(
+    id = ~ village_id,
+    data = data,
+    nest = TRUE
+  )
+} 
+
 plot <-
   list(
     "(1)\nAll households\nwith available data\n" = mon_survey_cl %>% dplyr::filter(!is.na(int_promoter)),
     "(2)\nDiscussed survey\nwith anyone\n" = mon_survey_cl %>% dplyr::filter(int_warned),
-    "(3)\nDiscussed water treatment\nwith promoter\n" = mon_survey_cl %>% dplyr::filter(int_promoter)
+    "(3)\nDiscussed water\ntreatment with promoter\n" = mon_survey_cl %>% dplyr::filter(int_promoter)
   ) %>%
   map(
     ~ .x %>%
       dplyr::filter(!is.na(disctcr_02)) %>%
-      group_by(country, wp_intervention_mon) %>%
+      group_by(country, wp_intervention_mon, sample_group, village_id) %>%
       dplyr::filter(n() > 1) %>%
+      group_by(country, wp_intervention_mon) %>%
       group_split
   ) %>%
   map_depth(
     2,
-    ~ mean_cis(
-        outcomes = c("disctcr_02"),
-        design = svydesign(
-          id = ~ household_id,
-          data = .,
-          nest = TRUE
-        )
+    ~ mean_ci(
+        var = "disctcr_02",
+        data = .x
     ) %>%
       mutate(
         country = .x %>% pull(country) %>% unique,
@@ -1132,6 +1192,16 @@ plot <-
     x = NULL,
     y = NULL
   )
+
+design <- function(data, ...) {
+  svydesign(
+    id = ~ village_id,
+    data = data, 
+    strata = ~ country + sample_group,
+    nest = TRUE,
+    ...
+  )
+}
 
 ggplot2::ggsave(
   filename = "output/appendix-graphs/adoption-promotermon.png",  
@@ -1246,29 +1316,108 @@ adoption_data %>%
   )
 ```
 
+### Does removing out of village households make estimates more similar?
+
+```{r}
+plot_data <-
+  list(
+    "(1)\nCensus sample\n" = adoption_data %>% dplyr::filter(inclusion == "Within village boundaries"),
+    "(2)\nPromoter sample\n" = mon_survey_cl %>% left_join(hh_census %>% select(household_id, inclusion)) %>% dplyr::filter(inclusion == "Within village boundaries") %>% mutate(wp_intervention = wp_intervention_mon)
+  ) %>%
+  map(
+    ~ .x %>% 
+      group_by(country, wp_intervention) %>%
+      group_split()
+  ) %>%
+  map_depth(
+    2,
+    ~ mean_ci(
+      var = "disctcr_02",
+      data = .x
+    ) %>%
+    mutate(
+      country = .x %>% pull(country) %>% unique,
+      wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+      N = .x %>% dplyr::filter(!is.na(disctcr_02)) %>% nrow
+    )
+  ) %>%
+  map(~ bind_rows(.)) %>%
+  bind_rows(.id = "sample") %>%
+  mutate(
+    sample = sample %>% paste0(" (N = ", N %>% format(big.mark = ","), ")"),
+    across(
+      c(mean, lb, ub),
+      ~ (. * 100) %>% round(1)
+    )
+  ) 
+
+plot <- 
+  plot_data %>%
+  ggplot(
+    aes(
+      x = sample,
+      y = mean,
+      label = mean %>% paste0("%"),
+      ymin = lb,
+      ymax = ub,
+      fill = country
+    )
+  ) +
+  geom_col() +
+  geom_errorbar(width = .2, color = "gray30") +
+  geom_text(vjust = 1.3, hjust = 1.1, size = 3.5) + 
+  facet_grid2(
+    wp_intervention ~ country, 
+    scale = "free_x",
+    independent = "x"
+  ) +
+  scale_fill_manual(values = c("#4575b4", "#FDB462")) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "gray80", color = NA)
+  ) + 
+  labs(
+    x = NULL,
+    y = NULL
+  )
+
+ggplot2::ggsave(
+  filename = "output/appendix-graphs/adoption-boundaries.png",  
+  plot     = plot,            
+  width    = 8,
+  height   = 6,
+  units    = "in",
+  dpi      = 300
+)
+
+plot
+```
+
+
 ### Are there more households outside of the village boundaries in the monitoring survey? 
 
 No
 
 ```{r}
 list(
-  "Household survey" = adoption_data,
-  "Monitoring survey" = mon_survey_cl %>% left_join(hh_census %>% select(household_id, inclusion)) %>% mutate(wp_intervention = wp_intervention_mon)
+  "Census Sample" = adoption_data,
+  "Promoter Sample" = mon_survey_cl %>% left_join(hh_census %>% select(household_id, inclusion)) %>% mutate(wp_intervention = wp_intervention_mon)
 ) %>%
-  map(
+  map_dfr(
     ~ .x %>%
       mutate(within = (inclusion == "Within village boundaries")) %>%
       group_by(country, wp_intervention) %>%
-      summarise(within = mean(within * 100, na.rm = TRUE) %>% round(1) %>% paste0("%"))
+      summarise(within = mean(within * 100, na.rm = TRUE) %>% round(1) %>% paste0("%")),
+    .id = "survey"
   ) %>%
-  bind_rows(.id = "survey") %>%
   pivot_wider(
     values_from = within,
     names_from = survey
   ) %>%
   ungroup %>%
   select(-country) %>%
-  rename(` ` = wp_intervention) %>%
+  rename(" " = wp_intervention) %>%
   kable_by_country(
     caption = "Share of households living within village boundaries"
   )
