@@ -1,3 +1,4 @@
+source("renv/activate.R")
 # File paths -------------------------------------------------------------------
 
 path_box <- file.path(Sys.getenv("BOX"),"i-h2o-takeup")
