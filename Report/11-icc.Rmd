@@ -1,0 +1,163 @@
+---
+title: "11-descriptives"
+output: html_document
+date: "2026-01-26"
+---
+
+## Mean and SE
+
+```{r}
+chlorination_data %>%
+  ungroup %>%
+  group_by(wp_intervention) %>%
+  group_split() %>%
+  map_dfr(
+    ~ map_dfr(
+      c("discfcr_02", "disctcr_02"),
+      \(outcome) mean_ci(
+        .x, 
+        var = outcome
+      ) %>%
+      mutate(
+        wp_intervention = .x %>% pull(wp_intervention) %>% unique,
+        hhs = .x %>% pull(household_id) %>% n_distinct,
+        villages = .x %>% pull(village_id) %>% n_distinct,
+      )
+    )
+  ) %>%
+  dplyr::filter(wp_intervention == "DSW") %>%
+  select(outcome, mean, se) %>%
+  arrange(desc(outcome))
+```
+
+## ICC
+
+# Calculate ICC
+
+```{r}
+icc_data <-
+  chlorination_data %>%
+  dplyr::filter(wp_intervention == "DSW")
+```
+
+## Unconditional ICC
+
+```{r}
+outcomes <- 
+  c("disctcr_02", "discfcr_02") 
+
+data <-
+  outcomes %>%
+  map(
+    ~ icc_data %>%
+      rename(outcome = all_of(.x)) %>%
+      dplyr::filter(!is.na(outcome)) %>%
+      select(outcome, village_id, country)
+  )
+
+data %>%
+  map(
+    ~ lm(
+      outcome ~ village_id,
+      data = .
+    )
+  ) %>%
+  map(
+    ~ summary(.x)$r.squared
+  ) %>%
+  set_names(outcomes) %>%
+  unlist
+```
+
+## By country
+
+```{r}
+data %>%
+  map(
+    ~ .x %>%
+      group_by(country) %>%
+      group_split %>%
+      map(
+        ~ lm(
+          outcome ~ village_id,
+          data = .
+        )
+      ) %>%
+    map(
+      ~ summary(.x)$r.squared
+    ) %>%
+      set_names(c("Malawi", "Uganda")) %>%
+      unlist
+  ) %>%
+  set_names("TCR", "FCR")
+```
+
+
+## Conditional ICC
+
+To calculate the conditional ICC, we first need to regress the outcome on stratum fixed effects and calculate the residual from this regression.
+
+```{r}
+country_models <-
+  data %>%
+  map(
+    ~ lm(
+      outcome ~ country,
+      data = .x
+    )
+  )
+
+data[[1]] <-
+  data[[1]] %>%
+  mutate(
+    residual = country_models[[1]]$residual
+  )
+
+data[[2]] <-
+  data[[2]] %>%
+  mutate(
+    residual = country_models[[2]]$residual
+  )
+```
+
+We then plug the residual instead of the outcome on the ICC calculation.
+
+```{r}
+data %>%
+  map(
+    ~ lm(
+      residual ~ village_id,
+      data = .x
+    )
+  ) %>%
+  map(
+    ~ summary(.x)$r.squared
+  ) %>%
+  set_names(outcomes) %>%
+  unlist
+```
+
+## Using `ICCest`
+
+```{r}
+data %>%
+  map_dfr(
+    ~ ICCest(
+      village_id,
+      outcome,
+      data = .,
+      CI.type = "Smith"
+    )
+  )
+```
+```{r}
+data %>%
+  map_dfr(
+    ~ ICCest(
+      village_id,
+      residual,
+      data = .,
+      CI.type = "Smith"
+    )
+  )
+```
