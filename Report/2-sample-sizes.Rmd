@@ -194,7 +194,7 @@ sample_sizes %>%
 ### Villages
 
 ```{r}
-villages %>%
+ug_villages <- villages %>%
   dplyr::filter(country == "Uganda") %>%
   summarise(
     Visited = sum(!is.na(vil_replaced)),
@@ -208,7 +208,8 @@ villages %>%
 ### Water points
 
 ```{r}
-wp_census %>% 
+ug_wp <-
+  wp_census %>% 
   dplyr::filter(country == "Uganda") %>%
   summarise(
     All = n(),
@@ -226,7 +227,8 @@ wp_census %>%
 ### Water samples tested
 
 ```{r}
-wp_census %>% 
+ug_samples <-
+  wp_census %>% 
   dplyr::filter(country == "Uganda", dsw, disp_filled) %>%
   summarise(
     `Filled dispensers` = n(),
@@ -238,7 +240,8 @@ wp_census %>%
 ### Household census
 
 ```{r}
-hh_census %>% 
+ug_census <-
+  hh_census %>% 
   dplyr::filter(country == "Uganda") %>%
   summarise(
     All = n(),
@@ -249,7 +252,8 @@ hh_census %>%
 ```
 
 ```{r}
-hh_census %>% 
+ug_census_respondents <-
+  hh_census %>% 
   dplyr::filter(country == "Uganda", response) %>%
   summarise(
     `WP matched` = sum(!is.na(wp_id)),
@@ -264,7 +268,8 @@ hh_census %>%
 ### Household survey
 
 ```{r}
-hh_survey %>% 
+ug_hhs <-
+  hh_survey %>% 
   dplyr::filter(country == "Uganda") %>%
   summarise(
     All = n(),
@@ -282,7 +287,8 @@ hh_survey %>%
 ### Promoter survey
 
 ```{r}
-pm_survey %>%
+ug_promoters <-
+  pm_survey %>%
   dplyr::filter(country == "Uganda", sample_group != "ILC") %>%
   nrow
 ```
