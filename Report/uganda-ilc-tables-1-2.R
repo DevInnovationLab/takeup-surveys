@@ -7,22 +7,21 @@
 # Table 1 uses village as the unit of reference.
 # Table 2 uses water point as the unit of reference.
 #
-# Data files required (from Downloads folder):
-#   hh-census.rds       - Household census
-#   hh-survey.rds       - Household survey (census sample + monitoring sample)
-#   wp-census.rds       - Water point census
-#   villages.rds        - Village-level data (sample frame)
+# Run from within the Report/ RStudio project (report.Rproj) so that .Rprofile
+# is loaded automatically. This gives access to path_box, which points to the
+# shared Box folder (set BOX env variable to your local Box sync root).
 ################################################################################
 
 library(survey)
 
-DATA_DIR <- "~/Downloads"
+# path_box is defined in .Rprofile as file.path(Sys.getenv("BOX"), "i-h2o-takeup")
+# Each collaborator sets the BOX environment variable to their local Box sync folder.
 
 # Load data
-hh  <- readRDS(file.path(DATA_DIR, "hh-census.rds"))
-hs  <- readRDS(file.path(DATA_DIR, "hh-survey.rds"))
-wp  <- readRDS(file.path(DATA_DIR, "wp-census.rds"))
-vil <- readRDS(file.path(DATA_DIR, "villages.rds"))
+hh  <- readRDS(file.path(path_box, "Data", "HouseholdCensus",  "hh-census.rds"))
+hs  <- readRDS(file.path(path_box, "Data", "HouseholdSurvey",  "hh-survey.rds"))
+wp  <- readRDS(file.path(path_box, "Data", "WaterPointCensus", "wp-census.rds"))
+vil <- readRDS(file.path(path_box, "Data", "Villages",         "villages.rds"))
 
 ################################################################################
 # HELPER: Reach estimate (village as unit of reference) — Table 1
